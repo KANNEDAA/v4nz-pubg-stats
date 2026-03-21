@@ -1,0 +1,17 @@
+{
+  "name": "v4nz-pubg-stats",
+  "version": "1.0.0",
+  "description": "V4NZ PUBG Console Stats Tracker — PlayStation & Xbox",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "author": "V4NZ",
+  "license": "MIT"
+}
