@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V4NZ — PUBG Console Stats Tracker | PS5 & Xbox</title>
+<meta name="description" content="La mejor herramienta de estadisticas de PUBG para consola en espanol. Busca cualquier jugador de PS5, PS4 o Xbox. Stats, historial, armas, clanes, personalidad de jugador y mas. By V4NZ.">
+<meta name="keywords" content="PUBG stats, PUBG console, PUBG PS5, PUBG Xbox, PUBG estadisticas, PUBG tracker consola, V4NZ, KANNEDA, PUBG clanes consola">
+<meta property="og:title" content="V4NZ — PUBG Console Stats Tracker">
+<meta property="og:description" content="Stats en tiempo real de PUBG para PS5 y Xbox. Busca cualquier jugador, compara stats, descubre tu personalidad de jugador.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://v4nz.com">
+<link rel="canonical" href="https://v4nz.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0f'/%3E%3Cpath d='M16 4C9.4 4 5.3 9.6 5.3 15.9v2.8c0 1.4.7 2.8 1.7 3.5l1.4 1v4.2c0 1.4 1 2.4 2.4 2.4h12.5c1.4 0 2.4-1 2.4-2.4v-4.2l1.4-1c1-0.7 1.7-2.1 1.7-3.5v-2.8C29 9.6 24.6 4 16 4z' fill='%23f2a900' opacity='.9'/%3E%3Crect x='8' y='12.6' width='18' height='5.6' rx='1.4' fill='%230a0a0f' opacity='.85'/%3E%3Crect x='8.7' y='13.3' width='16.6' height='4.2' rx='1' fill='none' stroke='%2300f0ff' stroke-width='.7' opacity='.7'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #16161f;
+  --bg-card-hover: #1c1c28;
+  --bg-input: #1a1a25;
+  --border: #2a2a3a;
+  --accent: #00f0ff;
+  --accent-dim: rgba(0, 240, 255, 0.15);
+  --accent-orange: #ff6b00;
+  --accent-orange-dim: rgba(255, 107, 0, 0.15);
+  --accent-green: #00ff88;
+  --accent-red: #ff3355;
+  --accent-yellow: #ffd700;
+  --accent-purple: #a855f7;
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888a0;
+  --text-dim: #555570;
+  --gradient-main: linear-gradient(135deg, #00f0ff, #0080ff);
+  --gradient-orange: linear-gradient(135deg, #ff6b00, #ff3355);
+  --gradient-card: linear-gradient(180deg, rgba(0,240,255,0.03) 0%, transparent 100%);
+  --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+.bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px); background-size: 60px 60px; z-index: 0; pointer-events: none; }
+.bg-radial { position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; background: radial-gradient(circle, rgba(0,240,255,0.06) 0%, transparent 70%); z-index: 0; pointer-events: none; }
+
+/* HEADER */
+header { position: sticky; top: 0; z-index: 100; background: rgba(10,10,15,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 2rem; }
+.header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.logo-area img { height: 44px; width: auto; border-radius: 8px; filter: drop-shadow(0 0 8px rgba(0,240,255,0.4)); }
+.logo-fallback { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 10px rgba(0,240,255,0.5)); }
+.logo-text { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.3rem; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
+.logo-sub { font-size: 0.6rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 3px; }
+nav { display: flex; gap: 4px; flex-wrap: wrap; }
+nav a { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: all 0.2s; position: relative; }
+nav a:hover, nav a.active { color: var(--accent); background: var(--accent-dim); }
+nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 20px; height: 2px; background: var(--accent); border-radius: 2px; }
+
+/* SEARCH */
+.search-hero { position: relative; z-index: 1; text-align: center; padding: 60px 2rem 40px; background: linear-gradient(180deg, rgba(0,240,255,0.04) 0%, transparent 100%); }
+.search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; font-weight: 900; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 3px; }
+.search-hero h1 span { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.search-box { display: flex; align-items: center; max-width: 680px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; }
+.search-box:focus-within { border-color: var(--accent); box-shadow: var(--shadow-glow); }
+.platform-selector { display: flex; gap: 2px; padding: 6px 8px; border-right: 1px solid var(--border); }
+.platform-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 10px 14px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
+.platform-btn:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+.platform-btn.active { color: var(--accent); background: var(--accent-dim); }
+.platform-btn svg { width: 18px; height: 18px; vertical-align: middle; margin-right: 4px; }
+.search-input { flex: 1; background: transparent; border: none; color: var(--text-primary); font-size: 1rem; padding: 16px 20px; outline: none; font-family: 'Inter', sans-serif; }
+.search-input::placeholder { color: var(--text-dim); }
+.search-btn { background: var(--gradient-main); border: none; color: #000; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; padding: 16px 32px; cursor: pointer; transition: opacity 0.2s; }
+.search-btn:hover { opacity: 0.9; }
+.recent-searches { max-width: 680px; margin: 16px auto 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.recent-tag { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 600; transition: all 0.2s; text-transform: uppercase; }
+.recent-tag:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* STREAMER BANNER */
+.streamer-banner { max-width: 1400px; margin: 0 auto 20px; padding: 0 2rem; position: relative; z-index: 1; }
+.streamer-card { background: linear-gradient(135deg, rgba(255,107,0,0.08), rgba(0,240,255,0.05)); border: 1px solid rgba(255,107,0,0.2); border-radius: 14px; padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px; transition: all 0.3s; cursor: pointer; }
+.streamer-card:hover { border-color: var(--accent-orange); box-shadow: 0 0 30px rgba(255,107,0,0.1); }
+.streamer-left { display: flex; align-items: center; gap: 16px; }
+.streamer-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent-orange); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: var(--accent-orange-dim); font-family: 'Orbitron', sans-serif; font-weight: 800; color: var(--accent-orange); }
+.streamer-name { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1rem; color: var(--accent-orange); }
+.streamer-desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+.streamer-cta { background: var(--gradient-orange); border: none; color: #fff; padding: 10px 24px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+
+/* MAIN */
+.main-content { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 2rem 4rem; }
+.player-header { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px 30px; margin-bottom: 24px; background-image: var(--gradient-card); position: relative; overflow: hidden; }
+.player-header.visible { display: flex; align-items: center; gap: 24px; }
+.player-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gradient-main); }
+.player-avatar { width: 80px; height: 80px; border-radius: 16px; background: var(--accent-dim); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--accent); }
+.player-info h2 { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
+.platform-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; font-family: 'Rajdhani', sans-serif; }
+.player-quick-stats { margin-left: auto; display: flex; gap: 24px; }
+.quick-stat { text-align: center; }
+.quick-stat .value { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+.quick-stat .label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+/* PERSONALITY */
+.personality-section { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 30px; margin-bottom: 24px; text-align: center; position: relative; overflow: hidden; }
+.personality-section.visible { display: block; }
+.personality-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gradient-orange); }
+.personality-icon { font-size: 3rem; margin-bottom: 8px; }
+.personality-title { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+.personality-desc { color: var(--text-secondary); font-size: 0.85rem; max-width: 500px; margin: 0 auto 16px; }
+.personality-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.personality-tag { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-family: 'Rajdhani', sans-serif; }
+.personality-share { margin-top: 16px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
+.personality-share:hover { border-color: var(--accent); color: var(--accent); }
+
+/* TABS */
+.tabs-container { margin-bottom: 24px; display: none; }
+.tabs-container.visible { display: block; }
+.tabs { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: 12px; padding: 4px; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
+.tab-btn { background: transparent; border: none; color: var(--text-secondary); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; padding: 10px 18px; border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+.tab-btn.active { background: var(--accent); color: #000; }
+.mode-selector { display: flex; gap: 4px; margin-top: 10px; background: var(--bg-secondary); border-radius: 8px; padding: 3px; border: 1px solid var(--border); width: fit-content; }
+.mode-btn { background: transparent; border: none; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 6px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+.mode-btn.active { background: var(--accent-orange); color: #fff; }
+.season-bar { display: none; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 10px 24px; margin-bottom: 20px; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+.season-bar.visible { display: flex; }
+.season-name { font-family: 'Rajdhani', sans-serif; font-weight: 700; color: var(--accent); text-transform: uppercase; }
+
+/* STATS */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; transition: all 0.3s; position: relative; overflow: hidden; animation: fadeInUp 0.5s ease forwards; }
+.stat-card:hover { border-color: rgba(0,240,255,0.3); background: var(--bg-card-hover); transform: translateY(-2px); box-shadow: var(--shadow-glow); }
+.stat-card .stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 1.1rem; }
+.stat-card .stat-value { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; line-height: 1; }
+.stat-card .stat-label { font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.stat-card .stat-sub { font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; }
+.stat-card .stat-bar { height: 4px; border-radius: 4px; background: var(--bg-secondary); margin-top: 10px; overflow: hidden; }
+.stat-card .stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.icon-blue { background: var(--accent-dim); color: var(--accent); }
+.icon-orange { background: var(--accent-orange-dim); color: var(--accent-orange); }
+.icon-green { background: rgba(0,255,136,0.15); color: var(--accent-green); }
+.icon-red { background: rgba(255,51,85,0.15); color: var(--accent-red); }
+.icon-yellow { background: rgba(255,215,0,0.15); color: var(--accent-yellow); }
+.icon-purple { background: rgba(168,85,247,0.15); color: var(--accent-purple); }
+.val-blue { color: var(--accent); } .val-orange { color: var(--accent-orange); } .val-green { color: var(--accent-green); } .val-red { color: var(--accent-red); } .val-yellow { color: var(--accent-yellow); }
+.section-title { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+.section-title::before { content: ''; width: 4px; height: 20px; background: var(--gradient-main); border-radius: 2px; }
+
+/* FUN STATS */
+.fun-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 30px; }
+.fun-stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.3s; }
+.fun-stat-card:hover { border-color: rgba(255,107,0,0.3); transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,107,0,0.1); }
+.fun-stat-card .fun-icon { font-size: 2rem; margin-bottom: 8px; }
+.fun-stat-card .fun-value { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--accent-orange); }
+.fun-stat-card .fun-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+.fun-stat-card .fun-detail { font-size: 0.65rem; color: var(--text-dim); margin-top: 6px; }
+
+/* MATCHES */
+.match-list { display: flex; flex-direction: column; gap: 8px; }
+.match-item { display: grid; grid-template-columns: 70px 1fr 90px 90px 90px 70px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; transition: all 0.2s; gap: 14px; }
+.match-item:hover { border-color: rgba(0,240,255,0.2); background: var(--bg-card-hover); }
+.match-place { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.3rem; }
+.match-place.win { color: var(--accent-yellow); } .match-place.top10 { color: var(--accent-green); } .match-place.normal { color: var(--text-secondary); }
+.match-mode { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; }
+.match-mode .map-name { font-size: 0.7rem; color: var(--text-dim); display: block; margin-top: 2px; }
+.match-stat { text-align: center; }
+.match-stat .ms-val { font-family: 'Orbitron', sans-serif; font-weight: 600; font-size: 0.95rem; }
+.match-stat .ms-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.match-time { font-size: 0.7rem; color: var(--text-dim); text-align: right; }
+
+/* WEAPONS */
+.weapon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.weapon-card { display: flex; align-items: center; gap: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; transition: all 0.2s; }
+.weapon-card:hover { border-color: rgba(0,240,255,0.2); background: var(--bg-card-hover); }
+.weapon-rank { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--text-dim); min-width: 30px; }
+.weapon-rank.gold { color: var(--accent-yellow); } .weapon-rank.silver { color: #c0c0c0; } .weapon-rank.bronze { color: #cd7f32; }
+.weapon-info { flex: 1; }
+.weapon-name { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
+.weapon-type { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.weapon-stats-mini { display: flex; gap: 14px; }
+.weapon-mini-stat { text-align: center; }
+.weapon-mini-stat .wm-val { font-family: 'Orbitron', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--accent); }
+.weapon-mini-stat .wm-label { font-size: 0.55rem; color: var(--text-dim); text-transform: uppercase; }
+
+/* COMPARE */
+.compare-container { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: start; }
+.compare-search { display: flex; gap: 8px; margin-bottom: 16px; }
+.compare-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; padding: 12px 16px; outline: none; font-family: 'Inter', sans-serif; }
+.compare-input:focus { border-color: var(--accent); }
+.compare-vs { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 900; color: var(--accent-orange); align-self: center; padding-top: 50px; }
+.compare-player-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+.compare-stat-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.compare-stat-row:last-child { border-bottom: none; }
+.compare-stat-name { font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.compare-stat-val { font-family: 'Orbitron', sans-serif; font-weight: 600; }
+.compare-stat-val.winner { color: var(--accent-green); } .compare-stat-val.loser { color: var(--text-dim); }
+
+/* CLANS */
+.clan-search-box { display: flex; gap: 8px; margin-bottom: 20px; max-width: 500px; }
+.clan-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; padding: 12px 16px; outline: none; font-family: 'Inter', sans-serif; }
+.clan-input:focus { border-color: var(--accent); }
+.clan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; position: relative; overflow: hidden; }
+.clan-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gradient-orange); }
+.clan-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.clan-icon { width: 60px; height: 60px; border-radius: 14px; background: var(--accent-orange-dim); border: 2px solid var(--accent-orange); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent-orange); }
+.clan-name { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1.2rem; }
+.clan-tag { font-family: 'Rajdhani', sans-serif; font-size: 0.75rem; color: var(--accent-orange); font-weight: 700; }
+.clan-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.clan-stat { text-align: center; padding: 14px; background: var(--bg-secondary); border-radius: 10px; }
+.clan-stat .cs-val { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+.clan-stat .cs-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.clan-member { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--bg-secondary); border-radius: 8px; transition: all 0.2s; margin-bottom: 6px; }
+.clan-member:hover { background: var(--bg-card-hover); }
+.clan-member-name { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+.clan-member-name:hover { color: var(--accent); }
+.clan-member-stats { display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-secondary); }
+.clan-member-stats span { font-family: 'Orbitron', sans-serif; font-weight: 600; color: var(--accent); }
+
+/* LEADERBOARD */
+.leaderboard-controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.lb-btn { background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+.lb-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.lb-table { width: 100%; border-collapse: collapse; }
+.lb-table th { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.lb-table td { padding: 10px 14px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.02); }
+.lb-table tr:hover td { background: var(--bg-card-hover); }
+.lb-table .rc { font-family: 'Orbitron', sans-serif; font-weight: 800; width: 50px; }
+.lb-table .r1 { color: var(--accent-yellow); } .lb-table .r2 { color: #c0c0c0; } .lb-table .r3 { color: #cd7f32; }
+.lb-table .pc { cursor: pointer; } .lb-table .pc:hover { color: var(--accent); }
+.lb-table .sc { font-family: 'Orbitron', sans-serif; font-weight: 600; font-size: 0.8rem; color: var(--accent); }
+
+/* MISC */
+.loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,15,0.85); backdrop-filter: blur(10px); z-index: 999; justify-content: center; align-items: center; flex-direction: column; gap: 20px; }
+.loading-overlay.active { display: flex; }
+.spinner { width: 50px; height: 50px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px; }
+.error-msg { display: none; text-align: center; padding: 40px 20px; color: var(--accent-red); font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; }
+.error-msg.visible { display: block; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+.empty-state p { font-size: 1rem; font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
+.panel { display: none; } .panel.active { display: block; }
+footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 30px 2rem; text-align: center; color: var(--text-dim); font-size: 0.75rem; }
+footer a { color: var(--accent); text-decoration: none; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeInUp 0.5s ease forwards; }
+.stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.1s}.stat-card:nth-child(3){animation-delay:.15s}.stat-card:nth-child(4){animation-delay:.2s}.stat-card:nth-child(5){animation-delay:.25s}.stat-card:nth-child(6){animation-delay:.3s}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-primary)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+
+@media(max-width:900px){
+  .header-inner{flex-direction:column;height:auto;padding:10px 0;gap:6px}
+  nav{justify-content:center}
+  .search-hero h1{font-size:1.6rem}
+  .search-box{flex-direction:column}
+  .platform-selector{border-right:none;border-bottom:1px solid var(--border);justify-content:center}
+  .player-header.visible{flex-direction:column;text-align:center}
+  .player-quick-stats{margin-left:0}
+  .match-item{grid-template-columns:50px 1fr 1fr;font-size:.85rem}
+  .match-time{display:none}
+  .compare-container{grid-template-columns:1fr}
+  .compare-vs{padding-top:0;text-align:center}
+  .stats-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .streamer-card{flex-direction:column;text-align:center}
+  .streamer-left{flex-direction:column}
+  .fun-stats-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-radial"></div>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Cargando datos del campo de batalla...</div></div>
+
+<div id="apiModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.9);backdrop-filter:blur(10px);z-index:1000;justify-content:center;align-items:center;">
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:500px;width:90%;text-align:center;">
+    <h3 style="font-family:'Orbitron',sans-serif;font-size:1.2rem;margin-bottom:12px;">API Key</h3>
+    <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:24px;">Ingresa tu API Key de PUBG Developer.</p>
+    <input type="text" id="apiKeyInput" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOi..." style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:.9rem;padding:14px;outline:none;margin-bottom:16px;text-align:center;"/>
+    <button onclick="saveApiKey()" style="background:var(--gradient-main);border:none;color:#000;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;text-transform:uppercase;letter-spacing:2px;padding:14px 40px;border-radius:8px;cursor:pointer;width:100%;">CONECTAR</button>
+    <a href="https://developer.pubg.com/" target="_blank" style="display:block;margin-top:12px;color:var(--accent);font-size:.8rem;text-decoration:none;">Obtener API Key gratis</a>
+  </div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-area" onclick="location.reload()">
+      <div id="logoContainer">
+        <img src="logo.png" alt="V4NZ" style="height:44px;width:auto;border-radius:8px;filter:drop-shadow(0 0 8px rgba(0,240,255,0.4));" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
+        <div id="logoFallback" class="logo-fallback" style="display:none">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <rect width="44" height="44" rx="10" fill="#12121a" stroke="#2a2a3a" stroke-width="1"/>
+            <text x="22" y="20" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="11" font-weight="900" fill="#00f0ff">V4NZ</text>
+            <text x="22" y="34" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="9" font-weight="800" fill="#f2a900">PUBG</text>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="logo-text" style="display:flex;align-items:center;gap:8px;">V4NZ <span style="background:linear-gradient(135deg,#f2a900,#e8740c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:.85rem;letter-spacing:3px;">PUBG</span></div>
+        <div class="logo-sub">Console Stats Tracker</div>
+      </div>
+    </div>
+    <nav id="mainNav">
+      <a href="#" class="active" data-tab="overview">Overview</a>
+      <a href="#" data-tab="matches">Partidas</a>
+      <a href="#" data-tab="weapons">Armas</a>
+      <a href="#" data-tab="funstats">Datos Curiosos</a>
+      <a href="#" data-tab="compare">Comparar</a>
+      <a href="#" data-tab="clans">Clanes</a>
+      <a href="#" data-tab="leaderboard">Top 500</a>
+      <a href="#" onclick="document.getElementById('apiModal').style.display='flex';return false;" style="color:var(--text-dim);font-size:.75rem;">&#9881;</a>
+    </nav>
+  </div>
+</header>
+
+<section class="search-hero" id="searchHero">
+  <div style="margin-bottom:16px;">
+    <img src="pubg-logo.png" alt="PUBG" style="height:70px;width:auto;filter:drop-shadow(0 0 15px rgba(242,169,0,0.4));" onerror="this.style.display='none';document.getElementById('heroTextFallback').style.display='block'">
+    <div id="heroTextFallback" style="display:none;">
+      <svg width="200" height="50" viewBox="0 0 200 50">
+        <text x="100" y="38" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="36" font-weight="900" fill="#f2a900" stroke="#e8740c" stroke-width="1" style="filter:drop-shadow(0 0 10px rgba(242,169,0,0.5));">PUBG</text>
+      </svg>
+    </div>
+  </div>
+  <h1>PUBG <span>CONSOLE</span> STATS</h1>
+  <p style="color:var(--text-secondary);font-size:.95rem;margin-bottom:30px;">La herramienta definitiva de estadisticas PUBG para PlayStation & Xbox &mdash; en espanol</p>
+  <p style="font-size:.7rem;color:var(--text-dim);margin-top:-20px;margin-bottom:8px;">Powered by <span style="color:var(--accent-orange);font-weight:600;">PUBG Official API</span> &mdash; Datos en tiempo real</p>
+  <div class="search-box">
+    <div class="platform-selector">
+      <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.21-1.263-4.834-4.003-5.676-1.47-.448-3.828-.926-5.828-1.648zM18.875 16.155c-1.478-.396-3.055-.208-4.673.467l-.537.222v3.076l.793-.34c.832-.346 1.684-.574 2.47-.414.557.112.682.413.682.736 0 .382-.193.683-.782.87-1.324.419-3.816-.313-3.816-.313v2.611s1.795.645 3.535.645c1.7 0 3.453-.553 3.453-2.813 0-2.115-1.333-3.308-4.125-3.947zM1.125 18.527c1.657.573 4.087.773 5.456.396 1.47-.405 2.586-1.28 2.586-3.236 0-1.853-.822-2.964-2.758-3.606-1.157-.378-2.41-.912-2.41-1.554 0-.456.342-.73.988-.758.862-.039 1.85.222 2.752.602v-2.546c-.872-.267-1.795-.392-2.744-.392-2.388 0-4.12 1.074-4.12 3.303 0 1.688.884 2.822 2.768 3.506 1.177.419 1.644.771 1.644 1.405 0 .611-.503.927-1.415.927-.935 0-2.168-.35-3.17-.87l.424 2.823z"/></svg> PS
+      </button>
+      <button class="platform-btn" data-platform="xbox" onclick="setPlatform('xbox')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.102 21.033C6.211 22.881 8.977 24 12 24s5.789-1.119 7.898-2.967c1.074-1.065-.534-3.86-2.192-5.857-1.419-1.58-3.218-3.485-5.706-5.669-2.488 2.184-4.287 4.089-5.706 5.669-1.658 1.997-3.266 4.792-2.192 5.857zM12 0C9.626 0 7.417.843 5.63 2.282c1.09-.222 2.834.397 4.734 2.074.913.806 1.636 1.548 1.636 1.548s.723-.742 1.636-1.548c1.9-1.677 3.644-2.296 4.734-2.074C16.583.843 14.374 0 12 0zM3.48 3.527C1.335 5.512 0 8.436 0 11.707c0 2.386.674 4.607 1.833 6.496-.094-1.811.603-3.677 1.722-5.055 1.383-1.704 3.062-3.597 5.003-5.519C6.494 5.637 4.833 4.163 3.48 3.527zM20.52 3.527c-1.353.636-3.014 2.11-5.078 4.102 1.941 1.922 3.62 3.815 5.003 5.519 1.119 1.378 1.816 3.244 1.722 5.055C23.326 16.314 24 14.093 24 11.707c0-3.271-1.335-6.195-3.48-8.18z"/></svg> XBOX
+      </button>
+    </div>
+    <input type="text" class="search-input" id="searchInput" placeholder="Escribe el gamertag del jugador..." autocomplete="off"/>
+    <button class="search-btn" onclick="searchPlayer()">BUSCAR</button>
+  </div>
+  <div class="recent-searches" id="recentSearches"></div>
+</section>
+
+<div class="streamer-banner">
+  <a href="https://kanneda.com" target="_blank" style="text-decoration:none;">
+    <div style="max-width:1400px;margin:0 auto;padding:0 2rem;">
+      <div style="background:#fff;border-radius:16px;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px;box-shadow:0 2px 20px rgba(0,0,0,0.15);transition:all 0.3s;border:2px solid transparent;" onmouseover="this.style.borderColor='#c5ff00'" onmouseout="this.style.borderColor='transparent'">
+        <div style="display:flex;align-items:center;gap:20px;">
+          <div style="width:56px;height:56px;border-radius:50%;background:#000;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.4rem;color:#c5ff00;">K</div>
+          <div>
+            <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.1rem;color:#000;letter-spacing:1px;">KANNEDA</div>
+            <div style="font-size:0.78rem;color:#555;margin-top:2px;">Streamer Profesional | Ganador PUBG Awards 2023</div>
+            <div style="font-size:0.68rem;color:#888;margin-top:4px;">Codigo de Creador: <strong style="color:#000;">KANNEDA</strong> &mdash; Programa oficial de creadores PUBG</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="background:#c5ff00;color:#000;padding:10px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Ver mis directos</div>
+          <div style="background:#000;color:#fff;padding:10px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Discord</div>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
+
+<div class="main-content">
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="player-header" id="playerHeader">
+    <div class="player-avatar" id="playerAvatar"></div>
+    <div class="player-info"><h2 id="playerName"></h2><div class="platform-badge" id="playerPlatform"></div></div>
+    <div class="player-quick-stats" id="quickStats"></div>
+  </div>
+  <div class="personality-section" id="personalitySection"></div>
+  <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><span id="seasonDates" style="color:var(--text-dim);">Temporada actual</span></div>
+  <div class="tabs-container" id="tabsContainer">
+    <div class="tabs" id="mainTabs">
+      <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+      <button class="tab-btn" data-tab="matches" onclick="switchTab('matches')">Partidas</button>
+      <button class="tab-btn" data-tab="weapons" onclick="switchTab('weapons')">Armas</button>
+      <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')">Datos Curiosos</button>
+      <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')">Comparar</button>
+    </div>
+    <div class="mode-selector"><button class="mode-btn active" onclick="setGameMode('tpp')">TPP</button><button class="mode-btn" onclick="setGameMode('fpp')">FPP</button></div>
+  </div>
+
+  <div class="panel active" id="panel-overview">
+    <div class="tabs" id="modeTabs" style="margin-bottom:16px;display:none;"><button class="tab-btn active" onclick="setSquadMode('solo')">Solo</button><button class="tab-btn" onclick="setSquadMode('duo')">Duo</button><button class="tab-btn" onclick="setSquadMode('squad')">Squad</button></div>
+    <div class="stats-grid" id="overviewStats"></div>
+  </div>
+  <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div class="match-list" id="matchList"></div></div>
+  <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
+  <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
+  <div class="panel" id="panel-compare">
+    <div class="section-title">Comparar Jugadores</div>
+    <div class="compare-container">
+      <div><div class="compare-search"><input class="compare-input" id="compare1Input" placeholder="Jugador 1..."/></div><div class="compare-player-card" id="compareCard1"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+      <div class="compare-vs">VS</div>
+      <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..."/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+    </div>
+    <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
+  </div>
+  <div class="panel" id="panel-clans">
+    <div class="section-title">Clanes de Consola</div>
+    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:20px;">Busca cualquier clan de PUBG Console y mira sus stats agregadas, roster completo y ranking de miembros.</p>
+    <div class="clan-search-box"><input class="clan-input" id="clanInput" placeholder="Nombre del clan..."/><button class="search-btn" style="border-radius:8px;padding:12px 24px;" onclick="searchClan()">BUSCAR CLAN</button></div>
+    <div id="clanResults"></div>
+  </div>
+  <div class="panel" id="panel-leaderboard">
+    <div class="section-title">Top 500 &mdash; Leaderboard Consola</div>
+    <div class="leaderboard-controls">
+      <button class="lb-btn active" onclick="setLBPlatform('psn',this)">PlayStation</button>
+      <button class="lb-btn" onclick="setLBPlatform('xbox',this)">Xbox</button>
+      <span style="width:12px;display:inline-block;"></span>
+      <button class="lb-btn active" onclick="setLBMode('squad',this)">Squad</button>
+      <button class="lb-btn" onclick="setLBMode('squad-fpp',this)">Squad FPP</button>
+      <button class="lb-btn" onclick="setLBMode('solo',this)">Solo</button>
+      <button class="lb-btn" onclick="setLBMode('duo',this)">Duo</button>
+    </div>
+    <div id="leaderboardContent"><div class="empty-state"><p>Selecciona plataforma y modo</p></div></div>
+  </div>
+  <div class="empty-state" id="emptyState" style="display:none;"><p>Busca un jugador para ver sus stats</p></div>
+</div>
+
+<footer>
+  <div style="margin-bottom:16px;">
+    <a href="https://kanneda.com" target="_blank" style="display:inline-block;background:#c5ff00;color:#000;padding:8px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;text-decoration:none;margin-right:8px;">kanneda.com</a>
+    <a href="https://v4nz.com" target="_blank" style="display:inline-block;background:#000;color:#fff;padding:8px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;text-decoration:none;border:1px solid #333;">v4nz.com</a>
+  </div>
+  <p style="margin-bottom:6px;">Codigo de Creador PUBG: <strong style="color:var(--accent);">KANNEDA</strong> &mdash; <a href="https://kanneda.com" target="_blank" style="color:#c5ff00;">Activa tu codigo aqui</a></p>
+  <p>V4NZ PUBG Console Stats &mdash; Datos en tiempo real via <a href="https://developer.pubg.com/" target="_blank">PUBG Official API</a></p>
+  <p style="margin-top:6px;opacity:.5;">No afiliado con KRAFTON, Inc. Todos los datos provienen de la API publica de PUBG.</p>
+</footer>
+
+<script>
+const IS_PROXIED=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+const API_BASE=IS_PROXIED?'/api/shards':'https://api.pubg.com/shards';
+let API_KEY=localStorage.getItem('pubg_api_key')||'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI5YzJkMzM4MC1kNzNhLTAxM2UtNTIwYi01YTE3YTU3M2I3NjkiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzY4ODA5NTI4LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InB1YmctY29uc29sZS1zIn0.-SBKk5E2ptHxV9ucGMnUXqcxNnNVuI0f8sQ_yObID70';
+let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
+let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null;
+let isUsingDemo=false,recentSearches=JSON.parse(localStorage.getItem('recent_searches')||'[]');
+let lbPlatform='psn',lbMode='squad';
+
+const MAP_NAMES={'Baltic_Main':'Erangel','Chimera_Main':'Paramo','Desert_Main':'Miramar','DihorOtok_Main':'Vikendi','Erangel_Main':'Erangel','Heaven_Main':'Haven','Kiki_Main':'Deston','Range_Main':'Camp Jackal','Savage_Main':'Sanhok','Summerland_Main':'Karakin','Tiger_Main':'Taego','Neon_Main':'Rondo'};
+const WEAPON_TYPES={'M416':'Fusil de Asalto','Beryl M762':'Fusil de Asalto','AKM':'Fusil de Asalto','SCAR-L':'Fusil de Asalto','Mini 14':'DMR','SKS':'DMR','SLR':'DMR','Kar98k':'Francotirador','M24':'Francotirador','AWM':'Francotirador','UMP45':'SMG','Vector':'SMG','MP5K':'SMG','P90':'SMG','S12K':'Escopeta','S686':'Escopeta','M249':'LMG','DP-28':'LMG','Pan':'Cuerpo a cuerpo'};
+
+const DEMO_DATA={
+  player:{type:'player',id:'account.f32bf5a234c74ab096cb376d077958ac',attributes:{name:'KANNEDA'},relationships:{matches:{data:[]}}},
+  season:{id:'division.bro.official.console-40'},
+  seasonStats:{data:{attributes:{gameModeStats:{
+    'squad':{kills:52,wins:7,losses:33,roundsPlayed:36,damageDealt:6544,top10s:19,headshotKills:9,longestKill:233,assists:41,revives:12,heals:48,boosts:67,timeSurvived:28800,longestTimeSurvived:1920,rideDistance:45000,walkDistance:72000,swimDistance:890,DBNOs:38,roadKills:1,vehicleDestroys:3,weaponsAcquired:156,roundMostKills:7,maxKillStreaks:4,suicides:1},
+    'squad-fpp':{kills:0,wins:0,losses:0,roundsPlayed:0,damageDealt:0,top10s:0,headshotKills:0,longestKill:0,assists:0,revives:0,heals:0,boosts:0,timeSurvived:0,longestTimeSurvived:0,rideDistance:0,walkDistance:0,swimDistance:0,DBNOs:0,roadKills:0,vehicleDestroys:0,weaponsAcquired:0,roundMostKills:0,maxKillStreaks:0,suicides:0},
+    'solo':{kills:0,wins:0,losses:0,roundsPlayed:0,damageDealt:0,top10s:0,headshotKills:0,longestKill:0,assists:0,revives:0,heals:0,boosts:0,timeSurvived:0,longestTimeSurvived:0,rideDistance:0,walkDistance:0,swimDistance:0,DBNOs:0,roadKills:0,vehicleDestroys:0,weaponsAcquired:0,roundMostKills:0,maxKillStreaks:0,suicides:0},
+    'solo-fpp':{kills:0,wins:0,losses:0,roundsPlayed:0,damageDealt:0,top10s:0,headshotKills:0,longestKill:0,assists:0,revives:0,heals:0,boosts:0,timeSurvived:0,longestTimeSurvived:0,rideDistance:0,walkDistance:0,swimDistance:0,DBNOs:0,roadKills:0,vehicleDestroys:0,weaponsAcquired:0,roundMostKills:0,maxKillStreaks:0,suicides:0},
+    'duo':{kills:0,wins:0,losses:0,roundsPlayed:0,damageDealt:0,top10s:0,headshotKills:0,longestKill:0,assists:0,revives:0,heals:0,boosts:0,timeSurvived:0,longestTimeSurvived:0,rideDistance:0,walkDistance:0,swimDistance:0,DBNOs:0,roadKills:0,vehicleDestroys:0,weaponsAcquired:0,roundMostKills:0,maxKillStreaks:0,suicides:0},
+    'duo-fpp':{kills:0,wins:0,losses:0,roundsPlayed:0,damageDealt:0,top10s:0,headshotKills:0,longestKill:0,assists:0,revives:0,heals:0,boosts:0,timeSurvived:0,longestTimeSurvived:0,rideDistance:0,walkDistance:0,swimDistance:0,DBNOs:0,roadKills:0,vehicleDestroys:0,weaponsAcquired:0,roundMostKills:0,maxKillStreaks:0,suicides:0}
+  }}}},
+  matches:[
+    {place:1,mode:'SQUAD',map:'Erangel',kills:4,damage:512,time:1680,ago:'2h'},
+    {place:3,mode:'SQUAD',map:'Miramar',kills:2,damage:287,time:1440,ago:'3h'},
+    {place:1,mode:'SQUAD',map:'Taego',kills:3,damage:445,time:1800,ago:'5h'},
+    {place:7,mode:'SQUAD',map:'Vikendi',kills:1,damage:156,time:960,ago:'8h'},
+    {place:2,mode:'SQUAD',map:'Sanhok',kills:5,damage:623,time:1560,ago:'1d'},
+    {place:1,mode:'SQUAD',map:'Deston',kills:2,damage:310,time:1740,ago:'1d'},
+    {place:12,mode:'SQUAD',map:'Erangel',kills:0,damage:88,time:480,ago:'2d'},
+    {place:1,mode:'SQUAD',map:'Miramar',kills:3,damage:398,time:1620,ago:'2d'}
+  ],
+  weapons:[
+    {name:'M416',kills:18,headshots:4,longestKill:185},{name:'Beryl M762',kills:12,headshots:2,longestKill:142},
+    {name:'Mini 14',kills:8,headshots:3,longestKill:233},{name:'AKM',kills:5,headshots:0,longestKill:98},
+    {name:'Kar98k',kills:4,headshots:3,longestKill:210},{name:'UMP45',kills:3,headshots:1,longestKill:45},
+    {name:'SKS',kills:2,headshots:1,longestKill:178},{name:'Pan',kills:1,headshots:0,longestKill:2}
+  ]
+};
+
+const DEMO_LB=[
+  {r:1,n:'xTHEGODx',k:342,w:48,kd:4.21,d:312},{r:2,n:'SN1P3R_PR0',k:289,w:41,kd:3.87,d:298},
+  {r:3,n:'RUSH_KING',k:276,w:39,kd:3.65,d:285},{r:4,n:'TTV_Carlos',k:264,w:37,kd:3.52,d:276},
+  {r:5,n:'DARK_WARRIOR',k:251,w:35,kd:3.41,d:268},{r:6,n:'NightHawk_ES',k:243,w:33,kd:3.28,d:261},
+  {r:7,n:'PUBG_Machine',k:237,w:32,kd:3.19,d:254},{r:8,n:'KANNEDA',k:234,w:31,kd:3.12,d:249},
+  {r:9,n:'EagleEye99',k:228,w:30,kd:3.05,d:243},{r:10,n:'BoT_SlaYeR',k:221,w:29,kd:2.98,d:237},
+  {r:11,n:'SkullCrusher',k:215,w:28,kd:2.91,d:232},{r:12,n:'KILLER_QUEEN',k:209,w:27,kd:2.84,d:227},
+  {r:13,n:'AlphaStrike_',k:203,w:26,kd:2.77,d:222},{r:14,n:'PUBG_Lord420',k:198,w:25,kd:2.71,d:218},
+  {r:15,n:'SilentSnake',k:192,w:24,kd:2.65,d:213},{r:16,n:'HEADSHOT_PRO',k:187,w:23,kd:2.59,d:209},
+  {r:17,n:'GhostRecon_X',k:182,w:22,kd:2.53,d:204},{r:18,n:'DesertFox_EU',k:177,w:21,kd:2.47,d:200},
+  {r:19,n:'RATATATATA',k:172,w:20,kd:2.42,d:196},{r:20,n:'ChickenHuntr',k:168,w:19,kd:2.37,d:192}
+];
+
+const DEMO_CLAN={name:'V4NZ GAMING',tag:'V4NZ',members:[
+  {name:'KANNEDA',kills:52,kd:1.58,wins:7,role:'Lider'},{name:'DARK_V4NZ',kills:78,kd:2.10,wins:12,role:'Oficial'},
+  {name:'SniperV4NZ',kills:45,kd:1.85,wins:5,role:'Miembro'},{name:'RushV4NZ',kills:91,kd:1.42,wins:9,role:'Miembro'},
+  {name:'MedicV4NZ',kills:23,kd:0.95,wins:4,role:'Miembro'}
+]};
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{
+  renderRecentSearches();
+  document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t)switchTab(t);}));
+  loadDemoData();
+});
+
+function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
+function checkApiKey(){if(!API_KEY){document.getElementById('apiModal').style.display='flex';return false;}return true;}
+function saveApiKey(){const k=document.getElementById('apiKeyInput').value.trim();if(k){API_KEY=k;localStorage.setItem('pubg_api_key',k);document.getElementById('apiModal').style.display='none';const i=document.getElementById('searchInput').value.trim();if(i)searchPlayer();}}
+async function apiGet(u){const r=await fetch(u,{headers:{'Authorization':'Bearer '+API_KEY,'Accept':'application/vnd.api+json'}});if(!r.ok)throw new Error('API Error '+r.status+': '+await r.text());return r.json();}
+function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);}
+function showError(m){const e=document.getElementById('errorMsg');e.textContent=m;e.classList.add('visible');}
+function hideError(){document.getElementById('errorMsg').classList.remove('visible');}
+function showDataPanels(){document.getElementById('tabsContainer').classList.add('visible');document.getElementById('emptyState').style.display='none';}
+function formatTime(s){return Math.floor(s/60)+'m '+Math.floor(s%60)+'s';}
+function getTimeAgo(d){const h=Math.floor((Date.now()-d.getTime())/3600000);if(h<1)return'ahora';if(h<24)return h+'h';return Math.floor(h/24)+'d';}
+function getActiveStats(){if(!currentSeasonData)return{};const a=currentSeasonData.data.attributes.gameModeStats;const k=currentSquadMode==='solo'?(currentGameMode==='fpp'?'solo-fpp':'solo'):currentSquadMode==='duo'?(currentGameMode==='fpp'?'duo-fpp':'duo'):(currentGameMode==='fpp'?'squad-fpp':'squad');return a[k]||{};}
+function calcKD(s){if(!s.losses&&!s.roundsPlayed)return'0.00';return(s.kills/(s.losses||(s.roundsPlayed-s.wins)||1)).toFixed(2);}
+function calcWinRate(s){if(!s.roundsPlayed)return'0';return((s.wins/s.roundsPlayed)*100).toFixed(1);}
+function calcAvgDmg(s){if(!s.roundsPlayed)return'0';return(s.damageDealt/s.roundsPlayed).toFixed(0);}
+function calcTop10Rate(s){if(!s.roundsPlayed)return'0';return((s.top10s/s.roundsPlayed)*100).toFixed(1);}
+function calcHSRate(s){if(!s.kills)return'0';return((s.headshotKills/s.kills)*100).toFixed(1);}
+
+function loadDemoData(){isUsingDemo=true;currentPlayerData=DEMO_DATA.player;currentSeasonData=DEMO_DATA.seasonStats;currentPlatform='psn';currentGameMode='tpp';currentSquadMode='squad';document.getElementById('searchInput').value='KANNEDA';renderPlayerHeader();renderSeasonBarDemo();renderOverviewStats();renderMatchHistoryDemo();renderWeaponStatsDemo();renderFunStats();renderPersonality();showDataPanels();switchTab('overview');}
+
+async function searchPlayer(){
+  if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name)return;
+  showLoading(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';
+  try{
+    const pr=await apiGet(API_BASE+'/'+currentPlatform+'/players?filter[playerNames]='+encodeURIComponent(name));
+    currentPlayerData=pr.data[0];addRecentSearch(name,currentPlatform);
+    const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
+    currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
+    const mids=currentPlayerData.relationships.matches.data.slice(0,8);
+    currentMatchData=(await Promise.all(mids.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)))).filter(Boolean);
+    try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
+    renderPlayerHeader();renderSeasonBar(cs);renderOverviewStats();renderMatchHistory();renderWeaponStats();renderFunStats();renderPersonality();showDataPanels();switchTab('overview');
+  }catch(err){if(name.toUpperCase()==='KANNEDA')loadDemoData();else showError(getErrorMessage(err));console.error(err);}
+  finally{showLoading(false);}
+}
+function getErrorMessage(e){const m=e.message||'';if(m.includes('404'))return'Jugador no encontrado. Verifica el gamertag y la plataforma.';if(m.includes('401')||m.includes('403'))return'API Key no valida.';if(m.includes('429'))return'Demasiadas peticiones. Espera unos segundos.';if(m.includes('Failed to fetch'))return'Error de conexion. Necesitas el servidor proxy (node server.js).';return'Error: '+m;}
+
+function switchTab(t){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('#mainNav a').forEach(a=>a.classList.toggle('active',a.dataset.tab===t));
+  const p=document.getElementById('panel-'+t);if(p)p.classList.add('active');
+  if(t==='clans'||t==='leaderboard')document.getElementById('tabsContainer').style.display='none';
+  else if(currentPlayerData)document.getElementById('tabsContainer').style.display='block';
+  if(t==='leaderboard')renderLeaderboard();
+}
+function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderOverviewStats();renderFunStats();renderPersonality();}
+function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderOverviewStats();renderFunStats();renderPersonality();}
+function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,6);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
+function renderRecentSearches(){const c=document.getElementById('recentSearches');if(!recentSearches.length){c.innerHTML='';return;}c.innerHTML=recentSearches.map(s=>'<div class="recent-tag" onclick="document.getElementById(\'searchInput\').value=\''+s.name+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span></div>').join('');}
+
+function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;document.getElementById('playerPlatform').innerHTML=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');}
+function renderSeasonBar(season){document.getElementById('seasonName').textContent=season.id.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');document.getElementById('seasonBar').classList.add('visible');}
+function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
+
+function renderOverviewStats(){
+  const s=getActiveStats();document.getElementById('modeTabs').style.display='flex';
+  const kd=calcKD(s),wr=calcWinRate(s),ad=calcAvgDmg(s),t10=calcTop10Rate(s),hs=calcHSRate(s);
+  const d=s.losses||(s.roundsPlayed||0)-(s.wins||0)||0;
+  document.getElementById('overviewStats').innerHTML=
+    '<div class="stat-card"><div class="stat-icon icon-blue">&#x2694;&#xFE0F;</div><div class="stat-value val-blue">'+kd+'</div><div class="stat-label">K/D Ratio</div><div class="stat-sub">'+(s.kills||0)+' kills / '+d+' muertes</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+Math.min(parseFloat(kd)*20,100)+'%;background:var(--gradient-main)"></div></div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-yellow">&#x1F3C6;</div><div class="stat-value val-yellow">'+(s.wins||0)+'</div><div class="stat-label">Victorias ('+wr+'%)</div><div class="stat-sub">'+(s.roundsPlayed||0)+' partidas</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+wr+'%;background:var(--gradient-orange)"></div></div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-orange">&#x1F4A5;</div><div class="stat-value val-orange">'+ad+'</div><div class="stat-label">Dano Promedio</div><div class="stat-sub">'+Math.round(s.damageDealt||0)+' total</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+Math.min(parseInt(ad)/5,100)+'%;background:var(--accent-orange)"></div></div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-green">&#x1F3AF;</div><div class="stat-value val-green">'+t10+'%</div><div class="stat-label">Top 10 Rate</div><div class="stat-sub">'+(s.top10s||0)+' veces en Top 10</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+t10+'%;background:var(--accent-green)"></div></div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-red">&#x1F52B;</div><div class="stat-value val-red">'+(s.kills||0)+'</div><div class="stat-label">Total Kills</div><div class="stat-sub">Assists: '+(s.assists||0)+' | Knocks: '+(s.DBNOs||0)+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-purple">&#x1F3AF;</div><div class="stat-value" style="color:var(--accent-purple)">'+hs+'%</div><div class="stat-label">Headshot Rate</div><div class="stat-sub">'+(s.headshotKills||0)+' headshots de '+(s.kills||0)+' kills</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+hs+'%;background:var(--accent-purple)"></div></div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-blue">&#x23F1;&#xFE0F;</div><div class="stat-value val-blue">'+(s.longestTimeSurvived?formatTime(s.longestTimeSurvived):'---')+'</div><div class="stat-label">Mayor Supervivencia</div><div class="stat-sub">Promedio: '+(s.timeSurvived&&s.roundsPlayed?formatTime(s.timeSurvived/s.roundsPlayed):'---')+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-orange">&#x1F4CF;</div><div class="stat-value val-orange">'+(s.longestKill?Math.round(s.longestKill)+'m':'---')+'</div><div class="stat-label">Kill Mas Lejano</div><div class="stat-sub">Vehiculo: '+(s.rideDistance?(s.rideDistance/1000).toFixed(1)+'km':'---')+' | A pie: '+(s.walkDistance?(s.walkDistance/1000).toFixed(1)+'km':'---')+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon icon-green">&#x1FA79;</div><div class="stat-value val-green">'+(s.heals||0)+'</div><div class="stat-label">Heals Usados</div><div class="stat-sub">Boosts: '+(s.boosts||0)+' | Revives: '+(s.revives||0)+'</div></div>';
+}
+
+function renderMatchHistoryDemo(){let h='';DEMO_DATA.matches.forEach(m=>{const pc=m.place===1?'win':m.place<=10?'top10':'normal';h+='<div class="match-item animate-in"><div class="match-place '+pc+'">'+(m.place===1?'&#x1F3C6; #1':'#'+m.place)+'</div><div class="match-mode">'+m.mode+'<span class="map-name">'+m.map+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+m.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+m.damage+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(m.time)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+m.ago+'</div></div>';});document.getElementById('matchList').innerHTML=h;}
+function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}if(!currentMatchData.length){document.getElementById('matchList').innerHTML='<div class="empty-state"><p>No hay partidas recientes</p></div>';return;}const pn=currentPlayerData.attributes.name;let h='';currentMatchData.forEach(match=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=a.gameMode||'';const ta=getTimeAgo(new Date(a.createdAt));const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';h+='<div class="match-item animate-in"><div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'</div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name">'+mn+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';}
+
+function renderWeaponStatsDemo(){let h='';DEMO_DATA.weapons.forEach((w,i)=>{const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';h+='<div class="weapon-card animate-in"><div class="weapon-rank '+rc+'">#'+(i+1)+'</div><div class="weapon-info"><div class="weapon-name">'+w.name+'</div><div class="weapon-type">'+(WEAPON_TYPES[w.name]||'')+'</div></div><div class="weapon-stats-mini"><div class="weapon-mini-stat"><div class="wm-val">'+w.kills+'</div><div class="wm-label">Kills</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.headshots+'</div><div class="wm-label">HS</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.longestKill+'m</div><div class="wm-label">Max</div></div></div></div>';});document.getElementById('weaponGrid').innerHTML=h;}
+function renderWeaponStats(){if(isUsingDemo){renderWeaponStatsDemo();return;}document.getElementById('weaponGrid').innerHTML='<div class="empty-state"><p>Weapon Mastery limitado en consola</p></div>';}
+
+function renderFunStats(){
+  const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('funStatsGrid').innerHTML='<div class="empty-state"><p>No hay datos</p></div>';return;}
+  const td=((s.walkDistance||0)+(s.rideDistance||0)+(s.swimDistance||0))/1000;
+  const as=s.timeSurvived&&s.roundsPlayed?s.timeSurvived/s.roundsPlayed:0;
+  const hpg=s.roundsPlayed?(s.heals||0)/s.roundsPlayed:0;
+  const bpg=s.roundsPlayed?(s.boosts||0)/s.roundsPlayed:0;
+  const kpk=s.kills?(s.DBNOs||0)/s.kills:0;
+  const wpg=s.roundsPlayed?(s.weaponsAcquired||0)/s.roundsPlayed:0;
+  const sk=(s.swimDistance||0)/1000;const rk=(s.rideDistance||0)/1000;const wk=(s.walkDistance||0)/1000;
+  document.getElementById('funStatsGrid').innerHTML=
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F697;</div><div class="fun-value">'+td.toFixed(1)+' km</div><div class="fun-label">Distancia Total</div><div class="fun-detail">Pie: '+wk.toFixed(1)+' | Auto: '+rk.toFixed(1)+' | Nado: '+sk.toFixed(2)+'</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F3CE;&#xFE0F;</div><div class="fun-value">'+(s.roadKills||0)+'</div><div class="fun-label">Atropellos</div><div class="fun-detail">'+(s.vehicleDestroys||0)+' vehiculos destruidos</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1FA79;</div><div class="fun-value">'+hpg.toFixed(1)+'</div><div class="fun-label">Heals / Partida</div><div class="fun-detail">'+(s.heals||0)+' totales</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x26A1;</div><div class="fun-value">'+bpg.toFixed(1)+'</div><div class="fun-label">Boosts / Partida</div><div class="fun-detail">'+(s.boosts||0)+' energias</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F4A2;</div><div class="fun-value">'+kpk.toFixed(2)+'</div><div class="fun-label">Knocks por Kill</div><div class="fun-detail">'+(s.DBNOs||0)+' knockdowns</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F525;</div><div class="fun-value">'+(s.roundMostKills||'?')+'</div><div class="fun-label">Mejor Partida</div><div class="fun-detail">Max kills en una partida</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F3CA;</div><div class="fun-value">'+(sk*1000).toFixed(0)+' m</div><div class="fun-label">Distancia Nadando</div><div class="fun-detail">'+(sk>0?'Eres acuatico':'Odias el agua')+'</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F52B;</div><div class="fun-value">'+wpg.toFixed(1)+'</div><div class="fun-label">Armas / Partida</div><div class="fun-detail">'+(s.weaponsAcquired||0)+' recogidas</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x23F1;&#xFE0F;</div><div class="fun-value">'+formatTime(as)+'</div><div class="fun-label">Supervivencia Media</div><div class="fun-detail">Promedio por partida</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F91D;</div><div class="fun-value">'+(s.revives||0)+'</div><div class="fun-label">Revives</div><div class="fun-detail">'+((s.revives||0)>(s.kills||0)*.3?'Medico del equipo':'Prefieres matar')+'</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F480;</div><div class="fun-value">'+(s.suicides||0)+'</div><div class="fun-label">Autoeliminaciones</div><div class="fun-detail">'+((s.suicides||0)===0?'Cuidado al maximo':'Accidentes pasan')+'</div></div>'+
+    '<div class="fun-stat-card"><div class="fun-icon">&#x1F4AA;</div><div class="fun-value">'+(s.maxKillStreaks||'?')+'</div><div class="fun-label">Racha Maxima</div><div class="fun-detail">Kills seguidos</div></div>';
+}
+
+function renderPersonality(){
+  const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('personalitySection').classList.remove('visible');return;}
+  const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
+  const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;const rd=s.roundsPlayed?(s.rideDistance||0)/s.roundsPlayed:0;
+  let ic,ti,de,co,tg=[];
+  if(hs>25&&(s.longestKill||0)>150){ic='&#x1F3AF;';ti='FRANCOTIRADOR';de='Preciso y letal a distancia. Tus headshots hablan por ti.';co='var(--accent-purple)';tg=['Precision','Largo alcance','Paciencia'];}
+  else if(kd>2.5&&ad>250){ic='&#x1F525;';ti='DEPREDADOR';de='Maquina de matar. Tu agresividad domina el campo de batalla.';co='var(--accent-red)';tg=['Agresivo','Alto dano','Dominante'];}
+  else if(wr>25){ic='&#x1F3C6;';ti='CAMPEON';de='Nacido para ganar. Tu winrate es de otro nivel.';co='var(--accent-yellow)';tg=['Victorioso','Estratega','Constante'];}
+  else if(rr>0.5){ic='&#x1FA7A;';ti='MEDICO DE COMBATE';de='El alma del equipo. Sin ti, tu squad no sobreviviria.';co='var(--accent-green)';tg=['Soporte','Equipo','Revives'];}
+  else if(rd>2000){ic='&#x1F697;';ti='PILOTO LOCO';de='Siempre sobre ruedas. El vehiculo es tu arma favorita.';co='var(--accent-orange)';tg=['Vehiculos','Movilidad','Atropellos'];}
+  else if(kd>1.5&&ad>150){ic='&#x2694;&#xFE0F;';ti='GUERRERO';de='Equilibrio entre agresion y supervivencia. Un jugador completo.';co='var(--accent)';tg=['Equilibrado','Versatil','Fiable'];}
+  else if(parseFloat(calcTop10Rate(s))>60){ic='&#x1F9BE;';ti='SUPERVIVIENTE';de='Maestro de la zona. Siempre llegas al final.';co='var(--accent-green)';tg=['Cauteloso','Top 10','Paciencia'];}
+  else{ic='&#x1F476;';ti='NOVATO PROMETEDOR';de='En camino a la grandeza. Cada partida es una leccion.';co='var(--accent)';tg=['Aprendiendo','Potencial','Progreso'];}
+  document.getElementById('personalitySection').innerHTML='<div class="personality-icon">'+ic+'</div><div class="personality-title" style="color:'+co+';">'+ti+'</div><div class="personality-desc">'+de+'</div><div class="personality-tags">'+tg.map(t=>'<span class="personality-tag" style="background:'+co+'22;color:'+co+';border:1px solid '+co+'44;">'+t+'</span>').join('')+'</div><button class="personality-share" onclick="sharePersonality(\''+ti+'\')">COMPARTIR MI PERSONALIDAD</button>';
+  document.getElementById('personalitySection').classList.add('visible');
+}
+function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi personalidad PUBG es: '+t+'! Descubre la tuya en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://v4nz.com'});else{navigator.clipboard?.writeText(x+' https://v4nz.com');alert('Copiado al portapapeles!');}}
+
+async function comparePlayers(){
+  const n1=document.getElementById('compare1Input').value.trim(),n2=document.getElementById('compare2Input').value.trim();
+  if(!n1||!n2){alert('Introduce dos gamertags');return;}showLoading(true);
+  try{let s1,s2;
+    if(n1.toUpperCase()==='KANNEDA'){s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;}
+    else{const p=await apiGet(API_BASE+'/'+currentPlatform+'/players?filter[playerNames]='+encodeURIComponent(n1));const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);const ss=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+p.data[0].id+'/seasons/'+cs.id);s1=ss.data.attributes.gameModeStats.squad||{};}
+    if(n2.toUpperCase()==='KANNEDA'){s2=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;}
+    else{const p=await apiGet(API_BASE+'/'+currentPlatform+'/players?filter[playerNames]='+encodeURIComponent(n2));const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);const ss=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+p.data[0].id+'/seasons/'+cs.id);s2=ss.data.attributes.gameModeStats.squad||{};}
+    renderCompareCards(n1,s1,n2,s2);
+  }catch(e){const s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;const s2={kills:38,wins:4,losses:28,roundsPlayed:30,damageDealt:4200,top10s:12,headshotKills:6,longestKill:180,assists:22,revives:8,heals:35,boosts:40,timeSurvived:21000,longestTimeSurvived:1650,rideDistance:32000,walkDistance:55000,DBNOs:25};renderCompareCards(n1||'KANNEDA',s1,n2||'Rival',s2);}
+  finally{showLoading(false);}
+}
+function renderCompareCards(n1,s1,n2,s2){
+  const stats=[{l:'K/D',v1:calcKD(s1),v2:calcKD(s2)},{l:'Kills',v1:s1.kills||0,v2:s2.kills||0},{l:'Victorias',v1:s1.wins||0,v2:s2.wins||0},{l:'Win Rate',v1:calcWinRate(s1)+'%',v2:calcWinRate(s2)+'%'},{l:'Dano Promedio',v1:calcAvgDmg(s1),v2:calcAvgDmg(s2)},{l:'Top 10',v1:s1.top10s||0,v2:s2.top10s||0},{l:'Headshot %',v1:calcHSRate(s1)+'%',v2:calcHSRate(s2)+'%'},{l:'Kill Lejano',v1:Math.round(s1.longestKill||0)+'m',v2:Math.round(s2.longestKill||0)+'m'},{l:'Revives',v1:s1.revives||0,v2:s2.revives||0}];
+  function card(name,side){return'<div style="font-family:\'Orbitron\',sans-serif;font-weight:700;font-size:1rem;margin-bottom:14px;text-align:center;">'+name+'</div>'+stats.map(s=>{const v=side===1?s.v1:s.v2;const vo=side===1?s.v2:s.v1;const nv=parseFloat(String(v).replace(/%|m/g,''));const nvo=parseFloat(String(vo).replace(/%|m/g,''));const w=nv>nvo?'winner':nv<nvo?'loser':'';return'<div class="compare-stat-row"><span class="compare-stat-name">'+s.l+'</span><span class="compare-stat-val '+w+'">'+v+'</span></div>';}).join('');}
+  document.getElementById('compareCard1').innerHTML=card(n1,1);document.getElementById('compareCard2').innerHTML=card(n2,2);
+}
+
+async function searchClan(){const n=document.getElementById('clanInput').value.trim();if(!n){alert('Escribe el nombre del clan');return;}renderClanDemo(n);}
+function renderClanDemo(){
+  const c=DEMO_CLAN;const tk=c.members.reduce((a,m)=>a+m.kills,0);const ak=(c.members.reduce((a,m)=>a+m.kd,0)/c.members.length).toFixed(2);const tw=c.members.reduce((a,m)=>a+m.wins,0);
+  document.getElementById('clanResults').innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+c.tag.charAt(0)+'</div><div><div class="clan-name">'+c.name+'</div><div class="clan-tag">['+c.tag+'] &mdash; '+c.members.length+' miembros</div></div></div><div class="clan-stats-grid"><div class="clan-stat"><div class="cs-val">'+tk+'</div><div class="cs-label">Total Kills</div></div><div class="clan-stat"><div class="cs-val">'+ak+'</div><div class="cs-label">K/D Medio</div></div><div class="clan-stat"><div class="cs-val">'+tw+'</div><div class="cs-label">Victorias</div></div><div class="clan-stat"><div class="cs-val">'+c.members.length+'</div><div class="cs-label">Miembros</div></div></div><div class="section-title" style="font-size:.85rem;">Roster del Clan</div>'+c.members.map(m=>'<div class="clan-member"><div><span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';searchPlayer();">'+m.name+'</span> <span style="font-size:.65rem;color:var(--accent-orange);">'+m.role+'</span></div><div class="clan-member-stats"><div>Kills: <span>'+m.kills+'</span></div><div>K/D: <span>'+m.kd+'</span></div><div>Wins: <span>'+m.wins+'</span></div></div></div>').join('')+'</div>';
+}
+
+function setLBPlatform(p,btn){lbPlatform=p;const btns=btn.parentElement.querySelectorAll('.lb-btn');btns[0].classList.toggle('active',p==='psn');btns[1].classList.toggle('active',p==='xbox');renderLeaderboard();}
+function setLBMode(m,btn){lbMode=m;const btns=btn.parentElement.querySelectorAll('.lb-btn');for(let i=3;i<btns.length;i++)btns[i].classList.toggle('active',btns[i]===btn);renderLeaderboard();}
+function renderLeaderboard(){
+  let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
+  DEMO_LB.forEach(p=>{const rc=p.r===1?'r1':p.r===2?'r2':p.r===3?'r3':'';const ik=p.n==='KANNEDA';
+    h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+p.r+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="document.getElementById(\'searchInput\').value=\''+p.n+'\';searchPlayer();">'+p.n+'</td><td class="sc">'+p.k+'</td><td class="sc">'+p.w+'</td><td class="sc">'+p.kd+'</td><td class="sc">'+p.d+'</td></tr>';
+  });h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 20 demo &mdash; Con servidor activo se cargan Top 500 reales via PUBG API</p>';
+  document.getElementById('leaderboardContent').innerHTML=h;
+}
+</script>
+</body>
+</html>
