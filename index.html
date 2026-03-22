@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V4NZ — PUBG Console Stats Tracker | PS5 & Xbox</title>
+<title>V4NZ â PUBG Console Stats Tracker | PS5 & Xbox</title>
 <meta name="description" content="La mejor herramienta de estadisticas de PUBG para consola en espanol. Busca cualquier jugador de PS5, PS4 o Xbox. Stats, historial, armas, clanes, personalidad de jugador y mas. By V4NZ.">
 <meta name="keywords" content="PUBG stats, PUBG console, PUBG PS5, PUBG Xbox, PUBG estadisticas, PUBG tracker consola, V4NZ, KANNEDA, PUBG clanes consola">
-<meta property="og:title" content="V4NZ — PUBG Console Stats Tracker">
+<meta property="og:title" content="V4NZ â PUBG Console Stats Tracker">
 <meta property="og:description" content="Stats en tiempo real de PUBG para PS5 y Xbox. Busca cualquier jugador, compara stats, descubre tu personalidad de jugador.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://v4nz.com">
@@ -194,9 +194,15 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .compare-stat-val.winner { color: var(--accent-green); } .compare-stat-val.loser { color: var(--text-dim); }
 
 /* CLANS */
-.clan-search-box { display: flex; gap: 8px; margin-bottom: 20px; max-width: 500px; }
+.clan-mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.clan-mode-tab { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; color: var(--text-secondary); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+.clan-mode-tab.active { background: var(--accent-orange); color: #000; border-color: var(--accent-orange); }
+.clan-search-box { display: flex; gap: 8px; margin-bottom: 12px; max-width: 500px; }
 .clan-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; padding: 12px 16px; outline: none; font-family: 'Inter', sans-serif; }
 .clan-input:focus { border-color: var(--accent); }
+.clan-platform-sel { display: flex; gap: 6px; margin-bottom: 16px; }
+.clan-plat-btn { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; color: var(--text-secondary); font-size: 0.75rem; font-family: 'Rajdhani', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.clan-plat-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 .clan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; position: relative; overflow: hidden; }
 .clan-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gradient-orange); }
 .clan-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
@@ -213,6 +219,14 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .clan-member-name:hover { color: var(--accent); }
 .clan-member-stats { display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-secondary); }
 .clan-member-stats span { font-family: 'Orbitron', sans-serif; font-weight: 600; color: var(--accent); }
+.clan-compare-container { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 16px; align-items: start; }
+.clan-compare-vs { display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--accent-orange); padding-top: 80px; }
+.clan-compare-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.clan-compare-bar-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; width: 80px; text-align: right; }
+.clan-compare-bar-fill { flex: 1; height: 8px; border-radius: 4px; background: var(--bg-secondary); overflow: hidden; }
+.clan-compare-bar-fill .bar-inner { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.clan-compare-bar-val { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 600; width: 50px; }
+@media(max-width:768px){ .clan-compare-container { grid-template-columns: 1fr; } .clan-compare-vs { padding-top: 0; font-size: 1.1rem; } }
 
 /* LEADERBOARD */
 .leaderboard-controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -397,9 +411,31 @@ footer a { color: var(--accent); text-decoration: none; }
   </div>
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
-    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:20px;">Busca cualquier clan de PUBG Console y mira sus stats agregadas, roster completo y ranking de miembros.</p>
-    <div class="clan-search-box"><input class="clan-input" id="clanInput" placeholder="Nombre del clan..."/><button class="search-btn" style="border-radius:8px;padding:12px 24px;" onclick="searchClan()">BUSCAR CLAN</button></div>
-    <div id="clanResults"></div>
+    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Busca el clan de cualquier jugador o compara dos clanes entre si. Escribe el nombre de un jugador y encontraremos su clan automaticamente.</p>
+    <div class="clan-mode-tabs">
+      <button class="clan-mode-tab active" onclick="setClanMode('search',this)">Buscar Clan</button>
+      <button class="clan-mode-tab" onclick="setClanMode('compare',this)">Comparar Clanes</button>
+    </div>
+    <div id="clanSearchMode">
+      <div class="clan-platform-sel">
+        <button class="clan-plat-btn active" data-cplat="psn" onclick="setClanPlatform('psn',this)">PlayStation</button>
+        <button class="clan-plat-btn" data-cplat="xbox" onclick="setClanPlatform('xbox',this)">Xbox</button>
+      </div>
+      <div class="clan-search-box"><input class="clan-input" id="clanPlayerInput" placeholder="Nombre del jugador..." onkeydown="if(event.key==='Enter')searchClan()"/><button class="search-btn" style="border-radius:8px;padding:12px 24px;" onclick="searchClan()">BUSCAR</button></div>
+      <div id="clanResults"></div>
+    </div>
+    <div id="clanCompareMode" style="display:none;">
+      <div class="clan-platform-sel">
+        <button class="clan-plat-btn active" data-ccplat="psn" onclick="setClanComparePlatform('psn',this)">PlayStation</button>
+        <button class="clan-plat-btn" data-ccplat="xbox" onclick="setClanComparePlatform('xbox',this)">Xbox</button>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+        <div class="clan-search-box" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Jugador del Clan 1..." onkeydown="if(event.key==='Enter')compareClans()"/></div>
+        <div class="clan-search-box" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Jugador del Clan 2..." onkeydown="if(event.key==='Enter')compareClans()"/></div>
+      </div>
+      <div style="text-align:center;margin-bottom:20px;"><button class="search-btn" style="border-radius:8px;padding:12px 30px;" onclick="compareClans()">COMPARAR CLANES</button></div>
+      <div id="clanCompareResults"></div>
+    </div>
   </div>
   <div class="panel" id="panel-leaderboard">
     <div class="section-title">Top 500 &mdash; Leaderboard Consola</div>
@@ -486,6 +522,8 @@ const DEMO_CLAN={name:'V4NZ GAMING',tag:'V4NZ',members:[
   {name:'SniperV4NZ',kills:45,kd:1.85,wins:5,role:'Miembro'},{name:'RushV4NZ',kills:91,kd:1.42,wins:9,role:'Miembro'},
   {name:'MedicV4NZ',kills:23,kd:0.95,wins:4,role:'Miembro'}
 ]};
+let clanPlatform='psn';
+let clanComparePlatform='psn';
 
 // INIT
 document.addEventListener('DOMContentLoaded',()=>{
@@ -547,7 +585,7 @@ function renderRecentSearches(){const c=document.getElementById('recentSearches'
 
 function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;document.getElementById('playerPlatform').innerHTML=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');}
 function renderSeasonBar(season){document.getElementById('seasonName').textContent=season.id.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');document.getElementById('seasonBar').classList.add('visible');}
-function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
+function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual â Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 
 function renderOverviewStats(){
   const s=getActiveStats();document.getElementById('modeTabs').style.display='flex';
@@ -631,10 +669,110 @@ function renderCompareCards(n1,s1,n2,s2){
   document.getElementById('compareCard1').innerHTML=card(n1,1);document.getElementById('compareCard2').innerHTML=card(n2,2);
 }
 
-async function searchClan(){const n=document.getElementById('clanInput').value.trim();if(!n){alert('Escribe el nombre del clan');return;}renderClanDemo(n);}
-function renderClanDemo(){
+async function setClanMode(mode,btn){
+  document.querySelectorAll('.clan-mode-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('clanSearchMode').style.display=mode==='search'?'block':'none';
+  document.getElementById('clanCompareMode').style.display=mode==='compare'?'block':'none';
+}
+function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
+function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
+
+async function fetchClanByPlayer(playerName, platform){
+  const baseUrl=window.location.origin+'/api/';
+  const pRes=await fetch(baseUrl+'shards/'+platform+'/players?filter[playerNames]='+encodeURIComponent(playerName),{headers:{'Authorization':'Bearer '+API_KEY,'Accept':'application/vnd.api+json'}});
+  if(!pRes.ok) throw new Error('Jugador no encontrado');
+  const pData=await pRes.json();
+  const player=pData.data[0];
+  const clanRel=player.relationships&&player.relationships.clan&&player.relationships.clan.data;
+  if(!clanRel||!clanRel.id) throw new Error(playerName+' no pertenece a ningun clan');
+  const cRes=await fetch(baseUrl+'shards/'+platform+'/clans/'+clanRel.id,{headers:{'Authorization':'Bearer '+API_KEY,'Accept':'application/vnd.api+json'}});
+  if(!cRes.ok) throw new Error('No se pudo cargar el clan');
+  const cData=await cRes.json();
+  return cData.data;
+}
+
+function renderClanCard(clan, targetId){
+  const attr=clan.attributes||{};
+  const name=attr.clanName||'Sin nombre';
+  const tag=attr.clanTag||'???';
+  const members=attr.members||clan.relationships&&clan.relationships.members&&clan.relationships.members.data||[];
+  const memberCount=members.length||attr.clanMemberCount||0;
+  const level=attr.clanLevel||'?';
+  let h='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+tag.charAt(0).toUpperCase()+'</div><div><div class="clan-name">'+name+'</div><div class="clan-tag">['+tag+'] \u0026mdash; '+memberCount+' miembros \u0026mdash; Nivel '+level+'</div></div></div>';
+  h+='<div class="clan-stats-grid"><div class="clan-stat"><div class="cs-val">'+memberCount+'</div><div class="cs-label">Miembros</div></div><div class="clan-stat"><div class="cs-val">'+level+'</div><div class="cs-label">Nivel Clan</div></div></div>';
+  if(members.length>0){
+    h+='<div class="section-title" style="font-size:.85rem;">Roster del Clan</div>';
+    members.forEach(m=>{
+      const mName=m.attributes?m.attributes.name:(m.id||'Desconocido');
+      h+='<div class="clan-member"><div><span class="clan-member-name">'+mName+'</span></div></div>';
+    });
+  }
+  h+='</div>';
+  document.getElementById(targetId).innerHTML=h;
+  return {name,tag,memberCount,level};
+}
+
+async function searchClan(){
+  const n=document.getElementById('clanPlayerInput').value.trim();
+  if(!n){alert('Escribe el nombre de un jugador');return;}
+  if(!API_KEY){renderClanDemo('clanResults');return;}
+  document.getElementById('clanResults').innerHTML='<p style="color:var(--accent);font-size:.85rem;">Buscando clan de '+n+'...</p>';
+  try{
+    const clan=await fetchClanByPlayer(n, clanPlatform);
+    renderClanCard(clan,'clanResults');
+  }catch(e){
+    document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+  }
+}
+
+function renderClanDemo(targetId){
   const c=DEMO_CLAN;const tk=c.members.reduce((a,m)=>a+m.kills,0);const ak=(c.members.reduce((a,m)=>a+m.kd,0)/c.members.length).toFixed(2);const tw=c.members.reduce((a,m)=>a+m.wins,0);
-  document.getElementById('clanResults').innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+c.tag.charAt(0)+'</div><div><div class="clan-name">'+c.name+'</div><div class="clan-tag">['+c.tag+'] &mdash; '+c.members.length+' miembros</div></div></div><div class="clan-stats-grid"><div class="clan-stat"><div class="cs-val">'+tk+'</div><div class="cs-label">Total Kills</div></div><div class="clan-stat"><div class="cs-val">'+ak+'</div><div class="cs-label">K/D Medio</div></div><div class="clan-stat"><div class="cs-val">'+tw+'</div><div class="cs-label">Victorias</div></div><div class="clan-stat"><div class="cs-val">'+c.members.length+'</div><div class="cs-label">Miembros</div></div></div><div class="section-title" style="font-size:.85rem;">Roster del Clan</div>'+c.members.map(m=>'<div class="clan-member"><div><span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';searchPlayer();">'+m.name+'</span> <span style="font-size:.65rem;color:var(--accent-orange);">'+m.role+'</span></div><div class="clan-member-stats"><div>Kills: <span>'+m.kills+'</span></div><div>K/D: <span>'+m.kd+'</span></div><div>Wins: <span>'+m.wins+'</span></div></div></div>').join('')+'</div>';
+  document.getElementById(targetId).innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+c.tag.charAt(0)+'</div><div><div class="clan-name">'+c.name+'</div><div class="clan-tag">['+c.tag+'] \u0026mdash; '+c.members.length+' miembros</div></div></div><div class="clan-stats-grid"><div class="clan-stat"><div class="cs-val">'+tk+'</div><div class="cs-label">Total Kills</div></div><div class="clan-stat"><div class="cs-val">'+ak+'</div><div class="cs-label">K/D Medio</div></div><div class="clan-stat"><div class="cs-val">'+tw+'</div><div class="cs-label">Victorias</div></div><div class="clan-stat"><div class="cs-val">'+c.members.length+'</div><div class="cs-label">Miembros</div></div></div><div class="section-title" style="font-size:.85rem;">Roster del Clan</div>'+c.members.map(m=>'<div class="clan-member"><div><span class="clan-member-name">'+m.name+'</span> <span style="font-size:.65rem;color:var(--accent-orange);">'+m.role+'</span></div><div class="clan-member-stats"><div>Kills: <span>'+m.kills+'</span></div><div>K/D: <span>'+m.kd+'</span></div><div>Wins: <span>'+m.wins+'</span></div></div></div>').join('')+'</div><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:12px;">Datos demo \u0026mdash; Introduce tu API Key para buscar clanes reales</p>';
+}
+
+async function compareClans(){
+  const n1=document.getElementById('clanCompare1').value.trim();
+  const n2=document.getElementById('clanCompare2').value.trim();
+  if(!n1||!n2){alert('Escribe el nombre de un jugador en cada campo');return;}
+  if(!API_KEY){
+    document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Necesitas API Key para comparar clanes reales.</p>';
+    return;
+  }
+  document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent);font-size:.85rem;">Buscando clanes de '+n1+' y '+n2+'...</p>';
+  try{
+    const [clan1,clan2]=await Promise.all([fetchClanByPlayer(n1,clanComparePlatform),fetchClanByPlayer(n2,clanComparePlatform)]);
+    const a1=clan1.attributes||{};const a2=clan2.attributes||{};
+    const m1=a1.members||clan1.relationships&&clan1.relationships.members&&clan1.relationships.members.data||[];
+    const m2=a2.members||clan2.relationships&&clan2.relationships.members&&clan2.relationships.members.data||[];
+    const mc1=m1.length||a1.clanMemberCount||0;const mc2=m2.length||a2.clanMemberCount||0;
+    const lv1=a1.clanLevel||0;const lv2=a2.clanLevel||0;
+    const tag1=a1.clanTag||'???';const tag2=a2.clanTag||'???';
+    const name1=a1.clanName||'Clan 1';const name2=a2.clanName||'Clan 2';
+    const metrics=[{label:'Miembros',v1:mc1,v2:mc2},{label:'Nivel',v1:lv1,v2:lv2}];
+    function barRow(label,v1,v2,c1,c2){
+      const max=Math.max(v1,v2)||1;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'+
+        '<div style="width:50px;text-align:right;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v1>=v2?c1:'var(--text-dim)')+';">'+v1+'</div>'+
+        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;direction:rtl;"><div style="height:100%;width:'+(v1/max*100)+'%;border-radius:4px;background:'+c1+';"></div></div>'+
+        '<div style="width:80px;text-align:center;font-size:.6rem;color:var(--text-dim);text-transform:uppercase;">'+label+'</div>'+
+        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;"><div style="height:100%;width:'+(v2/max*100)+'%;border-radius:4px;background:'+c2+';"></div></div>'+
+        '<div style="width:50px;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v2>=v1?c2:'var(--text-dim)')+';">'+v2+'</div></div>';
+    }
+    let h='<div class="clan-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">'+
+      '<div style="text-align:center;"><div class="clan-icon" style="margin:0 auto 8px;">'+tag1.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1rem;">'+name1+'</div><div class="clan-tag">['+tag1+']</div></div>'+
+      '<div style="font-family:Orbitron,sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent-orange);">VS</div>'+
+      '<div style="text-align:center;"><div class="clan-icon" style="margin:0 auto 8px;background:rgba(0,240,255,0.1);border-color:var(--accent);color:var(--accent);">'+tag2.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1rem;">'+name2+'</div><div class="clan-tag" style="color:var(--accent);">['+tag2+']</div></div></div>';
+    metrics.forEach(m=>{h+=barRow(m.label,m.v1,m.v2,'var(--accent-orange)','var(--accent)');});
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;">';
+    h+='<div><div class="section-title" style="font-size:.75rem;color:var(--accent-orange);">Roster '+tag1+' ('+mc1+')</div>';
+    m1.slice(0,20).forEach(m=>{const mn=m.attributes?m.attributes.name:(m.id||'?');h+='<div class="clan-member" style="font-size:.8rem;"><span class="clan-member-name">'+mn+'</span></div>';});
+    h+='</div><div><div class="section-title" style="font-size:.75rem;color:var(--accent);">Roster '+tag2+' ('+mc2+')</div>';
+    m2.slice(0,20).forEach(m=>{const mn=m.attributes?m.attributes.name:(m.id||'?');h+='<div class="clan-member" style="font-size:.8rem;"><span class="clan-member-name">'+mn+'</span></div>';});
+    h+='</div></div></div>';
+    document.getElementById('clanCompareResults').innerHTML=h;
+  }catch(e){
+    document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+  }
 }
 
 function setLBPlatform(p,btn){lbPlatform=p;const btns=btn.parentElement.querySelectorAll('.lb-btn');btns[0].classList.toggle('active',p==='psn');btns[1].classList.toggle('active',p==='xbox');renderLeaderboard();}
