@@ -177,6 +177,62 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .discord-float svg { width:22px; height:22px; fill:#fff; flex-shrink:0; }
 @media(max-width:768px){ .discord-float span { display:none; } .discord-float { padding:14px; border-radius:50%; } }
 
+/* STATS CARD MODAL */
+.card-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,.92); backdrop-filter:blur(8px); z-index:1001; justify-content:center; align-items:center; flex-direction:column; gap:16px; }
+.card-modal.active { display:flex; }
+.card-modal canvas { border-radius:12px; max-width:90vw; max-height:60vh; box-shadow:0 0 40px rgba(0,240,255,.2); }
+.card-modal-actions { display:flex; gap:12px; }
+.card-modal-btn { padding:12px 28px; border-radius:10px; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.card-modal-btn.primary { background:var(--gradient-main); color:#000; }
+.card-modal-btn.secondary { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+.card-modal-btn:hover { transform:translateY(-2px); }
+.card-modal-close { position:absolute; top:20px; right:24px; background:none; border:none; color:var(--text-dim); font-size:1.5rem; cursor:pointer; }
+
+/* SHARE BUTTON ON PLAYER HEADER */
+.share-stats-btn { background:linear-gradient(135deg,#5865F2,#00f0ff); color:#fff; border:none; padding:8px 18px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.75rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
+.share-stats-btn:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(0,240,255,.3); }
+
+/* MOBILE HAMBURGER MENU */
+.hamburger { display:none; background:none; border:none; cursor:pointer; padding:8px; z-index:101; }
+.hamburger span { display:block; width:24px; height:2px; background:var(--text-primary); margin:5px 0; transition:all .3s; border-radius:2px; }
+.hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+.hamburger.open span:nth-child(2) { opacity:0; }
+.hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+@media(max-width:768px){
+  .hamburger { display:block; }
+  #mainNav { display:none; position:fixed; top:0; left:0; width:100%; height:100vh; background:rgba(10,10,15,.97); flex-direction:column; justify-content:center; align-items:center; gap:20px; z-index:100; backdrop-filter:blur(10px); }
+  #mainNav.mobile-open { display:flex; }
+  #mainNav a { font-size:1.2rem; padding:12px 30px; }
+}
+
+/* STREAMER BANNER */
+.streamer-banner { background:linear-gradient(135deg,#12121a 0%,#1a1520 50%,#12121a 100%); border:1px solid var(--border); border-radius:16px; padding:24px 30px; margin:30px auto; max-width:800px; display:flex; align-items:center; gap:20px; position:relative; overflow:hidden; }
+.streamer-banner::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent-orange),#c5ff00); }
+.streamer-banner-avatar { width:64px; height:64px; border-radius:50%; background:var(--gradient-orange); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',sans-serif; font-weight:900; font-size:1.4rem; color:#fff; flex-shrink:0; border:2px solid var(--accent-orange); }
+.streamer-banner-info { flex:1; }
+.streamer-banner-name { font-family:'Orbitron',sans-serif; font-size:1.1rem; font-weight:800; color:var(--text-primary); }
+.streamer-banner-name span { color:var(--accent-orange); }
+.streamer-banner-desc { font-size:.8rem; color:var(--text-secondary); margin-top:4px; }
+.streamer-banner-links { display:flex; gap:8px; flex-shrink:0; }
+.streamer-banner-link { padding:8px 16px; border-radius:8px; text-decoration:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.75rem; text-transform:uppercase; letter-spacing:1px; transition:all .2s; }
+.streamer-banner-link:hover { transform:translateY(-2px); }
+.streamer-banner-link.yt { background:#FF0000; color:#fff; }
+.streamer-banner-link.tw { background:#9146FF; color:#fff; }
+.streamer-banner-link.kick { background:#53FC18; color:#000; }
+@media(max-width:768px){ .streamer-banner { flex-direction:column; text-align:center; } .streamer-banner-links { justify-content:center; } }
+
+/* MATCH DETAIL POPUP */
+.match-detail-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,.92); backdrop-filter:blur(8px); z-index:1001; justify-content:center; align-items:center; }
+.match-detail-popup.active { display:flex; }
+.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; position:relative; }
+.match-detail-card .close-btn { position:absolute; top:12px; right:16px; background:none; border:none; color:var(--text-dim); font-size:1.3rem; cursor:pointer; }
+.match-map-img { width:100%; height:200px; border-radius:10px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; margin-bottom:16px; overflow:hidden; position:relative; }
+.match-map-img .map-label { font-family:'Orbitron',sans-serif; font-size:1.6rem; font-weight:800; color:var(--accent); text-shadow:0 0 20px rgba(0,240,255,.3); }
+.match-detail-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.match-detail-stat { text-align:center; background:var(--bg-secondary); border-radius:8px; padding:12px 8px; }
+.match-detail-stat .val { font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:700; }
+.match-detail-stat .lbl { font-size:.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+
 /* TABS */
 .tabs-container { margin-bottom: 24px; display: none; }
 .tabs-container.visible { display: block; }
@@ -379,6 +435,7 @@ footer a { color: var(--accent); text-decoration: none; }
         <div class="logo-sub">Console Stats Tracker</div>
       </div>
     </div>
+    <button class="hamburger" id="hamburgerBtn" onclick="this.classList.toggle('open');document.getElementById('mainNav').classList.toggle('mobile-open');"><span></span><span></span><span></span></button>
     <nav id="mainNav">
       <a href="#" class="active" data-tab="overview">Overview</a>
       <a href="#" data-tab="matches">Partidas</a>
@@ -447,6 +504,7 @@ footer a { color: var(--accent); text-decoration: none; }
     <div class="player-info"><h2 id="playerName"></h2><div class="platform-badge" id="playerPlatform"></div></div>
     <div class="player-quick-stats" id="quickStats"></div>
     <div class="rank-badge-area" id="rankBadge"></div>
+    <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
   </div>
   <div class="personality-section" id="personalitySection"></div>
   <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><span id="seasonDates" style="color:var(--text-dim);">Temporada actual</span></div>
@@ -532,14 +590,47 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="empty-state" id="emptyState" style="display:none;"><p>Busca un jugador para ver sus stats</p></div>
 </div>
 
-<a href="https://discord.gg/v4nz" target="_blank" class="discord-float" title="Unete a V4NZ en Discord"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span>Discord</span></a>
+<!-- MATCH DETAIL POPUP -->
+<div class="match-detail-popup" id="matchDetailPopup" onclick="if(event.target===this)this.classList.remove('active');">
+  <div class="match-detail-card">
+    <button class="close-btn" onclick="document.getElementById('matchDetailPopup').classList.remove('active');">&times;</button>
+    <div id="matchDetailContent"></div>
+  </div>
+</div>
+
+<!-- STATS CARD MODAL -->
+<div class="card-modal" id="cardModal">
+  <button class="card-modal-close" onclick="document.getElementById('cardModal').classList.remove('active');">&times;</button>
+  <canvas id="statsCardCanvas" width="600" height="400"></canvas>
+  <div class="card-modal-actions">
+    <button class="card-modal-btn primary" onclick="downloadStatsCard()">Descargar Imagen</button>
+    <button class="card-modal-btn secondary" onclick="shareStatsCard()">Compartir</button>
+    <button class="card-modal-btn secondary" onclick="document.getElementById('cardModal').classList.remove('active');">Cerrar</button>
+  </div>
+</div>
+
+<!-- STREAMER BANNER -->
+<div class="streamer-banner">
+  <div class="streamer-banner-avatar">K</div>
+  <div class="streamer-banner-info">
+    <div class="streamer-banner-name"><span>KANNEDA</span> — Creador de Contenido PUBG</div>
+    <div class="streamer-banner-desc">Usa el codigo de creador <strong style="color:#c5ff00;">KANNEDA</strong> en la tienda de PUBG</div>
+  </div>
+  <div class="streamer-banner-links">
+    <a href="https://youtube.com/@kanneda" target="_blank" class="streamer-banner-link yt">YouTube</a>
+    <a href="https://twitch.tv/kanneda" target="_blank" class="streamer-banner-link tw">Twitch</a>
+    <a href="https://kick.com/kanneda" target="_blank" class="streamer-banner-link kick">Kick</a>
+  </div>
+</div>
+
+<a href="https://discord.gg/MBHHCHj6Ga" target="_blank" class="discord-float" title="Unete a V4NZ en Discord"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span>Discord</span></a>
 
 <footer>
   <div style="margin-bottom:16px;">
     <a href="https://kanneda.com" target="_blank" style="display:inline-block;background:#c5ff00;color:#000;padding:8px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;text-decoration:none;margin-right:8px;">kanneda.com</a>
     <a href="https://v4nz.com" target="_blank" style="display:inline-block;background:#000;color:#fff;padding:8px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;text-decoration:none;border:1px solid #333;">v4nz.com</a>
   </div>
-  <p style="margin-bottom:6px;">Codigo de Creador PUBG: <strong style="color:var(--accent);">KANNEDA</strong> &mdash; <a href="https://kanneda.com" target="_blank" style="color:#c5ff00;">Activa tu codigo aqui</a></p>
+  <p style="margin-bottom:6px;">Codigo de Creador PUBG: <strong style="color:var(--accent);">KANNEDA</strong> &mdash; <a href="https://accounts.krafton.com/v2/es/web/login-select" target="_blank" style="color:#c5ff00;">Activa tu codigo aqui</a></p>
   <p>V4NZ PUBG Console Stats &mdash; Datos en tiempo real via <a href="https://developer.pubg.com/" target="_blank">PUBG Official API</a></p>
   <p style="margin-top:6px;opacity:.5;">No afiliado con KRAFTON, Inc. Todos los datos provienen de la API publica de PUBG.</p>
 </footer>
@@ -610,7 +701,7 @@ let clanComparePlatform='psn';
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
-  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}}));
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
@@ -678,7 +769,7 @@ function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs
 function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,6);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
 function renderRecentSearches(){const c=document.getElementById('recentSearches');if(!recentSearches.length){c.innerHTML='';return;}c.innerHTML=recentSearches.map(s=>'<div class="recent-tag" onclick="document.getElementById(\'searchInput\').value=\''+s.name+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span></div>').join('');}
 
-function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;document.getElementById('playerPlatform').innerHTML=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');}
+function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;document.getElementById('playerPlatform').innerHTML=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';}
 function renderSeasonBar(season){document.getElementById('seasonName').textContent=season.id.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');document.getElementById('seasonBar').classList.add('visible');}
 function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 
@@ -699,7 +790,32 @@ function renderOverviewStats(){
 }
 
 function renderMatchHistoryDemo(){let h='';DEMO_DATA.matches.forEach(m=>{const pc=m.place===1?'win':m.place<=10?'top10':'normal';h+='<div class="match-item animate-in"><div class="match-place '+pc+'">'+(m.place===1?'&#x1F3C6; #1':'#'+m.place)+'</div><div class="match-mode">'+m.mode+'<span class="map-name">'+m.map+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+m.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+m.damage+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(m.time)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+m.ago+'</div></div>';});document.getElementById('matchList').innerHTML=h;}
-function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}if(!currentMatchData.length){document.getElementById('matchList').innerHTML='<div class="empty-state"><p>No hay partidas recientes</p></div>';return;}const pn=currentPlayerData.attributes.name;let h='';currentMatchData.forEach(match=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=a.gameMode||'';const ta=getTimeAgo(new Date(a.createdAt));const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';h+='<div class="match-item animate-in"><div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'</div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name">'+mn+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';}
+function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}if(!currentMatchData.length){document.getElementById('matchList').innerHTML='<div class="empty-state"><p>No hay partidas recientes</p></div>';return;}const pn=currentPlayerData.attributes.name;let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=a.gameMode||'';const ta=getTimeAgo(new Date(a.createdAt));const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';h+='<div class="match-item animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')"><div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'</div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name">'+mn+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+' &#x1F5FA;&#xFE0F;</div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';}
+function showMatchDetail(idx){
+  const match=currentMatchData[idx];if(!match)return;
+  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=a.gameMode||'';
+  const pn=currentPlayerData.attributes.name;
+  const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());
+  if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;
+  const totalP=(match.included||[]).filter(i=>i.type==='participant').length;
+  let h='<div class="match-map-img"><div class="map-label">&#x1F5FA;&#xFE0F; '+mn+'</div></div>';
+  h+='<div style="text-align:center;margin-bottom:16px;"><span style="font-family:Orbitron,sans-serif;font-size:1.4rem;font-weight:800;color:'+(pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-primary)')+';">#'+pl+'</span>';
+  h+='<span style="color:var(--text-dim);font-size:.8rem;"> / '+totalP+' jugadores</span>';
+  h+='<span style="display:block;color:var(--text-secondary);font-size:.8rem;margin-top:4px;">'+gm.toUpperCase()+' &mdash; '+new Date(a.createdAt).toLocaleString('es-ES')+'</span></div>';
+  h+='<div class="match-detail-stats">';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent);">'+ps.kills+'</div><div class="lbl">Kills</div></div>';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-orange);">'+Math.round(ps.damageDealt)+'</div><div class="lbl">Dano</div></div>';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-green);">'+formatTime(ps.timeSurvived)+'</div><div class="lbl">Tiempo</div></div>';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-purple);">'+(ps.headshotKills||0)+'</div><div class="lbl">Headshots</div></div>';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-yellow);">'+(ps.assists||0)+'</div><div class="lbl">Assists</div></div>';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-red);">'+(ps.DBNOs||0)+'</div><div class="lbl">Knocks</div></div>';
+  h+='<div class="match-detail-stat"><div class="val">'+((ps.walkDistance||0)/1000).toFixed(1)+'km</div><div class="lbl">A pie</div></div>';
+  h+='<div class="match-detail-stat"><div class="val">'+((ps.rideDistance||0)/1000).toFixed(1)+'km</div><div class="lbl">Vehiculo</div></div>';
+  h+='<div class="match-detail-stat"><div class="val">'+(ps.revives||0)+'</div><div class="lbl">Revives</div></div>';
+  h+='</div>';
+  document.getElementById('matchDetailContent').innerHTML=h;
+  document.getElementById('matchDetailPopup').classList.add('active');
+}
 
 function renderWeaponStatsDemo(){let h='';DEMO_DATA.weapons.forEach((w,i)=>{const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';h+='<div class="weapon-card animate-in"><div class="weapon-rank '+rc+'">#'+(i+1)+'</div><div class="weapon-info"><div class="weapon-name">'+w.name+'</div><div class="weapon-type">'+(WEAPON_TYPES[w.name]||'')+'</div></div><div class="weapon-stats-mini"><div class="weapon-mini-stat"><div class="wm-val">'+w.kills+'</div><div class="wm-label">Kills</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.headshots+'</div><div class="wm-label">HS</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.longestKill+'m</div><div class="wm-label">Max</div></div></div></div>';});document.getElementById('weaponGrid').innerHTML=h;}
 function renderWeaponStats(){if(isUsingDemo){renderWeaponStatsDemo();return;}document.getElementById('weaponGrid').innerHTML='<div class="empty-state"><p>Weapon Mastery limitado en consola</p></div>';}
@@ -745,6 +861,80 @@ function renderPersonality(){
   document.getElementById('personalitySection').classList.add('visible');
 }
 function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi personalidad PUBG es: '+t+'! Descubre la tuya en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://v4nz.com'});else{navigator.clipboard?.writeText(x+' https://v4nz.com');alert('Copiado al portapapeles!');}}
+
+function generateStatsCard(){
+  const c=document.getElementById('statsCardCanvas');const ctx=c.getContext('2d');
+  c.width=700;c.height=420;
+  const s=getActiveStats();const n=currentPlayerData?.attributes?.name||'???';
+  // Background
+  const bg=ctx.createLinearGradient(0,0,700,420);
+  bg.addColorStop(0,'#0a0a0f');bg.addColorStop(.5,'#12121a');bg.addColorStop(1,'#0a0a0f');
+  ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(0,0,700,420,16);ctx.fill();
+  // Top accent line
+  const tg=ctx.createLinearGradient(0,0,700,0);
+  tg.addColorStop(0,'#00f0ff');tg.addColorStop(.5,'#ff6b00');tg.addColorStop(1,'#c5ff00');
+  ctx.fillStyle=tg;ctx.fillRect(0,0,700,3);
+  // Border
+  ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(0,0,700,420,16);ctx.stroke();
+  // Avatar circle
+  ctx.fillStyle='#00f0ff';ctx.beginPath();ctx.arc(60,55,28,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#0a0a0f';ctx.font='bold 24px Orbitron,sans-serif';ctx.textAlign='center';
+  ctx.fillText(n.charAt(0).toUpperCase(),60,63);
+  // Player name
+  ctx.fillStyle='#e8e8f0';ctx.font='bold 26px Orbitron,sans-serif';ctx.textAlign='left';
+  ctx.fillText(n,100,52);
+  // Platform
+  ctx.fillStyle='#8888a0';ctx.font='600 14px Rajdhani,sans-serif';
+  ctx.fillText((currentPlatform==='psn'?'PlayStation':'Xbox')+' | '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase(),100,72);
+  // Divider
+  ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.moveTo(30,95);ctx.lineTo(670,95);ctx.stroke();
+  // Stats grid
+  const stats=[
+    {label:'K/D RATIO',value:calcKD(s),color:'#00f0ff'},
+    {label:'VICTORIAS',value:''+(s.wins||0),color:'#ffd700'},
+    {label:'KILLS',value:''+(s.kills||0),color:'#ff3355'},
+    {label:'DANO PROM.',value:calcAvgDmg(s),color:'#ff6b00'},
+    {label:'WIN RATE',value:calcWinRate(s)+'%',color:'#00ff88'},
+    {label:'HEADSHOT %',value:calcHSRate(s)+'%',color:'#a855f7'},
+    {label:'TOP 10 %',value:calcTop10Rate(s)+'%',color:'#00ff88'},
+    {label:'PARTIDAS',value:''+(s.roundsPlayed||0),color:'#00f0ff'}
+  ];
+  const cols=4,cw=160,ch=80,sx=30,sy=115;
+  stats.forEach((st,i)=>{
+    const col=i%cols,row=Math.floor(i/cols);
+    const x=sx+col*cw,y=sy+row*(ch+15);
+    // Card bg
+    ctx.fillStyle='#16161f';ctx.beginPath();ctx.roundRect(x,y,cw-10,ch,10);ctx.fill();
+    ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.roundRect(x,y,cw-10,ch,10);ctx.stroke();
+    // Value
+    ctx.fillStyle=st.color;ctx.font='bold 28px Orbitron,sans-serif';ctx.textAlign='center';
+    ctx.fillText(st.value,x+(cw-10)/2,y+38);
+    // Label
+    ctx.fillStyle='#8888a0';ctx.font='600 11px Rajdhani,sans-serif';
+    ctx.fillText(st.label,x+(cw-10)/2,y+60);
+  });
+  // Footer
+  ctx.fillStyle='#555570';ctx.font='600 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('V4NZ.COM — PUBG Console Stats Tracker',350,390);
+  ctx.fillStyle='#00f0ff';ctx.font='bold 13px Orbitron,sans-serif';
+  ctx.fillText('V4NZ',350,410);
+  // Show modal
+  document.getElementById('cardModal').classList.add('active');
+}
+function downloadStatsCard(){
+  const c=document.getElementById('statsCardCanvas');
+  const a=document.createElement('a');a.download=(currentPlayerData?.attributes?.name||'stats')+'_v4nz.png';
+  a.href=c.toDataURL('image/png');a.click();
+}
+async function shareStatsCard(){
+  const c=document.getElementById('statsCardCanvas');
+  try{
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+    const f=new File([blob],(currentPlayerData?.attributes?.name||'stats')+'_v4nz.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'V4NZ PUBG Stats',text:'Stats de '+(currentPlayerData?.attributes?.name||'')+' en v4nz.com'});}
+    else{downloadStatsCard();}
+  }catch(e){downloadStatsCard();}
+}
 
 /* === RANK BADGE === */
 function getRankInfo(s){
