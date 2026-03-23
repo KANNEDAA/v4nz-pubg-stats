@@ -85,7 +85,6 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .recent-tag:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
 /* STREAMER BANNER */
-.streamer-banner { max-width: 1400px; margin: 0 auto 20px; padding: 0 2rem; position: relative; z-index: 1; }
 .streamer-card { background: linear-gradient(135deg, rgba(255,107,0,0.08), rgba(0,240,255,0.05)); border: 1px solid rgba(255,107,0,0.2); border-radius: 14px; padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px; transition: all 0.3s; cursor: pointer; }
 .streamer-card:hover { border-color: var(--accent-orange); box-shadow: 0 0 30px rgba(255,107,0,0.1); }
 .streamer-left { display: flex; align-items: center; gap: 16px; }
@@ -476,26 +475,6 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="recent-searches" id="recentSearches"></div>
 </section>
 
-<div class="streamer-banner">
-  <a href="https://kanneda.com" target="_blank" style="text-decoration:none;">
-    <div style="max-width:1400px;margin:0 auto;padding:0 2rem;">
-      <div style="background:#fff;border-radius:16px;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px;box-shadow:0 2px 20px rgba(0,0,0,0.15);transition:all 0.3s;border:2px solid transparent;" onmouseover="this.style.borderColor='#c5ff00'" onmouseout="this.style.borderColor='transparent'">
-        <div style="display:flex;align-items:center;gap:20px;">
-          <div style="width:56px;height:56px;border-radius:50%;background:#000;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.4rem;color:#c5ff00;">K</div>
-          <div>
-            <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.1rem;color:#000;letter-spacing:1px;">KANNEDA</div>
-            <div style="font-size:0.78rem;color:#555;margin-top:2px;">Streamer Profesional | Ganador PUBG Awards 2023</div>
-            <div style="font-size:0.68rem;color:#888;margin-top:4px;">Codigo de Creador: <strong style="color:#000;">KANNEDA</strong> &mdash; Programa oficial de creadores PUBG</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <div style="background:#c5ff00;color:#000;padding:10px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Ver mis directos</div>
-          <div style="background:#000;color:#fff;padding:10px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Discord</div>
-        </div>
-      </div>
-    </div>
-  </a>
-</div>
 
 <div class="main-content">
   <div class="error-msg" id="errorMsg"></div>
