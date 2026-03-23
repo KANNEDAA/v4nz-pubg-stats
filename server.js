@@ -8,8 +8,8 @@
 //    2. node server.js
 //    3. Abre http://localhost:3000
 //
-//  La web se sirve automáticamente desde este servidor
-//  y las peticiones a /api/* se redirigen a la API de PUBG
+//  En Railway: configurar PUBG_API_KEY como variable de entorno
+//
 // ═══════════════════════════════════════════════
 
 const express = require('express');
@@ -18,6 +18,9 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// API Key: primero busca en variables de entorno (seguro), luego en header del cliente (fallback)
+const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
 
 app.use(cors());
 app.use(express.json());
@@ -34,10 +37,10 @@ app.all('/api/*', async (req, res) => {
   const queryString = new URLSearchParams(req.query).toString();
   const pubgUrl = `https://api.pubg.com/${pubgPath}${queryString ? '?' + queryString : ''}`;
 
-  // Forward the Authorization header from the client
-  const apiKey = req.headers.authorization;
+  // Use server-side key if available, otherwise forward client header
+  const apiKey = SERVER_API_KEY ? 'Bearer ' + SERVER_API_KEY : req.headers.authorization;
   if (!apiKey) {
-    return res.status(401).json({ error: 'Missing Authorization header' });
+    return res.status(401).json({ error: 'Missing API Key. Set PUBG_API_KEY env variable or send Authorization header.' });
   }
 
   try {
@@ -66,11 +69,12 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`
-  ╔═══════════════════════════════════════════╗
-  ║   V4NZ PUBG Stats Server                 ║
-  ║   Running on http://localhost:${PORT}        ║
-  ║                                           ║
-  ║   Open your browser and start tracking!   ║
-  ╚═══════════════════════════════════════════╝
+╔═══════════════════════════════════════════════╗
+║  V4NZ PUBG Stats Server                      ║
+║  Running on http://localhost:${PORT}             ║
+║                                               ║
+║  API Key: ${SERVER_API_KEY ? 'CONFIGURADA ✓' : 'NO CONFIGURADA ✗ (usa PUBG_API_KEY)'}
+║  Open your browser and start tracking!        ║
+╚═══════════════════════════════════════════════╝
   `);
 });
