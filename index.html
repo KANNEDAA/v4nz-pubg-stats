@@ -9,8 +9,17 @@
 <meta property="og:title" content="V4NZ — PUBG Console Stats Tracker">
 <meta property="og:description" content="Stats en tiempo real de PUBG para PS5 y Xbox. Busca cualquier jugador, compara stats, descubre tu personalidad de jugador.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://v4nz.com">
-<link rel="canonical" href="https://v4nz.com">
+<meta property="og:url" content="https://www.v4nz.com">
+<meta property="og:image" content="https://www.v4nz.com/og-image.png">
+<meta property="og:site_name" content="V4NZ PUBG Stats">
+<meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="V4NZ — PUBG Console Stats Tracker | PS5 & Xbox">
+<meta name="twitter:description" content="Stats en tiempo real de PUBG para PS5 y Xbox. Busca cualquier jugador, compara clanes, armas y mas.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="V4NZ / KANNEDA">
+<meta name="theme-color" content="#00f0ff">
+<link rel="canonical" href="https://www.v4nz.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0f'/%3E%3Cpath d='M16 4C9.4 4 5.3 9.6 5.3 15.9v2.8c0 1.4.7 2.8 1.7 3.5l1.4 1v4.2c0 1.4 1 2.4 2.4 2.4h12.5c1.4 0 2.4-1 2.4-2.4v-4.2l1.4-1c1-0.7 1.7-2.1 1.7-3.5v-2.8C29 9.6 24.6 4 16 4z' fill='%23f2a900' opacity='.9'/%3E%3Crect x='8' y='12.6' width='18' height='5.6' rx='1.4' fill='%230a0a0f' opacity='.85'/%3E%3Crect x='8.7' y='13.3' width='16.6' height='4.2' rx='1' fill='none' stroke='%2300f0ff' stroke-width='.7' opacity='.7'/%3E%3C/svg%3E">
 <style>
@@ -129,6 +138,11 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 
 /* LOADING SKELETONS */
 @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+@keyframes spin-loader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.api-loader { display:flex; flex-direction:column; align-items:center; gap:12px; padding:30px 0; }
+.api-loader .spinner { width:36px; height:36px; border:3px solid var(--bg-card-hover); border-top-color:var(--accent); border-radius:50%; animation:spin-loader .8s linear infinite; }
+.api-loader .loader-text { font-family:'Rajdhani',sans-serif; font-size:.85rem; color:var(--text-secondary); }
+.api-loader .loader-timer { font-family:'Orbitron',sans-serif; font-size:1.1rem; color:var(--accent); font-weight:700; }
 .skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%); background-size: 400px 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: 8px; }
 .skeleton-header { height: 100px; border-radius: 16px; margin-bottom: 24px; }
 .skeleton-personality { height: 160px; border-radius: 14px; margin-bottom: 24px; }
@@ -156,6 +170,12 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .personality-tag { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-family: 'Rajdhani', sans-serif; }
 .personality-share { margin-top: 16px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
 .personality-share:hover { border-color: var(--accent); color: var(--accent); }
+
+/* FLOATING DISCORD */
+.discord-float { position:fixed; bottom:24px; right:24px; z-index:999; display:flex; align-items:center; gap:10px; background:#5865F2; color:#fff; padding:12px 20px; border-radius:50px; text-decoration:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1px; box-shadow:0 4px 20px rgba(88,101,242,.4); transition:all .3s ease; }
+.discord-float:hover { transform:translateY(-3px); box-shadow:0 8px 30px rgba(88,101,242,.6); background:#4752C4; }
+.discord-float svg { width:22px; height:22px; fill:#fff; flex-shrink:0; }
+@media(max-width:768px){ .discord-float span { display:none; } .discord-float { padding:14px; border-radius:50%; } }
 
 /* TABS */
 .tabs-container { margin-bottom: 24px; display: none; }
@@ -329,7 +349,7 @@ footer a { color: var(--accent); text-decoration: none; }
 <div class="bg-grid"></div>
 <div class="bg-radial"></div>
 
-<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Cargando datos del campo de batalla...</div></div>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Conectando con PUBG API...</div><div class="loader-timer" id="mainLoaderTimer" style="font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--accent);font-weight:700;margin-top:8px;">0.0s</div><div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;" id="mainLoaderStep">Buscando jugador...</div></div>
 
 <div id="apiModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.9);backdrop-filter:blur(10px);z-index:1000;justify-content:center;align-items:center;">
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:500px;width:90%;text-align:center;">
@@ -512,6 +532,8 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="empty-state" id="emptyState" style="display:none;"><p>Busca un jugador para ver sus stats</p></div>
 </div>
 
+<a href="https://discord.gg/v4nz" target="_blank" class="discord-float" title="Unete a V4NZ en Discord"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span>Discord</span></a>
+
 <footer>
   <div style="margin-bottom:16px;">
     <a href="https://kanneda.com" target="_blank" style="display:inline-block;background:#c5ff00;color:#000;padding:8px 24px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;text-decoration:none;margin-right:8px;">kanneda.com</a>
@@ -523,9 +545,9 @@ footer a { color: var(--accent); text-decoration: none; }
 </footer>
 
 <script>
-const IS_PROXIED=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+const IS_PROXIED=location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname.includes('railway.app')||location.hostname.includes('v4nz.com');
 const API_BASE=IS_PROXIED?'/api/shards':'https://api.pubg.com/shards';
-let API_KEY=localStorage.getItem('pubg_api_key')||'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI5YzJkMzM4MC1kNzNhLTAxM2UtNTIwYi01YTE3YTU3M2I3NjkiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzY4ODA5NTI4LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InB1YmctY29uc29sZS1zIn0.-SBKk5E2ptHxV9ucGMnUXqcxNnNVuI0f8sQ_yObID70';
+let API_KEY=IS_PROXIED?'proxy':localStorage.getItem('pubg_api_key')||'';
 let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
 let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null;
 let isUsingDemo=false,recentSearches=JSON.parse(localStorage.getItem('recent_searches')||'[]');
@@ -588,15 +610,22 @@ let clanComparePlatform='psn';
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
-  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t)switchTab(t);}));
-  loadDemoData();
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}}));
+  // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER
+  const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
+  if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
+  else{loadDemoData();}
 });
 
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
-function checkApiKey(){if(!API_KEY){document.getElementById('apiModal').style.display='flex';return false;}return true;}
+function checkApiKey(){if(IS_PROXIED)return true;if(!API_KEY){document.getElementById('apiModal').style.display='flex';return false;}return true;}
 function saveApiKey(){const k=document.getElementById('apiKeyInput').value.trim();if(k){API_KEY=k;localStorage.setItem('pubg_api_key',k);document.getElementById('apiModal').style.display='none';const i=document.getElementById('searchInput').value.trim();if(i)searchPlayer();}}
-async function apiGet(u){const r=await fetch(u,{headers:{'Authorization':'Bearer '+API_KEY,'Accept':'application/vnd.api+json'}});if(!r.ok)throw new Error('API Error '+r.status+': '+await r.text());return r.json();}
-function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);}
+async function apiGet(u){const h={'Accept':'application/vnd.api+json'};if(!IS_PROXIED&&API_KEY)h['Authorization']='Bearer '+API_KEY;const r=await fetch(u,{headers:h});if(!r.ok)throw new Error('API Error '+r.status+': '+await r.text());return r.json();}
+function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Conectando con PUBG API...')+'</div><div class="loader-timer" id="loader-timer-'+targetId+'">0.0s</div></div>';const start=Date.now();const iv=setInterval(()=>{const t=document.getElementById('loader-timer-'+targetId);if(t)t.textContent=((Date.now()-start)/1000).toFixed(1)+'s';else clearInterval(iv);},100);return iv;}
+function stopApiLoader(iv){if(iv)clearInterval(iv);}
+let mainLoaderIv=null;
+function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);if(v){const start=Date.now();mainLoaderIv=setInterval(()=>{const t=document.getElementById('mainLoaderTimer');if(t)t.textContent=((Date.now()-start)/1000).toFixed(1)+'s';},100);}else{if(mainLoaderIv){clearInterval(mainLoaderIv);mainLoaderIv=null;}}}
+function setLoaderStep(msg){const el=document.getElementById('mainLoaderStep');if(el)el.textContent=msg;}
 function showError(m){const e=document.getElementById('errorMsg');e.textContent=m;e.classList.add('visible');}
 function hideError(){document.getElementById('errorMsg').classList.remove('visible');}
 function showDataPanels(){document.getElementById('tabsContainer').classList.add('visible');document.getElementById('emptyState').style.display='none';}
@@ -615,12 +644,19 @@ async function searchPlayer(){
   if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name)return;
   showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';
   try{
+    setLoaderStep('Buscando jugador '+name+'...');
     const pr=await apiGet(API_BASE+'/'+currentPlatform+'/players?filter[playerNames]='+encodeURIComponent(name));
     currentPlayerData=pr.data[0];addRecentSearch(name,currentPlatform);
+    history.pushState(null,'','/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name));
+    document.title='V4NZ — '+currentPlayerData.attributes.name+' | PUBG '+currentPlatform.toUpperCase()+' Stats';
+    setLoaderStep('Cargando temporada actual...');
     const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
+    setLoaderStep('Obteniendo estadisticas de temporada...');
     currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
+    setLoaderStep('Descargando partidas recientes...');
     const mids=currentPlayerData.relationships.matches.data.slice(0,8);
     currentMatchData=(await Promise.all(mids.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)))).filter(Boolean);
+    setLoaderStep('Cargando maestria de armas...');
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     showSkeletons(false);renderPlayerHeader();renderRankBadge();renderSeasonBar(cs);renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();renderWeaponStats();renderFunStats();renderPersonality();showDataPanels();switchTab('overview');
   }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else showError(getErrorMessage(err));console.error(err);}
@@ -905,16 +941,11 @@ function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-
 function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
 
 async function fetchClanByPlayer(playerName, platform){
-  const baseUrl=window.location.origin+'/api/';
-  const pRes=await fetch(baseUrl+'shards/'+platform+'/players?filter[playerNames]='+encodeURIComponent(playerName),{headers:{'Authorization':'Bearer '+API_KEY,'Accept':'application/vnd.api+json'}});
-  if(!pRes.ok) throw new Error('Jugador no encontrado');
-  const pData=await pRes.json();
-  const player=pData.data[0];
+  const pRes=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(playerName));
+  const player=pRes.data[0];
   const clanRel=player.relationships&&player.relationships.clan&&player.relationships.clan.data;
   if(!clanRel||!clanRel.id) throw new Error(playerName+' no pertenece a ningun clan');
-  const cRes=await fetch(baseUrl+'shards/'+platform+'/clans/'+clanRel.id,{headers:{'Authorization':'Bearer '+API_KEY,'Accept':'application/vnd.api+json'}});
-  if(!cRes.ok) throw new Error('No se pudo cargar el clan');
-  const cData=await cRes.json();
+  const cData=await apiGet(API_BASE+'/'+platform+'/clans/'+clanRel.id);
   return cData.data;
 }
 
@@ -943,12 +974,12 @@ async function searchClan(){
   const n=document.getElementById('clanPlayerInput').value.trim();
   if(!n){alert('Escribe el nombre de un jugador');return;}
   if(!API_KEY){renderClanDemo('clanResults');return;}
-  document.getElementById('clanResults').innerHTML='<p style="color:var(--accent);font-size:.85rem;">Buscando clan de '+n+'...</p>';
+  const iv=showApiLoader('clanResults','Buscando clan de '+n+'...');
   try{
     const clan=await fetchClanByPlayer(n, clanPlatform);
-    renderClanCard(clan,'clanResults');
+    stopApiLoader(iv);renderClanCard(clan,'clanResults');
   }catch(e){
-    document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+    stopApiLoader(iv);document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
   }
 }
 
@@ -965,7 +996,7 @@ async function compareClans(){
     document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Necesitas API Key para comparar clanes reales.</p>';
     return;
   }
-  document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent);font-size:.85rem;">Buscando clanes de '+n1+' y '+n2+'...</p>';
+  const ivcc=showApiLoader('clanCompareResults','Buscando clanes de '+n1+' y '+n2+'...');
   try{
     const [clan1,clan2]=await Promise.all([fetchClanByPlayer(n1,clanComparePlatform),fetchClanByPlayer(n2,clanComparePlatform)]);
     const a1=clan1.attributes||{};const a2=clan2.attributes||{};
@@ -996,9 +1027,9 @@ async function compareClans(){
     h+='</div><div><div class="section-title" style="font-size:.75rem;color:var(--accent);">Roster '+tag2+' ('+mc2+')</div>';
     m2.slice(0,20).forEach(m=>{const mn=m.attributes?m.attributes.name:(m.id||'?');h+='<div class="clan-member" style="font-size:.8rem;"><span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+mn+'\';switchTab(\'overview\');searchPlayer();">'+mn+'</span></div>';});
     h+='</div></div></div>';
-    document.getElementById('clanCompareResults').innerHTML=h;
+    stopApiLoader(ivcc);document.getElementById('clanCompareResults').innerHTML=h;
   }catch(e){
-    document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+    stopApiLoader(ivcc);document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
   }
 }
 
