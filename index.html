@@ -443,7 +443,6 @@ footer a { color: var(--accent); text-decoration: none; }
       <a href="#" data-tab="compare">Comparar</a>
       <a href="#" data-tab="clans">Clanes</a>
       <a href="#" data-tab="leaderboard">Top 500</a>
-      <a href="#" onclick="document.getElementById('apiModal').style.display='flex';return false;" style="color:var(--text-dim);font-size:.75rem;">&#9881;</a>
     </nav>
   </div>
 </header>
@@ -1112,9 +1111,10 @@ function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelec
 async function fetchClanByPlayer(playerName, platform){
   const pRes=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(playerName));
   const player=pRes.data[0];
-  const clanRel=player.relationships&&player.relationships.clan&&player.relationships.clan.data;
-  if(!clanRel||!clanRel.id) throw new Error(playerName+' no pertenece a ningun clan');
-  const cData=await apiGet(API_BASE+'/'+platform+'/clans/'+clanRel.id);
+  // clanId is in attributes, NOT in relationships
+  const clanId=player.attributes&&player.attributes.clanId;
+  if(!clanId) throw new Error(playerName+' no pertenece a ningun clan');
+  const cData=await apiGet(API_BASE+'/'+platform+'/clans/'+clanId);
   return cData.data;
 }
 
