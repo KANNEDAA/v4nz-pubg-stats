@@ -33,9 +33,10 @@ app.all('/api/*', async (req, res) => {
   // Dynamic import for node-fetch (ESM)
   const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
 
+  // Use original URL to preserve query params like filter[playerNames] exactly
+  const originalQuery = req.originalUrl.split('?')[1] || '';
   const pubgPath = req.params[0]; // everything after /api/
-  const queryString = new URLSearchParams(req.query).toString();
-  const pubgUrl = `https://api.pubg.com/${pubgPath}${queryString ? '?' + queryString : ''}`;
+  const pubgUrl = `https://api.pubg.com/${pubgPath}${originalQuery ? '?' + originalQuery : ''}`;
 
   // Use server-side key if available, otherwise forward client header
   const apiKey = SERVER_API_KEY ? 'Bearer ' + SERVER_API_KEY : req.headers.authorization;
