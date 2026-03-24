@@ -771,9 +771,11 @@ function formatTime(s){return Math.floor(s/60)+'m '+Math.floor(s%60)+'s';}
 function getTimeAgo(d){const h=Math.floor((Date.now()-d.getTime())/3600000);if(h<1)return'ahora';if(h<24)return h+'h';return Math.floor(h/24)+'d';}
 function getActiveStats(){
   const k=currentSquadMode==='solo'?(currentGameMode==='fpp'?'solo-fpp':'solo'):currentSquadMode==='duo'?(currentGameMode==='fpp'?'duo-fpp':'duo'):(currentGameMode==='fpp'?'squad-fpp':'squad');
-  if(seasonTypeMode==='ranked'&&currentRankedData){const a=currentRankedData.data.attributes.rankedGameModeStats||currentRankedData.data.attributes.gameModeStats||{};return a[k]||{};}
-  if(seasonTypeMode==='lifetime'&&currentLifetimeData){const a=currentLifetimeData.data.attributes.gameModeStats;return a[k]||{};}
-  if(!currentSeasonData)return{};const a=currentSeasonData.data.attributes.gameModeStats;return a[k]||{};
+  try{
+    if(seasonTypeMode==='ranked'&&currentRankedData){const attrs=currentRankedData.data&&currentRankedData.data.attributes?currentRankedData.data.attributes:{};const a=attrs.rankedGameModeStats||attrs.gameModeStats||{};return a[k]||{};}
+    if(seasonTypeMode==='lifetime'&&currentLifetimeData){const attrs=currentLifetimeData.data&&currentLifetimeData.data.attributes?currentLifetimeData.data.attributes:{};const a=attrs.gameModeStats||{};return a[k]||{};}
+    if(!currentSeasonData||!currentSeasonData.data||!currentSeasonData.data.attributes)return{};const a=currentSeasonData.data.attributes.gameModeStats||{};return a[k]||{};
+  }catch(e){console.error('getActiveStats error:',e);return{};}
 }
 function calcKD(s){if(!s.losses&&!s.roundsPlayed)return'0.00';return(s.kills/(s.losses||(s.roundsPlayed-s.wins)||1)).toFixed(2);}
 function calcWinRate(s){if(!s.roundsPlayed)return'0';return((s.wins/s.roundsPlayed)*100).toFixed(1);}
@@ -783,13 +785,34 @@ function calcHSRate(s){if(!s.kills)return'0';return((s.headshotKills/s.kills)*10
 
 function loadDemoData(){isUsingDemo=true;currentPlayerData=DEMO_DATA.player;currentSeasonData=DEMO_DATA.seasonStats;currentWeaponData=null;currentSurvivalData=null;currentPlatform='psn';currentGameMode='tpp';currentSquadMode='squad';currentSeasonId='demo';document.getElementById('searchInput').value='KANNEDA';showSkeletons(false);renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBarDemo();renderWLGridDemo();renderChartsDemo();renderOverviewStats();renderMatchHistoryDemo();renderWeaponStatsDemo();renderFunStats();renderPersonality();showDataPanels();switchTab('overview');}
 
+async function findPlayer(name,platform){
+  const url=API_BASE+'/'+platform+'/players?filter[playerNames]=';
+  try{return await apiGet(url+encodeURIComponent(name));}catch(e1){
+    if(!e1.message||!e1.message.includes('404'))throw e1;
+    setLoaderStep('Reintentando variaciones de nombre...');
+    // Retry: lowercase
+    if(name!==name.toLowerCase()){try{return await apiGet(url+encodeURIComponent(name.toLowerCase()));}catch(e2){if(!e2.message||!e2.message.includes('404'))throw e2;}}
+    // Retry: UPPERCASE
+    if(name!==name.toUpperCase()){try{return await apiGet(url+encodeURIComponent(name.toUpperCase()));}catch(e3){if(!e3.message||!e3.message.includes('404'))throw e3;}}
+    // Retry: other platform
+    setLoaderStep('Buscando en otra plataforma...');
+    const alt=platform==='psn'?'xbox':'psn';
+    try{return await apiGet(API_BASE+'/'+alt+'/players?filter[playerNames]='+encodeURIComponent(name));}catch(e4){if(!e4.message||!e4.message.includes('404'))throw e4;}
+    if(name!==name.toLowerCase()){try{return await apiGet(API_BASE+'/'+alt+'/players?filter[playerNames]='+encodeURIComponent(name.toLowerCase()));}catch(e5){if(!e5.message||!e5.message.includes('404'))throw e5;}}
+    throw e1;
+  }
+}
 async function searchPlayer(){
   if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name)return;
   showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';
   try{
     setLoaderStep('Buscando jugador '+name+'...');
-    const pr=await apiGet(API_BASE+'/'+currentPlatform+'/players?filter[playerNames]='+encodeURIComponent(name));
-    currentPlayerData=pr.data[0];addRecentSearch(name,currentPlatform);
+    const pr=await findPlayer(name,currentPlatform);
+    currentPlayerData=pr.data[0];
+    // Update platform if found on different one
+    const foundShard=pr.data[0]&&pr.data[0].attributes&&pr.data[0].attributes.shardId?pr.data[0].attributes.shardId:currentPlatform;
+    if(foundShard==='psn'||foundShard==='xbox'){currentPlatform=foundShard;setPlatform(foundShard);}
+    addRecentSearch(currentPlayerData.attributes.name,currentPlatform);
     history.pushState(null,'','/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name));
     document.title='V4NZ — '+currentPlayerData.attributes.name+' | PUBG '+currentPlatform.toUpperCase()+' Stats';
     setLoaderStep('Cargando temporada actual...');
@@ -803,7 +826,7 @@ async function searchPlayer(){
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
     showSkeletons(false);renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
-  }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else showError(getErrorMessage(err));console.error(err);}
+  }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('emptyState').style.display='block';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
 function getErrorMessage(e){const m=e.message||'';if(m.includes('404'))return'Jugador no encontrado. Verifica el gamertag y la plataforma.';if(m.includes('401')||m.includes('403'))return'API Key no valida.';if(m.includes('429'))return'Demasiadas peticiones. Espera unos segundos.';if(m.includes('Failed to fetch'))return'Error de conexion. Necesitas el servidor proxy (node server.js).';return'Error: '+m;}
@@ -891,7 +914,7 @@ function showMatchDetail(idx){
   h+='<div class="match-detail-stat"><div class="val">'+((ps.rideDistance||0)/1000).toFixed(1)+'km</div><div class="lbl">Vehiculo</div></div>';
   h+='<div class="match-detail-stat"><div class="val">'+(ps.revives||0)+'</div><div class="lbl">Revives</div></div>';
   h+='</div>';
-  const roster=(match.included||[]).find(i=>i.type==='roster');let teammates=[];if(roster&&roster.relationships&&roster.relationships.participants){const partIds=roster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>b.kills-a.kills);}
+  const myRoster=(match.included||[]).find(i=>i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(p=>p.id===pp.id));let teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){const partIds=myRoster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>b.kills-a.kills);}
   if(teammates.length>0){h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:12px;">Tu Equipo</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">';teammates.forEach(tm=>{h+='<div style="background:var(--bg-secondary);padding:8px;border-radius:6px;"><div style="color:var(--text-primary);font-weight:600;margin-bottom:3px;">'+tm.name+'</div><div style="color:var(--accent);font-size:.7rem;margin-bottom:2px;">'+tm.kills+' kills</div><div style="color:var(--accent-orange);font-size:.7rem;">'+Math.round(tm.damageDealt)+' dano</div></div>';});h+='</div></div>';}
   const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
   if(telemetryUrl){h+='<div style="margin-top:16px;"><button onclick="loadAndShowTelemetry(\''+telemetryUrl+'\',\''+pn+'\')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;">Ver Telemetria</button></div>';}
@@ -1316,11 +1339,12 @@ function setLBPlatform(p,btn){lbPlatform=p;const btns=btn.parentElement.querySel
 function setLBMode(m,btn){lbMode=m;const btns=btn.parentElement.querySelectorAll('.lb-btn');for(let i=3;i<btns.length;i++)btns[i].classList.toggle('active',btns[i]===btn);renderLeaderboard();}
 function renderLeaderboard(){
   const lbContent=document.getElementById('leaderboardContent');
-  if(!IS_PROXIED||!API_KEY||currentSeasonId==='demo'){renderLeaderboardDemo();return;}
+  const hasApi=IS_PROXIED||(API_KEY&&API_KEY.length>0);
+  if(!hasApi||currentSeasonId==='demo'||!currentSeasonId){renderLeaderboardDemo();return;}
   try{
     lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-timer">Cargando Top 500...</div></div></div>';
     const gm=lbMode+(currentGameMode==='fpp'?'-fpp':'');const sid=currentSeasonId;
-    apiGet(API_BASE+'/'+currentPlatform+'/leaderboards/'+sid+'/'+gm).then(r=>{
+    apiGet(API_BASE+'/'+lbPlatform+'/leaderboards/'+sid+'/'+gm).then(r=>{
       const lb=r.data;const players=r.included||[];const pRelations=lb.relationships?.players?.data||[];
       let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
       let rank=1;pRelations.slice(0,500).forEach(pRef=>{
@@ -1331,7 +1355,7 @@ function renderLeaderboard(){
         h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="document.getElementById(\'searchInput\').value=\''+pa.name+'\';searchPlayer();">'+pa.name+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
         rank++;
       });
-      h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 500 via PUBG API &mdash; '+currentPlatform.toUpperCase()+' '+gm.toUpperCase()+'</p>';
+      h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 500 via PUBG API &mdash; '+lbPlatform.toUpperCase()+' '+gm.toUpperCase()+'</p>';
       lbContent.innerHTML=h;
     }).catch(e=>{console.error('Leaderboard API error:',e);renderLeaderboardDemo();});
   }catch(e){console.error('Leaderboard error:',e);renderLeaderboardDemo();}
