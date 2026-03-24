@@ -546,7 +546,7 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="streamer-banner-avatar">K</div>
   <div class="streamer-banner-info">
     <div class="streamer-banner-name"><span>KANNEDA</span> — Creador de Contenido PUBG</div>
-    <div class="streamer-banner-desc">Usa el codigo de creador <strong style="color:#c5ff00;">KANNEDA</strong> en la tienda de PUBG</div>
+    <div class="streamer-banner-desc">Si disfrutas mi contenido, apoyame usando mi Codigo de Creador: <strong style="color:#c5ff00;">KANNEDA</strong> — Cada compra me apoya directamente. <a href="https://accounts.krafton.com/v2/es/web/login-select" target="_blank" style="color:var(--accent);text-decoration:underline;font-weight:600;">Activa tu codigo aqui</a></div>
   </div>
   <div class="streamer-banner-links">
     <a href="https://youtube.com/@kanneda" target="_blank" class="streamer-banner-link yt">YouTube</a>
@@ -785,20 +785,23 @@ function calcHSRate(s){if(!s.kills)return'0';return((s.headshotKills/s.kills)*10
 
 function loadDemoData(){isUsingDemo=true;currentPlayerData=DEMO_DATA.player;currentSeasonData=DEMO_DATA.seasonStats;currentWeaponData=null;currentSurvivalData=null;currentPlatform='psn';currentGameMode='tpp';currentSquadMode='squad';currentSeasonId='demo';document.getElementById('searchInput').value='KANNEDA';showSkeletons(false);renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBarDemo();renderWLGridDemo();renderChartsDemo();renderOverviewStats();renderMatchHistoryDemo();renderWeaponStatsDemo();renderFunStats();renderPersonality();showDataPanels();switchTab('overview');}
 
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
 async function findPlayer(name,platform){
   const url=API_BASE+'/'+platform+'/players?filter[playerNames]=';
   try{return await apiGet(url+encodeURIComponent(name));}catch(e1){
     if(!e1.message||!e1.message.includes('404'))throw e1;
     setLoaderStep('Reintentando variaciones de nombre...');
-    // Retry: lowercase
-    if(name!==name.toLowerCase()){try{return await apiGet(url+encodeURIComponent(name.toLowerCase()));}catch(e2){if(!e2.message||!e2.message.includes('404'))throw e2;}}
+    await wait(300);
     // Retry: UPPERCASE
-    if(name!==name.toUpperCase()){try{return await apiGet(url+encodeURIComponent(name.toUpperCase()));}catch(e3){if(!e3.message||!e3.message.includes('404'))throw e3;}}
+    if(name!==name.toUpperCase()){try{return await apiGet(url+encodeURIComponent(name.toUpperCase()));}catch(e2){if(!e2.message||!e2.message.includes('404'))throw e2;}}
+    await wait(300);
+    // Retry: lowercase
+    if(name!==name.toLowerCase()){try{return await apiGet(url+encodeURIComponent(name.toLowerCase()));}catch(e3){if(!e3.message||!e3.message.includes('404'))throw e3;}}
     // Retry: other platform
     setLoaderStep('Buscando en otra plataforma...');
+    await wait(300);
     const alt=platform==='psn'?'xbox':'psn';
     try{return await apiGet(API_BASE+'/'+alt+'/players?filter[playerNames]='+encodeURIComponent(name));}catch(e4){if(!e4.message||!e4.message.includes('404'))throw e4;}
-    if(name!==name.toLowerCase()){try{return await apiGet(API_BASE+'/'+alt+'/players?filter[playerNames]='+encodeURIComponent(name.toLowerCase()));}catch(e5){if(!e5.message||!e5.message.includes('404'))throw e5;}}
     throw e1;
   }
 }
