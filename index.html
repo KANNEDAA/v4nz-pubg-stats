@@ -696,7 +696,7 @@ let lbPlatform='psn',lbRegion='eu',lbMode='squad';
 let seasonTypeMode='season',currentSeasonId=null,currentRankedData=null,currentLifetimeData=null;
 
 const MAP_NAMES={'Baltic_Main':'Erangel','Chimera_Main':'Paramo','Desert_Main':'Miramar','DihorOtok_Main':'Vikendi','Erangel_Main':'Erangel','Heaven_Main':'Haven','Kiki_Main':'Deston','Range_Main':'Camp Jackal','Savage_Main':'Sanhok','Summerland_Main':'Karakin','Tiger_Main':'Taego','Neon_Main':'Rondo'};
-const WEAPON_TYPES={'M416':'Fusil de Asalto','Beryl M762':'Fusil de Asalto','AKM':'Fusil de Asalto','SCAR-L':'Fusil de Asalto','Mini 14':'DMR','SKS':'DMR','SLR':'DMR','Kar98k':'Francotirador','M24':'Francotirador','AWM':'Francotirador','UMP45':'SMG','Vector':'SMG','MP5K':'SMG','P90':'SMG','S12K':'Escopeta','S686':'Escopeta','M249':'LMG','DP-28':'LMG','Pan':'Cuerpo a cuerpo'};
+const WEAPON_TYPES={'M416':'Fusil de Asalto','Beryl M762':'Fusil de Asalto','AKM':'Fusil de Asalto','SCAR-L':'Fusil de Asalto','AUG':'Fusil de Asalto','G36C':'Fusil de Asalto','Groza':'Fusil de Asalto','QBZ':'Fusil de Asalto','M16A4':'Fusil de Asalto','ACE32':'Fusil de Asalto','Mk47':'Fusil de Asalto','Mini 14':'DMR','SKS':'DMR','SLR':'DMR','QBU':'DMR','Mk14':'DMR','VSS':'DMR','Kar98k':'Francotirador','M24':'Francotirador','AWM':'Francotirador','Mosin':'Francotirador','Lynx AMR':'Francotirador','Win94':'Francotirador','UMP45':'SMG','Vector':'SMG','MP5K':'SMG','P90':'SMG','Bizon':'SMG','Tommy Gun':'SMG','MP9':'SMG','S12K':'Escopeta','S686':'Escopeta','S1897':'Escopeta','M249':'LMG','DP-28':'LMG','MG3':'LMG','Pan':'Cuerpo a cuerpo','Machete':'Cuerpo a cuerpo','Sickle':'Cuerpo a cuerpo','Crossbow':'Arco','Deagle':'Pistola','P1911':'Pistola','P92':'Pistola','Rhino':'Pistola','Nagant':'Pistola','Flare Gun':'Especial','Mortar':'Especial','Panzerfaust':'Especial','C4':'Explosivo','Grenade':'Explosivo','Sticky Bomb':'Explosivo'};
 
 const DEMO_DATA={
   player:{type:'player',id:'account.f32bf5a234c74ab096cb376d077958ac',attributes:{name:'KANNEDA'},relationships:{matches:{data:[]}}},
@@ -801,11 +801,16 @@ async function findPlayer(name,platform){
     await wait(300);
     // Retry: lowercase
     if(name!==name.toLowerCase()){try{return await apiGet(url+encodeURIComponent(name.toLowerCase()));}catch(e3){if(!e3.message||!e3.message.includes('404'))throw e3;}}
-    // Retry: other platform
+    // Retry: other platform with all variations
     setLoaderStep('Buscando en otra plataforma...');
     await wait(300);
     const alt=platform==='psn'?'xbox':'psn';
-    try{return await apiGet(API_BASE+'/'+alt+'/players?filter[playerNames]='+encodeURIComponent(name));}catch(e4){if(!e4.message||!e4.message.includes('404'))throw e4;}
+    const altUrl=API_BASE+'/'+alt+'/players?filter[playerNames]=';
+    try{return await apiGet(altUrl+encodeURIComponent(name));}catch(e4){if(!e4.message||!e4.message.includes('404'))throw e4;}
+    await wait(300);
+    if(name!==name.toUpperCase()){try{return await apiGet(altUrl+encodeURIComponent(name.toUpperCase()));}catch(e5){if(!e5.message||!e5.message.includes('404'))throw e5;}}
+    await wait(300);
+    if(name!==name.toLowerCase()){try{return await apiGet(altUrl+encodeURIComponent(name.toLowerCase()));}catch(e6){if(!e6.message||!e6.message.includes('404'))throw e6;}}
     throw e1;
   }
 }
@@ -878,7 +883,7 @@ function renderNarrativeInsights(){
 }
 
 function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;let platformHtml=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';if(currentSurvivalData&&currentSurvivalData.data&&currentSurvivalData.data.attributes){platformHtml+=' <span style="margin-left:12px;font-size:.8rem;color:var(--accent-green);">Supervivencia Lv. '+currentSurvivalData.data.attributes.level+'</span>';}document.getElementById('playerPlatform').innerHTML=platformHtml;const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';}
-function renderSeasonBar(season){document.getElementById('seasonName').textContent=season.id.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');document.getElementById('seasonBar').classList.add('visible');}
+function renderSeasonBar(season){document.getElementById('seasonName').textContent=season.id.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 
 function renderOverviewStats(){
@@ -1345,13 +1350,23 @@ async function compareClans(){
 function setLBPlatform(p,btn){lbPlatform=p;const btns=btn.parentElement.querySelectorAll('.lb-btn');btns[0].classList.toggle('active',p==='psn');btns[1].classList.toggle('active',p==='xbox');renderLeaderboard();}
 function setLBRegion(r,btn){lbRegion=r;const btns=btn.parentElement.querySelectorAll('.lb-btn');btns[2].classList.toggle('active',r==='eu');btns[3].classList.toggle('active',r==='na');btns[4].classList.toggle('active',r==='as');renderLeaderboard();}
 function setLBMode(m,btn){lbMode=m;const btns=btn.parentElement.querySelectorAll('.lb-btn');for(let i=5;i<btns.length;i++)btns[i].classList.toggle('active',btns[i]===btn);renderLeaderboard();}
-function renderLeaderboard(){
+async function renderLeaderboard(){
   const lbContent=document.getElementById('leaderboardContent');
   const hasApi=IS_PROXIED||(API_KEY&&API_KEY.length>0);
-  if(!hasApi||currentSeasonId==='demo'||!currentSeasonId){renderLeaderboardDemo();return;}
+  if(!hasApi){renderLeaderboardDemo();return;}
+  // Auto-fetch season if we don't have a real one
+  let sid=currentSeasonId;
+  if(!sid||sid==='demo'){
+    try{
+      lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-timer">Obteniendo temporada...</div></div></div>';
+      const sr=await apiGet(API_BASE+'/'+lbPlatform+'/seasons');
+      const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
+      if(cs){sid=cs.id;currentSeasonId=sid;}else{renderLeaderboardDemo();return;}
+    }catch(e){console.error('Failed to fetch season for LB:',e);renderLeaderboardDemo();return;}
+  }
   try{
     lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-timer">Cargando Top 500...</div></div></div>';
-    const gm=lbMode;const sid=currentSeasonId;
+    const gm=lbMode;
     const lbShard=lbPlatform+'-'+lbRegion;
     apiGet(API_BASE+'/'+lbShard+'/leaderboards/'+sid+'/'+gm).then(r=>{
       const lb=r.data;const players=r.included||[];const pRelations=lb.relationships?.players?.data||[];
@@ -1359,9 +1374,9 @@ function renderLeaderboard(){
       let rank=1;pRelations.slice(0,500).forEach(pRef=>{
         const p=players.find(pl=>pl.id===pRef.id);if(!p||!p.attributes)return;
         const pa=p.attributes;const stats=pa.stats||{};const ik=pa.name==='KANNEDA';
-        const kd=stats.kills&&stats.losses?(stats.kills/Math.max(stats.losses,1)).toFixed(2):stats.kills||0;
+        const kd=stats.killDeathRatio?stats.killDeathRatio.toFixed(2):stats.kills&&(stats.roundsPlayed-stats.wins)>0?(stats.kills/Math.max(stats.roundsPlayed-stats.wins,1)).toFixed(2):(stats.kills||0);
         const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-        h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="document.getElementById(\'searchInput\').value=\''+pa.name+'\';searchPlayer();">'+pa.name+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
+        h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\''+lbPlatform+'\');document.getElementById(\'searchInput\').value=\''+pa.name+'\';searchPlayer();">'+pa.name+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
         rank++;
       });
       h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 500 via PUBG API &mdash; '+lbShard.toUpperCase()+' '+gm.toUpperCase()+'</p>';
