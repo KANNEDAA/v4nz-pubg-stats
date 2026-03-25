@@ -249,8 +249,12 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 /* MATCH DETAIL POPUP */
 .match-detail-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,.92); backdrop-filter:blur(8px); z-index:1001; justify-content:center; align-items:center; }
 .match-detail-popup.active { display:flex; }
-.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; position:relative; }
-.match-detail-card .close-btn { position:absolute; top:12px; right:16px; background:none; border:none; color:var(--text-dim); font-size:1.3rem; cursor:pointer; }
+.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; position:relative; }
+.match-detail-card::-webkit-scrollbar { width:4px; } .match-detail-card::-webkit-scrollbar-thumb { background:var(--accent-dim); border-radius:4px; }
+.match-detail-card .close-btn { position:sticky; top:0; float:right; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
+.match-detail-card .close-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+.match-back-btn { width:100%; margin-top:16px; padding:10px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.match-back-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
 .match-map-img { width:100%; height:200px; border-radius:10px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; margin-bottom:16px; overflow:hidden; position:relative; }
 .match-map-img .map-label { font-family:'Orbitron',sans-serif; font-size:1.6rem; font-weight:800; color:var(--accent); text-shadow:0 0 20px rgba(0,240,255,.3); }
 .match-detail-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
@@ -672,9 +676,9 @@ footer a { color: var(--accent); text-decoration: none; }
 </div>
 
 <!-- MATCH DETAIL POPUP -->
-<div class="match-detail-popup" id="matchDetailPopup" onclick="if(event.target===this)this.classList.remove('active');">
+<div class="match-detail-popup" id="matchDetailPopup" onclick="if(event.target===this)closeMatchDetail();">
   <div class="match-detail-card">
-    <button class="close-btn" onclick="document.getElementById('matchDetailPopup').classList.remove('active');">&times;</button>
+    <button class="close-btn" onclick="closeMatchDetail();">&times;</button>
     <div id="matchDetailContent"></div>
   </div>
 </div>
@@ -774,6 +778,7 @@ let clanComparePlatform='psn';
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();document.getElementById('apiModal').style.display='none';}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
@@ -860,7 +865,7 @@ async function searchPlayer(){
     setLoaderStep('Obteniendo estadisticas de temporada...');
     currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
     setLoaderStep('Descargando partidas recientes...');
-    const mids=currentPlayerData.relationships.matches.data.slice(0,8);
+    const mids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]).slice(0,8);
     currentMatchData=(await Promise.all(mids.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)))).filter(Boolean);
     setLoaderStep('Cargando maestria de armas...');
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
@@ -963,9 +968,12 @@ function showMatchDetail(idx){
   if(teammates.length>0){h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:12px;">Tu Equipo</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">';teammates.forEach(tm=>{h+='<div style="background:var(--bg-secondary);padding:8px;border-radius:6px;"><div style="color:var(--text-primary);font-weight:600;margin-bottom:3px;">'+tm.name+'</div><div style="color:var(--accent);font-size:.7rem;margin-bottom:2px;">'+tm.kills+' kills</div><div style="color:var(--accent-orange);font-size:.7rem;">'+Math.round(tm.damageDealt)+' dano</div></div>';});h+='</div></div>';}
   const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
   if(telemetryUrl){h+='<div style="margin-top:16px;"><button onclick="loadAndShowTelemetry(\''+telemetryUrl+'\',\''+pn+'\')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;">Ver Telemetria</button></div>';}
+  h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
   document.getElementById('matchDetailContent').innerHTML=h;
   document.getElementById('matchDetailPopup').classList.add('active');
+  document.querySelector('.match-detail-card').scrollTop=0;
 }
+function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');}
 
 function cleanWeaponName(id){let n=id.replace('Item_Weapon_','').replace('_C','');const MAP={'AK47':'AKM','HK416':'M416','Beryl':'Beryl M762','Mini14':'Mini 14','Win94':'Win94','Kar98k':'Kar98k','M16A4':'M16A4','SCAR-L':'SCAR-L','UMP':'UMP45','Vector':'Vector','Thompson':'Tommy Gun','Mk47Mutant':'Mk47','DesertEagle':'Deagle','P90':'P90','MP5K':'MP5K','FNFal':'SLR','Mk14':'Mk14','SKS':'SKS','QBZ':'QBZ','QBU':'QBU','Mosin':'Mosin','M249':'M249','DP28':'DP-28','S686':'S686','S12K':'S12K','S1897':'S1897','Pan':'Pan','Machete':'Machete','Sickle':'Sickle','Crossbow':'Crossbow','VSS':'VSS','AWM':'AWM','M24':'M24','Groza':'Groza','AUG':'AUG','Bizon':'Bizon','MG3':'MG3','L6':'Lynx AMR','ACE32':'ACE32','MP9':'MP9','P1911':'P1911','Rhino':'Rhino','M9':'P92','NagantM1895':'Nagant','G36C':'G36C','FlareGun':'Flare Gun','Mortar':'Mortar','PanzerFaust':'Panzerfaust','M79':'M79','Drone':'Drone','EMT':'EMT Gear','Decoy':'Decoy','BluezoneGrenade':'Bluehole Grenade','Sticky':'Sticky Bomb','C4':'C4','Grenade':'Grenade','SmokeBomb':'Smoke'};return MAP[n]||n;}
 function renderWeaponStatsDemo(){let h='';DEMO_DATA.weapons.forEach((w,i)=>{const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';h+='<div class="weapon-card animate-in"><div class="weapon-rank '+rc+'">#'+(i+1)+'</div><div class="weapon-info"><div class="weapon-name">'+w.name+'</div><div class="weapon-type">'+(WEAPON_TYPES[w.name]||'')+'</div></div><div class="weapon-stats-mini"><div class="weapon-mini-stat"><div class="wm-val">'+w.kills+'</div><div class="wm-label">Kills</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.headshots+'</div><div class="wm-label">HS</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.longestKill+'m</div><div class="wm-label">Max</div></div></div></div>';});document.getElementById('weaponGrid').innerHTML=h;}
@@ -1275,7 +1283,7 @@ async function comparePlayers(){
     if(n2.toUpperCase()==='KANNEDA'){s2=DEMO_DATA.seasonStats.data.attributes.gameModeStats[cmpMode]||{};}
     else{setLoaderStep('Buscando '+n2+'...');const p2=await findPlayer(n2,cmpPlatform);rn2=p2.data[0].attributes.name;setLoaderStep('Stats de '+rn2+'...');const ss2=await apiGet(API_BASE+'/'+cmpPlatform+'/players/'+p2.data[0].id+'/seasons/'+cs.id);s2=ss2.data.attributes.gameModeStats[cmpMode]||ss2.data.attributes.gameModeStats.squad||{};}
     renderCompareCards(rn1,s1,rn2,s2);
-  }catch(e){console.error('Compare error:',e);const s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;const s2={kills:38,wins:4,losses:28,roundsPlayed:30,damageDealt:4200,top10s:12,headshotKills:6,longestKill:180,assists:22,revives:8,heals:35,boosts:40,timeSurvived:21000,longestTimeSurvived:1650,rideDistance:32000,walkDistance:55000,DBNOs:25};renderCompareCards(n1||'KANNEDA',s1,n2||'Rival',s2);}
+  }catch(e){console.error('Compare error:',e);document.getElementById('compareCard1').innerHTML='<div class="empty-state"><p style="color:var(--accent-orange);">'+(''+e.message||'Error desconocido')+'</p></div>';document.getElementById('compareCard2').innerHTML='<div class="empty-state"><p>Revisa los nombres e intentalo de nuevo</p></div>';document.getElementById('compareBarChart').innerHTML='';}
   finally{showLoading(false);}
 }
 function renderCompareCards(n1,s1,n2,s2){
