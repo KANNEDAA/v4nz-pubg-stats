@@ -401,6 +401,30 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .clan-compare-bar-val { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 600; width: 50px; }
 @media(max-width:768px){ .clan-compare-container { grid-template-columns: 1fr; } .clan-compare-vs { padding-top: 0; font-size: 1.1rem; } }
 
+/* MI CLAN & HISTORIAL */
+.my-clan-banner { background: linear-gradient(135deg, rgba(255,107,0,0.12), rgba(255,51,85,0.08)); border: 1px solid rgba(255,107,0,0.25); border-radius: 12px; padding: 16px; margin-bottom: 16px; cursor: pointer; transition: all .25s; position: relative; overflow: hidden; }
+.my-clan-banner:hover { border-color: var(--accent-orange); box-shadow: 0 0 20px rgba(255,107,0,0.1); }
+.my-clan-banner::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--gradient-orange); }
+.my-clan-banner .mcb-tag { font-family:'Orbitron',sans-serif; font-weight:700; font-size:.75rem; color:var(--accent-orange); letter-spacing:1px; }
+.my-clan-banner .mcb-name { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1.1rem; color:var(--text-primary); margin-top:2px; }
+.my-clan-banner .mcb-members { font-size:.72rem; color:var(--text-secondary); margin-top:4px; }
+.my-clan-banner .mcb-badge { position:absolute; top:12px; right:14px; font-size:.6rem; font-family:'Rajdhani',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent-orange); background:rgba(255,107,0,0.1); padding:3px 8px; border-radius:6px; }
+.clan-history-section { margin-bottom: 16px; }
+.clan-history-title { font-family:'Rajdhani',sans-serif; font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:8px; }
+.clan-history-item { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; cursor:pointer; transition:all .2s; }
+.clan-history-item:hover { border-color:var(--border-hover); background:var(--bg-card-hover); }
+.clan-history-item .chi-icon { width:32px; height:32px; border-radius:8px; background:var(--accent-orange-dim); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',sans-serif; font-weight:700; font-size:.75rem; color:var(--accent-orange); flex-shrink:0; }
+.clan-history-item .chi-info { flex:1; min-width:0; }
+.clan-history-item .chi-name { font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.88rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.clan-history-item .chi-meta { font-size:.65rem; color:var(--text-dim); }
+.clan-history-item .chi-actions { display:flex; gap:4px; flex-shrink:0; }
+.chi-action-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:.65rem; cursor:pointer; transition:all .2s; color:var(--text-dim); }
+.chi-action-btn:hover { border-color:var(--accent); color:var(--accent); }
+.chi-action-btn.set-my-clan { color:var(--accent-orange); border-color:rgba(255,107,0,0.3); }
+.chi-action-btn.set-my-clan:hover { background:rgba(255,107,0,0.1); border-color:var(--accent-orange); }
+.chi-action-btn.remove-history { color:var(--accent-red); border-color:rgba(255,51,85,0.2); }
+.chi-action-btn.remove-history:hover { background:rgba(255,51,85,0.08); border-color:var(--accent-red); }
+
 /* LEADERBOARD */
 .leaderboard-controls { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .lb-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 16px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.25s; box-shadow: var(--shadow-card); }
@@ -664,6 +688,8 @@ footer a { color: var(--accent); text-decoration: none; }
       <button class="clan-mode-tab" onclick="setClanMode('compare',this)">Comparar Clanes</button>
     </div>
     <div id="clanSearchMode">
+      <div id="myClanBanner"></div>
+      <div id="clanHistorySection"></div>
       <div class="clan-platform-sel">
         <button class="clan-plat-btn active" data-cplat="psn" onclick="setClanPlatform('psn',this)">PlayStation</button>
         <button class="clan-plat-btn" data-cplat="xbox" onclick="setClanPlatform('xbox',this)">Xbox</button>
@@ -802,10 +828,92 @@ const DEMO_CLAN={name:'V4NZ GAMING',tag:'V4NZ',members:[
 ]};
 let clanPlatform='psn';
 let clanComparePlatform='psn';
+let clanHistory=JSON.parse(localStorage.getItem('pubg_clan_history')||'[]');
+let myClan=JSON.parse(localStorage.getItem('pubg_my_clan')||'null');
+
+function saveClanToHistory(clanName,clanTag,memberCount,level,platform,memberNames){
+  const existing=clanHistory.findIndex(c=>c.tag===clanTag);
+  const entry={name:clanName,tag:clanTag,memberCount,level,platform,members:memberNames||[],date:Date.now()};
+  if(existing>=0)clanHistory[existing]=entry;else clanHistory.unshift(entry);
+  if(clanHistory.length>10)clanHistory=clanHistory.slice(0,10);
+  localStorage.setItem('pubg_clan_history',JSON.stringify(clanHistory));
+  renderClanHistoryUI();
+}
+function removeClanFromHistory(tag,evt){
+  if(evt)evt.stopPropagation();
+  clanHistory=clanHistory.filter(c=>c.tag!==tag);
+  localStorage.setItem('pubg_clan_history',JSON.stringify(clanHistory));
+  if(myClan&&myClan.tag===tag){myClan=null;localStorage.removeItem('pubg_my_clan');}
+  renderClanHistoryUI();
+}
+function setAsMyClan(tag,evt){
+  if(evt)evt.stopPropagation();
+  const clan=clanHistory.find(c=>c.tag===tag);
+  if(!clan)return;
+  myClan={...clan};
+  localStorage.setItem('pubg_my_clan',JSON.stringify(myClan));
+  renderClanHistoryUI();
+}
+function clearMyClan(evt){
+  if(evt)evt.stopPropagation();
+  myClan=null;localStorage.removeItem('pubg_my_clan');
+  renderClanHistoryUI();
+}
+function loadClanFromHistory(tag){
+  const clan=clanHistory.find(c=>c.tag===tag)||(myClan&&myClan.tag===tag?myClan:null);
+  if(!clan)return;
+  setClanPlatform(clan.platform,document.querySelector('.clan-plat-btn[data-cplat="'+clan.platform+'"]'));
+  document.getElementById('clanPlayerInput').value='';
+  // Render the clan card directly + pre-fill members
+  const cr=document.getElementById('clanResults');
+  cr.innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+clan.tag.charAt(0)+'</div><div><div class="clan-name">'+clan.name+'</div><div class="clan-tag">['+clan.tag+'] &mdash; Nivel '+clan.level+' &mdash; '+clan.memberCount+' miembros</div></div></div></div>';
+  if(clan.members&&clan.members.length){
+    cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
+      '<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Analizar Miembros del Clan</div>'+
+      '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">Miembros guardados del historial. Puedes editarlos o pulsar Analizar:</p>'+
+      '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" value="'+clan.members.join(', ')+'" onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')">ANALIZAR</button></div></div>';
+  }else{
+    cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
+      '<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Analizar Miembros del Clan</div>'+
+      '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">La API de PUBG no devuelve la lista de miembros. Escribe los gamertags separados por coma:</p>'+
+      '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" placeholder="Jugador1, Jugador2, Jugador3..." onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')">ANALIZAR</button></div></div>';
+  }
+}
+function renderClanHistoryUI(){
+  const banner=document.getElementById('myClanBanner');
+  const histSec=document.getElementById('clanHistorySection');
+  if(!banner||!histSec)return;
+  // Mi Clan banner
+  if(myClan){
+    const memberList=myClan.members&&myClan.members.length?myClan.members.slice(0,5).join(', ')+(myClan.members.length>5?' +' +(myClan.members.length-5)+' mas':''):'Sin miembros guardados';
+    banner.innerHTML='<div class="my-clan-banner" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberList+' &mdash; '+myClan.platform.toUpperCase()+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\');event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Analizar</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
+  }else{banner.innerHTML='';}
+  // Historial
+  const nonMyClan=clanHistory.filter(c=>!(myClan&&c.tag===myClan.tag));
+  if(nonMyClan.length){
+    let h='<div class="clan-history-section"><div class="clan-history-title">Clanes Recientes</div>';
+    nonMyClan.forEach(c=>{
+      const memberHint=c.members&&c.members.length?c.members.length+' miembros guardados':'Sin miembros';
+      const ago=getTimeAgo(c.date);
+      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+c.platform.toUpperCase()+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions"><button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-history" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Eliminar">&times;</button></div></div>';
+    });
+    h+='</div>';
+    histSec.innerHTML=h;
+  }else{histSec.innerHTML='';}
+}
+function getTimeAgo(ts){
+  if(!ts)return '';
+  const diff=Date.now()-ts;const mins=Math.floor(diff/60000);
+  if(mins<1)return 'ahora';if(mins<60)return 'hace '+mins+' min';
+  const hrs=Math.floor(mins/60);if(hrs<24)return 'hace '+hrs+'h';
+  const days=Math.floor(hrs/24);if(days<7)return 'hace '+days+'d';
+  return new Date(ts).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+}
 
 // INIT
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
+  renderClanHistoryUI();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();document.getElementById('apiModal').style.display='none';}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
@@ -1471,6 +1579,8 @@ async function searchClan(){
   try{
     const clan=await fetchClanByPlayer(n, clanPlatform);
     const clanInfo=renderClanCard(clan,'clanResults');
+    // Save to history (no members yet - will be updated when analyzed)
+    saveClanToHistory(clanInfo.name,clanInfo.tag,clanInfo.memberCount,clanInfo.level,clanPlatform,[]);
     // PUBG API doesn't return member list - show input to add members manually
     const cr=document.getElementById('clanResults');
     cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
@@ -1492,6 +1602,8 @@ async function analyzeClanMembers(clanName,clanTag,memberCount,level){
     const fakeMembers=names.map(n=>({attributes:{name:n},id:n}));
     const memberStats=await fetchClanMemberStats(fakeMembers,clanPlatform);
     renderClanEnhanced({name:clanName,tag:clanTag,memberCount,level},memberStats,'clanResults');
+    // Update history with member names
+    saveClanToHistory(clanName,clanTag,memberCount,level,clanPlatform,names);
   }catch(e){
     document.getElementById('clanResults').innerHTML+='<p style="color:var(--accent-orange);font-size:.85rem;margin-top:10px;">'+e.message+'</p>';
   }finally{showLoading(false);}
