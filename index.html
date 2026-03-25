@@ -425,12 +425,40 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .error-msg.visible { display: block; }
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
 .empty-state p { font-size: 1rem; font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
-.panel { display: none; } .panel.active { display: block; }
 footer { position: relative; z-index: 1; border-top: 1px solid rgba(255,255,255,0.04); padding: 28px 2rem; text-align: center; color: var(--text-dim); font-size: 0.72rem; background: var(--bg-secondary); }
 footer a { color: var(--accent); text-decoration: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.animate-in { animation: fadeInUp 0.5s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+@keyframes scaleIn { from { opacity:0; transform:scale(.92); } to { opacity:1; transform:scale(1); } }
+.animate-in { opacity:0; animation: fadeInUp 0.45s ease forwards; }
+.animate-in:nth-child(1){animation-delay:.03s}.animate-in:nth-child(2){animation-delay:.06s}.animate-in:nth-child(3){animation-delay:.09s}.animate-in:nth-child(4){animation-delay:.12s}.animate-in:nth-child(5){animation-delay:.15s}.animate-in:nth-child(6){animation-delay:.18s}.animate-in:nth-child(7){animation-delay:.21s}.animate-in:nth-child(8){animation-delay:.24s}
+.stat-card { opacity:0; animation: scaleIn .4s ease forwards; }
 .stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.1s}.stat-card:nth-child(3){animation-delay:.15s}.stat-card:nth-child(4){animation-delay:.2s}.stat-card:nth-child(5){animation-delay:.25s}.stat-card:nth-child(6){animation-delay:.3s}
+.weapon-card { opacity:0; animation: slideIn .4s ease forwards; }
+.weapon-card:nth-child(1){animation-delay:.04s}.weapon-card:nth-child(2){animation-delay:.08s}.weapon-card:nth-child(3){animation-delay:.12s}.weapon-card:nth-child(4){animation-delay:.16s}.weapon-card:nth-child(5){animation-delay:.2s}.weapon-card:nth-child(6){animation-delay:.24s}
+.fun-stat-card { opacity:0; animation: scaleIn .35s ease forwards; }
+.fun-stat-card:nth-child(1){animation-delay:.03s}.fun-stat-card:nth-child(2){animation-delay:.06s}.fun-stat-card:nth-child(3){animation-delay:.09s}.fun-stat-card:nth-child(4){animation-delay:.12s}.fun-stat-card:nth-child(5){animation-delay:.15s}.fun-stat-card:nth-child(6){animation-delay:.18s}
+.panel { display:none; opacity:0; } .panel.active { display:block; animation: fadeIn .3s ease forwards; }
+/* FAVORITES */
+.fav-section { margin-bottom:8px; }
+.fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
+.recent-tag { position:relative; }
+.fav-star { display:inline-block; cursor:pointer; margin-left:4px; font-size:.65rem; opacity:.4; transition:all .2s; vertical-align:middle; }
+.fav-star:hover, .fav-star.active { opacity:1; color:var(--accent-yellow); }
+.fav-tag { background:var(--accent-yellow)11; border:1px solid var(--accent-yellow)33; }
+.fav-tag .fav-star { opacity:1; color:var(--accent-yellow); }
+/* COPY LINK BTN */
+.copy-link-btn { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); padding:6px 14px; border-radius:6px; font-size:.75rem; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:all .2s; margin-left:8px; }
+.copy-link-btn:hover { border-color:var(--accent); color:var(--accent); }
+.copy-link-btn.copied { border-color:var(--accent-green); color:var(--accent-green); }
+/* MATCH DETAIL EXTRA */
+.md-combat-summary { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; margin:16px 0; padding:14px; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border); }
+.md-combat-bar { height:6px; border-radius:3px; background:var(--bg-card); overflow:hidden; }
+.md-combat-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+.md-loot-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.md-loot-item { background:var(--bg-secondary); padding:4px 10px; border-radius:4px; font-size:.7rem; color:var(--text-secondary); border:1px solid var(--border); }
+.md-loot-item .loot-val { color:var(--accent); font-weight:600; margin-right:4px; }
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-primary)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
 
 @media(max-width:900px){
@@ -576,6 +604,7 @@ footer a { color: var(--accent); text-decoration: none; }
     <div class="player-quick-stats" id="quickStats"></div>
     <div class="rank-badge-area" id="rankBadge"></div>
     <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
+    <button class="copy-link-btn" id="copyLinkBtn" style="display:none;" onclick="copyPlayerLink(this)">&#x1F517; Copiar Enlace</button>
   </div>
   <div id="narrativeInsights"></div>
   <div class="personality-section" id="personalitySection"></div>
@@ -713,7 +742,7 @@ const API_BASE=IS_PROXIED?'/api/shards':'https://api.pubg.com/shards';
 let API_KEY=IS_PROXIED?'proxy':localStorage.getItem('pubg_api_key')||'';
 let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
 let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null,currentSurvivalData=null;
-let isUsingDemo=false,recentSearches=JSON.parse(localStorage.getItem('recent_searches')||'[]');
+let isUsingDemo=false,recentSearches=JSON.parse(localStorage.getItem('recent_searches')||'[]'),favorites=JSON.parse(localStorage.getItem('pubg_favorites')||'[]');
 let lbPlatform='psn',lbRegion='eu',lbMode='squad';
 let cmpPlatform='psn',cmpMode='squad';
 function setCmpMode(m){cmpMode=m;['squad','squad-fpp','solo','duo'].forEach(k=>{const el=document.getElementById('cmpMode-'+k);if(el)el.classList.toggle('active',k===m);});}
@@ -905,8 +934,10 @@ async function setSeasonType(type){
     renderOverviewStats();renderFunStats();renderPersonality();
   }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
 }
-function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,6);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
-function renderRecentSearches(){const c=document.getElementById('recentSearches');if(!recentSearches.length){c.innerHTML='';return;}c.innerHTML=recentSearches.map(s=>'<div class="recent-tag" onclick="document.getElementById(\'searchInput\').value=\''+s.name+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span></div>').join('');}
+function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,8);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
+function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const idx=favorites.findIndex(f=>f.name===name);if(idx>=0)favorites.splice(idx,1);else favorites.push({name,platform});localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
+function isFavorite(name){return favorites.some(f=>f.name===name);}
+function renderRecentSearches(){const c=document.getElementById('recentSearches');let h='';if(favorites.length){h+='<div class="fav-section"><div class="fav-section-title">Favoritos</div><div style="display:flex;flex-wrap:wrap;gap:6px;">';favorites.forEach(s=>{h+='<div class="recent-tag fav-tag" onclick="document.getElementById(\'searchInput\').value=\''+s.name+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span><span class="fav-star active" onclick="toggleFavorite(\''+s.name+'\',\''+s.platform+'\',event)">&#9733;</span></div>';});h+='</div></div>';}const nonFavRecents=recentSearches.filter(s=>!isFavorite(s.name));if(nonFavRecents.length){h+='<div class="fav-section"><div class="fav-section-title">Recientes</div><div style="display:flex;flex-wrap:wrap;gap:6px;">';nonFavRecents.forEach(s=>{h+='<div class="recent-tag" onclick="document.getElementById(\'searchInput\').value=\''+s.name+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span><span class="fav-star" onclick="toggleFavorite(\''+s.name+'\',\''+s.platform+'\',event)">&#9734;</span></div>';});h+='</div></div>';}c.innerHTML=h;}
 
 function renderNarrativeInsights(){
   const s=getActiveStats();const kd=parseFloat(calcKD(s));let kdTier,kdClass,kdEmoji;if(kd>3){kdTier='Elite';kdClass='kd-elite';kdEmoji='👑';}else if(kd>2){kdTier='Muy bueno';kdClass='kd-good';kdEmoji='⭐';}else if(kd>1.5){kdTier='Bueno';kdClass='kd-good';kdEmoji='✓';}else if(kd>1){kdTier='Promedio';kdClass='kd-avg';kdEmoji='→';}else{kdTier='En progreso';kdClass='kd-progress';kdEmoji='📈';}
@@ -915,7 +946,8 @@ function renderNarrativeInsights(){
   const combatScore=Math.min(100,Math.round((kd*15)+(wr*0.4)+(t10*0.2)+(Math.min(ad/3,30))));const ni=document.getElementById('narrativeInsights');ni.innerHTML='<div class="insight-chips"><div class="insight-chip '+kdClass+'">'+kdEmoji+' <span class="insight-chip-label">K/D Tier:</span> <span class="insight-chip-value">'+kdTier+'</span></div><div class="insight-chip percentile"><span class="insight-chip-label">Percentil:</span> <span class="insight-chip-value">Mejor que ~'+percentile+'</span></div><div class="insight-chip highlight">⚡ '+bestStatText+' ('+bestStat+')</div><div class="insight-chip combat-rating">🎖 Combat Rating: <span class="insight-chip-value">'+combatScore+'/100</span></div></div>';ni.classList.add('visible');
 }
 
-function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;let platformHtml=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';if(currentSurvivalData&&currentSurvivalData.data&&currentSurvivalData.data.attributes){platformHtml+=' <span style="margin-left:12px;font-size:.8rem;color:var(--accent-green);">Supervivencia Lv. '+currentSurvivalData.data.attributes.level+'</span>';}document.getElementById('playerPlatform').innerHTML=platformHtml;const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';}
+function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;let platformHtml=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';if(currentSurvivalData&&currentSurvivalData.data&&currentSurvivalData.data.attributes){platformHtml+=' <span style="margin-left:12px;font-size:.8rem;color:var(--accent-green);">Supervivencia Lv. '+currentSurvivalData.data.attributes.level+'</span>';}document.getElementById('playerPlatform').innerHTML=platformHtml;const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';const cl=document.getElementById('copyLinkBtn');if(cl)cl.style.display='inline-flex';}
+function copyPlayerLink(btn){const n=currentPlayerData?.attributes?.name;if(!n)return;const url='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);navigator.clipboard?.writeText(url).then(()=>{btn.classList.add('copied');btn.innerHTML='&#x2705; Copiado!';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='&#x1F517; Copiar Enlace';},2000);}).catch(()=>{prompt('Copia este enlace:',url);});}
 function renderSeasonBar(season){document.getElementById('seasonName').textContent=season.id.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 
@@ -964,6 +996,14 @@ function showMatchDetail(idx){
   h+='<div class="match-detail-stat"><div class="val">'+((ps.rideDistance||0)/1000).toFixed(1)+'km</div><div class="lbl">Vehiculo</div></div>';
   h+='<div class="match-detail-stat"><div class="val">'+(ps.revives||0)+'</div><div class="lbl">Revives</div></div>';
   h+='</div>';
+  // Combat summary: damage dealt vs avg, efficiency
+  const dmgDealt=Math.round(ps.damageDealt||0);const killDmgRatio=ps.kills>0?Math.round(dmgDealt/ps.kills):0;
+  const dpm=ps.timeSurvived>0?(dmgDealt/(ps.timeSurvived/60)).toFixed(1):'0';
+  h+='<div class="md-combat-summary"><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent-orange);">'+dmgDealt+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano Total</div></div><div style="text-align:center;padding:0 16px;"><div style="font-size:.7rem;color:var(--text-dim);margin-bottom:4px;">Eficiencia</div><div style="font-family:Orbitron,sans-serif;font-size:1rem;color:var(--accent);">'+killDmgRatio+'</div><div style="font-size:.6rem;color:var(--text-dim);">dano/kill</div></div><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent);">'+dpm+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano/min</div></div></div>';
+  // Loot & resources used
+  const lootItems=[];
+  if(ps.heals)lootItems.push({l:'Heals',v:ps.heals});if(ps.boosts)lootItems.push({l:'Boosts',v:ps.boosts});if(ps.weaponsAcquired)lootItems.push({l:'Armas',v:ps.weaponsAcquired});if(ps.roadKills)lootItems.push({l:'Atropellos',v:ps.roadKills});if(ps.vehicleDestroys)lootItems.push({l:'Vehiculos',v:ps.vehicleDestroys});if(ps.longestKill)lootItems.push({l:'Kill lejano',v:Math.round(ps.longestKill)+'m'});if(ps.swimDistance>0)lootItems.push({l:'Nado',v:((ps.swimDistance)/1000).toFixed(2)+'km'});
+  if(lootItems.length){h+='<div class="md-loot-grid">';lootItems.forEach(i=>{h+='<div class="md-loot-item"><span class="loot-val">'+i.v+'</span>'+i.l+'</div>';});h+='</div>';}
   const myRoster=(match.included||[]).find(i=>i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(p=>p.id===pp.id));let teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){const partIds=myRoster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>b.kills-a.kills);}
   if(teammates.length>0){h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:12px;">Tu Equipo</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">';teammates.forEach(tm=>{h+='<div style="background:var(--bg-secondary);padding:8px;border-radius:6px;"><div style="color:var(--text-primary);font-weight:600;margin-bottom:3px;">'+tm.name+'</div><div style="color:var(--accent);font-size:.7rem;margin-bottom:2px;">'+tm.kills+' kills</div><div style="color:var(--accent-orange);font-size:.7rem;">'+Math.round(tm.damageDealt)+' dano</div></div>';});h+='</div></div>';}
   const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
@@ -1338,17 +1378,109 @@ function renderClanCard(clan, targetId){
   return {name,tag,memberCount,level};
 }
 
+async function fetchClanMemberStats(members,platform){
+  // Fetch season + stats for up to 10 members
+  const sr=await apiGet(API_BASE+'/'+platform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
+  if(!cs)return[];
+  const results=[];const maxM=Math.min(members.length,10);
+  for(let i=0;i<maxM;i++){
+    const m=members[i];const mName=m.attributes?m.attributes.name:(m.id||'?');const mId=m.id||(m.attributes&&m.attributes.id)||null;
+    try{
+      setLoaderStep('Stats de '+mName+' ('+(i+1)+'/'+maxM+')...');
+      // If no ID, look up by name
+      let pid=mId;
+      if(!pid||pid.indexOf('account.')<0){const pr=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(mName));pid=pr.data[0].id;}
+      const ss=await apiGet(API_BASE+'/'+platform+'/players/'+pid+'/seasons/'+cs.id);
+      const gms=ss.data.attributes.gameModeStats||{};
+      // Combine squad+squad-fpp as main stats
+      const sq=gms.squad||{};const sqf=gms['squad-fpp']||{};
+      const combined={kills:(sq.kills||0)+(sqf.kills||0),wins:(sq.wins||0)+(sqf.wins||0),roundsPlayed:(sq.roundsPlayed||0)+(sqf.roundsPlayed||0),damageDealt:(sq.damageDealt||0)+(sqf.damageDealt||0),top10s:(sq.top10s||0)+(sqf.top10s||0),assists:(sq.assists||0)+(sqf.assists||0),revives:(sq.revives||0)+(sqf.revives||0),headshotKills:(sq.headshotKills||0)+(sqf.headshotKills||0),longestKill:Math.max(sq.longestKill||0,sqf.longestKill||0),timeSurvived:(sq.timeSurvived||0)+(sqf.timeSurvived||0),losses:(sq.losses||0)+(sqf.losses||0)};
+      // Check recent activity from player data
+      const pData=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(mName)).catch(()=>null);
+      let lastMatch=null;
+      if(pData&&pData.data&&pData.data[0]&&pData.data[0].relationships&&pData.data[0].relationships.matches&&pData.data[0].relationships.matches.data&&pData.data[0].relationships.matches.data.length>0){lastMatch='activo';}
+      results.push({name:mName,stats:combined,active:lastMatch});
+      await wait(200);
+    }catch(e){results.push({name:mName,stats:null,active:null});}
+  }
+  // Mark remaining members as not fetched
+  for(let i=maxM;i<members.length;i++){const mName=members[i].attributes?members[i].attributes.name:(members[i].id||'?');results.push({name:mName,stats:null,active:null});}
+  return results;
+}
+function renderClanEnhanced(clanInfo,memberStats,targetId){
+  const {name,tag,memberCount,level}=clanInfo;
+  const fetched=memberStats.filter(m=>m.stats);
+  // Aggregated stats
+  const totKills=fetched.reduce((a,m)=>a+(m.stats.kills||0),0);
+  const totWins=fetched.reduce((a,m)=>a+(m.stats.wins||0),0);
+  const totRounds=fetched.reduce((a,m)=>a+(m.stats.roundsPlayed||0),0);
+  const totDmg=fetched.reduce((a,m)=>a+(m.stats.damageDealt||0),0);
+  const avgKD=fetched.length?(fetched.reduce((a,m)=>{const d=(m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1;return a+(m.stats.kills/d);},0)/fetched.length).toFixed(2):'?';
+  const avgWR=totRounds?((totWins/totRounds)*100).toFixed(1):'0';
+  const avgDmg=totRounds?Math.round(totDmg/totRounds):0;
+  // Best player
+  const best=fetched.length?fetched.reduce((a,b)=>(b.stats.kills>a.stats.kills?b:a)):null;
+  // Active members
+  const activeCount=fetched.filter(m=>m.active).length;
+  const inactiveCount=fetched.filter(m=>!m.active).length;
+
+  let h='<div class="clan-card">';
+  h+='<div class="clan-header"><div class="clan-icon">'+tag.charAt(0).toUpperCase()+'</div><div><div class="clan-name">'+name+'</div><div class="clan-tag">['+tag+'] &mdash; '+memberCount+' miembros &mdash; Nivel '+level+'</div></div></div>';
+  // Aggregated stats grid
+  h+='<div class="clan-stats-grid">';
+  h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent);">'+totKills+'</div><div class="cs-label">Total Kills</div></div>';
+  h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent-yellow);">'+totWins+'</div><div class="cs-label">Victorias</div></div>';
+  h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent-green);">'+avgKD+'</div><div class="cs-label">K/D Medio</div></div>';
+  h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent-orange);">'+avgDmg+'</div><div class="cs-label">Dano Prom.</div></div>';
+  h+='<div class="clan-stat"><div class="cs-val">'+avgWR+'%</div><div class="cs-label">Win Rate</div></div>';
+  h+='<div class="clan-stat"><div class="cs-val">'+totRounds+'</div><div class="cs-label">Partidas</div></div>';
+  h+='</div>';
+  if(best){h+='<div style="text-align:center;margin:12px 0;padding:10px;background:var(--accent-dim);border-radius:8px;font-size:.8rem;">MVP del clan: <span style="color:var(--accent);font-weight:700;">'+best.name+'</span> — '+best.stats.kills+' kills, K/D '+(best.stats.kills/(best.stats.losses||1)).toFixed(2)+'</div>';}
+  // Activity indicator
+  h+='<div style="display:flex;justify-content:center;gap:16px;margin:12px 0;font-size:.75rem;">';
+  h+='<span style="color:var(--accent-green);">&#x25CF; '+activeCount+' activos</span>';
+  h+='<span style="color:var(--text-dim);">&#x25CB; '+inactiveCount+' sin partidas recientes</span>';
+  if(memberStats.length>fetched.length)h+='<span style="color:var(--text-dim);">&#x2022; '+(memberStats.length-fetched.length)+' sin analizar</span>';
+  h+='</div>';
+  // Member ranking
+  const ranked=[...fetched].sort((a,b)=>(b.stats.kills||0)-(a.stats.kills||0));
+  h+='<div class="section-title" style="font-size:.85rem;margin-top:16px;">Ranking de Miembros</div>';
+  const maxKills=ranked.length?ranked[0].stats.kills||1:1;
+  ranked.forEach((m,i)=>{
+    const medal=i===0?'<span style="color:#ffd700;">&#x1F947;</span>':i===1?'<span style="color:#c0c0c0;">&#x1F948;</span>':i===2?'<span style="color:#cd7f32;">&#x1F949;</span>':'<span style="color:var(--text-dim);font-size:.7rem;">#'+(i+1)+'</span>';
+    const kd=((m.stats.kills||0)/((m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1)).toFixed(2);
+    const wr=m.stats.roundsPlayed?((m.stats.wins/m.stats.roundsPlayed)*100).toFixed(1):'0';
+    const pct=Math.round(((m.stats.kills||0)/maxKills)*100);
+    const actDot=m.active?'<span style="color:var(--accent-green);font-size:.5rem;margin-left:4px;">&#x25CF;</span>':'<span style="color:var(--text-dim);font-size:.5rem;margin-left:4px;">&#x25CB;</span>';
+    h+='<div class="animate-in" style="display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:center;padding:8px 10px;background:var(--bg-secondary);border-radius:8px;margin-bottom:6px;border:1px solid var(--border);">';
+    h+='<div style="text-align:center;">'+medal+'</div>';
+    h+='<div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span class="clan-member-name" style="font-size:.8rem;" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';switchTab(\'overview\');searchPlayer();">'+m.name+actDot+'</span><span style="font-size:.7rem;color:var(--text-dim);">'+m.stats.kills+' kills &mdash; K/D '+kd+' &mdash; WR '+wr+'%</span></div>';
+    h+='<div style="height:4px;border-radius:2px;background:var(--bg-card);overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:2px;transition:width .5s;"></div></div></div></div>';
+  });
+  // Unanalyzed members
+  const unanalyzed=memberStats.filter(m=>!m.stats);
+  if(unanalyzed.length){h+='<div style="margin-top:10px;font-size:.7rem;color:var(--text-dim);">Sin analizar: '+unanalyzed.map(m=>m.name).join(', ')+'</div>';}
+  h+='</div>';
+  document.getElementById(targetId).innerHTML=h;
+}
 async function searchClan(){
   const n=document.getElementById('clanPlayerInput').value.trim();
   if(!n){alert('Escribe el nombre de un jugador');return;}
   if(!API_KEY){renderClanDemo('clanResults');return;}
-  const iv=showApiLoader('clanResults','Buscando clan de '+n+'...');
+  showLoading(true);setLoaderStep('Buscando clan de '+n+'...');
   try{
     const clan=await fetchClanByPlayer(n, clanPlatform);
-    stopApiLoader(iv);renderClanCard(clan,'clanResults');
+    const clanInfo=renderClanCard(clan,'clanResults');
+    // Now fetch member stats for enhanced view
+    const members=clan.attributes&&clan.attributes.members||clan.relationships&&clan.relationships.members&&clan.relationships.members.data||[];
+    if(members.length>0){
+      setLoaderStep('Cargando stats de miembros...');
+      const memberStats=await fetchClanMemberStats(members,clanPlatform);
+      renderClanEnhanced(clanInfo,memberStats,'clanResults');
+    }
   }catch(e){
-    stopApiLoader(iv);document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
-  }
+    document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+  }finally{showLoading(false);}
 }
 
 function renderClanDemo(targetId){
@@ -1360,28 +1492,37 @@ async function compareClans(){
   const n1=document.getElementById('clanCompare1').value.trim();
   const n2=document.getElementById('clanCompare2').value.trim();
   if(!n1||!n2){alert('Escribe el nombre de un jugador en cada campo');return;}
-  if(!API_KEY){
-    document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Necesitas API Key para comparar clanes reales.</p>';
-    return;
-  }
-  const ivcc=showApiLoader('clanCompareResults','Buscando clanes de '+n1+' y '+n2+'...');
+  if(!API_KEY){document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Necesitas API Key para comparar clanes reales.</p>';return;}
+  showLoading(true);setLoaderStep('Buscando clanes...');
   try{
     const [clan1,clan2]=await Promise.all([fetchClanByPlayer(n1,clanComparePlatform),fetchClanByPlayer(n2,clanComparePlatform)]);
     const a1=clan1.attributes||{};const a2=clan2.attributes||{};
     const m1=a1.members||clan1.relationships&&clan1.relationships.members&&clan1.relationships.members.data||[];
     const m2=a2.members||clan2.relationships&&clan2.relationships.members&&clan2.relationships.members.data||[];
-    const mc1=m1.length||a1.clanMemberCount||0;const mc2=m2.length||a2.clanMemberCount||0;
-    const lv1=a1.clanLevel||0;const lv2=a2.clanLevel||0;
     const tag1=a1.clanTag||'???';const tag2=a2.clanTag||'???';
     const name1=a1.clanName||'Clan 1';const name2=a2.clanName||'Clan 2';
-    const metrics=[{label:'Miembros',v1:mc1,v2:mc2},{label:'Nivel',v1:lv1,v2:lv2}];
+    const mc1=m1.length||a1.clanMemberCount||0;const mc2=m2.length||a2.clanMemberCount||0;
+    const lv1=a1.clanLevel||0;const lv2=a2.clanLevel||0;
+    // Fetch member stats for both clans
+    setLoaderStep('Stats del clan '+tag1+'...');
+    const ms1=await fetchClanMemberStats(m1,clanComparePlatform);
+    setLoaderStep('Stats del clan '+tag2+'...');
+    const ms2=await fetchClanMemberStats(m2,clanComparePlatform);
+    // Aggregate
+    function aggr(ms){const f=ms.filter(m=>m.stats);return{kills:f.reduce((a,m)=>a+(m.stats.kills||0),0),wins:f.reduce((a,m)=>a+(m.stats.wins||0),0),rounds:f.reduce((a,m)=>a+(m.stats.roundsPlayed||0),0),dmg:f.reduce((a,m)=>a+(m.stats.damageDealt||0),0),kd:f.length?(f.reduce((a,m)=>{const d=(m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1;return a+(m.stats.kills/d);},0)/f.length).toFixed(2):'0',active:f.filter(m=>m.active).length,fetched:f.length};}
+    const ag1=aggr(ms1);const ag2=aggr(ms2);
+    const wr1=ag1.rounds?((ag1.wins/ag1.rounds)*100).toFixed(1):'0';
+    const wr2=ag2.rounds?((ag2.wins/ag2.rounds)*100).toFixed(1):'0';
+    const ad1=ag1.rounds?Math.round(ag1.dmg/ag1.rounds):0;
+    const ad2=ag2.rounds?Math.round(ag2.dmg/ag2.rounds):0;
+    const metrics=[{label:'Miembros',v1:mc1,v2:mc2},{label:'Nivel',v1:lv1,v2:lv2},{label:'Total Kills',v1:ag1.kills,v2:ag2.kills},{label:'Victorias',v1:ag1.wins,v2:ag2.wins},{label:'K/D Medio',v1:parseFloat(ag1.kd),v2:parseFloat(ag2.kd)},{label:'Win Rate %',v1:parseFloat(wr1),v2:parseFloat(wr2)},{label:'Dano Prom.',v1:ad1,v2:ad2},{label:'Activos',v1:ag1.active,v2:ag2.active}];
     function barRow(label,v1,v2,c1,c2){
       const max=Math.max(v1,v2)||1;
       return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'+
         '<div style="width:50px;text-align:right;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v1>=v2?c1:'var(--text-dim)')+';">'+v1+'</div>'+
-        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;direction:rtl;"><div style="height:100%;width:'+(v1/max*100)+'%;border-radius:4px;background:'+c1+';"></div></div>'+
+        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;direction:rtl;"><div style="height:100%;width:'+(v1/max*100)+'%;border-radius:4px;background:'+c1+';transition:width .5s;"></div></div>'+
         '<div style="width:80px;text-align:center;font-size:.6rem;color:var(--text-dim);text-transform:uppercase;">'+label+'</div>'+
-        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;"><div style="height:100%;width:'+(v2/max*100)+'%;border-radius:4px;background:'+c2+';"></div></div>'+
+        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;"><div style="height:100%;width:'+(v2/max*100)+'%;border-radius:4px;background:'+c2+';transition:width .5s;"></div></div>'+
         '<div style="width:50px;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v2>=v1?c2:'var(--text-dim)')+';">'+v2+'</div></div>';
     }
     let h='<div class="clan-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">'+
@@ -1389,16 +1530,24 @@ async function compareClans(){
       '<div style="font-family:Orbitron,sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent-orange);">VS</div>'+
       '<div style="text-align:center;"><div class="clan-icon" style="margin:0 auto 8px;background:rgba(0,240,255,0.1);border-color:var(--accent);color:var(--accent);">'+tag2.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1rem;">'+name2+'</div><div class="clan-tag" style="color:var(--accent);">['+tag2+']</div></div></div>';
     metrics.forEach(m=>{h+=barRow(m.label,m.v1,m.v2,'var(--accent-orange)','var(--accent)');});
+    // Win counter
+    let w1=0,w2=0;metrics.forEach(m=>{if(m.v1>m.v2)w1++;else if(m.v2>m.v1)w2++;});
+    h+='<div style="text-align:center;margin:16px 0;font-family:Orbitron,sans-serif;font-size:.85rem;"><span style="color:var(--accent-orange);font-weight:700;">'+w1+'</span> <span style="color:var(--text-dim);font-size:.7rem;">ganadas</span> <span style="color:var(--text-dim);margin:0 8px;">vs</span> <span style="color:var(--accent);font-weight:700;">'+w2+'</span> <span style="color:var(--text-dim);font-size:.7rem;">ganadas</span></div>';
+    // Top 3 killers from each clan
+    const top1=[...ms1.filter(m=>m.stats)].sort((a,b)=>(b.stats.kills||0)-(a.stats.kills||0)).slice(0,3);
+    const top2=[...ms2.filter(m=>m.stats)].sort((a,b)=>(b.stats.kills||0)-(a.stats.kills||0)).slice(0,3);
     h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;">';
-    h+='<div><div class="section-title" style="font-size:.75rem;color:var(--accent-orange);">Roster '+tag1+' ('+mc1+')</div>';
-    m1.slice(0,20).forEach(m=>{const mn=m.attributes?m.attributes.name:(m.id||'?');h+='<div class="clan-member" style="font-size:.8rem;"><span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+mn+'\';switchTab(\'overview\');searchPlayer();">'+mn+'</span></div>';});
-    h+='</div><div><div class="section-title" style="font-size:.75rem;color:var(--accent);">Roster '+tag2+' ('+mc2+')</div>';
-    m2.slice(0,20).forEach(m=>{const mn=m.attributes?m.attributes.name:(m.id||'?');h+='<div class="clan-member" style="font-size:.8rem;"><span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+mn+'\';switchTab(\'overview\');searchPlayer();">'+mn+'</span></div>';});
-    h+='</div></div></div>';
-    stopApiLoader(ivcc);document.getElementById('clanCompareResults').innerHTML=h;
+    h+='<div><div class="section-title" style="font-size:.75rem;color:var(--accent-orange);">Top '+tag1+'</div>';
+    top1.forEach((m,i)=>{const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':'&#x1F949;';const kd=((m.stats.kills||0)/((m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1)).toFixed(2);h+='<div style="padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:4px;font-size:.75rem;"><span>'+medal+'</span> <span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';switchTab(\'overview\');searchPlayer();">'+m.name+'</span> <span style="color:var(--text-dim);float:right;">'+m.stats.kills+' kills / '+kd+' KD</span></div>';});
+    h+='</div><div><div class="section-title" style="font-size:.75rem;color:var(--accent);">Top '+tag2+'</div>';
+    top2.forEach((m,i)=>{const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':'&#x1F949;';const kd=((m.stats.kills||0)/((m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1)).toFixed(2);h+='<div style="padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:4px;font-size:.75rem;"><span>'+medal+'</span> <span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';switchTab(\'overview\');searchPlayer();">'+m.name+'</span> <span style="color:var(--text-dim);float:right;">'+m.stats.kills+' kills / '+kd+' KD</span></div>';});
+    h+='</div></div>';
+    h+='<div style="text-align:center;font-size:.65rem;color:var(--text-dim);margin-top:12px;">Analisis basado en los top '+ag1.fetched+' y '+ag2.fetched+' miembros respectivamente (squad + squad-fpp)</div>';
+    h+='</div>';
+    document.getElementById('clanCompareResults').innerHTML=h;
   }catch(e){
-    stopApiLoader(ivcc);document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
-  }
+    document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+  }finally{showLoading(false);}
 }
 
 function setLBPlatform(p,btn){lbPlatform=p;const btns=btn.parentElement.querySelectorAll('.lb-btn');btns[0].classList.toggle('active',p==='psn');btns[1].classList.toggle('active',p==='xbox');renderLeaderboard();}
