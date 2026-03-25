@@ -316,16 +316,24 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 
 /* MATCHES */
 .match-list { display: flex; flex-direction: column; gap: 8px; }
-.match-item { display: grid; grid-template-columns: 70px 1fr 90px 90px 90px 70px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; transition: all 0.3s; gap: 14px; box-shadow: var(--shadow-card); }
+.match-item { display: grid; grid-template-columns: 70px 1fr 90px 90px 90px 70px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; transition: all 0.3s; gap: 14px; box-shadow: var(--shadow-card); position:relative; overflow:hidden; }
+.match-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:12px 0 0 12px; }
+.match-item.mi-win::before { background:var(--accent-yellow); }
+.match-item.mi-top10::before { background:var(--accent-green); }
+.match-item.mi-normal::before { background:var(--text-dim); opacity:.3; }
 .match-item:hover { border-color: var(--border-hover); background: var(--bg-card-hover); transform: translateY(-1px); box-shadow: var(--shadow-card-hover); }
 .match-place { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.3rem; }
 .match-place.win { color: var(--accent-yellow); } .match-place.top10 { color: var(--accent-green); } .match-place.normal { color: var(--text-secondary); }
 .match-mode { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; }
 .match-mode .map-name { font-size: 0.7rem; color: var(--text-dim); display: block; margin-top: 2px; }
+.match-mode .map-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:4px; vertical-align:middle; }
 .match-stat { text-align: center; }
 .match-stat .ms-val { font-family: 'Orbitron', sans-serif; font-weight: 600; font-size: 0.95rem; }
 .match-stat .ms-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.match-stat .ms-sub { font-size: 0.58rem; color: var(--text-dim); margin-top:1px; }
 .match-time { font-size: 0.7rem; color: var(--text-dim); text-align: right; }
+.match-surv-bar { position:absolute; bottom:0; left:0; right:0; height:2px; background:rgba(255,255,255,.03); }
+.match-surv-fill { height:100%; border-radius:0 2px 2px 0; transition:width .6s ease; }
 
 /* WEAPONS */
 .weapon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
@@ -598,12 +606,22 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
   <div class="panel" id="panel-compare">
     <div class="section-title">Comparar Jugadores</div>
+    <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="lb-btn active" id="cmpPlat-psn" onclick="cmpPlatform='psn';this.classList.add('active');document.getElementById('cmpPlat-xbox').classList.remove('active');">PlayStation</button>
+      <button class="lb-btn" id="cmpPlat-xbox" onclick="cmpPlatform='xbox';this.classList.add('active');document.getElementById('cmpPlat-psn').classList.remove('active');">Xbox</button>
+      <span style="width:8px;display:inline-block;"></span>
+      <button class="lb-btn active" id="cmpMode-squad" onclick="setCmpMode('squad')">Squad</button>
+      <button class="lb-btn" id="cmpMode-squad-fpp" onclick="setCmpMode('squad-fpp')">Squad FPP</button>
+      <button class="lb-btn" id="cmpMode-solo" onclick="setCmpMode('solo')">Solo</button>
+      <button class="lb-btn" id="cmpMode-duo" onclick="setCmpMode('duo')">Duo</button>
+    </div>
     <div class="compare-container">
-      <div><div class="compare-search"><input class="compare-input" id="compare1Input" placeholder="Jugador 1..."/></div><div class="compare-player-card" id="compareCard1"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+      <div><div class="compare-search"><input class="compare-input" id="compare1Input" placeholder="Jugador 1..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard1"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
       <div class="compare-vs">VS</div>
-      <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..."/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+      <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
     </div>
     <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
+    <div id="compareBarChart" style="margin-top:20px;"></div>
   </div>
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
@@ -693,9 +711,13 @@ let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
 let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null,currentSurvivalData=null;
 let isUsingDemo=false,recentSearches=JSON.parse(localStorage.getItem('recent_searches')||'[]');
 let lbPlatform='psn',lbRegion='eu',lbMode='squad';
+let cmpPlatform='psn',cmpMode='squad';
+function setCmpMode(m){cmpMode=m;['squad','squad-fpp','solo','duo'].forEach(k=>{const el=document.getElementById('cmpMode-'+k);if(el)el.classList.toggle('active',k===m);});}
 let seasonTypeMode='season',currentSeasonId=null,currentRankedData=null,currentLifetimeData=null;
 
 const MAP_NAMES={'Baltic_Main':'Erangel','Chimera_Main':'Paramo','Desert_Main':'Miramar','DihorOtok_Main':'Vikendi','Erangel_Main':'Erangel','Heaven_Main':'Haven','Kiki_Main':'Deston','Range_Main':'Camp Jackal','Savage_Main':'Sanhok','Summerland_Main':'Karakin','Tiger_Main':'Taego','Neon_Main':'Rondo'};
+const MAP_COLORS={'Erangel':'#4caf50','Miramar':'#ff9800','Sanhok':'#8bc34a','Vikendi':'#90caf9','Karakin':'#e6a23c','Taego':'#66bb6a','Deston':'#5c6bc0','Haven':'#ef5350','Paramo':'#78909c','Rondo':'#ab47bc','Camp Jackal':'#ffa726'};
+const MAP_SIZE={'Erangel':'8x8','Miramar':'8x8','Sanhok':'4x4','Vikendi':'6x6','Karakin':'2x2','Taego':'8x8','Deston':'8x8','Haven':'1x1','Paramo':'3x3','Rondo':'1.2x1.2','Camp Jackal':'2x2'};
 const WEAPON_TYPES={'M416':'Fusil de Asalto','Beryl M762':'Fusil de Asalto','AKM':'Fusil de Asalto','SCAR-L':'Fusil de Asalto','AUG':'Fusil de Asalto','G36C':'Fusil de Asalto','Groza':'Fusil de Asalto','QBZ':'Fusil de Asalto','M16A4':'Fusil de Asalto','ACE32':'Fusil de Asalto','Mk47':'Fusil de Asalto','Mini 14':'DMR','SKS':'DMR','SLR':'DMR','QBU':'DMR','Mk14':'DMR','VSS':'DMR','Kar98k':'Francotirador','M24':'Francotirador','AWM':'Francotirador','Mosin':'Francotirador','Lynx AMR':'Francotirador','Win94':'Francotirador','UMP45':'SMG','Vector':'SMG','MP5K':'SMG','P90':'SMG','Bizon':'SMG','Tommy Gun':'SMG','MP9':'SMG','S12K':'Escopeta','S686':'Escopeta','S1897':'Escopeta','M249':'LMG','DP-28':'LMG','MG3':'LMG','Pan':'Cuerpo a cuerpo','Machete':'Cuerpo a cuerpo','Sickle':'Cuerpo a cuerpo','Crossbow':'Arco','Deagle':'Pistola','P1911':'Pistola','P92':'Pistola','Rhino':'Pistola','Nagant':'Pistola','Flare Gun':'Especial','Mortar':'Especial','Panzerfaust':'Especial','C4':'Explosivo','Grenade':'Explosivo','Sticky Bomb':'Explosivo'};
 
 const DEMO_DATA={
@@ -757,6 +779,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
   else{loadDemoData();}
+  // Back/forward browser navigation
+  window.addEventListener('popstate',()=>{
+    const m=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
+    if(m){const plat=m[1].toLowerCase(),pname=decodeURIComponent(m[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
+    else{location.reload();}
+  });
 });
 
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
@@ -790,27 +818,27 @@ function calcHSRate(s){if(!s.kills)return'0';return((s.headshotKills/s.kills)*10
 function loadDemoData(){isUsingDemo=true;currentPlayerData=DEMO_DATA.player;currentSeasonData=DEMO_DATA.seasonStats;currentWeaponData=null;currentSurvivalData=null;currentPlatform='psn';currentGameMode='tpp';currentSquadMode='squad';currentSeasonId='demo';document.getElementById('searchInput').value='KANNEDA';showSkeletons(false);renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBarDemo();renderWLGridDemo();renderChartsDemo();renderOverviewStats();renderMatchHistoryDemo();renderWeaponStatsDemo();renderFunStats();renderPersonality();showDataPanels();switchTab('overview');}
 
 function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+function capFirst(s){return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase();}
+function nameVariations(name){
+  const v=[name];
+  if(name!==name.toUpperCase())v.push(name.toUpperCase());
+  if(name!==name.toLowerCase())v.push(name.toLowerCase());
+  const cf=capFirst(name);if(!v.includes(cf))v.push(cf);
+  return v;
+}
 async function findPlayer(name,platform){
   const url=API_BASE+'/'+platform+'/players?filter[playerNames]=';
   try{return await apiGet(url+encodeURIComponent(name));}catch(e1){
     if(!e1.message||!e1.message.includes('404'))throw e1;
     setLoaderStep('Reintentando variaciones de nombre...');
-    await wait(300);
-    // Retry: UPPERCASE
-    if(name!==name.toUpperCase()){try{return await apiGet(url+encodeURIComponent(name.toUpperCase()));}catch(e2){if(!e2.message||!e2.message.includes('404'))throw e2;}}
-    await wait(300);
-    // Retry: lowercase
-    if(name!==name.toLowerCase()){try{return await apiGet(url+encodeURIComponent(name.toLowerCase()));}catch(e3){if(!e3.message||!e3.message.includes('404'))throw e3;}}
-    // Retry: other platform with all variations
+    const vars=nameVariations(name);
+    // Try remaining variations on same platform
+    for(let i=1;i<vars.length;i++){await wait(300);try{return await apiGet(url+encodeURIComponent(vars[i]));}catch(e){if(!e.message||!e.message.includes('404'))throw e;}}
+    // Try all variations on other platform
     setLoaderStep('Buscando en otra plataforma...');
-    await wait(300);
     const alt=platform==='psn'?'xbox':'psn';
     const altUrl=API_BASE+'/'+alt+'/players?filter[playerNames]=';
-    try{return await apiGet(altUrl+encodeURIComponent(name));}catch(e4){if(!e4.message||!e4.message.includes('404'))throw e4;}
-    await wait(300);
-    if(name!==name.toUpperCase()){try{return await apiGet(altUrl+encodeURIComponent(name.toUpperCase()));}catch(e5){if(!e5.message||!e5.message.includes('404'))throw e5;}}
-    await wait(300);
-    if(name!==name.toLowerCase()){try{return await apiGet(altUrl+encodeURIComponent(name.toLowerCase()));}catch(e6){if(!e6.message||!e6.message.includes('404'))throw e6;}}
+    for(let i=0;i<vars.length;i++){await wait(300);try{return await apiGet(altUrl+encodeURIComponent(vars[i]));}catch(e){if(!e.message||!e.message.includes('404'))throw e;}}
     throw e1;
   }
 }
@@ -838,7 +866,7 @@ async function searchPlayer(){
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
     showSkeletons(false);renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
-  }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('emptyState').style.display='block';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
+  }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
 function getErrorMessage(e){const m=e.message||'';if(m.includes('404'))return'Jugador no encontrado. Verifica el gamertag y la plataforma.';if(m.includes('401')||m.includes('403'))return'API Key no valida.';if(m.includes('429'))return'Demasiadas peticiones. Espera unos segundos.';if(m.includes('Failed to fetch'))return'Error de conexion. Necesitas el servidor proxy (node server.js).';return'Error: '+m;}
@@ -903,18 +931,23 @@ function renderOverviewStats(){
 }
 
 function renderMatchHistoryDemo(){let h='';DEMO_DATA.matches.forEach(m=>{const pc=m.place===1?'win':m.place<=10?'top10':'normal';h+='<div class="match-item animate-in"><div class="match-place '+pc+'">'+(m.place===1?'&#x1F3C6; #1':'#'+m.place)+'</div><div class="match-mode">'+m.mode+'<span class="map-name">'+m.map+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+m.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+m.damage+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(m.time)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+m.ago+'</div></div>';});document.getElementById('matchList').innerHTML=h;}
-function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}if(!currentMatchData.length){document.getElementById('matchList').innerHTML='<div class="empty-state"><p>No hay partidas recientes</p></div>';return;}const pn=currentPlayerData.attributes.name;let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=a.gameMode||'';const ta=getTimeAgo(new Date(a.createdAt));const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';h+='<div class="match-item animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')"><div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'</div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name">'+mn+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+' &#x1F5FA;&#xFE0F;</div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';}
+function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}if(!currentMatchData.length){document.getElementById('matchList').innerHTML='<div class="empty-state"><p>No hay partidas recientes</p></div>';return;}const pn=currentPlayerData.attributes.name;let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgo(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+'A / '+(ps.DBNOs||0)+'K</span>':'';h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')"><div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';}
 function showMatchDetail(idx){
   const match=currentMatchData[idx];if(!match)return;
-  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=a.gameMode||'';
+  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';
   const pn=currentPlayerData.attributes.name;
   const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());
   if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;
   const totalP=(match.included||[]).filter(i=>i.type==='participant').length;
-  let h='<div class="match-map-img"><div class="map-label">&#x1F5FA;&#xFE0F; '+mn+'</div></div>';
-  h+='<div style="text-align:center;margin-bottom:16px;"><span style="font-family:Orbitron,sans-serif;font-size:1.4rem;font-weight:800;color:'+(pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-primary)')+';">#'+pl+'</span>';
-  h+='<span style="color:var(--text-dim);font-size:.8rem;"> / '+totalP+' jugadores</span>';
-  h+='<span style="display:block;color:var(--text-secondary);font-size:.8rem;margin-top:4px;">'+gm.toUpperCase()+' &mdash; '+new Date(a.createdAt).toLocaleString('es-ES')+'</span></div>';
+  const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;
+  const plColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-primary)';
+  const matchDur=a.duration?formatTime(a.duration):'?';
+  let h='<div class="match-map-img" style="background:linear-gradient(135deg,'+mc+'22,var(--bg-secondary));"><div class="map-label" style="color:'+mc+';">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:var(--text-dim);">'+(MAP_SIZE[mn]||'')+'</div></div>';
+  h+='<div style="text-align:center;margin-bottom:16px;"><span style="font-family:Orbitron,sans-serif;font-size:1.8rem;font-weight:800;color:'+plColor+';">#'+pl+'</span>';
+  h+='<span style="color:var(--text-dim);font-size:.8rem;"> / '+totalP+'</span>';
+  h+='<div style="margin:8px auto;width:80%;height:4px;border-radius:2px;background:var(--bg-secondary);"><div style="height:100%;width:'+survPct+'%;border-radius:2px;background:'+plColor+';transition:width .4s;"></div></div>';
+  h+='<span style="display:block;color:var(--text-secondary);font-size:.78rem;">'+gm.toUpperCase()+' &mdash; '+new Date(a.createdAt).toLocaleString('es-ES')+'</span>';
+  h+='<span style="display:block;color:var(--text-dim);font-size:.68rem;margin-top:2px;">Duracion partida: '+matchDur+'</span></div>';
   h+='<div class="match-detail-stats">';
   h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent);">'+ps.kills+'</div><div class="lbl">Kills</div></div>';
   h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-orange);">'+Math.round(ps.damageDealt)+'</div><div class="lbl">Dano</div></div>';
@@ -1230,19 +1263,32 @@ function showSkeletons(show){
 async function comparePlayers(){
   const n1=document.getElementById('compare1Input').value.trim(),n2=document.getElementById('compare2Input').value.trim();
   if(!n1||!n2){alert('Introduce dos gamertags');return;}showLoading(true);
-  try{let s1,s2;
-    if(n1.toUpperCase()==='KANNEDA'){s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;}
-    else{const p=await apiGet(API_BASE+'/'+currentPlatform+'/players?filter[playerNames]='+encodeURIComponent(n1));const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);const ss=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+p.data[0].id+'/seasons/'+cs.id);s1=ss.data.attributes.gameModeStats.squad||{};}
-    if(n2.toUpperCase()==='KANNEDA'){s2=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;}
-    else{const p=await apiGet(API_BASE+'/'+currentPlatform+'/players?filter[playerNames]='+encodeURIComponent(n2));const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);const ss=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+p.data[0].id+'/seasons/'+cs.id);s2=ss.data.attributes.gameModeStats.squad||{};}
-    renderCompareCards(n1,s1,n2,s2);
-  }catch(e){const s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;const s2={kills:38,wins:4,losses:28,roundsPlayed:30,damageDealt:4200,top10s:12,headshotKills:6,longestKill:180,assists:22,revives:8,heals:35,boosts:40,timeSurvived:21000,longestTimeSurvived:1650,rideDistance:32000,walkDistance:55000,DBNOs:25};renderCompareCards(n1||'KANNEDA',s1,n2||'Rival',s2);}
+  try{
+    let s1,s2,rn1=n1,rn2=n2;
+    // Fetch season first
+    setLoaderStep('Obteniendo temporada...');
+    const sr=await apiGet(API_BASE+'/'+cmpPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
+    // Player 1
+    if(n1.toUpperCase()==='KANNEDA'){s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats[cmpMode]||{};}
+    else{setLoaderStep('Buscando '+n1+'...');const p1=await findPlayer(n1,cmpPlatform);rn1=p1.data[0].attributes.name;setLoaderStep('Stats de '+rn1+'...');const ss1=await apiGet(API_BASE+'/'+cmpPlatform+'/players/'+p1.data[0].id+'/seasons/'+cs.id);s1=ss1.data.attributes.gameModeStats[cmpMode]||ss1.data.attributes.gameModeStats.squad||{};}
+    // Player 2
+    if(n2.toUpperCase()==='KANNEDA'){s2=DEMO_DATA.seasonStats.data.attributes.gameModeStats[cmpMode]||{};}
+    else{setLoaderStep('Buscando '+n2+'...');const p2=await findPlayer(n2,cmpPlatform);rn2=p2.data[0].attributes.name;setLoaderStep('Stats de '+rn2+'...');const ss2=await apiGet(API_BASE+'/'+cmpPlatform+'/players/'+p2.data[0].id+'/seasons/'+cs.id);s2=ss2.data.attributes.gameModeStats[cmpMode]||ss2.data.attributes.gameModeStats.squad||{};}
+    renderCompareCards(rn1,s1,rn2,s2);
+  }catch(e){console.error('Compare error:',e);const s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats.squad;const s2={kills:38,wins:4,losses:28,roundsPlayed:30,damageDealt:4200,top10s:12,headshotKills:6,longestKill:180,assists:22,revives:8,heals:35,boosts:40,timeSurvived:21000,longestTimeSurvived:1650,rideDistance:32000,walkDistance:55000,DBNOs:25};renderCompareCards(n1||'KANNEDA',s1,n2||'Rival',s2);}
   finally{showLoading(false);}
 }
 function renderCompareCards(n1,s1,n2,s2){
-  const stats=[{l:'K/D',v1:calcKD(s1),v2:calcKD(s2)},{l:'Kills',v1:s1.kills||0,v2:s2.kills||0},{l:'Victorias',v1:s1.wins||0,v2:s2.wins||0},{l:'Win Rate',v1:calcWinRate(s1)+'%',v2:calcWinRate(s2)+'%'},{l:'Dano Promedio',v1:calcAvgDmg(s1),v2:calcAvgDmg(s2)},{l:'Top 10',v1:s1.top10s||0,v2:s2.top10s||0},{l:'Headshot %',v1:calcHSRate(s1)+'%',v2:calcHSRate(s2)+'%'},{l:'Kill Lejano',v1:Math.round(s1.longestKill||0)+'m',v2:Math.round(s2.longestKill||0)+'m'},{l:'Revives',v1:s1.revives||0,v2:s2.revives||0}];
-  function card(name,side){return'<div style="font-family:\'Orbitron\',sans-serif;font-weight:700;font-size:1rem;margin-bottom:14px;text-align:center;">'+name+'</div>'+stats.map(s=>{const v=side===1?s.v1:s.v2;const vo=side===1?s.v2:s.v1;const nv=parseFloat(String(v).replace(/%|m/g,''));const nvo=parseFloat(String(vo).replace(/%|m/g,''));const w=nv>nvo?'winner':nv<nvo?'loser':'';return'<div class="compare-stat-row"><span class="compare-stat-name">'+s.l+'</span><span class="compare-stat-val '+w+'">'+v+'</span></div>';}).join('');}
+  const stats=[{l:'K/D',v1:calcKD(s1),v2:calcKD(s2),u:''},{l:'Kills',v1:s1.kills||0,v2:s2.kills||0,u:''},{l:'Partidas',v1:s1.roundsPlayed||0,v2:s2.roundsPlayed||0,u:''},{l:'Victorias',v1:s1.wins||0,v2:s2.wins||0,u:''},{l:'Win Rate',v1:calcWinRate(s1),v2:calcWinRate(s2),u:'%'},{l:'Dano Promedio',v1:calcAvgDmg(s1),v2:calcAvgDmg(s2),u:''},{l:'Top 10',v1:s1.top10s||0,v2:s2.top10s||0,u:''},{l:'Headshot %',v1:calcHSRate(s1),v2:calcHSRate(s2),u:'%'},{l:'Kill Lejano',v1:Math.round(s1.longestKill||0),v2:Math.round(s2.longestKill||0),u:'m'},{l:'Revives',v1:s1.revives||0,v2:s2.revives||0,u:''}];
+  function card(name,side){return'<div style="font-family:\'Orbitron\',sans-serif;font-weight:700;font-size:1rem;margin-bottom:14px;text-align:center;color:var(--accent);">'+name+'</div>'+stats.map(s=>{const v=side===1?s.v1:s.v2;const vo=side===1?s.v2:s.v1;const nv=parseFloat(v);const nvo=parseFloat(vo);const w=nv>nvo?'winner':nv<nvo?'loser':'';return'<div class="compare-stat-row"><span class="compare-stat-name">'+s.l+'</span><span class="compare-stat-val '+w+'">'+v+s.u+'</span></div>';}).join('');}
   document.getElementById('compareCard1').innerHTML=card(n1,1);document.getElementById('compareCard2').innerHTML=card(n2,2);
+  // Render visual bar chart
+  let bh='';
+  stats.forEach(s=>{const nv1=parseFloat(s.v1),nv2=parseFloat(s.v2);const mx=Math.max(nv1,nv2,1);const p1=Math.round((nv1/mx)*100),p2=Math.round((nv2/mx)*100);const c1=nv1>=nv2?'var(--accent)':'var(--text-dim)',c2=nv2>=nv1?'var(--accent-orange)':'var(--text-dim)';bh+='<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-secondary);margin-bottom:3px;"><span>'+s.v1+s.u+'</span><span style="font-weight:600;text-transform:uppercase;letter-spacing:1px;">'+s.l+'</span><span>'+s.v2+s.u+'</span></div><div style="display:flex;gap:4px;height:6px;"><div style="flex:1;display:flex;justify-content:flex-end;"><div style="width:'+p1+'%;background:'+c1+';border-radius:3px 0 0 3px;transition:width .5s;"></div></div><div style="flex:1;"><div style="width:'+p2+'%;background:'+c2+';border-radius:0 3px 3px 0;transition:width .5s;"></div></div></div></div>';});
+  // Count wins
+  let w1=0,w2=0;stats.forEach(s=>{const nv1=parseFloat(s.v1),nv2=parseFloat(s.v2);if(nv1>nv2)w1++;else if(nv2>nv1)w2++;});
+  bh+='<div style="text-align:center;margin-top:16px;font-family:Orbitron,sans-serif;font-size:.85rem;"><span style="color:var(--accent);font-weight:700;">'+w1+'</span> <span style="color:var(--text-dim);font-size:.7rem;">stats ganadas</span> <span style="color:var(--text-dim);margin:0 8px;">vs</span> <span style="color:var(--accent-orange);font-weight:700;">'+w2+'</span> <span style="color:var(--text-dim);font-size:.7rem;">stats ganadas</span></div>';
+  document.getElementById('compareBarChart').innerHTML=bh;
 }
 
 function setClanMode(mode,btn){
@@ -1374,7 +1420,7 @@ async function renderLeaderboard(){
       let rank=1;pRelations.slice(0,500).forEach(pRef=>{
         const p=players.find(pl=>pl.id===pRef.id);if(!p||!p.attributes)return;
         const pa=p.attributes;const stats=pa.stats||{};const ik=pa.name==='KANNEDA';
-        const kd=stats.killDeathRatio?stats.killDeathRatio.toFixed(2):stats.kills&&(stats.roundsPlayed-stats.wins)>0?(stats.kills/Math.max(stats.roundsPlayed-stats.wins,1)).toFixed(2):(stats.kills||0);
+        const lbDeaths=((stats.roundsPlayed||stats.games||0)-(stats.wins||0));const kd=(stats.killDeathRatio>0)?stats.killDeathRatio.toFixed(2):(lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0');
         const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
         h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\''+lbPlatform+'\');document.getElementById(\'searchInput\').value=\''+pa.name+'\';searchPlayer();">'+pa.name+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
         rank++;
