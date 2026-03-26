@@ -1756,16 +1756,62 @@ async function searchClan(){
     const clanInfo=renderClanCard(clan,'clanResults');
     // Save to history (no members yet - will be updated when analyzed)
     saveClanToHistory(clanInfo.name,clanInfo.tag,clanInfo.memberCount,clanInfo.level,clanPlatform,[]);
-    // PUBG API doesn't return member list - show input to add members manually
+    // PUBG API doesn't return member list - show auto-discover + manual input
     const cr=document.getElementById('clanResults');
+    const eName=clanInfo.name.replace(/'/g,"\\'");
+    const eTag=clanInfo.tag.replace(/'/g,"\\'");
     cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
       '<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Analizar Miembros del Clan</div>'+
-      '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">La API de PUBG no devuelve la lista de miembros. Escribe los gamertags separados por coma:</p>'+
-      '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" placeholder="Jugador1, Jugador2, Jugador3..." onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+clanInfo.name.replace(/'/g,"\\'")+'\',\''+clanInfo.tag.replace(/'/g,"\\'")+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+clanInfo.name.replace(/'/g,"\\'")+'\',\''+clanInfo.tag.replace(/'/g,"\\'")+'\','+clanInfo.memberCount+','+clanInfo.level+')">ANALIZAR</button></div></div>';
+      '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">La API de PUBG no devuelve la lista de miembros. Puedes descubrirlos automaticamente o escribirlos a mano:</p>'+
+      '<div style="margin-bottom:12px;padding:12px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.15);border-radius:8px;">'+
+        '<div style="font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:6px;">&#x1F50D; Auto-descubrir miembros</div>'+
+        '<p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Escribe el gamertag de UN miembro y descubriremos al resto analizando sus partidas recientes:</p>'+
+        '<div style="display:flex;gap:8px;"><input id="clanSeedInput" class="clan-input" style="flex:1;" placeholder="Gamertag de un miembro del clan..." onkeydown="if(event.key===\'Enter\')discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent);color:var(--bg-primary);" onclick="discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">DESCUBRIR</button></div>'+
+        '<div id="discoverStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>'+
+      '</div>'+
+      '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-bottom:8px;">— o escribe los gamertags manualmente —</div>'+
+      '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" placeholder="Jugador1, Jugador2, Jugador3..." onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">ANALIZAR</button></div></div>';
   }catch(e){
     document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
   }finally{showLoading(false);}
 }
+async function discoverClanMembers(clanName,clanTag,memberCount,level){
+  const seed=document.getElementById('clanSeedInput')?.value?.trim();
+  if(!seed){alert('Escribe el gamertag de un miembro del clan');return;}
+  const statusEl=document.getElementById('discoverStatus');
+  if(statusEl)statusEl.innerHTML='<div class="api-loader" style="justify-content:flex-start;"><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div><div class="loader-text" style="font-size:.7rem;">Analizando partidas recientes de '+seed+'... (esto puede tardar ~15s)</div></div>';
+  try{
+    const resp=await fetch('/clans/discover-members',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({gamertag:seed,platform:clanPlatform})
+    });
+    const data=await resp.json();
+    if(!resp.ok)throw new Error(data.error||'Error al descubrir miembros');
+    if(!data.members||!data.members.length){
+      if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">No se encontraron companeros en las partidas recientes.</span>';
+      return;
+    }
+    // Show discovered members and auto-fill the manual input
+    const names=data.members.map(m=>m.name);
+    const memberInput=document.getElementById('clanMembersInput');
+    if(memberInput)memberInput.value=[seed,...names].join(', ');
+    // Show summary
+    if(statusEl){
+      let html='<div style="color:var(--accent-green);margin-bottom:6px;">&#x2705; '+data.members.length+' companeros encontrados en '+data.matchesAnalyzed+' partidas!</div>';
+      html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">';
+      data.members.forEach(m=>{
+        html+='<span style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:.65rem;">'+m.name+' <span style="color:var(--accent);">('+m.appearances+'x)</span></span>';
+      });
+      html+='</div>';
+      html+='<button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="analyzeClanMembers(\''+clanName.replace(/'/g,"\\'")+'\',\''+clanTag.replace(/'/g,"\\'")+'\','+memberCount+','+level+')">ANALIZAR TODOS CON STATS DE TEMPORADA</button>';
+      statusEl.innerHTML=html;
+    }
+  }catch(e){
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
+  }
+}
+
 async function analyzeClanMembers(clanName,clanTag,memberCount,level){
   const input=document.getElementById('clanMembersInput')?.value?.trim();
   if(!input){alert('Escribe al menos un gamertag');return;}
