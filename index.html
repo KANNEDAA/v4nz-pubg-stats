@@ -963,25 +963,93 @@ async function loadClanRanking(){
       el.innerHTML='<div class="empty-state"><p>Aun no hay clanes registrados. Se el primero en publicar tu clan desde la pestana de Clanes.</p></div>';
       return;
     }
-    let h='<table class="cr-table"><thead><tr><th>#</th><th>Clan</th><th>Kills</th><th>K/D</th><th>Wins</th><th>Win%</th><th>Miembros</th><th>Plat</th></tr></thead><tbody>';
+    let h='';
     d.clans.forEach((c,i)=>{
-      const rank=i+1;const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-      h+='<tr onclick="window.location.href=\'/clan/'+c.tag+'\'">';
-      h+='<td class="cr-rank '+rc+'">'+rank+'</td>';
-      h+='<td><div class="cr-clan-cell"><div class="cr-clan-icon">'+c.tag.charAt(0)+'</div><div><div class="cr-clan-name">'+c.name+'</div><div class="cr-clan-tag">['+c.tag+']</div></div></div></td>';
-      h+='<td class="cr-stat">'+(c.total_kills||0)+'</td>';
-      h+='<td class="cr-stat">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</td>';
-      h+='<td class="cr-stat-dim">'+(c.total_wins||0)+'</td>';
-      h+='<td class="cr-stat-dim">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</td>';
-      h+='<td class="cr-stat-dim">'+(c.active_members||0)+'</td>';
-      h+='<td class="cr-plat">'+(c.platform||'psn').toUpperCase()+'</td>';
-      h+='</tr>';
+      const rank=i+1;
+      const medal=rank===1?'&#x1F947;':rank===2?'&#x1F948;':rank===3?'&#x1F949;':'#'+rank;
+      const borderColor=rank===1?'var(--accent-yellow)':rank===2?'#aaa':rank===3?'#cd7f32':'var(--border)';
+      h+='<div class="cr-card" style="background:var(--bg-card);border:1px solid '+borderColor+';border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s;" onclick="toggleClanMembers(\''+c.tag+'\',this)">';
+      // Header row
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">';
+      h+='<div style="display:flex;align-items:center;gap:12px;">';
+      h+='<div style="font-size:1.2rem;min-width:36px;text-align:center;">'+medal+'</div>';
+      h+='<div class="cr-clan-icon" style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(0,240,255,0.05));display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:700;font-size:1rem;color:var(--accent);">'+c.tag.charAt(0)+'</div>';
+      h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">'+c.name+'</div>';
+      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(c.platform||'psn').toUpperCase()+' &middot; Nivel '+(c.level||'?')+'</div></div>';
+      h+='</div>';
+      h+='<div style="font-size:.7rem;color:var(--text-dim);">&#x25BC;</div>';
+      h+='</div>';
+      // Stats row
+      h+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px;text-align:center;">';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Kills</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent-green);">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">K/D</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent-yellow);">'+(c.total_wins||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Wins</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Win Rate</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;">'+(c.active_members||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Activos</div></div>';
+      h+='</div>';
+      // Members container (hidden initially)
+      h+='<div id="clanMembers_'+c.tag+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;"></div>';
+      h+='</div>';
     });
-    h+='</tbody></table>';
     h+='<p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">'+d.clans.length+' clanes registrados &mdash; Publica tu clan para aparecer aqui</p>';
     el.innerHTML=h;
   }catch(e){
     el.innerHTML='<div class="empty-state"><p>'+e.message+'</p></div>';
+  }
+}
+
+async function toggleClanMembers(tag,cardEl){
+  const container=document.getElementById('clanMembers_'+tag);
+  if(!container)return;
+  // Toggle visibility
+  if(container.style.display!=='none'){
+    container.style.display='none';
+    cardEl.querySelector('div:first-child > div:last-child').innerHTML='&#x25BC;';
+    return;
+  }
+  container.style.display='block';
+  cardEl.querySelector('div:first-child > div:last-child').innerHTML='&#x25B2;';
+  // If already loaded, just show
+  if(container.dataset.loaded){return;}
+  container.innerHTML='<div class="api-loader" style="justify-content:center;padding:8px;"><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div><div class="loader-text" style="font-size:.7rem;">Cargando miembros...</div></div>';
+  try{
+    const r=await fetch('/clans/'+encodeURIComponent(tag));
+    if(!r.ok)throw new Error('Error');
+    const d=await r.json();
+    const members=d.members||[];
+    if(!members.length){
+      container.innerHTML='<p style="font-size:.75rem;color:var(--text-dim);text-align:center;">No hay miembros registrados</p>';
+      container.dataset.loaded='1';
+      return;
+    }
+    // Show top members as mini cards
+    let mh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
+    const maxK=members[0]?.kills||1;
+    members.forEach((m,i)=>{
+      const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
+      const barW=Math.max(5,Math.round(((m.kills||0)/maxK)*100));
+      const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
+      const opacity=isActive?'1':'0.4';
+      mh+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;position:relative;overflow:hidden;opacity:'+opacity+';cursor:pointer;" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+d.clan.platform+'\');switchTab(\'overview\');searchPlayer();">';
+      mh+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:8px;"></div>';
+      mh+='<div style="position:relative;z-index:1;">';
+      mh+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
+      mh+='<span style="font-family:Orbitron;font-size:.6rem;color:var(--text-dim);">'+(i+1)+'</span>';
+      if(medal)mh+='<span style="font-size:.75rem;">'+medal+'</span>';
+      mh+='<span style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:.8rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+      mh+='</div>';
+      mh+='<div style="display:flex;gap:10px;font-size:.65rem;color:var(--text-secondary);">';
+      mh+='<span>K: <b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
+      mh+='<span>K/D: <b>'+(parseFloat(m.kd)||0).toFixed(2)+'</b></span>';
+      mh+='<span>W: <b>'+(m.wins||0)+'</b></span>';
+      mh+='</div></div></div>';
+    });
+    mh+='</div>';
+    mh+='<div style="text-align:center;margin-top:8px;"><a href="/clan/'+tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.stopPropagation();event.preventDefault();history.pushState(null,\'\',\'clan/'+tag+'\');loadClanPage(\''+tag+'\');">Ver pagina completa del clan &#x2192;</a></div>';
+    container.innerHTML=mh;
+    container.dataset.loaded='1';
+  }catch(e){
+    container.innerHTML='<p style="font-size:.75rem;color:var(--accent-orange);text-align:center;">'+e.message+'</p>';
   }
 }
 
