@@ -1792,24 +1792,53 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
       if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">No se encontraron companeros en las partidas recientes.</span>';
       return;
     }
-    // Show discovered members and auto-fill the manual input
-    const names=data.members.map(m=>m.name);
-    const memberInput=document.getElementById('clanMembersInput');
-    if(memberInput)memberInput.value=[seed,...names].join(', ');
-    // Show summary
+    // Show discovered members with checkboxes for user confirmation
     if(statusEl){
-      let html='<div style="color:var(--accent-green);margin-bottom:6px;">&#x2705; '+data.members.length+' companeros encontrados en '+data.matchesAnalyzed+' partidas!</div>';
-      html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">';
-      data.members.forEach(m=>{
-        html+='<span style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:.65rem;">'+m.name+' <span style="color:var(--accent);">('+m.appearances+'x)</span></span>';
+      const clanMembers=data.members||[];
+      const randoms=data.maybeRandoms||[];
+      let html='<div style="color:var(--accent-green);margin-bottom:8px;">&#x2705; '+clanMembers.length+' companeros frecuentes + '+randoms.length+' posibles randoms en '+data.matchesAnalyzed+' partidas</div>';
+      html+='<div style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">&#x1F7E2; 3+ partidas juntos &nbsp; &#x1F7E1; 2 partidas &nbsp; &#x26AA; solo 1 (posible random). Desmarca los que NO sean del clan:</div>';
+      html+='<div id="discoverCheckboxes" style="max-height:300px;overflow-y:auto;margin-bottom:10px;">';
+      // Seed player (always included)
+      html+='<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:rgba(0,240,255,0.08);margin-bottom:3px;font-size:.7rem;cursor:pointer;"><input type="checkbox" checked disabled value="'+seed+'" class="dc-check"/> <span style="color:var(--accent);font-weight:600;">'+seed+'</span> <span style="color:var(--text-dim);font-size:.6rem;">(tu)</span></label>';
+      // Frequent teammates (pre-checked)
+      clanMembers.forEach(m=>{
+        const icon=m.confidence==='high'?'&#x1F7E2;':'&#x1F7E1;';
+        const conf=m.confidence==='high'?'color:var(--accent-green);':'color:var(--accent-yellow);';
+        html+='<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:var(--bg-card);margin-bottom:2px;font-size:.7rem;cursor:pointer;"><input type="checkbox" checked value="'+m.name+'" class="dc-check"/> '+icon+' <span>'+m.name+'</span> <span style="'+conf+'font-size:.6rem;">('+m.appearances+'x)</span> <span style="color:var(--text-dim);font-size:.6rem;">K/D '+m.stats.kd+'</span></label>';
       });
+      // Randoms (unchecked by default)
+      if(randoms.length){
+        html+='<div style="font-size:.65rem;color:var(--text-dim);margin:6px 0 3px;border-top:1px solid var(--border);padding-top:6px;">Posibles randoms (1 partida) — marca si son del clan:</div>';
+        randoms.forEach(m=>{
+          html+='<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;margin-bottom:2px;font-size:.7rem;cursor:pointer;opacity:.6;"><input type="checkbox" value="'+m.name+'" class="dc-check"/> &#x26AA; <span>'+m.name+'</span> <span style="color:var(--text-dim);font-size:.6rem;">K/D '+m.stats.kd+'</span></label>';
+        });
+      }
       html+='</div>';
-      html+='<button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="analyzeClanMembers(\''+clanName.replace(/'/g,"\\'")+'\',\''+clanTag.replace(/'/g,"\\'")+'\','+memberCount+','+level+')">ANALIZAR TODOS CON STATS DE TEMPORADA</button>';
+      html+='<div style="display:flex;gap:8px;align-items:center;">';
+      html+='<button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;flex:1;" onclick="confirmDiscoveredMembers(\''+clanName.replace(/'/g,"\\'")+'\',\''+clanTag.replace(/'/g,"\\'")+'\','+memberCount+','+level+')">ANALIZAR SELECCIONADOS</button>';
+      html+='<span id="dcCount" style="font-size:.65rem;color:var(--text-dim);">'+(clanMembers.length+1)+' seleccionados</span>';
+      html+='</div>';
       statusEl.innerHTML=html;
+      // Update count dynamically
+      statusEl.querySelectorAll('.dc-check:not(:disabled)').forEach(cb=>{cb.addEventListener('change',()=>{
+        const cnt=statusEl.querySelectorAll('.dc-check:checked').length;
+        document.getElementById('dcCount').textContent=cnt+' seleccionados';
+      });});
     }
   }catch(e){
     if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
   }
+}
+
+function confirmDiscoveredMembers(clanName,clanTag,memberCount,level){
+  const checks=document.querySelectorAll('#discoverCheckboxes .dc-check:checked');
+  const names=[...checks].map(cb=>cb.value).filter(n=>n);
+  if(!names.length){alert('Selecciona al menos un miembro');return;}
+  // Fill manual input with selected names and trigger analysis
+  const memberInput=document.getElementById('clanMembersInput');
+  if(memberInput)memberInput.value=names.join(', ');
+  analyzeClanMembers(clanName,clanTag,memberCount,level);
 }
 
 async function analyzeClanMembers(clanName,clanTag,memberCount,level){
