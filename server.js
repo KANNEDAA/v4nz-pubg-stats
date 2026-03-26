@@ -271,11 +271,13 @@ app.post('/clans/discover-members', async (req, res) => {
     }
 
     // Step 3: Build member list sorted by appearances (most frequent teammates first)
-    const members = Object.entries(teammateStats)
+    // Split into "likely clan" (2+ appearances) and "maybe random" (1 appearance)
+    const allTeammates = Object.entries(teammateStats)
       .map(([name, s]) => ({
         name,
         active: true,
         appearances: s.appearances,
+        confidence: s.appearances >= 3 ? 'high' : s.appearances >= 2 ? 'medium' : 'low',
         stats: {
           kills: s.kills,
           wins: s.wins,
@@ -286,23 +288,21 @@ app.post('/clans/discover-members', async (req, res) => {
       }))
       .sort((a, b) => b.appearances - a.appearances);
 
-    // Also add the seed player themselves with their aggregated stats
-    const seedStats = { kills: 0, damage: 0, wins: 0, rounds: 0 };
-    for (const matchId of matchIds.slice(0, matchesProcessed)) {
-      // We already have the data from the loop above, but let's compute seed from participants
-    }
-    // Simpler: get seed player stats from the matches we already processed
-    // (we skipped them above, so let's re-extract)
+    // Clan members = appeared in 2+ matches; randoms = only 1 match
+    const members = allTeammates.filter(m => m.appearances >= 2);
+    const maybeRandoms = allTeammates.filter(m => m.appearances < 2);
 
-    console.log(`[discover] Found ${members.length} teammates across ${matchesProcessed} matches`);
+    console.log(`[discover] Found ${members.length} likely clan + ${maybeRandoms.length} possible randoms across ${matchesProcessed} matches`);
 
     res.json({
       ok: true,
       seedPlayer: gamertag,
       platform: shard,
       matchesAnalyzed: matchesProcessed,
-      members: members,
-      total: members.length
+      members: members,        // 2+ appearances = likely clan
+      maybeRandoms: maybeRandoms, // 1 appearance = possibly random
+      total: members.length,
+      totalIncludingRandoms: allTeammates.length
     });
 
   } catch (e) {
