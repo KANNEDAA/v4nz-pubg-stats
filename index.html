@@ -1769,6 +1769,13 @@ async function searchClan(){
         '<div style="display:flex;gap:8px;"><input id="clanSeedInput" class="clan-input" style="flex:1;" placeholder="Gamertag de un miembro del clan..." onkeydown="if(event.key===\'Enter\')discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent);color:var(--bg-primary);" onclick="discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">DESCUBRIR</button></div>'+
         '<div id="discoverStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>'+
       '</div>'+
+      '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin:10px 0 8px;">— o importa directamente desde pubgclans.net —</div>'+
+      '<div style="margin-bottom:12px;padding:12px;background:rgba(255,165,0,0.05);border:1px solid rgba(255,165,0,0.15);border-radius:8px;">'+
+        '<div style="font-size:.75rem;font-weight:600;color:var(--accent-orange);margin-bottom:6px;">&#x1F4E5; Importar desde pubgclans.net</div>'+
+        '<p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Pega el ID del clan de la URL de pubgclans.net (ej: clan.bc03cc7f04a347ef81e48070f004283c):</p>'+
+        '<div style="display:flex;gap:8px;"><input id="pubgclansIdInput" class="clan-input" style="flex:1;" placeholder="clan.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" onkeydown="if(event.key===\'Enter\')importFromPubgclans()"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent-orange);color:var(--bg-primary);" onclick="importFromPubgclans()">IMPORTAR</button></div>'+
+        '<div id="importStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>'+
+      '</div>'+
       '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-bottom:8px;">— o escribe los gamertags manualmente —</div>'+
       '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" placeholder="Jugador1, Jugador2, Jugador3..." onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">ANALIZAR</button></div></div>';
   }catch(e){
@@ -1837,6 +1844,35 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
         document.getElementById('dcCount').textContent=cnt+' seleccionados';
       });});
     }
+  }catch(e){
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
+  }
+}
+
+async function importFromPubgclans(){
+  let cid=document.getElementById('pubgclansIdInput')?.value?.trim();
+  if(!cid){alert('Pega el clanId de pubgclans.net');return;}
+  // Accept full URL or just the clanId
+  const urlMatch=cid.match(/clanId=([^&]+)/);
+  if(urlMatch)cid=urlMatch[1];
+  if(!cid.startsWith('clan.'))cid='clan.'+cid;
+  const statusEl=document.getElementById('importStatus');
+  if(statusEl)statusEl.innerHTML='<div class="api-loader" style="justify-content:flex-start;"><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div><div class="loader-text" style="font-size:.7rem;">Importando clan desde pubgclans.net + PUBG API...</div></div>';
+  try{
+    const resp=await fetch('/clans/import-pubgclans',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({clanId:cid,gameMode:'squad'})
+    });
+    const data=await resp.json();
+    if(!resp.ok)throw new Error(data.error||'Error al importar');
+    if(statusEl){
+      statusEl.innerHTML='<div style="color:var(--accent-green);font-size:.75rem;font-weight:600;">&#x2705; Clan ['+data.tag+'] '+data.name+' importado!</div>'+
+        '<div style="font-size:.7rem;color:var(--text-secondary);margin-top:4px;">'+data.members+' miembros ('+data.activeMembers+' activos) · '+data.totalKills+' kills · K/D '+data.avgKd+' · Win Rate '+data.winRate+'%</div>'+
+        '<div style="margin-top:8px;"><a href="/clan/'+data.tag+'" style="color:var(--accent);font-size:.75rem;font-weight:600;text-decoration:none;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+data.tag+'\');showClanDetail(\''+data.tag+'\');">&#x27A1; VER CLAN EN EL RANKING</a></div>';
+    }
+    // Refresh leaderboard
+    loadClanRanking();
   }catch(e){
     if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
   }
