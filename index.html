@@ -1822,30 +1822,84 @@ async function searchClan(){
   try{
     const clan=await fetchClanByPlayer(n, clanPlatform);
     const clanInfo=renderClanCard(clan,'clanResults');
-    // Save to history (no members yet - will be updated when analyzed)
     saveClanToHistory(clanInfo.name,clanInfo.tag,clanInfo.memberCount,clanInfo.level,clanPlatform,[]);
-    // PUBG API doesn't return member list - show auto-discover + manual input
     const cr=document.getElementById('clanResults');
     const eName=clanInfo.name.replace(/'/g,"\\'");
     const eTag=clanInfo.tag.replace(/'/g,"\\'");
-    cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
-      '<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Analizar Miembros del Clan</div>'+
-      '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">La API de PUBG no devuelve la lista de miembros. Puedes descubrirlos automaticamente o escribirlos a mano:</p>'+
-      '<div style="margin-bottom:12px;padding:12px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.15);border-radius:8px;">'+
-        '<div style="font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:6px;">&#x1F50D; Auto-descubrir miembros</div>'+
-        '<p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Escribe el gamertag de UN miembro y descubriremos al resto analizando sus partidas recientes:</p>'+
-        '<div style="display:flex;gap:8px;"><input id="clanSeedInput" class="clan-input" style="flex:1;" placeholder="Gamertag de un miembro del clan..." onkeydown="if(event.key===\'Enter\')discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent);color:var(--bg-primary);" onclick="discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">DESCUBRIR</button></div>'+
-        '<div id="discoverStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>'+
-      '</div>'+
-      '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin:10px 0 8px;">— o importa directamente desde pubgclans.net —</div>'+
-      '<div style="margin-bottom:12px;padding:12px;background:rgba(255,165,0,0.05);border:1px solid rgba(255,165,0,0.15);border-radius:8px;">'+
-        '<div style="font-size:.75rem;font-weight:600;color:var(--accent-orange);margin-bottom:6px;">&#x1F4E5; Importar desde pubgclans.net</div>'+
-        '<p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Pega el ID del clan de la URL de pubgclans.net (ej: clan.bc03cc7f04a347ef81e48070f004283c):</p>'+
-        '<div style="display:flex;gap:8px;"><input id="pubgclansIdInput" class="clan-input" style="flex:1;" placeholder="clan.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" onkeydown="if(event.key===\'Enter\')importFromPubgclans()"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent-orange);color:var(--bg-primary);" onclick="importFromPubgclans()">IMPORTAR</button></div>'+
-        '<div id="importStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>'+
-      '</div>'+
-      '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-bottom:8px;">— o escribe los gamertags manualmente —</div>'+
-      '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" placeholder="Jugador1, Jugador2, Jugador3..." onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">ANALIZAR</button></div></div>';
+
+    // Check if this clan already exists in our database
+    setLoaderStep('Comprobando si el clan ya esta registrado...');
+    let existsInDB=false;
+    try{
+      const dbResp=await fetch('/clans/'+encodeURIComponent(clanInfo.tag));
+      if(dbResp.ok){
+        const dbData=await dbResp.json();
+        if(dbData.clan&&dbData.members&&dbData.members.length>0){
+          existsInDB=true;
+          // Show existing members inline
+          const members=dbData.members;
+          const c=dbData.clan;
+          let mh='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--accent);border-opacity:0.3;">';
+          mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+          mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">&#x2705; Clan registrado &mdash; '+members.length+' miembros</div>';
+          mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina completa &#x2192;</a>';
+          mh+='</div>';
+          // Stats summary
+          mh+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;text-align:center;">';
+          mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);">KILLS</div></div>';
+          mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent-green);">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</div><div style="font-size:.6rem;color:var(--text-dim);">K/D</div></div>';
+          mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent-yellow);">'+(c.total_wins||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);">WINS</div></div>';
+          mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</div><div style="font-size:.6rem;color:var(--text-dim);">WIN RATE</div></div>';
+          mh+='</div>';
+          // Top members grid
+          const maxK=members[0]?.kills||1;
+          mh+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;max-height:350px;overflow-y:auto;">';
+          members.forEach((m,i)=>{
+            const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
+            const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
+            const opacity=isActive?'1':'0.4';
+            mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
+            mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
+            mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
+            if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
+            mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+            mh+='</div>';
+            mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
+            mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
+            mh+='<span>K/D:<b>'+(parseFloat(m.kd)||0).toFixed(2)+'</b></span>';
+            mh+='<span>W:<b>'+(m.wins||0)+'</b></span>';
+            mh+='</div></div>';
+          });
+          mh+='</div></div>';
+          cr.innerHTML+=mh;
+        }
+      }
+    }catch(dbErr){/* clan not in DB, that's fine */}
+
+    // If clan is NOT in our database, show registration options
+    if(!existsInDB){
+      cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
+        '<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Registrar Clan</div>'+
+        '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">Este clan aun no esta en V4NZ. Registralo para que aparezca en el ranking:</p>'+
+        // Option 1: Import from pubgclans.net (recommended)
+        '<div style="margin-bottom:12px;padding:12px;background:rgba(255,165,0,0.05);border:1px solid rgba(255,165,0,0.15);border-radius:8px;">'+
+          '<div style="font-size:.75rem;font-weight:600;color:var(--accent-orange);margin-bottom:6px;">&#x1F4E5; Importar desde pubgclans.net (recomendado)</div>'+
+          '<p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Pega la URL o el clanId de pubgclans.net — importa todos los miembros con stats automaticamente:</p>'+
+          '<div style="display:flex;gap:8px;"><input id="pubgclansIdInput" class="clan-input" style="flex:1;" placeholder="URL de pubgclans.net o clan.xxxxxxxx..." onkeydown="if(event.key===\'Enter\')importFromPubgclans()"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent-orange);color:var(--bg-primary);" onclick="importFromPubgclans()">IMPORTAR</button></div>'+
+          '<div id="importStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>'+
+        '</div>'+
+        // Option 2: Auto-discover
+        '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin:10px 0 8px;">— o descubre miembros desde partidas —</div>'+
+        '<div style="margin-bottom:12px;padding:12px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.15);border-radius:8px;">'+
+          '<div style="font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:6px;">&#x1F50D; Auto-descubrir por partidas</div>'+
+          '<p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Escribe el gamertag de UN miembro — analizamos sus partidas para encontrar companeros:</p>'+
+          '<div style="display:flex;gap:8px;"><input id="clanSeedInput" class="clan-input" style="flex:1;" placeholder="Gamertag de un miembro..." onkeydown="if(event.key===\'Enter\')discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent);color:var(--bg-primary);" onclick="discoverClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">DESCUBRIR</button></div>'+
+          '<div id="discoverStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>'+
+        '</div>'+
+        // Option 3: Manual
+        '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-bottom:8px;">— o escribe los gamertags manualmente —</div>'+
+        '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" placeholder="Jugador1, Jugador2, Jugador3..." onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+eName+'\',\''+eTag+'\','+clanInfo.memberCount+','+clanInfo.level+')">ANALIZAR</button></div></div>';
+    }
   }catch(e){
     document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
   }finally{showLoading(false);}
