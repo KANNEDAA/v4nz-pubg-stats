@@ -425,6 +425,31 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .chi-action-btn.remove-history { color:var(--accent-red); border-color:rgba(255,51,85,0.2); }
 .chi-action-btn.remove-history:hover { background:rgba(255,51,85,0.08); border-color:var(--accent-red); }
 
+/* CLAN RANKING TABLE */
+.cr-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+.cr-table thead th { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.65rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); padding:10px 8px; text-align:left; border-bottom:1px solid var(--border); }
+.cr-table tbody tr { border-bottom:1px solid var(--border); transition:background .2s; cursor:pointer; }
+.cr-table tbody tr:hover { background:var(--bg-card-hover); }
+.cr-table td { padding:10px 8px; }
+.cr-rank { font-family:'Orbitron',sans-serif; font-weight:700; font-size:.85rem; width:40px; text-align:center; }
+.cr-rank.r1 { color:var(--accent-yellow); }
+.cr-rank.r2 { color:#c0c0c0; }
+.cr-rank.r3 { color:#cd7f32; }
+.cr-clan-cell { display:flex; align-items:center; gap:10px; }
+.cr-clan-icon { width:32px; height:32px; border-radius:8px; background:var(--accent-orange-dim); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',sans-serif; font-weight:700; font-size:.7rem; color:var(--accent-orange); flex-shrink:0; }
+.cr-clan-name { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.9rem; color:var(--text-primary); }
+.cr-clan-tag { font-size:.65rem; color:var(--accent-orange); }
+.cr-stat { font-family:'Orbitron',sans-serif; font-weight:600; font-size:.75rem; color:var(--accent); }
+.cr-stat-dim { font-family:'Orbitron',sans-serif; font-weight:500; font-size:.7rem; color:var(--text-secondary); }
+.cr-plat { font-size:.6rem; color:var(--text-dim); text-transform:uppercase; }
+.clan-publish-btn { background:var(--gradient-orange); border:none; color:#000; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; padding:10px 24px; border-radius:8px; cursor:pointer; transition:all .25s; margin-top:12px; }
+.clan-publish-btn:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(255,107,0,0.3); }
+/* CLAN PAGE */
+.clan-page-header { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; margin-bottom:20px; position:relative; overflow:hidden; }
+.clan-page-header::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--gradient-orange); }
+.clan-page-share { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-size:.72rem; color:var(--text-secondary); cursor:pointer; transition:all .2s; margin-top:12px; }
+.clan-page-share:hover { border-color:var(--accent); color:var(--accent); }
+
 /* LEADERBOARD */
 .leaderboard-controls { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .lb-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 16px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.25s; box-shadow: var(--shadow-card); }
@@ -571,6 +596,7 @@ footer a { color: var(--accent); text-decoration: none; }
       <a href="#" data-tab="matches">Partidas</a>
       <a href="#" data-tab="compare">Comparar</a>
       <a href="#" data-tab="clans">Clanes</a>
+      <a href="#" data-tab="clanranking">Ranking Clanes</a>
       <a href="#" data-tab="leaderboard">Top 500</a>
     </nav>
   </div>
@@ -709,6 +735,18 @@ footer a { color: var(--accent); text-decoration: none; }
       <div style="text-align:center;margin-bottom:20px;"><button class="search-btn" style="border-radius:8px;padding:12px 30px;" onclick="compareClans()">COMPARAR CLANES</button></div>
       <div id="clanCompareResults"></div>
     </div>
+  </div>
+  <div class="panel" id="panel-clanranking">
+    <div class="section-title">Ranking de Clanes</div>
+    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Los mejores clanes de consola clasificados por stats reales. Publica tu clan desde la pestana de Clanes para aparecer aqui.</p>
+    <div class="leaderboard-controls">
+      <button class="lb-btn active" onclick="setCRSort('kills',this)">Kills</button>
+      <button class="lb-btn" onclick="setCRSort('kd',this)">K/D</button>
+      <button class="lb-btn" onclick="setCRSort('wins',this)">Victorias</button>
+      <button class="lb-btn" onclick="setCRSort('winrate',this)">Win Rate</button>
+      <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
+    </div>
+    <div id="clanRankingContent"><div class="empty-state"><p>Cargando ranking de clanes...</p></div></div>
   </div>
   <div class="panel" id="panel-leaderboard">
     <div class="section-title">Top 500 &mdash; Leaderboard Consola</div>
@@ -910,6 +948,118 @@ function getTimeAgo(ts){
   return new Date(ts).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
 }
 
+// ═══ CLAN RANKING + PUBLISH + CLAN PAGE ═══
+let crSort='kills';
+const HAS_DB=IS_PROXIED; // if proxied server exists, DB likely exists too
+function setCRSort(s,btn){crSort=s;const btns=btn.parentElement.querySelectorAll('.lb-btn');btns.forEach(b=>b.classList.toggle('active',b===btn));loadClanRanking();}
+async function loadClanRanking(){
+  const el=document.getElementById('clanRankingContent');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:30px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando ranking...</div></div></div>';
+  try{
+    const r=await fetch('/clans/leaderboard?sort='+crSort+'&limit=50');
+    const d=await r.json();
+    if(!d.clans||!d.clans.length){
+      el.innerHTML='<div class="empty-state"><p>Aun no hay clanes registrados. Se el primero en publicar tu clan desde la pestana de Clanes.</p></div>';
+      return;
+    }
+    let h='<table class="cr-table"><thead><tr><th>#</th><th>Clan</th><th>Kills</th><th>K/D</th><th>Wins</th><th>Win%</th><th>Miembros</th><th>Plat</th></tr></thead><tbody>';
+    d.clans.forEach((c,i)=>{
+      const rank=i+1;const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
+      h+='<tr onclick="window.location.href=\'/clan/'+c.tag+'\'">';
+      h+='<td class="cr-rank '+rc+'">'+rank+'</td>';
+      h+='<td><div class="cr-clan-cell"><div class="cr-clan-icon">'+c.tag.charAt(0)+'</div><div><div class="cr-clan-name">'+c.name+'</div><div class="cr-clan-tag">['+c.tag+']</div></div></div></td>';
+      h+='<td class="cr-stat">'+(c.total_kills||0)+'</td>';
+      h+='<td class="cr-stat">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</td>';
+      h+='<td class="cr-stat-dim">'+(c.total_wins||0)+'</td>';
+      h+='<td class="cr-stat-dim">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</td>';
+      h+='<td class="cr-stat-dim">'+(c.active_members||0)+'</td>';
+      h+='<td class="cr-plat">'+(c.platform||'psn').toUpperCase()+'</td>';
+      h+='</tr>';
+    });
+    h+='</tbody></table>';
+    h+='<p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">'+d.clans.length+' clanes registrados &mdash; Publica tu clan para aparecer aqui</p>';
+    el.innerHTML=h;
+  }catch(e){
+    el.innerHTML='<div class="empty-state"><p>'+e.message+'</p></div>';
+  }
+}
+
+async function publishClanToServer(clanTag,clanName,memberCount,level,platform,memberStats){
+  try{
+    const members=memberStats.map(m=>({
+      name:m.name,
+      active:m.active!==false,
+      stats:{kills:m.stats?.kills||0,wins:m.stats?.wins||0,kd:m.stats?.kd||0,damage:m.stats?.damageDealt||m.stats?.damage||0,rounds:m.stats?.roundsPlayed||m.stats?.rounds||0}
+    }));
+    const r=await fetch('/clans/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tag:clanTag,name:clanName,memberCount,level,platform,registeredBy:currentPlayerData?.attributes?.name||'anon',members})
+    });
+    const d=await r.json();
+    if(d.ok)return d;
+    throw new Error(d.error||'Error al publicar');
+  }catch(e){throw e;}
+}
+
+// Clan page rendering for /clan/:tag URLs
+async function loadClanPage(tag){
+  switchTab('clans');
+  const cr=document.getElementById('clanResults');
+  cr.innerHTML='<div style="text-align:center;padding:40px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando clan '+tag+'...</div></div></div>';
+  try{
+    const r=await fetch('/clans/'+encodeURIComponent(tag));
+    if(!r.ok)throw new Error('Clan no encontrado en la base de datos');
+    const d=await r.json();
+    const c=d.clan;const members=d.members||[];
+    let h='<div class="clan-page-header">';
+    h+='<div style="display:flex;align-items:center;gap:16px;"><div class="clan-icon" style="width:56px;height:56px;font-size:1.5rem;">'+c.tag.charAt(0)+'</div>';
+    h+='<div><div class="clan-name" style="font-size:1.4rem;">'+c.name+'</div>';
+    h+='<div class="clan-tag">['+c.tag+'] &mdash; '+c.platform.toUpperCase()+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
+    // Aggregated stats
+    h+='<div class="clan-stats-grid" style="margin-top:16px;">';
+    h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent);">'+(c.total_kills||0)+'</div><div class="cs-label">Total Kills</div></div>';
+    h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent-green);">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</div><div class="cs-label">K/D Medio</div></div>';
+    h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent-yellow);">'+(c.total_wins||0)+'</div><div class="cs-label">Victorias</div></div>';
+    h+='<div class="clan-stat"><div class="cs-val">'+(parseFloat(c.avg_damage)||0).toFixed(0)+'</div><div class="cs-label">Dano Medio</div></div>';
+    h+='<div class="clan-stat"><div class="cs-val">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</div><div class="cs-label">Win Rate</div></div>';
+    h+='<div class="clan-stat"><div class="cs-val">'+(c.active_members||0)+'</div><div class="cs-label">Activos</div></div>';
+    h+='</div>';
+    // Share button
+    const shareUrl='https://v4nz.com/clan/'+c.tag;
+    h+='<div class="clan-page-share" onclick="navigator.clipboard.writeText(\''+shareUrl+'\').then(()=>{this.innerHTML=\'&#x2705; Copiado!\';setTimeout(()=>{this.innerHTML=\'&#x1F517; Compartir Clan\';},2000);})">&#x1F517; Compartir Clan</div>';
+    h+='</div>';
+    // Member ranking
+    if(members.length){
+      h+='<div style="margin-top:16px;"><div class="section-title" style="font-size:.85rem;">Ranking de Miembros</div>';
+      members.forEach((m,i)=>{
+        const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':'';
+        const maxKills=members[0]?.kills||1;
+        const barW=Math.max(5,Math.round(((m.kills||0)/maxKills)*100));
+        h+='<div class="clan-member" style="position:relative;overflow:hidden;">';
+        h+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:8px;"></div>';
+        h+='<div style="display:flex;align-items:center;gap:8px;z-index:1;position:relative;">';
+        h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;width:24px;text-align:center;color:var(--text-dim);">'+(i+1)+'</span>';
+        h+=medal?'<span>'+medal+'</span>':'';
+        h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">'+m.player_name+'</span>';
+        h+='</div>';
+        h+='<div class="clan-member-stats" style="z-index:1;position:relative;">';
+        h+='<div>Kills: <span>'+(m.kills||0)+'</span></div>';
+        h+='<div>K/D: <span>'+(parseFloat(m.kd)||0).toFixed(2)+'</span></div>';
+        h+='<div>Wins: <span>'+(m.wins||0)+'</span></div>';
+        h+='<div>Dano: <span>'+(parseFloat(m.damage)||0).toFixed(0)+'</span></div>';
+        h+='</div></div>';
+      });
+      h+='</div>';
+    }
+    cr.innerHTML=h;
+  }catch(e){
+    // Not in DB — try searching via PUBG API
+    cr.innerHTML='<div class="empty-state"><p style="color:var(--text-secondary);">Este clan aun no esta publicado en V4NZ.</p><p style="font-size:.8rem;color:var(--text-dim);">Busca un jugador del clan arriba para encontrarlo y publicarlo.</p></div>';
+  }
+}
+
 // INIT
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
@@ -917,9 +1067,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();document.getElementById('apiModal').style.display='none';}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
-  // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER
+  // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER or /clan/TAG
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
+  const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
+  else if(clanMatch){loadClanPage(decodeURIComponent(clanMatch[1]));}
   else{loadDemoData();}
   // Back/forward browser navigation
   window.addEventListener('popstate',()=>{
@@ -1568,8 +1720,31 @@ function renderClanEnhanced(clanInfo,memberStats,targetId){
   // Unanalyzed members
   const unanalyzed=memberStats.filter(m=>!m.stats);
   if(unanalyzed.length){h+='<div style="margin-top:10px;font-size:.7rem;color:var(--text-dim);">Sin analizar: '+unanalyzed.map(m=>m.name).join(', ')+'</div>';}
+  h+='<div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">';
+  h+='<button class="clan-publish-btn" id="publishClanBtn" onclick="doPublishClan(\''+tag.replace(/'/g,"\\'")+'\',\''+name.replace(/'/g,"\\'")+'\','+memberCount+','+level+')">&#x1F680; PUBLICAR CLAN EN V4NZ</button>';
+  h+='<p style="font-size:.65rem;color:var(--text-dim);margin-top:6px;">Tu clan aparecera en el Ranking de Clanes y tendra su propia URL: v4nz.com/clan/'+tag+'</p>';
+  h+='</div>';
   h+='</div>';
   document.getElementById(targetId).innerHTML=h;
+  // Store member stats globally for publish
+  window.__lastClanMembers=memberStats;window.__lastClanPlatform=clanPlatform;
+}
+async function doPublishClan(tag,name,memberCount,level){
+  const btn=document.getElementById('publishClanBtn');
+  if(!btn)return;
+  btn.disabled=true;btn.innerHTML='Publicando...';
+  try{
+    const ms=window.__lastClanMembers||[];
+    const result=await publishClanToServer(tag,name,memberCount,level,window.__lastClanPlatform||'psn',ms);
+    btn.innerHTML='&#x2705; Publicado! v4nz.com/clan/'+tag;
+    btn.style.background='var(--accent-green)';
+    btn.onclick=()=>window.location.href='/clan/'+tag;
+    // Update history
+    history.pushState(null,'','https://v4nz.com/clan/'+tag);
+  }catch(e){
+    btn.disabled=false;btn.innerHTML='&#x1F680; PUBLICAR CLAN EN V4NZ';
+    alert('Error: '+e.message+'. Puede que la base de datos no este configurada aun.');
+  }
 }
 async function searchClan(){
   const n=document.getElementById('clanPlayerInput').value.trim();
