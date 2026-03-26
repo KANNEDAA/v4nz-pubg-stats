@@ -212,8 +212,9 @@ app.post('/clans/discover-members', async (req, res) => {
     if (!matchIds.length) return res.json({ members: [], message: 'No recent matches found' });
 
     // Step 2: Fetch each match and find teammates
-    const teammateStats = {}; // { playerName: { kills, damage, wins, rounds, assists, appearances } }
+    const teammateStats = {}; // { playerName: { kills, damage, wins, rounds, assists, appearances, clanConfirmed } }
     let matchesProcessed = 0;
+    let seedClanId = null; // Will be detected from match data
 
     for (const matchId of matchIds) {
       try {
@@ -235,33 +236,44 @@ app.post('/clans/discover-members', async (req, res) => {
         );
         if (!myParticipant) continue;
 
+        // Detect seed player's clanId from match data (if available)
+        const myClanId = myParticipant.attributes?.stats?.clanId;
+        if (myClanId && !seedClanId) seedClanId = myClanId;
+
         const myRoster = rosters.find(r =>
           r.relationships?.participants?.data?.some(p => p.id === myParticipant.id)
         );
         if (!myRoster) continue;
 
-        // Get all participants on the same roster (teammates)
-        const rosterParticipantIds = myRoster.relationships.participants.data.map(p => p.id);
-        const teammates = participants.filter(p => rosterParticipantIds.includes(p.id));
-
         // Also check if roster won
         const rosterWon = myRoster.attributes?.won === 'true' || myRoster.attributes?.stats?.rank === 1;
 
-        for (const tm of teammates) {
-          const stats = tm.attributes?.stats;
+        // Scan ALL participants in the match (not just our roster)
+        // If they share our clanId, they're confirmed clan members
+        // If they're on our roster but different/no clanId, they're possible randoms
+        for (const p of participants) {
+          const stats = p.attributes?.stats;
           if (!stats) continue;
           const name = stats.name;
-          if (name === gamertag) continue; // skip ourselves
+          if (name === gamertag) continue;
+
+          const pClanId = stats.clanId;
+          const isOnMyRoster = myRoster.relationships.participants.data.some(rp => rp.id === p.id);
+          const isSameClan = seedClanId && pClanId && pClanId === seedClanId;
+
+          // Only track: same clan members (from any roster) OR our roster teammates
+          if (!isSameClan && !isOnMyRoster) continue;
 
           if (!teammateStats[name]) {
-            teammateStats[name] = { kills: 0, damage: 0, wins: 0, rounds: 0, assists: 0, appearances: 0 };
+            teammateStats[name] = { kills: 0, damage: 0, wins: 0, rounds: 0, assists: 0, appearances: 0, clanConfirmed: false };
           }
           teammateStats[name].kills += stats.kills || 0;
           teammateStats[name].damage += stats.damageDealt || 0;
-          teammateStats[name].wins += (rosterWon ? 1 : 0);
+          teammateStats[name].wins += (isOnMyRoster && rosterWon ? 1 : 0);
           teammateStats[name].rounds += 1;
           teammateStats[name].assists += stats.assists || 0;
           teammateStats[name].appearances += 1;
+          if (isSameClan) teammateStats[name].clanConfirmed = true;
         }
 
         matchesProcessed++;
@@ -270,37 +282,55 @@ app.post('/clans/discover-members', async (req, res) => {
       }
     }
 
-    // Step 3: Build member list sorted by appearances (most frequent teammates first)
-    // Split into "likely clan" (2+ appearances) and "maybe random" (1 appearance)
+    // Step 3: Build member list
+    // If clanId was found, use it for definitive filtering
+    // Otherwise fall back to frequency heuristic
     const allTeammates = Object.entries(teammateStats)
-      .map(([name, s]) => ({
-        name,
-        active: true,
-        appearances: s.appearances,
-        confidence: s.appearances >= 3 ? 'high' : s.appearances >= 2 ? 'medium' : 'low',
-        stats: {
-          kills: s.kills,
-          wins: s.wins,
-          kd: s.rounds > 0 ? parseFloat((s.kills / s.rounds).toFixed(2)) : 0,
-          damage: parseFloat(s.damage.toFixed(2)),
-          rounds: s.rounds
-        }
-      }))
-      .sort((a, b) => b.appearances - a.appearances);
+      .map(([name, s]) => {
+        let confidence;
+        if (s.clanConfirmed) confidence = 'confirmed'; // same clanId = 100% sure
+        else if (s.appearances >= 3) confidence = 'high';
+        else if (s.appearances >= 2) confidence = 'medium';
+        else confidence = 'low';
+        return {
+          name, active: true,
+          appearances: s.appearances,
+          clanConfirmed: s.clanConfirmed,
+          confidence,
+          stats: {
+            kills: s.kills, wins: s.wins,
+            kd: s.rounds > 0 ? parseFloat((s.kills / s.rounds).toFixed(2)) : 0,
+            damage: parseFloat(s.damage.toFixed(2)),
+            rounds: s.rounds
+          }
+        };
+      })
+      .sort((a, b) => {
+        // Sort: confirmed first, then by appearances
+        if (a.clanConfirmed !== b.clanConfirmed) return b.clanConfirmed ? 1 : -1;
+        return b.appearances - a.appearances;
+      });
 
-    // Clan members = appeared in 2+ matches; randoms = only 1 match
-    const members = allTeammates.filter(m => m.appearances >= 2);
-    const maybeRandoms = allTeammates.filter(m => m.appearances < 2);
+    // If we have clanId data: confirmed = members, unconfirmed = maybe randoms
+    // If no clanId: fall back to 2+ appearances = members
+    const hasClanData = seedClanId && allTeammates.some(m => m.clanConfirmed);
+    const members = hasClanData
+      ? allTeammates.filter(m => m.clanConfirmed)
+      : allTeammates.filter(m => m.appearances >= 2);
+    const maybeRandoms = hasClanData
+      ? allTeammates.filter(m => !m.clanConfirmed)
+      : allTeammates.filter(m => m.appearances < 2);
 
-    console.log(`[discover] Found ${members.length} likely clan + ${maybeRandoms.length} possible randoms across ${matchesProcessed} matches`);
+    console.log(`[discover] ClanId: ${seedClanId || 'not found'} | ${members.length} clan members + ${maybeRandoms.length} others across ${matchesProcessed} matches`);
 
     res.json({
       ok: true,
       seedPlayer: gamertag,
       platform: shard,
       matchesAnalyzed: matchesProcessed,
-      members: members,        // 2+ appearances = likely clan
-      maybeRandoms: maybeRandoms, // 1 appearance = possibly random
+      clanIdDetected: !!seedClanId,  // true = we could verify by clanId
+      members: members,
+      maybeRandoms: maybeRandoms,
       total: members.length,
       totalIncludingRandoms: allTeammates.length
     });
