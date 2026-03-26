@@ -987,11 +987,10 @@ async function loadClanRanking(){
 
 async function publishClanToServer(clanTag,clanName,memberCount,level,platform,memberStats){
   try{
-    const members=memberStats.map(m=>({
-      name:m.name,
-      active:m.active!==false,
-      stats:{kills:m.stats?.kills||0,wins:m.stats?.wins||0,kd:m.stats?.kd||0,damage:m.stats?.damageDealt||m.stats?.damage||0,rounds:m.stats?.roundsPlayed||m.stats?.rounds||0}
-    }));
+    const members=memberStats.filter(m=>m.stats).map(m=>{
+      const k=m.stats.kills||0,r=m.stats.roundsPlayed||m.stats.rounds||0;
+      return{name:m.name,active:m.active!==false,stats:{kills:k,wins:m.stats.wins||0,kd:r>0?parseFloat((k/r).toFixed(2)):0,damage:m.stats.damageDealt||m.stats.damage||0,rounds:r}};
+    });
     const r=await fetch('/clans/register',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -1722,7 +1721,7 @@ function renderClanEnhanced(clanInfo,memberStats,targetId){
   const unanalyzed=memberStats.filter(m=>!m.stats);
   if(unanalyzed.length){h+='<div style="margin-top:10px;font-size:.7rem;color:var(--text-dim);">Sin analizar: '+unanalyzed.map(m=>m.name).join(', ')+'</div>';}
   h+='<div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">';
-  h+='<button class="clan-publish-btn" id="publishClanBtn" onclick="doPublishClan(\''+tag.replace(/'/g,"\\'")+'\',\''+name.replace(/'/g,"\\'")+'\','+memberCount+','+level+')">&#x1F680; PUBLICAR CLAN EN V4NZ</button>';
+  h+='<button class="clan-publish-btn" id="publishClanBtn" onclick="doPublishClan(\''+tag.replace(/'/g,"\\'")+'\',\''+name.replace(/'/g,"\\'")+'\','+memberCount+','+level+')">&#x1F4E2; PUBLICAR CLAN EN RANKING</button>';
   h+='<p style="font-size:.65rem;color:var(--text-dim);margin-top:6px;">Tu clan aparecera en el Ranking de Clanes y tendra su propia URL: v4nz.com/clan/'+tag+'</p>';
   h+='</div>';
   h+='</div>';
@@ -1743,7 +1742,7 @@ async function doPublishClan(tag,name,memberCount,level){
     // Update history
     history.pushState(null,'','https://v4nz.com/clan/'+tag);
   }catch(e){
-    btn.disabled=false;btn.innerHTML='&#x1F680; PUBLICAR CLAN EN V4NZ';
+    btn.disabled=false;btn.innerHTML='&#x1F4E2; PUBLICAR CLAN EN RANKING';
     alert('Error: '+e.message+'. Puede que la base de datos no este configurada aun.');
   }
 }
