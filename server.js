@@ -180,6 +180,130 @@ app.get('/clans/search/:query', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ═══ IMPORT CLAN FROM PUBGCLANS.NET ═══
+// POST /clans/import-pubgclans — Import a clan using pubgclans.net data + PUBG API metadata
+app.post('/clans/import-pubgclans', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database configured' });
+  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+  const { clanId, gameMode } = req.body;
+  if (!clanId) return res.status(400).json({ error: 'clanId required (e.g. clan.bc03cc7f04a347ef81e48070f004283c)' });
+
+  const mode = gameMode || 'squad';
+  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+
+  try {
+    // Step 1: Fetch clan metadata from PUBG API (try xbox first, then psn)
+    let clanMeta = null;
+    let detectedPlatform = 'xbox';
+    for (const shard of ['xbox', 'psn', 'steam']) {
+      try {
+        const clanResp = await fetch(`https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers });
+        if (clanResp.ok) {
+          const clanData = await clanResp.json();
+          clanMeta = clanData.data?.attributes;
+          detectedPlatform = shard;
+          break;
+        }
+      } catch (e) { /* try next shard */ }
+    }
+
+    if (!clanMeta) return res.status(404).json({ error: 'Clan not found on any platform' });
+    console.log(`[import] Found clan: [${clanMeta.clanTag}] ${clanMeta.clanName} (${detectedPlatform}, level ${clanMeta.clanLevel}, ${clanMeta.clanMemberCount} members)`);
+
+    // Step 2: Fetch member stats from pubgclans.net
+    const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${mode}`;
+    const pcnResp = await fetch(pcnUrl);
+    if (!pcnResp.ok) return res.status(502).json({ error: 'Failed to fetch data from pubgclans.net' });
+    const pcnData = await pcnResp.json();
+
+    if (!Array.isArray(pcnData) || pcnData.length === 0) {
+      return res.status(404).json({ error: 'No member data found on pubgclans.net for this clan' });
+    }
+    console.log(`[import] Got ${pcnData.length} members from pubgclans.net`);
+
+    // Step 3: Transform member data to our format
+    const members = pcnData.map(p => {
+      const kills = parseInt(p.kills) || 0;
+      const rounds = parseInt(p.roundsplayed) || 0;
+      const wins = parseInt(p.wins) || 0;
+      const damage = parseFloat(p.damagedealt) || 0;
+      const kd = rounds > 0 ? parseFloat((kills / rounds).toFixed(2)) : 0;
+      return {
+        name: p.player_name,
+        active: rounds > 0,
+        stats: { kills, wins, kd, damage, rounds }
+      };
+    });
+
+    // Step 4: Register the clan (upsert)
+    const payload = {
+      tag: clanMeta.clanTag,
+      name: clanMeta.clanName,
+      memberCount: clanMeta.clanMemberCount,
+      level: clanMeta.clanLevel,
+      platform: detectedPlatform,
+      registeredBy: 'pubgclans_import',
+      members: members
+    };
+
+    // Use our own register endpoint logic inline
+    const cleanTag = payload.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
+    let totalKills = 0, totalWins = 0, totalRounds = 0, totalDmg = 0, kdSum = 0, activeCount = 0;
+    members.forEach(m => {
+      const s = m.stats;
+      totalKills += s.kills; totalWins += s.wins; totalRounds += s.rounds;
+      totalDmg += s.damage; kdSum += s.kd;
+      if (m.active) activeCount++;
+    });
+    const avgKd = members.length > 0 ? (kdSum / members.length).toFixed(2) : 0;
+    const avgDmg = members.length > 0 ? (totalDmg / members.length).toFixed(1) : 0;
+    const winRate = totalRounds > 0 ? ((totalWins / totalRounds) * 100).toFixed(2) : 0;
+
+    await pool.query(`
+      INSERT INTO clans (tag, name, member_count, level, platform, registered_by,
+                         total_kills, total_wins, avg_kd, avg_damage, total_rounds,
+                         win_rate, active_members, stats_updated_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW(),NOW())
+      ON CONFLICT (tag) DO UPDATE SET
+        name=EXCLUDED.name, member_count=EXCLUDED.member_count, level=EXCLUDED.level,
+        platform=EXCLUDED.platform, total_kills=EXCLUDED.total_kills, total_wins=EXCLUDED.total_wins,
+        avg_kd=EXCLUDED.avg_kd, avg_damage=EXCLUDED.avg_damage, total_rounds=EXCLUDED.total_rounds,
+        win_rate=EXCLUDED.win_rate, active_members=EXCLUDED.active_members,
+        stats_updated_at=NOW(), updated_at=NOW()
+    `, [cleanTag, payload.name, payload.memberCount, payload.level, detectedPlatform,
+        'pubgclans_import', totalKills, totalWins, avgKd, avgDmg, totalRounds, winRate, activeCount]);
+
+    for (const m of members) {
+      const s = m.stats;
+      await pool.query(`
+        INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ON CONFLICT (clan_tag, player_name) DO UPDATE SET
+          kills=EXCLUDED.kills, wins=EXCLUDED.wins, kd=EXCLUDED.kd,
+          damage=EXCLUDED.damage, rounds=EXCLUDED.rounds, active=EXCLUDED.active
+      `, [cleanTag, m.name, s.kills, s.wins, s.kd, s.damage, s.rounds, m.active, 'pubgclans_import']);
+    }
+
+    console.log(`[import] Registered [${cleanTag}] ${payload.name}: ${members.length} members, ${totalKills} kills`);
+
+    res.json({
+      ok: true,
+      tag: cleanTag,
+      name: payload.name,
+      platform: detectedPlatform,
+      level: payload.level,
+      members: members.length,
+      activeMembers: activeCount,
+      totalKills, totalWins, avgKd, winRate,
+      url: `/clan/${cleanTag}`
+    });
+
+  } catch (e) {
+    console.error('[import] Error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ═══ AUTO-DISCOVER CLAN MEMBERS FROM MATCHES ═══
 // POST /clans/discover-members — Given one gamertag, find frequent teammates
 app.post('/clans/discover-members', async (req, res) => {
