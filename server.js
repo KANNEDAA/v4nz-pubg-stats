@@ -1,58 +1,200 @@
 // ═══════════════════════════════════════════════
-//  V4NZ PUBG Stats — Proxy Server
-//  Evita restricciones CORS de la API de PUBG
-// ═══════════════════════════════════════════════
-//
-//  USO:
-//    1. npm install express cors node-fetch
-//    2. node server.js
-//    3. Abre http://localhost:3000
-//
-//  En Railway: configurar PUBG_API_KEY como variable de entorno
-//
+//  V4NZ PUBG Stats — Server + Clan API
+//  Proxy PUBG API + PostgreSQL clan system
 // ═══════════════════════════════════════════════
 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// API Key: primero busca en variables de entorno (seguro), luego en header del cliente (fallback)
 const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
+
+// PostgreSQL connection (Railway provides DATABASE_URL automatically)
+const pool = process.env.DATABASE_URL ? new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+}) : null;
 
 app.use(cors());
 app.use(express.json());
-
-// Serve static files (index.html, etc.)
 app.use(express.static(path.join(__dirname)));
 
-// ═══ PROXY: /api/* → https://api.pubg.com/* ═══
-app.all('/api/*', async (req, res) => {
-  // Dynamic import for node-fetch (ESM)
-  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+// ═══ AUTO-CREATE TABLES ═══
+async function initDB() {
+  if (!pool) { console.log('⚠ No DATABASE_URL — clan API disabled (localStorage mode)'); return; }
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS clans (
+        tag VARCHAR(20) PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        member_count INT DEFAULT 0,
+        level INT DEFAULT 0,
+        platform VARCHAR(10) DEFAULT 'psn',
+        registered_by VARCHAR(50),
+        total_kills INT DEFAULT 0,
+        total_wins INT DEFAULT 0,
+        avg_kd NUMERIC(5,2) DEFAULT 0,
+        avg_damage NUMERIC(7,1) DEFAULT 0,
+        total_rounds INT DEFAULT 0,
+        win_rate NUMERIC(5,2) DEFAULT 0,
+        active_members INT DEFAULT 0,
+        stats_updated_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS clan_members (
+        id SERIAL PRIMARY KEY,
+        clan_tag VARCHAR(20) REFERENCES clans(tag) ON DELETE CASCADE,
+        player_name VARCHAR(50) NOT NULL,
+        kills INT DEFAULT 0,
+        wins INT DEFAULT 0,
+        kd NUMERIC(5,2) DEFAULT 0,
+        damage NUMERIC(7,1) DEFAULT 0,
+        rounds INT DEFAULT 0,
+        active BOOLEAN DEFAULT true,
+        added_by VARCHAR(50),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(clan_tag, player_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_clan_members_tag ON clan_members(clan_tag);
+      CREATE INDEX IF NOT EXISTS idx_clans_kills ON clans(total_kills DESC);
+      CREATE INDEX IF NOT EXISTS idx_clans_kd ON clans(avg_kd DESC);
+    `);
+    console.log('✓ Database tables ready');
+  } catch (e) { console.error('DB init error:', e.message); }
+}
 
-  // Use original URL to preserve query params like filter[playerNames] exactly
+// ═══ CLAN API ENDPOINTS ═══
+
+// GET /clans/leaderboard — Top clans ranked
+app.get('/clans/leaderboard', async (req, res) => {
+  if (!pool) return res.json({ clans: [], mode: 'local' });
+  try {
+    const sort = req.query.sort || 'kills'; // kills, kd, wins, winrate, members
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const orderMap = {
+      kills: 'total_kills DESC', kd: 'avg_kd DESC', wins: 'total_wins DESC',
+      winrate: 'win_rate DESC', members: 'active_members DESC', rounds: 'total_rounds DESC'
+    };
+    const order = orderMap[sort] || 'total_kills DESC';
+    const { rows } = await pool.query(
+      `SELECT tag, name, member_count, level, platform, total_kills, total_wins,
+              avg_kd, avg_damage, total_rounds, win_rate, active_members,
+              stats_updated_at, created_at
+       FROM clans WHERE active_members > 0 ORDER BY ${order} LIMIT $1`, [limit]
+    );
+    res.json({ clans: rows, total: rows.length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /clans/:tag — Get clan detail with members
+app.get('/clans/:tag', async (req, res) => {
+  if (!pool) return res.status(404).json({ error: 'No database' });
+  try {
+    const tag = req.params.tag.toUpperCase();
+    const clan = await pool.query('SELECT * FROM clans WHERE tag = $1', [tag]);
+    if (!clan.rows.length) return res.status(404).json({ error: 'Clan not found' });
+    const members = await pool.query(
+      'SELECT player_name, kills, wins, kd, damage, rounds, active FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC',
+      [tag]
+    );
+    res.json({ clan: clan.rows[0], members: members.rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /clans/register — Register or update a clan with member stats
+app.post('/clans/register', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database configured' });
+  try {
+    const { tag, name, memberCount, level, platform, registeredBy, members } = req.body;
+    if (!tag || !name) return res.status(400).json({ error: 'tag and name required' });
+
+    const cleanTag = tag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
+    const cleanName = name.slice(0, 100);
+
+    // Calculate aggregated stats from members
+    let totalKills = 0, totalWins = 0, totalRounds = 0, totalDmg = 0, kdSum = 0;
+    let activeCount = 0;
+    const validMembers = (members || []).filter(m => m.name && m.stats);
+
+    validMembers.forEach(m => {
+      const s = m.stats;
+      totalKills += s.kills || 0;
+      totalWins += s.wins || 0;
+      totalRounds += s.rounds || 0;
+      totalDmg += s.damage || 0;
+      kdSum += s.kd || 0;
+      if (m.active !== false) activeCount++;
+    });
+
+    const avgKd = validMembers.length > 0 ? (kdSum / validMembers.length).toFixed(2) : 0;
+    const avgDmg = validMembers.length > 0 ? (totalDmg / validMembers.length).toFixed(1) : 0;
+    const winRate = totalRounds > 0 ? ((totalWins / totalRounds) * 100).toFixed(2) : 0;
+
+    // Upsert clan
+    await pool.query(`
+      INSERT INTO clans (tag, name, member_count, level, platform, registered_by,
+                         total_kills, total_wins, avg_kd, avg_damage, total_rounds,
+                         win_rate, active_members, stats_updated_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW(),NOW())
+      ON CONFLICT (tag) DO UPDATE SET
+        name=EXCLUDED.name, member_count=EXCLUDED.member_count, level=EXCLUDED.level,
+        platform=EXCLUDED.platform, total_kills=EXCLUDED.total_kills, total_wins=EXCLUDED.total_wins,
+        avg_kd=EXCLUDED.avg_kd, avg_damage=EXCLUDED.avg_damage, total_rounds=EXCLUDED.total_rounds,
+        win_rate=EXCLUDED.win_rate, active_members=EXCLUDED.active_members,
+        stats_updated_at=NOW(), updated_at=NOW()
+    `, [cleanTag, cleanName, memberCount || 0, level || 0, platform || 'psn',
+        registeredBy || 'anon', totalKills, totalWins, avgKd, avgDmg, totalRounds, winRate, activeCount]);
+
+    // Upsert members
+    for (const m of validMembers) {
+      const s = m.stats;
+      await pool.query(`
+        INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ON CONFLICT (clan_tag, player_name) DO UPDATE SET
+          kills=EXCLUDED.kills, wins=EXCLUDED.wins, kd=EXCLUDED.kd,
+          damage=EXCLUDED.damage, rounds=EXCLUDED.rounds, active=EXCLUDED.active
+      `, [cleanTag, m.name, s.kills||0, s.wins||0, s.kd||0, s.damage||0, s.rounds||0,
+          m.active !== false, registeredBy || 'anon']);
+    }
+
+    res.json({ ok: true, tag: cleanTag, members: validMembers.length, url: `/clan/${cleanTag}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /clans/search/:query — Search clans by name or tag
+app.get('/clans/search/:query', async (req, res) => {
+  if (!pool) return res.json({ clans: [] });
+  try {
+    const q = `%${req.params.query.toUpperCase()}%`;
+    const { rows } = await pool.query(
+      `SELECT tag, name, active_members, total_kills, avg_kd, platform
+       FROM clans WHERE UPPER(tag) LIKE $1 OR UPPER(name) LIKE $1
+       ORDER BY active_members DESC LIMIT 20`, [q]
+    );
+    res.json({ clans: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══ PUBG API PROXY ═══
+app.all('/api/*', async (req, res) => {
+  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
   const originalQuery = req.originalUrl.split('?')[1] || '';
-  const pubgPath = req.params[0]; // everything after /api/
+  const pubgPath = req.params[0];
   const pubgUrl = `https://api.pubg.com/${pubgPath}${originalQuery ? '?' + originalQuery : ''}`;
 
-  // Use server-side key if available, otherwise forward client header
   const apiKey = SERVER_API_KEY ? 'Bearer ' + SERVER_API_KEY : req.headers.authorization;
-  if (!apiKey) {
-    return res.status(401).json({ error: 'Missing API Key. Set PUBG_API_KEY env variable or send Authorization header.' });
-  }
+  if (!apiKey) return res.status(401).json({ error: 'Missing API Key' });
 
   try {
     const response = await fetch(pubgUrl, {
       method: req.method,
-      headers: {
-        'Authorization': apiKey,
-        'Accept': 'application/vnd.api+json',
-      },
+      headers: { 'Authorization': apiKey, 'Accept': 'application/vnd.api+json' },
     });
-
     const data = await response.text();
     res.status(response.status);
     res.set('Content-Type', 'application/vnd.api+json');
@@ -63,19 +205,23 @@ app.all('/api/*', async (req, res) => {
   }
 });
 
-// Fallback: serve index.html for any other route
+// Fallback: serve index.html for SPA routes (/clan/*, /stats/*, etc.)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`
+// ═══ START ═══
+initDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`
 ╔═══════════════════════════════════════════════╗
-║  V4NZ PUBG Stats Server                      ║
-║  Running on http://localhost:${PORT}             ║
+║  V4NZ PUBG Stats Server v2.0                 ║
+║  http://localhost:${PORT}                        ║
 ║                                               ║
-║  API Key: ${SERVER_API_KEY ? 'CONFIGURADA ✓' : 'NO CONFIGURADA ✗ (usa PUBG_API_KEY)'}
-║  Open your browser and start tracking!        ║
+║  API Key: ${SERVER_API_KEY ? 'CONFIGURADA ✓' : 'NO CONFIGURADA ✗'}
+║  Database: ${pool ? 'CONECTADA ✓' : 'NO CONFIGURADA (localStorage)'}
+║  Clan API: ${pool ? '/clans/* ACTIVO' : 'DESACTIVADO'}
 ╚═══════════════════════════════════════════════╝
-  `);
+    `);
+  });
 });
