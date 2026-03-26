@@ -196,10 +196,7 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .insight-chip-value { font-weight: 700; }
 
 /* FLOATING DISCORD */
-.discord-float { position:fixed; bottom:20px; right:20px; z-index:999; display:flex; align-items:center; gap:8px; background:#5865F2; color:#fff; padding:10px 18px; border-radius:50px; text-decoration:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; box-shadow:0 4px 16px rgba(88,101,242,.3); transition:all .3s ease; opacity:0.9; }
-.discord-float:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(88,101,242,.5); background:#4752C4; opacity:1; }
-.discord-float svg { width:20px; height:20px; fill:#fff; flex-shrink:0; }
-@media(max-width:768px){ .discord-float span { display:none; } .discord-float { padding:12px; border-radius:50%; bottom:16px; right:16px; opacity:0.85; } }
+/* Floating button slot — reserved for future use (bot/suggestions) */
 
 /* STATS CARD MODAL */
 .card-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,.92); backdrop-filter:blur(8px); z-index:1001; justify-content:center; align-items:center; flex-direction:column; gap:16px; }
@@ -731,6 +728,15 @@ footer a { color: var(--accent); text-decoration: none; }
         <div class="clan-search-box" style="margin-bottom:0;"><input class="clan-input" id="clanPlayerInput" placeholder="Nombre del jugador..." onkeydown="if(event.key==='Enter')searchClan()"/><button class="search-btn" style="border-radius:8px;padding:12px 24px;" onclick="searchClan()">BUSCAR</button></div>
       </div>
       <div id="clanResults"></div>
+      <!-- Community Discord invite -->
+      <div style="margin-top:16px;background:linear-gradient(135deg,rgba(88,101,242,0.08),rgba(0,240,255,0.04));border:1px solid rgba(88,101,242,0.2);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(88,101,242,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></div>
+        <div style="flex:1;min-width:180px;">
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;color:var(--text-primary);letter-spacing:.5px;">Comunidad V4NZ en Discord</div>
+          <div style="font-size:.7rem;color:var(--text-dim);margin-top:2px;">Unete para participar en torneos, comparar clanes y registrar tu equipo</div>
+        </div>
+        <a href="https://discord.com/invite/Kw4NA3b8p8" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#5865F2;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;border-radius:8px;text-decoration:none;transition:all .2s;white-space:nowrap;" onmouseover="this.style.background='#4752C4'" onmouseout="this.style.background='#5865F2'">Unirse al Discord</a>
+      </div>
       <!-- Admin panel (hidden by default, toggle with ?admin=1 or admin password) -->
       <div id="clanAdminPanel" style="display:none;margin-top:20px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:14px;padding:20px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -817,7 +823,7 @@ footer a { color: var(--accent); text-decoration: none; }
 </div>
 
 
-<a href="https://discord.com/invite/Kw4NA3b8p8" target="_blank" class="discord-float" title="Unete a V4NZ en Discord"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span>Discord</span></a>
+<!-- Floating button slot reserved for future use (bot/suggestions) -->
 
 <footer>
   <!-- KANNEDA Social Icons -->
@@ -830,6 +836,7 @@ footer a { color: var(--accent); text-decoration: none; }
     <a href="https://discord.com/invite/Kw4NA3b8p8" target="_blank" title="Discord" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="#888"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></a>
     <a href="https://www.linkedin.com/in/afc7/" target="_blank" title="LinkedIn" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
     <a href="https://www.reddit.com/user/KANN3DA/" target="_blank" title="Reddit" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)'"><svg width="15" height="15" viewBox="0 0 24 24" fill="#888"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 0-.462.342.342 0 0 0-.461 0c-.536.535-1.664.73-2.514.73-.85 0-1.965-.18-2.5-.73a.326.326 0 0 0-.216-.095z"/></svg></a>
+    <a href="https://www.kanneda.com" target="_blank" title="kanneda.com" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></a>
   </div>
   <p style="margin-bottom:6px;">Codigo de Creador PUBG: <strong style="color:var(--accent);">KANNEDA</strong> &mdash; <a href="https://accounts.krafton.com/v2/es/web/login-select" target="_blank" style="color:#c5ff00;">Activa tu codigo aqui</a></p>
   <p>V4NZ PUBG Console Stats &mdash; Datos en tiempo real via <a href="https://developer.pubg.com/" target="_blank">PUBG Official API</a></p>
@@ -2221,6 +2228,8 @@ async function compareClans(){
   const n2=document.getElementById('clanCompare2').value.trim();
   if(!n1||!n2){alert('Escribe el nombre de un jugador en cada campo');return;}
   if(!API_KEY){document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Necesitas API Key para comparar clanes reales.</p>';return;}
+  const cr=document.getElementById('clanCompareResults');
+  cr.innerHTML='';
   showLoading(true);setLoaderStep('Buscando clanes...');
   try{
     const [clan1,clan2]=await Promise.all([fetchClanByPlayer(n1,clanComparePlatform),fetchClanByPlayer(n2,clanComparePlatform)]);
@@ -2229,73 +2238,132 @@ async function compareClans(){
     const name1=a1.clanName||'Clan 1';const name2=a2.clanName||'Clan 2';
     const mc1=a1.clanMemberCount||0;const mc2=a2.clanMemberCount||0;
     const lv1=a1.clanLevel||0;const lv2=a2.clanLevel||0;
-    // Store clan info for deep compare
     window._cmpClans={tag1,tag2,name1,name2,mc1,mc2,lv1,lv2};
-    const metrics=[{label:'Miembros',v1:mc1,v2:mc2},{label:'Nivel',v1:lv1,v2:lv2}];
-    function barRow(label,v1,v2,c1,c2){
-      const max=Math.max(v1,v2)||1;
-      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'+
-        '<div style="width:50px;text-align:right;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v1>=v2?c1:'var(--text-dim)')+';">'+v1+'</div>'+
-        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;direction:rtl;"><div style="height:100%;width:'+(v1/max*100)+'%;border-radius:4px;background:'+c1+';transition:width .5s;"></div></div>'+
-        '<div style="width:80px;text-align:center;font-size:.6rem;color:var(--text-dim);text-transform:uppercase;">'+label+'</div>'+
-        '<div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;"><div style="height:100%;width:'+(v2/max*100)+'%;border-radius:4px;background:'+c2+';transition:width .5s;"></div></div>'+
-        '<div style="width:50px;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v2>=v1?c2:'var(--text-dim)')+';">'+v2+'</div></div>';
+
+    // Try to get DB data for both clans
+    setLoaderStep('Cargando stats de ambos clanes...');
+    let db1=null,db2=null;
+    try{const r=await fetch('/clans/'+encodeURIComponent(tag1));if(r.ok)db1=await r.json();}catch(e){}
+    try{const r=await fetch('/clans/'+encodeURIComponent(tag2));if(r.ok)db2=await r.json();}catch(e){}
+
+    // If clans not in DB, try auto-import
+    if(!db1?.members?.length&&clan1.id){
+      setLoaderStep('Importando ['+tag1+']...');
+      try{const ir=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clan1.id,gameMode:'squad'})});if(ir.ok){const r2=await fetch('/clans/'+encodeURIComponent(tag1));if(r2.ok)db1=await r2.json();}}catch(e){}
     }
-    let h='<div class="clan-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">'+
-      '<div style="text-align:center;"><div class="clan-icon" style="margin:0 auto 8px;">'+tag1.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1rem;">'+name1+'</div><div class="clan-tag">['+tag1+']</div></div>'+
-      '<div style="font-family:Orbitron,sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent-orange);">VS</div>'+
-      '<div style="text-align:center;"><div class="clan-icon" style="margin:0 auto 8px;background:rgba(0,240,255,0.1);border-color:var(--accent);color:var(--accent);">'+tag2.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1rem;">'+name2+'</div><div class="clan-tag" style="color:var(--accent);">['+tag2+']</div></div></div>';
-    metrics.forEach(m=>{h+=barRow(m.label,m.v1,m.v2,'var(--accent-orange)','var(--accent)');});
-    // Deep compare input
-    h+='<div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">';
-    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Comparacion Profunda por Stats</div>';
-    h+='<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">Escribe miembros de cada clan para comparar stats reales:</p>';
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">';
-    h+='<input id="cmpMembers1" class="clan-input" placeholder="Miembros ['+tag1+'] (coma)..."/>';
-    h+='<input id="cmpMembers2" class="clan-input" placeholder="Miembros ['+tag2+'] (coma)..."/>';
+    if(!db2?.members?.length&&clan2.id){
+      setLoaderStep('Importando ['+tag2+']...');
+      try{const ir=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clan2.id,gameMode:'squad'})});if(ir.ok){const r2=await fetch('/clans/'+encodeURIComponent(tag2));if(r2.ok)db2=await r2.json();}}catch(e){}
+    }
+
+    const c1=db1?.clan||{};const c2=db2?.clan||{};
+    const m1=db1?.members||[];const m2=db2?.members||[];
+    const hasDB=m1.length>0&&m2.length>0;
+
+    function barRow(label,v1,v2,c1c,c2c,fmt){
+      const fv1=fmt?fmt(v1):v1;const fv2=fmt?fmt(v2):v2;
+      const max=Math.max(v1,v2)||1;
+      const w1=Math.max(3,(v1/max*100));const w2=Math.max(3,(v2/max*100));
+      const win1=v1>v2;const win2=v2>v1;const tie=v1===v2;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'+
+        '<div style="width:60px;text-align:right;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(win1?c1c:tie?'var(--text-secondary)':'var(--text-dim)')+';">'+(win1?'&#x2B50; ':'')+fv1+'</div>'+
+        '<div style="flex:1;height:10px;border-radius:5px;background:var(--bg-secondary);overflow:hidden;direction:rtl;"><div style="height:100%;width:'+w1+'%;border-radius:5px;background:'+(win1?c1c:'rgba(255,255,255,0.1)')+';transition:width .6s ease;"></div></div>'+
+        '<div style="width:90px;text-align:center;font-size:.6rem;color:var(--text-secondary);text-transform:uppercase;font-weight:600;letter-spacing:.5px;">'+label+'</div>'+
+        '<div style="flex:1;height:10px;border-radius:5px;background:var(--bg-secondary);overflow:hidden;"><div style="height:100%;width:'+w2+'%;border-radius:5px;background:'+(win2?c2c:'rgba(255,255,255,0.1)')+';transition:width .6s ease;"></div></div>'+
+        '<div style="width:60px;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(win2?c2c:tie?'var(--text-secondary)':'var(--text-dim)')+';">'+fv2+(win2?' &#x2B50;':'')+'</div></div>';
+    }
+
+    // Header VS
+    let h='<div class="clan-card" style="padding:24px;">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+    h+='<div style="text-align:center;flex:1;"><div class="clan-icon" style="margin:0 auto 8px;width:50px;height:50px;font-size:1.3rem;">'+tag1.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1.1rem;">'+name1+'</div><div class="clan-tag">['+tag1+']</div>';
+    if(hasDB)h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:4px;">'+m1.length+' miembros en DB</div>';
     h+='</div>';
-    h+='<div style="text-align:center;"><button class="search-btn" style="border-radius:8px;padding:10px 24px;" onclick="deepCompareClans()">COMPARAR STATS</button></div></div>';
-    h+='</div>';
-    document.getElementById('clanCompareResults').innerHTML=h;
-  }catch(e){
-    document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
-  }finally{showLoading(false);}
-}
-async function deepCompareClans(){
-  const i1=document.getElementById('cmpMembers1')?.value?.trim();
-  const i2=document.getElementById('cmpMembers2')?.value?.trim();
-  if(!i1||!i2){alert('Escribe miembros en ambos campos');return;}
-  const n1=i1.split(',').map(n=>n.trim()).filter(n=>n);
-  const n2=i2.split(',').map(n=>n.trim()).filter(n=>n);
-  if(!n1.length||!n2.length)return;
-  const cc=window._cmpClans;if(!cc)return;
-  showLoading(true);
-  try{
-    setLoaderStep('Stats de ['+cc.tag1+']...');
-    const ms1=await fetchClanMemberStats(n1.map(n=>({attributes:{name:n},id:n})),clanComparePlatform);
-    setLoaderStep('Stats de ['+cc.tag2+']...');
-    const ms2=await fetchClanMemberStats(n2.map(n=>({attributes:{name:n},id:n})),clanComparePlatform);
-    function aggr(ms){const f=ms.filter(m=>m.stats);return{kills:f.reduce((a,m)=>a+(m.stats.kills||0),0),wins:f.reduce((a,m)=>a+(m.stats.wins||0),0),rounds:f.reduce((a,m)=>a+(m.stats.roundsPlayed||0),0),dmg:f.reduce((a,m)=>a+(m.stats.damageDealt||0),0),kd:f.length?(f.reduce((a,m)=>{const d=(m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1;return a+(m.stats.kills/d);},0)/f.length).toFixed(2):'0',active:f.filter(m=>m.active).length,fetched:f.length};}
-    const ag1=aggr(ms1);const ag2=aggr(ms2);
-    const wr1=ag1.rounds?((ag1.wins/ag1.rounds)*100).toFixed(1):'0';const wr2=ag2.rounds?((ag2.wins/ag2.rounds)*100).toFixed(1):'0';
-    const ad1=ag1.rounds?Math.round(ag1.dmg/ag1.rounds):0;const ad2=ag2.rounds?Math.round(ag2.dmg/ag2.rounds):0;
-    const metrics=[{label:'Miembros',v1:cc.mc1,v2:cc.mc2},{label:'Nivel',v1:cc.lv1,v2:cc.lv2},{label:'Total Kills',v1:ag1.kills,v2:ag2.kills},{label:'Victorias',v1:ag1.wins,v2:ag2.wins},{label:'K/D Medio',v1:parseFloat(ag1.kd),v2:parseFloat(ag2.kd)},{label:'Win Rate %',v1:parseFloat(wr1),v2:parseFloat(wr2)},{label:'Dano Prom.',v1:ad1,v2:ad2},{label:'Activos',v1:ag1.active,v2:ag2.active}];
-    function barRow(label,v1,v2,c1,c2){const max=Math.max(v1,v2)||1;return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><div style="width:50px;text-align:right;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v1>=v2?c1:'var(--text-dim)')+';">'+v1+'</div><div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;direction:rtl;"><div style="height:100%;width:'+(v1/max*100)+'%;border-radius:4px;background:'+c1+';transition:width .5s;"></div></div><div style="width:80px;text-align:center;font-size:.6rem;color:var(--text-dim);text-transform:uppercase;">'+label+'</div><div style="flex:1;height:8px;border-radius:4px;background:var(--bg-secondary);overflow:hidden;"><div style="height:100%;width:'+(v2/max*100)+'%;border-radius:4px;background:'+c2+';transition:width .5s;"></div></div><div style="width:50px;font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(v2>=v1?c2:'var(--text-dim)')+';">'+v2+'</div></div>';}
-    let h='<div class="clan-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;"><div style="text-align:center;"><div class="clan-icon" style="margin:0 auto 8px;">'+cc.tag1.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1rem;">'+cc.name1+'</div><div class="clan-tag">['+cc.tag1+']</div></div><div style="font-family:Orbitron,sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent-orange);">VS</div><div style="text-align:center;"><div class="clan-icon" style="margin:0 auto 8px;background:rgba(0,240,255,0.1);border-color:var(--accent);color:var(--accent);">'+cc.tag2.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1rem;">'+cc.name2+'</div><div class="clan-tag" style="color:var(--accent);">['+cc.tag2+']</div></div></div>';
-    metrics.forEach(m=>{h+=barRow(m.label,m.v1,m.v2,'var(--accent-orange)','var(--accent)');});
-    let w1=0,w2=0;metrics.forEach(m=>{if(m.v1>m.v2)w1++;else if(m.v2>m.v1)w2++;});
-    h+='<div style="text-align:center;margin:16px 0;font-family:Orbitron,sans-serif;font-size:.85rem;"><span style="color:var(--accent-orange);font-weight:700;">'+w1+'</span> <span style="color:var(--text-dim);font-size:.7rem;">ganadas</span> <span style="color:var(--text-dim);margin:0 8px;">vs</span> <span style="color:var(--accent);font-weight:700;">'+w2+'</span> <span style="color:var(--text-dim);font-size:.7rem;">ganadas</span></div>';
-    const top1=[...ms1.filter(m=>m.stats)].sort((a,b)=>(b.stats.kills||0)-(a.stats.kills||0)).slice(0,3);
-    const top2=[...ms2.filter(m=>m.stats)].sort((a,b)=>(b.stats.kills||0)-(a.stats.kills||0)).slice(0,3);
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;"><div><div class="section-title" style="font-size:.75rem;color:var(--accent-orange);">Top '+cc.tag1+'</div>';
-    top1.forEach((m,i)=>{const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':'&#x1F949;';const kd=((m.stats.kills||0)/((m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1)).toFixed(2);h+='<div style="padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:4px;font-size:.75rem;"><span>'+medal+'</span> <span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';switchTab(\'overview\');searchPlayer();">'+m.name+'</span> <span style="color:var(--text-dim);float:right;">'+m.stats.kills+' kills / '+kd+' KD</span></div>';});
-    h+='</div><div><div class="section-title" style="font-size:.75rem;color:var(--accent);">Top '+cc.tag2+'</div>';
-    top2.forEach((m,i)=>{const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':'&#x1F949;';const kd=((m.stats.kills||0)/((m.stats.losses||0)||(m.stats.roundsPlayed-m.stats.wins)||1)).toFixed(2);h+='<div style="padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:4px;font-size:.75rem;"><span>'+medal+'</span> <span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';switchTab(\'overview\');searchPlayer();">'+m.name+'</span> <span style="color:var(--text-dim);float:right;">'+m.stats.kills+' kills / '+kd+' KD</span></div>';});
+    h+='<div style="font-family:Orbitron,sans-serif;font-weight:800;font-size:2rem;color:var(--accent-orange);text-shadow:0 0 20px rgba(255,107,0,.3);">VS</div>';
+    h+='<div style="text-align:center;flex:1;"><div class="clan-icon" style="margin:0 auto 8px;width:50px;height:50px;font-size:1.3rem;background:rgba(0,240,255,0.1);border-color:var(--accent);color:var(--accent);">'+tag2.charAt(0).toUpperCase()+'</div><div class="clan-name" style="font-size:1.1rem;">'+name2+'</div><div class="clan-tag" style="color:var(--accent);">['+tag2+']</div>';
+    if(hasDB)h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:4px;">'+m2.length+' miembros en DB</div>';
     h+='</div></div>';
-    h+='<div style="text-align:center;font-size:.65rem;color:var(--text-dim);margin-top:12px;">Basado en '+ag1.fetched+' vs '+ag2.fetched+' miembros (squad + squad-fpp)</div></div>';
-    document.getElementById('clanCompareResults').innerHTML=h;
-  }catch(e){document.getElementById('clanCompareResults').innerHTML+='<p style="color:var(--accent-orange);font-size:.85rem;margin-top:10px;">'+e.message+'</p>';}
-  finally{showLoading(false);}
+
+    // Metrics
+    const co='var(--accent-orange)';const ca='var(--accent)';
+    h+=barRow('Miembros',mc1,mc2,co,ca);
+    h+=barRow('Nivel',lv1,lv2,co,ca);
+
+    if(hasDB){
+      h+='<div style="margin:16px 0 8px;border-top:1px solid var(--border);padding-top:12px;font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);text-align:center;">Stats de Temporada</div>';
+      const tk1=parseInt(c1.total_kills)||0;const tk2=parseInt(c2.total_kills)||0;
+      const tw1=parseInt(c1.total_wins)||0;const tw2=parseInt(c2.total_wins)||0;
+      const kd1=parseFloat(c1.avg_kd)||0;const kd2=parseFloat(c2.avg_kd)||0;
+      const wr1=parseFloat(c1.win_rate)||0;const wr2=parseFloat(c2.win_rate)||0;
+      const ad1=parseFloat(c1.avg_damage)||0;const ad2=parseFloat(c2.avg_damage)||0;
+      const tr1=parseInt(c1.total_rounds)||0;const tr2=parseInt(c2.total_rounds)||0;
+      const ac1=parseInt(c1.active_members)||0;const ac2=parseInt(c2.active_members)||0;
+      // Kills per member
+      const kpm1=ac1>0?Math.round(tk1/ac1):0;const kpm2=ac2>0?Math.round(tk2/ac2):0;
+      // Wins per member
+      const wpm1=ac1>0?(tw1/ac1).toFixed(1):0;const wpm2=ac2>0?(tw2/ac2).toFixed(1):0;
+
+      h+=barRow('Total Kills',tk1,tk2,co,ca,v=>v.toLocaleString());
+      h+=barRow('Total Wins',tw1,tw2,co,ca);
+      h+=barRow('K/D Medio',kd1,kd2,co,ca,v=>v.toFixed(2));
+      h+=barRow('Win Rate',wr1,wr2,co,ca,v=>v.toFixed(1)+'%');
+      h+=barRow('Dano Medio',ad1,ad2,co,ca,v=>Math.round(v).toLocaleString());
+      h+=barRow('Partidas',tr1,tr2,co,ca,v=>v.toLocaleString());
+      h+=barRow('Activos',ac1,ac2,co,ca);
+      h+=barRow('Kills/Miembro',kpm1,kpm2,co,ca);
+      h+=barRow('Wins/Miembro',parseFloat(wpm1),parseFloat(wpm2),co,ca,v=>parseFloat(v).toFixed(1));
+
+      // Score summary
+      const allMetrics=[{v1:tk1,v2:tk2},{v1:tw1,v2:tw2},{v1:kd1,v2:kd2},{v1:wr1,v2:wr2},{v1:ad1,v2:ad2},{v1:tr1,v2:tr2},{v1:ac1,v2:ac2},{v1:kpm1,v2:kpm2},{v1:parseFloat(wpm1),v2:parseFloat(wpm2)},{v1:mc1,v2:mc2},{v1:lv1,v2:lv2}];
+      let w1=0,w2=0;allMetrics.forEach(m=>{if(m.v1>m.v2)w1++;else if(m.v2>m.v1)w2++;});
+      const winner=w1>w2?1:w2>w1?2:0;
+      h+='<div style="margin:20px 0;padding:16px;background:var(--bg-secondary);border-radius:12px;text-align:center;">';
+      h+='<div style="font-family:Rajdhani,sans-serif;font-size:.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Resultado</div>';
+      h+='<div style="display:flex;justify-content:center;align-items:center;gap:20px;">';
+      h+='<div style="font-family:Orbitron,sans-serif;font-size:1.8rem;font-weight:800;color:'+(w1>=w2?co:'var(--text-dim)')+';">'+w1+'</div>';
+      h+='<div style="font-size:.7rem;color:var(--text-dim);">categorias<br>ganadas</div>';
+      h+='<div style="font-family:Orbitron,sans-serif;font-size:1.8rem;font-weight:800;color:'+(w2>=w1?ca:'var(--text-dim)')+';">'+w2+'</div>';
+      h+='</div>';
+      if(winner){h+='<div style="margin-top:8px;font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:'+(winner===1?co:ca)+';">&#x1F3C6; '+(winner===1?name1:name2)+' GANA</div>';}
+      else{h+='<div style="margin-top:8px;font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:var(--text-secondary);">EMPATE</div>';}
+      h+='</div>';
+
+      // Top 5 members side by side
+      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">';
+      h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent-orange);margin-bottom:8px;">Top 5 ['+tag1+']</div>';
+      m1.slice(0,5).forEach((m,i)=>{
+        const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
+        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';switchTab(\'overview\');searchPlayer();">';
+        h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
+        if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+        h+='<span style="color:var(--accent-orange);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
+        h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
+        h+='</div>';
+      });
+      h+='</div><div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px;">Top 5 ['+tag2+']</div>';
+      m2.slice(0,5).forEach((m,i)=>{
+        const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
+        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';switchTab(\'overview\');searchPlayer();">';
+        h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
+        if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+        h+='<span style="color:var(--accent);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
+        h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
+        h+='</div>';
+      });
+      h+='</div></div>';
+    }else{
+      // No DB data — show basic only + offer deep compare
+      h+='<div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">';
+      h+='<div style="font-size:.75rem;color:var(--text-dim);text-align:center;">Estos clanes no tienen stats completos en V4NZ aun. Busca cada clan en la pestana Clanes para importarlos.</div>';
+      h+='</div>';
+    }
+    h+='</div>';
+    cr.innerHTML=h;
+  }catch(e){
+    cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+  }finally{showLoading(false);}
 }
 
 function setLBPlatform(p,btn){lbPlatform=p;const btns=btn.parentElement.querySelectorAll('.lb-btn');btns[0].classList.toggle('active',p==='psn');btns[1].classList.toggle('active',p==='xbox');renderLeaderboard();}
