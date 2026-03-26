@@ -638,6 +638,7 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="streamer-banner-links">
     <a href="https://open.spotify.com/show/0C2hMGCheSgdOttbTYF844" target="_blank" class="streamer-banner-link" style="background:#1DB954;color:#fff;display:inline-flex;align-items:center;gap:5px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>Spotify</a>
     <a href="https://podcasts.apple.com/es/podcast/el-drop-de-kanneda-pubg-podcast/id1869009436" target="_blank" class="streamer-banner-link" style="background:linear-gradient(135deg,#9933FF,#FC3C44);color:#fff;display:inline-flex;align-items:center;gap:5px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M5.34 0A5.328 5.328 0 0 0 0 5.34v13.32A5.328 5.328 0 0 0 5.34 24h13.32A5.328 5.328 0 0 0 24 18.66V5.34A5.328 5.328 0 0 0 18.66 0zm6.525 2.568c4.415 0 7.941 3.67 7.941 7.882 0 4.422-3.526 7.882-7.94 7.882-4.416 0-7.942-3.46-7.942-7.882 0-4.212 3.526-7.882 7.941-7.882zM11.8 6.04a4.451 4.451 0 0 0-4.453 4.45 4.451 4.451 0 0 0 4.452 4.45 4.451 4.451 0 0 0 4.453-4.45A4.451 4.451 0 0 0 11.8 6.04zm-.048 1.616c1.544 0 2.834 1.29 2.834 2.834s-1.29 2.834-2.834 2.834-2.834-1.29-2.834-2.834 1.29-2.834 2.834-2.834z"/></svg>Apple</a>
+    <a href="https://www.kanneda.com" target="_blank" class="streamer-banner-link" style="background:rgba(255,255,255,0.1);color:#fff;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,0.2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>Web</a>
   </div>
 </div>
 </div>
@@ -940,25 +941,62 @@ function clearMyClan(evt){
   myClan=null;localStorage.removeItem('pubg_my_clan');
   renderClanHistoryUI();
 }
-function loadClanFromHistory(tag){
+async function loadClanFromHistory(tag){
   const clan=clanHistory.find(c=>c.tag===tag)||(myClan&&myClan.tag===tag?myClan:null);
   if(!clan)return;
   setClanPlatform(clan.platform,document.querySelector('.clan-plat-btn[data-cplat="'+clan.platform+'"]'));
   document.getElementById('clanPlayerInput').value='';
-  // Render the clan card directly + pre-fill members
   const cr=document.getElementById('clanResults');
   cr.innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+clan.tag.charAt(0)+'</div><div><div class="clan-name">'+clan.name+'</div><div class="clan-tag">['+clan.tag+'] &mdash; Nivel '+clan.level+' &mdash; '+clan.memberCount+' miembros</div></div></div></div>';
-  if(clan.members&&clan.members.length){
-    cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
-      '<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Analizar Miembros del Clan</div>'+
-      '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">Miembros guardados del historial. Puedes editarlos o pulsar Analizar:</p>'+
-      '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" value="'+clan.members.join(', ')+'" onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')">ANALIZAR</button></div></div>';
-  }else{
-    cr.innerHTML+='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">'+
-      '<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Analizar Miembros del Clan</div>'+
-      '<p style="font-size:.72rem;color:var(--text-dim);margin-bottom:10px;">La API de PUBG no devuelve la lista de miembros. Escribe los gamertags separados por coma:</p>'+
-      '<div style="display:flex;gap:8px;"><input id="clanMembersInput" class="clan-input" style="flex:1;" placeholder="Jugador1, Jugador2, Jugador3..." onkeydown="if(event.key===\'Enter\')analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;" onclick="analyzeClanMembers(\''+clan.name.replace(/'/g,"\\'")+'\',\''+clan.tag.replace(/'/g,"\\'")+'\','+clan.memberCount+','+clan.level+')">ANALIZAR</button></div></div>';
-  }
+  // Try to load members from DB
+  try{
+    const dbResp=await fetch('/clans/'+encodeURIComponent(clan.tag));
+    if(dbResp.ok){
+      const dbData=await dbResp.json();
+      if(dbData.clan&&dbData.members&&dbData.members.length>0){
+        const members=dbData.members;const c=dbData.clan;
+        let mh='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:12px;border:1px solid rgba(0,240,255,0.15);">';
+        mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+        mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">'+members.length+' Miembros del Clan</div>';
+        mh+='</div>';
+        mh+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;text-align:center;">';
+        mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);">KILLS</div></div>';
+        mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent-green);">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</div><div style="font-size:.6rem;color:var(--text-dim);">K/D</div></div>';
+        mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent-yellow);">'+(c.total_wins||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);">WINS</div></div>';
+        mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</div><div style="font-size:.6rem;color:var(--text-dim);">WIN RATE</div></div>';
+        mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;">'+(c.active_members||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);">ACTIVOS</div></div>';
+        mh+='</div>';
+        const maxK=members[0]?.kills||1;
+        mh+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;max-height:400px;overflow-y:auto;padding-right:4px;">';
+        members.forEach((m,i)=>{
+          const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
+          const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
+          const opacity=isActive?'1':'0.4';
+          mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
+          mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
+          mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
+          if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
+          mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+          mh+='</div>';
+          mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
+          mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
+          mh+='<span>K/D:<b>'+(parseFloat(m.kd)||0).toFixed(2)+'</b></span>';
+          mh+='<span>W:<b>'+(m.wins||0)+'</b></span>';
+          mh+='</div></div>';
+        });
+        mh+='</div>';
+        mh+='<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">';
+        mh+='<div style="font-size:.72rem;color:var(--text-dim);margin-bottom:8px;">&#x2753; Falta alguien? Solicita anadir un jugador al clan:</div>';
+        mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+c.tag+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+c.tag+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+c.tag+'\')">SOLICITAR</button></div>';
+        mh+='<div id="requestStatus_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
+        mh+='</div></div>';
+        cr.innerHTML+=mh;
+        return;
+      }
+    }
+  }catch(e){}
+  // Fallback: clan not in DB yet
+  cr.innerHTML+='<div style="margin-top:16px;padding:14px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);text-align:center;"><div style="font-size:.75rem;color:var(--text-dim);">Este clan aun no tiene stats en V4NZ. Busca un jugador del clan para importarlo automaticamente.</div></div>';
 }
 function renderClanHistoryUI(){
   const banner=document.getElementById('myClanBanner');
