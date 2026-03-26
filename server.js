@@ -62,6 +62,18 @@ async function initDB() {
       CREATE INDEX IF NOT EXISTS idx_clan_members_tag ON clan_members(clan_tag);
       CREATE INDEX IF NOT EXISTS idx_clans_kills ON clans(total_kills DESC);
       CREATE INDEX IF NOT EXISTS idx_clans_kd ON clans(avg_kd DESC);
+      CREATE TABLE IF NOT EXISTS member_requests (
+        id SERIAL PRIMARY KEY,
+        clan_tag VARCHAR(20) NOT NULL,
+        player_name VARCHAR(50) NOT NULL,
+        requested_by VARCHAR(50) DEFAULT 'web_user',
+        status VARCHAR(20) DEFAULT 'pending',
+        reviewed_by VARCHAR(50),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        reviewed_at TIMESTAMPTZ,
+        UNIQUE(clan_tag, player_name, status)
+      );
+      CREATE INDEX IF NOT EXISTS idx_member_requests_pending ON member_requests(status) WHERE status = 'pending';
     `);
     console.log('✓ Database tables ready');
   } catch (e) { console.error('DB init error:', e.message); }
@@ -87,6 +99,32 @@ app.get('/clans/leaderboard', async (req, res) => {
        FROM clans WHERE active_members > 0 ORDER BY ${order} LIMIT $1`, [limit]
     );
     res.json({ clans: rows, total: rows.length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /clans/requests/pending — Admin: list pending requests (MUST be before :tag wildcard)
+app.get('/clans/requests/pending', async (req, res) => {
+  if (!pool) return res.json({ requests: [] });
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, clan_tag, player_name, requested_by, created_at
+       FROM member_requests WHERE status = 'pending' ORDER BY created_at DESC LIMIT 50`
+    );
+    res.json({ requests: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /clans/search/:query — Search clans by name or tag (MUST be before :tag wildcard)
+app.get('/clans/search/:query', async (req, res) => {
+  if (!pool) return res.json({ clans: [] });
+  try {
+    const q = `%${req.params.query.toUpperCase()}%`;
+    const { rows } = await pool.query(
+      `SELECT tag, name, active_members, total_kills, avg_kd, platform
+       FROM clans WHERE UPPER(tag) LIKE $1 OR UPPER(name) LIKE $1
+       ORDER BY active_members DESC LIMIT 20`, [q]
+    );
+    res.json({ clans: rows });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -166,17 +204,59 @@ app.post('/clans/register', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /clans/search/:query — Search clans by name or tag
-app.get('/clans/search/:query', async (req, res) => {
-  if (!pool) return res.json({ clans: [] });
+// ═══ MEMBER REQUEST SYSTEM ═══
+// POST /clans/request-member — Public: request to add a player to a clan (admin reviews)
+app.post('/clans/request-member', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database configured' });
   try {
-    const q = `%${req.params.query.toUpperCase()}%`;
-    const { rows } = await pool.query(
-      `SELECT tag, name, active_members, total_kills, avg_kd, platform
-       FROM clans WHERE UPPER(tag) LIKE $1 OR UPPER(name) LIKE $1
-       ORDER BY active_members DESC LIMIT 20`, [q]
-    );
-    res.json({ clans: rows });
+    const { clanTag, playerName, requestedBy } = req.body;
+    if (!clanTag || !playerName) return res.status(400).json({ error: 'clanTag and playerName required' });
+    const cleanTag = clanTag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
+    const cleanName = playerName.trim().slice(0, 50);
+    // Check if player already exists in clan
+    const existing = await pool.query('SELECT id FROM clan_members WHERE clan_tag = $1 AND player_name = $2', [cleanTag, cleanName]);
+    if (existing.rows.length) return res.json({ ok: true, message: 'Este jugador ya esta en el clan' });
+    // Check for duplicate pending request
+    await pool.query(`
+      INSERT INTO member_requests (clan_tag, player_name, requested_by)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (clan_tag, player_name, status) DO NOTHING
+    `, [cleanTag, cleanName, requestedBy || 'web_user']);
+    console.log(`[request] New member request: ${cleanName} -> [${cleanTag}]`);
+    res.json({ ok: true, message: 'Solicitud enviada correctamente' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /clans/requests/:id/approve — Admin: approve a member request
+app.post('/clans/requests/:id/approve', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database' });
+  try {
+    const requestId = parseInt(req.params.id);
+    const request = await pool.query('SELECT * FROM member_requests WHERE id = $1', [requestId]);
+    if (!request.rows.length) return res.status(404).json({ error: 'Request not found' });
+    const r = request.rows[0];
+    // Add player to clan_members with 0 stats (will be updated later)
+    await pool.query(`
+      INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
+      VALUES ($1, $2, 0, 0, 0, 0, 0, true, $3)
+      ON CONFLICT (clan_tag, player_name) DO NOTHING
+    `, [r.clan_tag, r.player_name, 'approved_request']);
+    // Update clan active_members count
+    const countResult = await pool.query('SELECT COUNT(*) FROM clan_members WHERE clan_tag = $1 AND active = true', [r.clan_tag]);
+    await pool.query('UPDATE clans SET active_members = $1, updated_at = NOW() WHERE tag = $2', [countResult.rows[0].count, r.clan_tag]);
+    // Mark request as approved
+    await pool.query("UPDATE member_requests SET status = 'approved', reviewed_at = NOW() WHERE id = $1", [requestId]);
+    console.log(`[request] Approved: ${r.player_name} -> [${r.clan_tag}]`);
+    res.json({ ok: true, playerName: r.player_name, clanTag: r.clan_tag });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /clans/requests/:id/reject — Admin: reject a member request
+app.post('/clans/requests/:id/reject', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database' });
+  try {
+    await pool.query("UPDATE member_requests SET status = 'rejected', reviewed_at = NOW() WHERE id = $1", [parseInt(req.params.id)]);
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
