@@ -1740,7 +1740,7 @@ async function doPublishClan(tag,name,memberCount,level){
     btn.style.background='var(--accent-green)';
     btn.onclick=()=>window.location.href='/clan/'+tag;
     // Update history
-    history.pushState(null,'','https://v4nz.com/clan/'+tag);
+    history.pushState(null,'','/clan/'+tag);
   }catch(e){
     btn.disabled=false;btn.innerHTML='&#x1F4E2; PUBLICAR CLAN EN RANKING';
     alert('Error: '+e.message+'. Puede que la base de datos no este configurada aun.');
