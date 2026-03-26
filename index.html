@@ -1180,6 +1180,7 @@ function switchTab(t){
   if(playerTabs.includes(t)&&currentPlayerData)document.getElementById('tabsContainer').style.display='block';
   else document.getElementById('tabsContainer').style.display='none';
   if(t==='leaderboard')renderLeaderboard();
+  if(t==='clanranking')loadClanRanking();
 }
 function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
 function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
