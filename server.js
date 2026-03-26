@@ -290,30 +290,54 @@ app.post('/clans/import-pubgclans', async (req, res) => {
     if (!clanMeta) return res.status(404).json({ error: 'Clan not found on any platform' });
     console.log(`[import] Found clan: [${clanMeta.clanTag}] ${clanMeta.clanName} (${detectedPlatform}, level ${clanMeta.clanLevel}, ${clanMeta.clanMemberCount} members)`);
 
-    // Step 2: Fetch member stats from pubgclans.net
-    const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${mode}`;
-    const pcnResp = await fetch(pcnUrl);
-    if (!pcnResp.ok) return res.status(502).json({ error: 'Failed to fetch data from pubgclans.net' });
-    const pcnData = await pcnResp.json();
+    // Step 2: Fetch member stats from pubgclans.net — try ALL game modes and merge best stats
+    const gameModes = ['squad', 'squad-fpp', 'solo', 'solo-fpp', 'duo', 'duo-fpp'];
+    const mergedPlayers = {}; // player_name -> best stats
 
-    if (!Array.isArray(pcnData) || pcnData.length === 0) {
-      return res.status(404).json({ error: 'No member data found on pubgclans.net for this clan' });
+    for (const gm of gameModes) {
+      try {
+        const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${gm}`;
+        const pcnResp = await fetch(pcnUrl);
+        if (!pcnResp.ok) { console.log(`[import] pubgclans.net ${gm}: HTTP ${pcnResp.status}`); continue; }
+        const pcnData = await pcnResp.json();
+        if (!Array.isArray(pcnData)) continue;
+        console.log(`[import] pubgclans.net ${gm}: ${pcnData.length} members`);
+        pcnData.forEach(p => {
+          const name = p.player_name;
+          if (!name) return;
+          const kills = parseInt(p.kills) || 0;
+          const rounds = parseInt(p.roundsplayed) || 0;
+          const wins = parseInt(p.wins) || 0;
+          const damage = parseFloat(p.damagedealt) || 0;
+          if (mergedPlayers[name]) {
+            // Accumulate stats across game modes
+            mergedPlayers[name].kills += kills;
+            mergedPlayers[name].wins += wins;
+            mergedPlayers[name].rounds += rounds;
+            mergedPlayers[name].damage += damage;
+          } else {
+            mergedPlayers[name] = { kills, wins, rounds, damage };
+          }
+        });
+      } catch (e) { console.log(`[import] pubgclans.net ${gm}: error — ${e.message}`); }
     }
-    console.log(`[import] Got ${pcnData.length} members from pubgclans.net`);
 
-    // Step 3: Transform member data to our format
-    const members = pcnData.map(p => {
-      const kills = parseInt(p.kills) || 0;
-      const rounds = parseInt(p.roundsplayed) || 0;
-      const wins = parseInt(p.wins) || 0;
-      const damage = parseFloat(p.damagedealt) || 0;
-      const kd = rounds > 0 ? parseFloat((kills / rounds).toFixed(2)) : 0;
+    const playerNames = Object.keys(mergedPlayers);
+    if (playerNames.length === 0) {
+      return res.status(404).json({ error: 'No member data found on pubgclans.net for this clan (tried all game modes)' });
+    }
+    console.log(`[import] Merged ${playerNames.length} unique members across all modes`);
+
+    // Step 3: Transform merged data to our format
+    const members = playerNames.map(name => {
+      const p = mergedPlayers[name];
+      const kd = p.rounds > 0 ? parseFloat((p.kills / p.rounds).toFixed(2)) : 0;
       return {
-        name: p.player_name,
-        active: rounds > 0,
-        stats: { kills, wins, kd, damage, rounds }
+        name,
+        active: p.rounds > 0,
+        stats: { kills: p.kills, wins: p.wins, kd, damage: p.damage, rounds: p.rounds }
       };
-    });
+    }).sort((a, b) => b.stats.kills - a.stats.kills);
 
     // Step 4: Register the clan (upsert)
     const payload = {
