@@ -1796,20 +1796,31 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
     if(statusEl){
       const clanMembers=data.members||[];
       const randoms=data.maybeRandoms||[];
-      let html='<div style="color:var(--accent-green);margin-bottom:8px;">&#x2705; '+clanMembers.length+' companeros frecuentes + '+randoms.length+' posibles randoms en '+data.matchesAnalyzed+' partidas</div>';
-      html+='<div style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">&#x1F7E2; 3+ partidas juntos &nbsp; &#x1F7E1; 2 partidas &nbsp; &#x26AA; solo 1 (posible random). Desmarca los que NO sean del clan:</div>';
+      const usedClanId=data.clanIdDetected;
+      let html='<div style="color:var(--accent-green);margin-bottom:8px;">&#x2705; ';
+      if(usedClanId){
+        html+=clanMembers.length+' miembros del clan detectados automaticamente';
+      }else{
+        html+=clanMembers.length+' companeros frecuentes encontrados';
+      }
+      html+=' + '+randoms.length+' otros en '+data.matchesAnalyzed+' partidas</div>';
+      if(usedClanId){
+        html+='<div style="font-size:.68rem;color:var(--accent-green);margin-bottom:8px;">&#x1F6E1; Verificacion por ID de clan activa — los miembros marcados pertenecen al mismo clan en PUBG</div>';
+      }else{
+        html+='<div style="font-size:.68rem;color:var(--accent-yellow);margin-bottom:8px;">&#x26A0; No se pudo verificar por ID de clan — filtrado por frecuencia de partidas. Revisa la lista:</div>';
+      }
       html+='<div id="discoverCheckboxes" style="max-height:300px;overflow-y:auto;margin-bottom:10px;">';
       // Seed player (always included)
       html+='<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:rgba(0,240,255,0.08);margin-bottom:3px;font-size:.7rem;cursor:pointer;"><input type="checkbox" checked disabled value="'+seed+'" class="dc-check"/> <span style="color:var(--accent);font-weight:600;">'+seed+'</span> <span style="color:var(--text-dim);font-size:.6rem;">(tu)</span></label>';
-      // Frequent teammates (pre-checked)
+      // Confirmed / frequent teammates (pre-checked)
       clanMembers.forEach(m=>{
-        const icon=m.confidence==='high'?'&#x1F7E2;':'&#x1F7E1;';
-        const conf=m.confidence==='high'?'color:var(--accent-green);':'color:var(--accent-yellow);';
-        html+='<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:var(--bg-card);margin-bottom:2px;font-size:.7rem;cursor:pointer;"><input type="checkbox" checked value="'+m.name+'" class="dc-check"/> '+icon+' <span>'+m.name+'</span> <span style="'+conf+'font-size:.6rem;">('+m.appearances+'x)</span> <span style="color:var(--text-dim);font-size:.6rem;">K/D '+m.stats.kd+'</span></label>';
+        const icon=m.clanConfirmed?'&#x1F6E1;':m.confidence==='high'?'&#x1F7E2;':'&#x1F7E1;';
+        const label=m.clanConfirmed?'<span style="color:var(--accent-green);font-size:.6rem;">CLAN</span>':'<span style="color:var(--text-dim);font-size:.6rem;">('+m.appearances+'x)</span>';
+        html+='<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:var(--bg-card);margin-bottom:2px;font-size:.7rem;cursor:pointer;"><input type="checkbox" checked value="'+m.name+'" class="dc-check"/> '+icon+' <span>'+m.name+'</span> '+label+' <span style="color:var(--text-dim);font-size:.6rem;">K/D '+m.stats.kd+'</span></label>';
       });
-      // Randoms (unchecked by default)
+      // Others (unchecked by default)
       if(randoms.length){
-        html+='<div style="font-size:.65rem;color:var(--text-dim);margin:6px 0 3px;border-top:1px solid var(--border);padding-top:6px;">Posibles randoms (1 partida) — marca si son del clan:</div>';
+        html+='<div style="font-size:.65rem;color:var(--text-dim);margin:6px 0 3px;border-top:1px solid var(--border);padding-top:6px;">'+(usedClanId?'No pertenecen al clan':'Posibles randoms')+' — marca si quieres incluirlos:</div>';
         randoms.forEach(m=>{
           html+='<label style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;margin-bottom:2px;font-size:.7rem;cursor:pointer;opacity:.6;"><input type="checkbox" value="'+m.name+'" class="dc-check"/> &#x26AA; <span>'+m.name+'</span> <span style="color:var(--text-dim);font-size:.6rem;">K/D '+m.stats.kd+'</span></label>';
         });
