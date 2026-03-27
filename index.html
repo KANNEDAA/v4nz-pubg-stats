@@ -470,7 +470,8 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .spinner { width: 50px; height: 50px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px; }
-.error-msg { display: none; text-align: center; padding: 40px 20px; color: var(--accent-red); font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; }
+.error-msg { display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); max-width: 90%; width: 100%; max-width: 500px; padding: 16px 24px; background: rgba(255, 51, 85, 0.95); border: 1px solid rgba(255, 51, 85, 0.5); border-radius: 12px; color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; z-index: 1002; box-shadow: 0 8px 32px rgba(255, 51, 85, 0.2); backdrop-filter: blur(8px); text-align: center; animation: slideUp 0.3s ease-out; }
+@keyframes slideUp { from { transform: translateX(-50%) translateY(120px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
 .error-msg.visible { display: block; }
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
 .empty-state p { font-size: 1rem; font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
@@ -560,17 +561,7 @@ footer a { color: var(--accent); text-decoration: none; }
 <div class="bg-grid"></div>
 <div class="bg-radial"></div>
 
-<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Conectando con PUBG API...</div><div class="loader-timer" id="mainLoaderTimer" style="font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--accent);font-weight:700;margin-top:8px;">0.0s</div><div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;" id="mainLoaderStep">Buscando jugador...</div></div>
-
-<div id="apiModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.9);backdrop-filter:blur(10px);z-index:1000;justify-content:center;align-items:center;">
-  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:500px;width:90%;text-align:center;">
-    <h3 style="font-family:'Orbitron',sans-serif;font-size:1.2rem;margin-bottom:12px;">API Key</h3>
-    <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:24px;">Ingresa tu API Key de PUBG Developer.</p>
-    <input type="text" id="apiKeyInput" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOi..." style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:.9rem;padding:14px;outline:none;margin-bottom:16px;text-align:center;"/>
-    <button onclick="saveApiKey()" style="background:var(--gradient-main);border:none;color:#000;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;text-transform:uppercase;letter-spacing:2px;padding:14px 40px;border-radius:8px;cursor:pointer;width:100%;">CONECTAR</button>
-    <a href="https://developer.pubg.com/" target="_blank" style="display:block;margin-top:12px;color:var(--accent);font-size:.8rem;text-decoration:none;">Obtener API Key gratis</a>
-  </div>
-</div>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Cargando estadísticas...</div><div class="loader-timer" id="mainLoaderTimer" style="font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--accent);font-weight:700;margin-top:8px;">0.0s</div><div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;" id="mainLoaderStep">Buscando jugador...</div></div>
 
 <header>
   <div class="header-inner">
@@ -741,7 +732,7 @@ footer a { color: var(--accent); text-decoration: none; }
         </div>
         <a href="https://discord.com/invite/Kw4NA3b8p8" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#5865F2;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;border-radius:8px;text-decoration:none;transition:all .2s;white-space:nowrap;" onmouseover="this.style.background='#4752C4'" onmouseout="this.style.background='#5865F2'">Unirse al Discord</a>
       </div>
-      <!-- Admin panel (hidden by default, toggle with ?admin=1 or admin password) -->
+      <!-- Admin panel (hidden by default, requires /admin route + password) -->
       <div id="clanAdminPanel" style="display:none;margin-top:20px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:14px;padding:20px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
           <span style="font-size:1rem;">&#x1F6E0;</span>
@@ -1216,7 +1207,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
   renderClanHistoryUI();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();document.getElementById('apiModal').style.display='none';}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER or /clan/TAG
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
@@ -1230,35 +1221,38 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(m){const plat=m[1].toLowerCase(),pname=decodeURIComponent(m[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
     else{location.reload();}
   });
-  // Admin panel: show with ?admin=1 in URL or by typing "v4nzadmin" anywhere
-  if(location.search.includes('admin=1')||localStorage.getItem('v4nz_admin')==='1'){
+  // Admin panel: check if admin is stored in sessionStorage from /admin route
+  if(sessionStorage.getItem('adminMode')==='true'){
     const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
     loadPendingRequests();
   }
-  let adminSequence='';
-  document.addEventListener('keypress',e=>{
-    adminSequence+=e.key;
-    if(adminSequence.length>20)adminSequence=adminSequence.slice(-20);
-    if(adminSequence.includes('v4nzadmin')){
-      localStorage.setItem('v4nz_admin','1');
+  // Check if on /admin route and show password prompt
+  if(location.pathname==='/admin'){
+    const pwd=prompt('Ingresa la contraseña de administrador:');
+    if(pwd==='v4nz2024admin'){
+      sessionStorage.setItem('adminMode','true');
       const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
       loadPendingRequests();
-      adminSequence='';
+      // Go back to home
+      history.replaceState(null,'','/');
+    }else{
+      alert('Contraseña incorrecta');
+      history.replaceState(null,'','/');
     }
-  });
+  }
 });
 
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
-function checkApiKey(){if(IS_PROXIED)return true;if(!API_KEY){document.getElementById('apiModal').style.display='flex';return false;}return true;}
-function saveApiKey(){const k=document.getElementById('apiKeyInput').value.trim();if(k){API_KEY=k;localStorage.setItem('pubg_api_key',k);document.getElementById('apiModal').style.display='none';const i=document.getElementById('searchInput').value.trim();if(i)searchPlayer();}}
-async function apiGet(u){const h={'Accept':'application/vnd.api+json'};if(!IS_PROXIED&&API_KEY)h['Authorization']='Bearer '+API_KEY;const r=await fetch(u,{headers:h});if(!r.ok){let msg='Error '+r.status;try{const j=JSON.parse(await r.text());if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Verifica el nombre y la plataforma.';if(r.status===429)msg='Demasiadas peticiones. Espera unos segundos.';throw new Error(msg);}return r.json();}
-function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Conectando con PUBG API...')+'</div><div class="loader-timer" id="loader-timer-'+targetId+'">0.0s</div></div>';const start=Date.now();const iv=setInterval(()=>{const t=document.getElementById('loader-timer-'+targetId);if(t)t.textContent=((Date.now()-start)/1000).toFixed(1)+'s';else clearInterval(iv);},100);return iv;}
+function checkApiKey(){return true;}
+function saveApiKey(){}
+async function apiGet(u){const h={'Accept':'application/vnd.api+json'};const r=await fetch(u,{headers:h});if(!r.ok){let msg='Error '+r.status;try{const j=JSON.parse(await r.text());if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;}catch(e){}if(r.status===404)msg='No se encontró ningún jugador con ese nombre. Revisa que esté bien escrito y selecciona la plataforma correcta (PS/Xbox).';if(r.status===429)msg='Demasiadas consultas seguidas. Espera unos segundos e inténtalo de nuevo.';if(r.status===401||r.status===403)msg='Error de conexión con el servidor. Inténtalo de nuevo en unos minutos.';if(r.status>=500)msg='El servidor de PUBG no responde. Inténtalo más tarde.';throw new Error(msg);}return r.json();}
+function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div><div class="loader-timer" id="loader-timer-'+targetId+'">0.0s</div></div>';const start=Date.now();const iv=setInterval(()=>{const t=document.getElementById('loader-timer-'+targetId);if(t)t.textContent=((Date.now()-start)/1000).toFixed(1)+'s';else clearInterval(iv);},100);return iv;}
 function stopApiLoader(iv){if(iv)clearInterval(iv);}
 let mainLoaderIv=null;
 function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);if(v){const start=Date.now();mainLoaderIv=setInterval(()=>{const t=document.getElementById('mainLoaderTimer');if(t)t.textContent=((Date.now()-start)/1000).toFixed(1)+'s';},100);}else{if(mainLoaderIv){clearInterval(mainLoaderIv);mainLoaderIv=null;}}}
 function setLoaderStep(msg){const el=document.getElementById('mainLoaderStep');if(el)el.textContent=msg;}
-function showError(m){const e=document.getElementById('errorMsg');e.textContent=m;e.classList.add('visible');}
-function hideError(){document.getElementById('errorMsg').classList.remove('visible');}
+let errorTimeout=null;function showError(m){const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.textContent=m;e.classList.add('visible');errorTimeout=setTimeout(()=>{e.classList.remove('visible');errorTimeout=null;},5000);}
+function hideError(){const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.classList.remove('visible');errorTimeout=null;}
 function showDataPanels(){document.getElementById('tabsContainer').classList.add('visible');document.getElementById('emptyState').style.display='none';}
 function formatTime(s){return Math.floor(s/60)+'m '+Math.floor(s%60)+'s';}
 function getTimeAgoMatch(d){const t=typeof d==='number'?d:d.getTime();const h=Math.floor((Date.now()-t)/3600000);if(h<1)return'ahora';if(h<24)return h+'h';return Math.floor(h/24)+'d';}
@@ -1304,7 +1298,7 @@ async function findPlayer(name,platform){
   }
 }
 async function searchPlayer(){
-  if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name)return;
+  if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name){showError('Escribe el nombre de un jugador para buscar sus estadísticas');return;}
   showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';
   try{
     setLoaderStep('Buscando jugador '+name+'...');
@@ -1330,7 +1324,7 @@ async function searchPlayer(){
   }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
-function getErrorMessage(e){const m=e.message||'';if(m.includes('404'))return'Jugador no encontrado. Verifica el gamertag y la plataforma.';if(m.includes('401')||m.includes('403'))return'API Key no valida.';if(m.includes('429'))return'Demasiadas peticiones. Espera unos segundos.';if(m.includes('Failed to fetch'))return'Error de conexion. Necesitas el servidor proxy (node server.js).';return'Error: '+m;}
+function getErrorMessage(e){const m=e.message||'';if(m.includes('404'))return'No se encontró ningún jugador con ese nombre. Revisa que esté bien escrito y selecciona la plataforma correcta (PS/Xbox).';if(m.includes('401')||m.includes('403'))return'Error de conexión con el servidor. Inténtalo de nuevo en unos minutos.';if(m.includes('429'))return'Demasiadas consultas seguidas. Espera unos segundos e inténtalo de nuevo.';if(m.includes('Failed to fetch'))return'Error de conexión. Necesitas el servidor proxy (node server.js).';if(m.includes('5'))return'El servidor de PUBG no responde. Inténtalo más tarde.';return'Algo ha ido mal. Inténtalo de nuevo.';}
 
 function switchTab(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -2268,7 +2262,7 @@ async function compareClans(){
   const n1=document.getElementById('clanCompare1').value.trim();
   const n2=document.getElementById('clanCompare2').value.trim();
   if(!n1||!n2){alert('Escribe el nombre de un jugador en cada campo');return;}
-  if(!API_KEY){document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Necesitas API Key para comparar clanes reales.</p>';return;}
+  if(!API_KEY){document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Para comparar clanes reales necesitas configurar la conexión.</p>';return;}
   const cr=document.getElementById('clanCompareResults');
   cr.innerHTML='';
   showLoading(true);setLoaderStep('Buscando clanes...');
