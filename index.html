@@ -20,6 +20,11 @@
 <meta name="author" content="V4NZ / KANNEDA">
 <meta name="theme-color" content="#00f0ff">
 <link rel="canonical" href="https://v4nz.com">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0f'/%3E%3Cpath d='M16 4C9.4 4 5.3 9.6 5.3 15.9v2.8c0 1.4.7 2.8 1.7 3.5l1.4 1v4.2c0 1.4 1 2.4 2.4 2.4h12.5c1.4 0 2.4-1 2.4-2.4v-4.2l1.4-1c1-0.7 1.7-2.1 1.7-3.5v-2.8C29 9.6 24.6 4 16 4z' fill='%23f2a900' opacity='.9'/%3E%3Crect x='8' y='12.6' width='18' height='5.6' rx='1.4' fill='%230a0a0f' opacity='.85'/%3E%3Crect x='8.7' y='13.3' width='16.6' height='4.2' rx='1' fill='none' stroke='%2300f0ff' stroke-width='.7' opacity='.7'/%3E%3C/svg%3E">
 <style>
@@ -801,7 +806,7 @@ footer a { color: var(--accent); text-decoration: none; }
       <span style="width:8px;display:inline-block;"></span>
       <span id="lbRegionBtns"><button class="lb-btn active" onclick="setLBRegion('eu',this)">EU</button><button class="lb-btn" onclick="setLBRegion('na',this)">NA</button><button class="lb-btn" onclick="setLBRegion('as',this)">AS</button></span>
       <span style="width:8px;display:inline-block;"></span>
-      <span id="lbModeBtns"><button class="lb-btn active" onclick="setLBMode('squad',this)">Squad</button><button class="lb-btn" onclick="setLBMode('squad-fpp',this)">Squad FPP</button><button class="lb-btn" onclick="setLBMode('solo',this)">Solo</button><button class="lb-btn" onclick="setLBMode('duo',this)">Duo</button></span>
+      <span id="lbModeBtns"><button class="lb-btn active" onclick="setLBMode('squad',this)">Squad</button><button class="lb-btn" onclick="setLBMode('squad-fpp',this)">Squad FPP</button><button class="lb-btn" onclick="setLBMode('duo',this)">Duo</button><button class="lb-btn" onclick="setLBMode('duo-fpp',this)">Duo FPP</button><button class="lb-btn" onclick="setLBMode('solo',this)">Solo</button><button class="lb-btn" onclick="setLBMode('solo-fpp',this)">Solo FPP</button></span>
     </div>
     <div id="leaderboardContent"><div class="empty-state"><p>Selecciona plataforma y modo</p></div></div>
   </div>
@@ -962,6 +967,7 @@ async function loadClanFromHistory(tag){
         let mh='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:12px;border:1px solid rgba(0,240,255,0.15);">';
         mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
         mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">'+members.length+' Miembros del Clan</div>';
+        mh+='<button onclick="refreshClanStats(\''+c.tag+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar Stats</button>';
         mh+='</div>';
         mh+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;text-align:center;">';
         mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);">KILLS</div></div>';
@@ -1331,11 +1337,31 @@ async function searchPlayer(){
     setLoaderStep('Cargando maestria de armas...');
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
-    showSkeletons(false);renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
+    showSkeletons(false);autoBestMode();renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
   }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
 function getErrorMessage(e){if(e.status){if(e.status===404)return'No se encontró ningún jugador con ese nombre. Revisa que esté bien escrito y selecciona la plataforma correcta (PS/Xbox).';if(e.status===401||e.status===403)return'Error de conexión con el servidor. Inténtalo de nuevo en unos minutos.';if(e.status===429)return'Demasiadas consultas seguidas. Espera unos segundos e inténtalo de nuevo.';if(e.status>=500)return'El servidor de PUBG no responde. Inténtalo más tarde.';return e.message||'Error desconocido ('+e.status+')';}const m=e.message||'';if(m.includes('Failed to fetch')||m.includes('NetworkError'))return'Error de conexión. Comprueba tu conexión a internet.';if(m.includes('No se encontró')||m.includes('Demasiadas consultas')||m.includes('servidor'))return m;return'Algo ha ido mal. Inténtalo de nuevo.';}
+
+function autoBestMode(){
+  // Auto-detect the game mode with most rounds played so the user doesn't land on an empty view
+  if(!currentSeasonData||!currentSeasonData.data||!currentSeasonData.data.attributes)return;
+  const gms=currentSeasonData.data.attributes.gameModeStats||{};
+  const modes=[
+    {squad:'squad',game:'tpp',r:gms['squad']?.roundsPlayed||0},
+    {squad:'squad',game:'fpp',r:gms['squad-fpp']?.roundsPlayed||0},
+    {squad:'duo',game:'tpp',r:gms['duo']?.roundsPlayed||0},
+    {squad:'duo',game:'fpp',r:gms['duo-fpp']?.roundsPlayed||0},
+    {squad:'solo',game:'tpp',r:gms['solo']?.roundsPlayed||0},
+    {squad:'solo',game:'fpp',r:gms['solo-fpp']?.roundsPlayed||0}
+  ];
+  const best=modes.reduce((a,b)=>b.r>a.r?b:a,modes[0]);
+  if(best.r>0){
+    currentSquadMode=best.squad;currentGameMode=best.game;
+    document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(best.game==='tpp'&&b.textContent==='TPP')||(best.game==='fpp'&&b.textContent==='FPP'));});
+    document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===best.squad));
+  }
+}
 
 function switchTab(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -1989,8 +2015,10 @@ async function searchClan(){
           // Header
           mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
           mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">'+members.length+' Miembros del Clan</div>';
-          mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina completa &#x2192;</a>';
-          mh+='</div>';
+          mh+='<div style="display:flex;gap:8px;align-items:center;">';
+          mh+='<button onclick="refreshClanStats(\''+c.tag+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar</button>';
+          mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina &#x2192;</a>';
+          mh+='</div></div>';
           // Stats summary
           mh+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;text-align:center;">';
           mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);">KILLS</div></div>';
@@ -2126,6 +2154,38 @@ async function requestAddPlayer(clanTag){
     input.value='';
   }catch(e){
     statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
+  }
+}
+async function refreshClanStats(clanTag,btn){
+  if(!clanTag)return;
+  const origText=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='&#x23F3; Actualizando...';btn.style.opacity='0.5';
+  try{
+    // First get the PUBG clanId by looking up a member of this clan
+    const dbResp=await fetch('/clans/'+encodeURIComponent(clanTag));
+    if(!dbResp.ok)throw new Error('Clan no encontrado');
+    const dbData=await dbResp.json();
+    const firstMember=dbData.members&&dbData.members[0]?dbData.members[0].player_name:null;
+    if(!firstMember)throw new Error('Sin miembros para buscar');
+    // Get clanId from PUBG API via player lookup
+    const platform=dbData.clan.platform||'psn';
+    const playerResp=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(firstMember));
+    const clanId=playerResp.data[0]?.attributes?.clanId;
+    if(!clanId)throw new Error('No se pudo obtener el ID del clan');
+    // Re-import from pubgclans.net
+    const impResp=await fetch('/clans/import-pubgclans',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({clanId:clanId,gameMode:'squad'})
+    });
+    if(!impResp.ok){const d=await impResp.json();throw new Error(d.error||'Error al importar');}
+    btn.innerHTML='&#x2705; Actualizado!';btn.style.color='var(--accent-green)';
+    // Reload the clan view after 1 second
+    setTimeout(()=>{loadClanFromHistory(clanTag);},1200);
+  }catch(e){
+    console.error('Refresh clan error:',e);
+    btn.innerHTML='&#x274C; '+e.message;btn.style.color='var(--accent-orange)';
+    setTimeout(()=>{btn.innerHTML=origText;btn.disabled=false;btn.style.opacity='1';btn.style.color='';},3000);
   }
 }
 // Admin: Load pending member requests
@@ -2581,6 +2641,8 @@ function renderLeaderboardDemo(){
   });h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 20 demo &mdash; Con servidor activo se cargan Top 500 reales via PUBG API</p>';
   document.getElementById('leaderboardContent').innerHTML=h;
 }
+// PWA: Register Service Worker
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.log('SW registration failed:',e));}
 </script>
 </body>
 </html>
