@@ -1004,15 +1004,15 @@ function renderClanHistoryUI(){
   if(!banner||!histSec)return;
   // Mi Clan banner
   if(myClan){
-    const memberList=myClan.members&&myClan.members.length?myClan.members.slice(0,5).join(', ')+(myClan.members.length>5?' +' +(myClan.members.length-5)+' mas':''):'Sin miembros guardados';
-    banner.innerHTML='<div class="my-clan-banner" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberList+' &mdash; '+myClan.platform.toUpperCase()+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\');event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Analizar</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
+    const memberHintMC=myClan.members&&myClan.members.length?myClan.members.length+' miembros':'Nivel '+myClan.level+' &mdash; '+myClan.memberCount+' miembros';
+    banner.innerHTML='<div class="my-clan-banner" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+myClan.platform.toUpperCase()+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\');event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
   }else{banner.innerHTML='';}
   // Historial
   const nonMyClan=clanHistory.filter(c=>!(myClan&&c.tag===myClan.tag));
   if(nonMyClan.length){
     let h='<div class="clan-history-section"><div class="clan-history-title">Clanes Recientes</div>';
     nonMyClan.forEach(c=>{
-      const memberHint=c.members&&c.members.length?c.members.length+' miembros guardados':'Sin miembros';
+      const memberHint=c.members&&c.members.length?c.members.length+' miembros':'Nivel '+c.level+' &mdash; '+c.memberCount+' miembros';
       const ago=getTimeAgo(c.date);
       h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+c.platform.toUpperCase()+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions"><button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-history" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Eliminar">&times;</button></div></div>';
     });
