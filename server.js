@@ -6,6 +6,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { Pool } = require('pg');
 
 const app = express();
@@ -594,8 +595,35 @@ app.post('/clans/discover-members', async (req, res) => {
   }
 });
 
+// ═══ RATE LIMITER (in-memory, no deps) ═══
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX = 30; // max 30 requests per minute per IP
+function rateLimit(req, res, next) {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+  const now = Date.now();
+  let entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.start > RATE_LIMIT_WINDOW) {
+    entry = { start: now, count: 1 };
+    rateLimitMap.set(ip, entry);
+  } else {
+    entry.count++;
+  }
+  if (entry.count > RATE_LIMIT_MAX) {
+    return res.status(429).json({ error: 'Demasiadas peticiones. Espera un momento.' });
+  }
+  next();
+}
+// Cleanup old entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now - entry.start > RATE_LIMIT_WINDOW * 2) rateLimitMap.delete(ip);
+  }
+}, 300000);
+
 // ═══ PUBG API PROXY ═══
-app.all('/api/*', async (req, res) => {
+app.all('/api/*', rateLimit, async (req, res) => {
   const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
   const originalQuery = req.originalUrl.split('?')[1] || '';
   const pubgPath = req.params[0];
@@ -637,9 +665,88 @@ app.get('/robots.txt', (req, res) => {
   res.send('User-agent: *\nAllow: /\nSitemap: https://v4nz.com/sitemap.xml');
 });
 
-// Fallback: serve index.html for SPA routes (/clan/*, /stats/*, etc.)
+// PWA files
+app.get('/manifest.json', (req, res) => res.sendFile(path.join(__dirname, 'manifest.json')));
+app.get('/sw.js', (req, res) => {
+  res.set('Content-Type', 'application/javascript');
+  res.set('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(__dirname, 'sw.js'));
+});
+
+// PWA Icons (generated SVG — no external files needed)
+const V4NZ_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0b0b12"/>
+  <rect x="24" y="24" width="464" height="464" rx="80" fill="none" stroke="#00f0ff" stroke-width="4" opacity=".3"/>
+  <text x="256" y="300" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="220" fill="#00f0ff">V4</text>
+  <text x="256" y="420" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="100" fill="#ff6b00">NZ</text>
+</svg>`;
+app.get('/icon-192.svg', (req, res) => { res.set('Content-Type', 'image/svg+xml'); res.send(V4NZ_ICON_SVG); });
+app.get('/icon-512.svg', (req, res) => { res.set('Content-Type', 'image/svg+xml'); res.send(V4NZ_ICON_SVG); });
+app.get('/icon-maskable.svg', (req, res) => {
+  res.set('Content-Type', 'image/svg+xml');
+  res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" fill="#0b0b12"/>
+    <text x="256" y="280" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="180" fill="#00f0ff">V4</text>
+    <text x="256" y="390" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="90" fill="#ff6b00">NZ</text>
+  </svg>`);
+});
+
+// OG Image (static SVG served as image for social sharing previews)
+app.get('/og-image.png', (req, res) => {
+  // Serve an SVG with .png extension — most crawlers accept this
+  // For pixel-perfect PNG, install 'canvas' or 'sharp' npm packages
+  res.set('Content-Type', 'image/svg+xml');
+  res.send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#131320"/></linearGradient></defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect x="16" y="16" width="1168" height="598" rx="24" fill="none" stroke="#00f0ff" stroke-width="2" opacity=".2"/>
+    <text x="600" y="260" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="140" fill="#00f0ff">V4NZ</text>
+    <text x="600" y="360" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="42" fill="#eaeaf2">PUBG Console Stats Tracker</text>
+    <text x="600" y="430" text-anchor="middle" font-family="sans-serif" font-weight="400" font-size="28" fill="#9e9eb8">PlayStation &amp; Xbox — Estadisticas en Tiempo Real</text>
+    <text x="600" y="560" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="24" fill="#ff6b00">v4nz.com</text>
+  </svg>`);
+});
+
+// Fallback: serve index.html for SPA routes with dynamic meta tags
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
+  const clanMatch = req.path.match(/^\/clan\/(.+)$/i);
+
+  if (statsMatch || clanMatch) {
+    // Inject dynamic OG meta tags for player/clan URLs (for social sharing)
+    try {
+      let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+      if (statsMatch) {
+        const platform = statsMatch[1].toUpperCase();
+        const playerName = decodeURIComponent(statsMatch[2]);
+        const title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
+        const desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
+        const url = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
+        html = html
+          .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
+          .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${title}">`)
+          .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${desc}">`)
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${url}">`)
+          .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${title}">`)
+          .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${desc}">`)
+          .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${desc}">`);
+      } else if (clanMatch) {
+        const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
+        const title = `Clan [${clanTag}] — PUBG Stats | V4NZ`;
+        const desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
+        html = html
+          .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
+          .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${title}">`)
+          .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${desc}">`);
+      }
+      res.set('Content-Type', 'text/html');
+      res.send(html);
+    } catch (e) {
+      res.sendFile(path.join(__dirname, 'index.html'));
+    }
+  } else {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  }
 });
 
 // ═══ START ═══
