@@ -619,6 +619,24 @@ app.all('/api/*', async (req, res) => {
   }
 });
 
+// Sitemap for SEO
+app.get('/sitemap.xml', (req, res) => {
+  res.set('Content-Type', 'application/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://v4nz.com/top500</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+</urlset>`);
+});
+
+// Robots.txt
+app.get('/robots.txt', (req, res) => {
+  res.set('Content-Type', 'text/plain');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://v4nz.com/sitemap.xml');
+});
+
 // Fallback: serve index.html for SPA routes (/clan/*, /stats/*, etc.)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
