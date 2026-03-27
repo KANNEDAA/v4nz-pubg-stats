@@ -36,10 +36,10 @@ async function initDB() {
         registered_by VARCHAR(50),
         total_kills INT DEFAULT 0,
         total_wins INT DEFAULT 0,
-        avg_kd NUMERIC(5,2) DEFAULT 0,
-        avg_damage NUMERIC(7,1) DEFAULT 0,
+        avg_kd NUMERIC(6,2) DEFAULT 0,
+        avg_damage NUMERIC(12,1) DEFAULT 0,
         total_rounds INT DEFAULT 0,
-        win_rate NUMERIC(5,2) DEFAULT 0,
+        win_rate NUMERIC(6,2) DEFAULT 0,
         active_members INT DEFAULT 0,
         stats_updated_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -51,8 +51,8 @@ async function initDB() {
         player_name VARCHAR(50) NOT NULL,
         kills INT DEFAULT 0,
         wins INT DEFAULT 0,
-        kd NUMERIC(5,2) DEFAULT 0,
-        damage NUMERIC(7,1) DEFAULT 0,
+        kd NUMERIC(6,2) DEFAULT 0,
+        damage NUMERIC(12,1) DEFAULT 0,
         rounds INT DEFAULT 0,
         active BOOLEAN DEFAULT true,
         added_by VARCHAR(50),
@@ -75,6 +75,14 @@ async function initDB() {
       );
       CREATE INDEX IF NOT EXISTS idx_member_requests_pending ON member_requests(status) WHERE status = 'pending';
     `);
+    // Alter existing columns to support larger values (safe to run multiple times)
+    await pool.query(`
+      ALTER TABLE clans ALTER COLUMN avg_kd TYPE NUMERIC(6,2);
+      ALTER TABLE clans ALTER COLUMN avg_damage TYPE NUMERIC(12,1);
+      ALTER TABLE clans ALTER COLUMN win_rate TYPE NUMERIC(6,2);
+      ALTER TABLE clan_members ALTER COLUMN kd TYPE NUMERIC(6,2);
+      ALTER TABLE clan_members ALTER COLUMN damage TYPE NUMERIC(12,1);
+    `).catch(() => {}); // Ignore if already correct type
     console.log('✓ Database tables ready');
   } catch (e) { console.error('DB init error:', e.message); }
 }
