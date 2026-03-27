@@ -1511,33 +1511,59 @@ function renderPersonality(){
 }
 function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi personalidad PUBG es: '+t+'! Descubre la tuya en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://v4nz.com'});else{navigator.clipboard?.writeText(x+' https://v4nz.com');alert('Copiado al portapapeles!');}}
 
+/* === STATS CARD POLYFILL === */
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    if(typeof r==='number'){r={tl:r,tr:r,br:r,bl:r};}else{r={tl:0,tr:0,br:0,bl:0,...r};}
+    this.moveTo(x+r.tl,y);this.lineTo(x+w-r.tr,y);this.arcTo(x+w,y,x+w,y+r.tr,r.tr);
+    this.lineTo(x+w,y+h-r.br);this.arcTo(x+w,y+h,x+w-r.br,y+h,r.br);
+    this.lineTo(x+r.bl,y+h);this.arcTo(x,y+h,x,y+h-r.bl,r.bl);
+    this.lineTo(x,y+r.tl);this.arcTo(x,y,x+r.tl,y,r.tl);this.closePath();
+  };
+}
+
 function generateStatsCard(){
   const c=document.getElementById('statsCardCanvas');const ctx=c.getContext('2d');
   c.width=700;c.height=420;
   const s=getActiveStats();const n=currentPlayerData?.attributes?.name||'???';
-  // Background
+
+  // Background with gradient
   const bg=ctx.createLinearGradient(0,0,700,420);
   bg.addColorStop(0,'#0a0a0f');bg.addColorStop(.5,'#12121a');bg.addColorStop(1,'#0a0a0f');
   ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(0,0,700,420,16);ctx.fill();
-  // Top accent line
+
+  // Top accent gradient line
   const tg=ctx.createLinearGradient(0,0,700,0);
   tg.addColorStop(0,'#00f0ff');tg.addColorStop(.5,'#ff6b00');tg.addColorStop(1,'#c5ff00');
   ctx.fillStyle=tg;ctx.fillRect(0,0,700,3);
+
+  // Subtle glow background for top section
+  const glowGrad=ctx.createLinearGradient(0,0,700,100);
+  glowGrad.addColorStop(0,'rgba(0,240,255,0.04)');glowGrad.addColorStop(1,'rgba(0,240,255,0)');
+  ctx.fillStyle=glowGrad;ctx.fillRect(0,3,700,97);
+
   // Border
   ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(0,0,700,420,16);ctx.stroke();
-  // Avatar circle
-  ctx.fillStyle='#00f0ff';ctx.beginPath();ctx.arc(60,55,28,0,Math.PI*2);ctx.fill();
+
+  // Avatar circle with glow effect
+  ctx.shadowColor='rgba(0,240,255,0.3)';ctx.shadowBlur=12;ctx.fillStyle='#00f0ff';ctx.beginPath();ctx.arc(60,55,28,0,Math.PI*2);ctx.fill();
+  ctx.shadowColor='transparent';
   ctx.fillStyle='#0a0a0f';ctx.font='bold 24px Orbitron,sans-serif';ctx.textAlign='center';
   ctx.fillText(n.charAt(0).toUpperCase(),60,63);
-  // Player name
+
+  // Player name - prominent
   ctx.fillStyle='#e8e8f0';ctx.font='bold 26px Orbitron,sans-serif';ctx.textAlign='left';
   ctx.fillText(n,100,52);
-  // Platform
-  ctx.fillStyle='#8888a0';ctx.font='600 14px Rajdhani,sans-serif';
-  ctx.fillText((currentPlatform==='psn'?'PlayStation':'Xbox')+' | '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase(),100,72);
-  // Divider
+
+  // Platform and mode badge
+  ctx.fillStyle='#8888a0';ctx.font='600 12px Rajdhani,sans-serif';
+  const platformStr=(currentPlatform==='psn'?'PlayStation':'Xbox')+' | '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase();
+  ctx.fillText(platformStr,100,72);
+
+  // Divider line
   ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.moveTo(30,95);ctx.lineTo(670,95);ctx.stroke();
-  // Stats grid
+
+  // Stats grid - 4 columns, 2 rows
   const stats=[
     {label:'K/D RATIO',value:calcKD(s),color:'#00f0ff'},
     {label:'VICTORIAS',value:''+(s.wins||0),color:'#ffd700'},
@@ -1548,25 +1574,36 @@ function generateStatsCard(){
     {label:'TOP 10 %',value:calcTop10Rate(s)+'%',color:'#00ff88'},
     {label:'PARTIDAS',value:''+(s.roundsPlayed||0),color:'#00f0ff'}
   ];
+
   const cols=4,cw=160,ch=80,sx=30,sy=115;
   stats.forEach((st,i)=>{
     const col=i%cols,row=Math.floor(i/cols);
     const x=sx+col*cw,y=sy+row*(ch+15);
-    // Card bg
+
+    // Stat card background with subtle accent
     ctx.fillStyle='#16161f';ctx.beginPath();ctx.roundRect(x,y,cw-10,ch,10);ctx.fill();
+
+    // Accent left border for color coding
+    ctx.fillStyle=st.color;ctx.fillRect(x,y,3,ch);
+
+    // Border
     ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.roundRect(x,y,cw-10,ch,10);ctx.stroke();
-    // Value
+
+    // Value - larger and colored
     ctx.fillStyle=st.color;ctx.font='bold 28px Orbitron,sans-serif';ctx.textAlign='center';
     ctx.fillText(st.value,x+(cw-10)/2,y+38);
-    // Label
-    ctx.fillStyle='#8888a0';ctx.font='600 11px Rajdhani,sans-serif';
+
+    // Label - smaller gray text
+    ctx.fillStyle='#8888a0';ctx.font='600 11px Rajdhani,sans-serif';ctx.textAlign='center';
     ctx.fillText(st.label,x+(cw-10)/2,y+60);
   });
-  // Footer
+
+  // Footer with branding
   ctx.fillStyle='#555570';ctx.font='600 12px Rajdhani,sans-serif';ctx.textAlign='center';
   ctx.fillText('V4NZ.COM — PUBG Console Stats Tracker',350,390);
   ctx.fillStyle='#00f0ff';ctx.font='bold 13px Orbitron,sans-serif';
   ctx.fillText('V4NZ',350,410);
+
   // Show modal
   document.getElementById('cardModal').classList.add('active');
 }
