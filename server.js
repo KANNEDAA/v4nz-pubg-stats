@@ -322,20 +322,37 @@ app.post('/clans/import-pubgclans', async (req, res) => {
       } catch (e) { console.log(`[import] pubgclans.net ${gm}: error — ${e.message}`); }
     }
 
-    const playerNames = Object.keys(mergedPlayers);
+    // Deduplicate by lowercase name (pubgclans.net can return same player with different casing)
+    const deduped = {};
+    for (const [name, stats] of Object.entries(mergedPlayers)) {
+      const key = name.toLowerCase();
+      if (deduped[key]) {
+        // Keep the name with most kills, accumulate stats
+        if (stats.kills > deduped[key].stats.kills) deduped[key].displayName = name;
+        deduped[key].stats.kills += stats.kills;
+        deduped[key].stats.wins += stats.wins;
+        deduped[key].stats.rounds += stats.rounds;
+        deduped[key].stats.damage += stats.damage;
+      } else {
+        deduped[key] = { displayName: name, stats: { ...stats } };
+      }
+    }
+
+    const playerNames = Object.keys(deduped);
     if (playerNames.length === 0) {
       return res.status(404).json({ error: 'No member data found on pubgclans.net for this clan (tried all game modes)' });
     }
     console.log(`[import] Merged ${playerNames.length} unique members across all modes`);
 
     // Step 3: Transform merged data to our format
-    const members = playerNames.map(name => {
-      const p = mergedPlayers[name];
-      const kd = p.rounds > 0 ? parseFloat((p.kills / p.rounds).toFixed(2)) : 0;
+    const members = playerNames.map(key => {
+      const p = deduped[key];
+      const s = p.stats;
+      const kd = s.rounds > 0 ? parseFloat((s.kills / s.rounds).toFixed(2)) : 0;
       return {
-        name,
-        active: p.rounds > 0,
-        stats: { kills: p.kills, wins: p.wins, kd, damage: p.damage, rounds: p.rounds }
+        name: p.displayName,
+        active: s.rounds > 0,
+        stats: { kills: s.kills, wins: s.wins, kd, damage: s.damage, rounds: s.rounds }
       };
     }).sort((a, b) => b.stats.kills - a.stats.kills);
 
@@ -377,14 +394,14 @@ app.post('/clans/import-pubgclans', async (req, res) => {
     `, [cleanTag, payload.name, payload.memberCount, payload.level, detectedPlatform,
         'pubgclans_import', totalKills, totalWins, avgKd, avgDmg, totalRounds, winRate, activeCount]);
 
+    // Delete old members before re-importing (prevents duplicates from casing differences)
+    await pool.query('DELETE FROM clan_members WHERE clan_tag = $1', [cleanTag]);
+
     for (const m of members) {
       const s = m.stats;
       await pool.query(`
         INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-        ON CONFLICT (clan_tag, player_name) DO UPDATE SET
-          kills=EXCLUDED.kills, wins=EXCLUDED.wins, kd=EXCLUDED.kd,
-          damage=EXCLUDED.damage, rounds=EXCLUDED.rounds, active=EXCLUDED.active
       `, [cleanTag, m.name, s.kills, s.wins, s.kd, s.damage, s.rounds, m.active, 'pubgclans_import']);
     }
 
