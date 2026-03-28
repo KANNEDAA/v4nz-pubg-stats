@@ -28,14 +28,6 @@ const pool = process.env.DATABASE_URL ? new Pool({
 app.use(cors());
 app.use(express.json());
 
-// ═══ WWW → APEX REDIRECT (SEO: avoid duplicate content) ═══
-app.use((req, res, next) => {
-  if (req.hostname === 'www.v4nz.com') {
-    return res.redirect(301, 'https://v4nz.com' + req.originalUrl);
-  }
-  next();
-});
-
 app.use(express.static(path.join(__dirname)));
 
 // ═══ AUTO-CREATE TABLES ═══
