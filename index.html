@@ -101,6 +101,24 @@
 /* THEME TOGGLE */
 .theme-toggle { background:none; border:1px solid var(--border); color:var(--text-secondary); width:36px; height:36px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem; transition:all .25s; margin-left:8px; flex-shrink:0; }
 .theme-toggle:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+/* AUTH */
+.auth-btn { background:var(--gradient-main); color:#fff; border:none; padding:6px 14px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:6px; flex-shrink:0; white-space:nowrap; }
+.auth-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,240,255,.25); }
+.auth-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,10,.92); backdrop-filter:blur(12px); z-index:1003; justify-content:center; align-items:center; }
+.auth-popup.active { display:flex; }
+[data-theme="light"] .auth-popup { background:rgba(240,242,245,.94); }
+.auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:380px; width:92%; position:relative; box-shadow:var(--shadow-card); }
+.auth-box .close-btn { position:absolute; top:10px; right:10px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1rem; cursor:pointer; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.auth-box .close-btn:hover { color:var(--accent); border-color:var(--accent); }
+.auth-input { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); padding:10px 14px; border-radius:8px; font-size:.8rem; font-family:'Inter',sans-serif; margin-bottom:10px; outline:none; transition:border-color .2s; box-sizing:border-box; }
+.auth-input:focus { border-color:var(--accent); }
+.auth-submit { background:var(--gradient-main); color:#fff; border:none; padding:11px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; width:100%; transition:all .2s; margin-top:4px; }
+.auth-submit:hover { transform:translateY(-1px); }
+.auth-discord-btn { display:flex; align-items:center; justify-content:center; gap:10px; background:#5865F2; color:#fff; border:none; padding:12px; border-radius:10px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; width:100%; transition:all .2s; }
+.auth-discord-btn:hover { background:#4752C4; }
+.auth-divider { display:flex; align-items:center; gap:12px; margin:18px 0; color:var(--text-dim); font-size:.7rem; }
+.auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.auth-error { background:rgba(255,51,85,.1); border:1px solid rgba(255,51,85,.2); color:var(--accent-red); padding:8px 12px; border-radius:8px; font-size:.72rem; margin-bottom:10px; text-align:center; display:none; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
@@ -711,7 +729,8 @@ footer a { color: var(--accent); text-decoration: none; }
       <a href="#" data-tab="clanranking">Ranking Clanes</a>
       <a href="#" data-tab="leaderboard">Top 500</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:4px;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()">Iniciar Sesion</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema">&#x1F319;</button>
       <button class="hamburger" id="hamburgerBtn" onclick="this.classList.toggle('open');document.getElementById('mainNav').classList.toggle('mobile-open');"><span></span><span></span><span></span></button>
     </div>
@@ -997,6 +1016,51 @@ footer a { color: var(--accent); text-decoration: none; }
   <p style="margin-top:6px;opacity:.5;">No afiliado con KRAFTON, Inc. Todos los datos provienen de la API publica de PUBG.</p>
 </footer>
 
+<!-- AUTH POPUP -->
+<div class="auth-popup" id="authPopup" onclick="if(event.target===this)closeAuthPopup();">
+  <div class="auth-box">
+    <button class="close-btn" onclick="closeAuthPopup();">&times;</button>
+    <div id="authContent">
+      <!-- Login form (default) -->
+      <div id="authLoginView">
+        <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem;color:var(--accent);text-align:center;margin-bottom:4px;">Iniciar Sesion</div>
+        <div style="font-size:.75rem;color:var(--text-dim);text-align:center;margin-bottom:20px;">Guarda tus favoritos y accede desde cualquier dispositivo</div>
+        <button class="auth-discord-btn" onclick="window.location.href='/auth/discord'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          Entrar con Discord
+        </button>
+        <div class="auth-divider">o con email</div>
+        <div class="auth-error" id="authLoginError"></div>
+        <input class="auth-input" id="loginEmail" type="email" placeholder="Email" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+        <input class="auth-input" id="loginPass" type="password" placeholder="Contrasena" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="auth-submit" onclick="doLogin()">ENTRAR</button>
+        <div style="text-align:center;margin-top:14px;font-size:.72rem;color:var(--text-dim);">No tienes cuenta? <a style="color:var(--accent);cursor:pointer;font-weight:600;" onclick="showAuthView('register')">Crear cuenta</a></div>
+      </div>
+      <!-- Register form -->
+      <div id="authRegisterView" style="display:none;">
+        <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem;color:var(--accent);text-align:center;margin-bottom:4px;">Crear Cuenta</div>
+        <div style="font-size:.75rem;color:var(--text-dim);text-align:center;margin-bottom:20px;">Registro rapido — solo necesitas email y contrasena</div>
+        <div class="auth-error" id="authRegError"></div>
+        <input class="auth-input" id="regName" type="text" placeholder="Tu nombre o gamertag" maxlength="50">
+        <input class="auth-input" id="regEmail" type="email" placeholder="Email">
+        <input class="auth-input" id="regPass" type="password" placeholder="Contrasena (minimo 4 caracteres)">
+        <input class="auth-input" id="regGamertag" type="text" placeholder="Gamertag PUBG (opcional)" maxlength="50">
+        <button class="auth-submit" onclick="doRegister()">CREAR CUENTA</button>
+        <div style="text-align:center;margin-top:14px;font-size:.72rem;color:var(--text-dim);">Ya tienes cuenta? <a style="color:var(--accent);cursor:pointer;font-weight:600;" onclick="showAuthView('login')">Iniciar sesion</a></div>
+      </div>
+      <!-- Logged in view -->
+      <div id="authLoggedView" style="display:none;">
+        <div style="text-align:center;">
+          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem;color:var(--accent);margin-bottom:12px;" id="authUserName"></div>
+          <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px;" id="authUserInfo"></div>
+          <button class="auth-submit" onclick="syncFavoritesToServer()" style="margin-bottom:8px;">Sincronizar Favoritos</button>
+          <button class="auth-submit" onclick="doLogout()" style="background:var(--gradient-orange);">Cerrar Sesion</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // THEME TOGGLE
 function toggleTheme(){
@@ -1015,6 +1079,114 @@ function toggleTheme(){
     document.querySelector('meta[name="theme-color"]').content='#0088cc';
     const btn=document.getElementById('themeToggle');
     if(btn) btn.innerHTML='&#x2600;&#xFE0F;';
+  }
+})();
+
+// ═══ AUTH SYSTEM ═══
+let currentUser=null;
+let authToken=localStorage.getItem('v4nz_token')||null;
+
+function openAuthPopup(){
+  if(currentUser){showAuthView('logged');}
+  else{showAuthView('login');}
+  document.getElementById('authPopup').classList.add('active');
+}
+function closeAuthPopup(){document.getElementById('authPopup').classList.remove('active');}
+function showAuthView(view){
+  document.getElementById('authLoginView').style.display=view==='login'?'':'none';
+  document.getElementById('authRegisterView').style.display=view==='register'?'':'none';
+  document.getElementById('authLoggedView').style.display=view==='logged'?'':'none';
+  document.querySelectorAll('.auth-error').forEach(e=>{e.style.display='none';});
+}
+function showAuthError(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function updateAuthUI(){
+  const btn=document.getElementById('authHeaderBtn');
+  if(currentUser){
+    btn.innerHTML=currentUser.display_name;
+    btn.style.background='var(--bg-card)';btn.style.border='1px solid var(--border)';btn.style.color='var(--accent)';
+    document.getElementById('authUserName').textContent=currentUser.display_name;
+    document.getElementById('authUserInfo').textContent=(currentUser.gamertag?currentUser.gamertag+' — ':'')+(currentUser.email||currentUser.discord_name||'');
+  }else{
+    btn.innerHTML='Iniciar Sesion';
+    btn.style.background='';btn.style.border='';btn.style.color='';
+  }
+}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!email||!pass){showAuthError('authLoginError','Introduce email y contrasena');return;}
+  try{
+    const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(!r.ok){showAuthError('authLoginError',d.error||'Error al entrar');return;}
+    authToken=d.token;currentUser=d.user;
+    localStorage.setItem('v4nz_token',authToken);
+    updateAuthUI();loadFavoritesFromServer();closeAuthPopup();
+  }catch(e){showAuthError('authLoginError','Error de conexion');}
+}
+
+async function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const pass=document.getElementById('regPass').value;
+  const gt=document.getElementById('regGamertag').value.trim();
+  if(!name||!email||!pass){showAuthError('authRegError','Nombre, email y contrasena son obligatorios');return;}
+  if(pass.length<4){showAuthError('authRegError','La contrasena debe tener al menos 4 caracteres');return;}
+  try{
+    const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,displayName:name,gamertag:gt,platform:currentPlatform})});
+    const d=await r.json();
+    if(!r.ok){showAuthError('authRegError',d.error||'Error al registrar');return;}
+    authToken=d.token;currentUser=d.user;
+    localStorage.setItem('v4nz_token',authToken);
+    updateAuthUI();syncFavoritesToServer();closeAuthPopup();
+  }catch(e){showAuthError('authRegError','Error de conexion');}
+}
+
+function doLogout(){
+  authToken=null;currentUser=null;
+  localStorage.removeItem('v4nz_token');
+  updateAuthUI();closeAuthPopup();
+}
+
+async function loadFavoritesFromServer(){
+  if(!authToken)return;
+  try{
+    const r=await fetch('/favorites',{headers:{'Authorization':'Bearer '+authToken}});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d.favorites&&d.favorites.length){
+      favorites=d.favorites.map(f=>({name:f.name,platform:f.platform,group:f.fav_group||''}));
+      localStorage.setItem('pubg_favorites',JSON.stringify(favorites));
+      renderRecentSearches();
+    }
+  }catch(e){console.error('Load favs error:',e);}
+}
+
+async function syncFavoritesToServer(){
+  if(!authToken){openAuthPopup();return;}
+  try{
+    const favs=favorites.map(f=>({name:f.name,platform:f.platform,type:'player',group:f.group||''}));
+    const r=await fetch('/favorites/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({favorites:favs})});
+    const d=await r.json();
+    if(d.ok)alert('Favoritos sincronizados! ('+d.count+' guardados en servidor)');
+  }catch(e){console.error('Sync error:',e);}
+}
+
+// Check for Discord OAuth callback token in URL
+(function(){
+  const params=new URLSearchParams(location.search);
+  const token=params.get('auth_token');
+  if(token){
+    authToken=token;localStorage.setItem('v4nz_token',token);
+    history.replaceState(null,'',location.pathname);
+  }
+  // Auto-login if token exists
+  if(authToken){
+    fetch('/auth/me',{headers:{'Authorization':'Bearer '+authToken}})
+      .then(r=>{if(!r.ok)throw new Error();return r.json();})
+      .then(d=>{currentUser=d.user;updateAuthUI();loadFavoritesFromServer();})
+      .catch(()=>{authToken=null;localStorage.removeItem('v4nz_token');updateAuthUI();});
   }
 })();
 
