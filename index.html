@@ -921,20 +921,28 @@ footer a { color: var(--accent); text-decoration: none; }
     </div>
     <div id="clanSearchMode">
       <div id="myClanBanner"></div>
-      <!-- Search area with better visual flow -->
+      <!-- Search area with two modes: by clan name and by player -->
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-          <div style="width:40px;height:40px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">&#x1F50E;</div>
-          <div>
-            <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-primary);">Buscar Clan por Jugador</div>
-            <div style="font-size:.7rem;color:var(--text-dim);">Escribe el gamertag de cualquier jugador y encontraremos su clan</div>
+        <!-- Search mode tabs -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+          <button id="clanSearchByNameTab" onclick="setClanSearchTab('name')" style="flex:1;padding:10px 16px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;border:none;cursor:pointer;transition:all .2s;background:var(--accent);color:var(--bg-primary);">&#x1F50D; Buscar por Nombre de Clan</button>
+          <button id="clanSearchByPlayerTab" onclick="setClanSearchTab('player')" style="flex:1;padding:10px 16px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;border:none;cursor:pointer;transition:all .2s;background:var(--bg-secondary);color:var(--text-dim);">&#x1F464; Buscar por Jugador</button>
+        </div>
+        <!-- Search by clan name -->
+        <div id="clanSearchByNamePanel">
+          <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:10px;">Escribe el nombre o tag del clan (ej: V4NZ, AVANZA, SCU2...)</div>
+          <div class="clan-search-box" style="margin-bottom:0;"><input class="clan-input" id="clanNameInput" placeholder="Nombre o tag del clan..." onkeydown="if(event.key==='Enter')searchClanByName()"/><button class="search-btn" style="border-radius:8px;padding:12px 24px;" onclick="searchClanByName()">BUSCAR</button></div>
+          <div id="clanNameResults" style="margin-top:12px;"></div>
+        </div>
+        <!-- Search by player gamertag -->
+        <div id="clanSearchByPlayerPanel" style="display:none;">
+          <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:10px;">Escribe el gamertag de cualquier jugador y encontraremos su clan</div>
+          <div class="clan-platform-sel" style="margin-bottom:10px;">
+            <button class="clan-plat-btn active" data-cplat="psn" onclick="setClanPlatform('psn',this)">PlayStation</button>
+            <button class="clan-plat-btn" data-cplat="xbox" onclick="setClanPlatform('xbox',this)">Xbox</button>
           </div>
+          <div class="clan-search-box" style="margin-bottom:0;"><input class="clan-input" id="clanPlayerInput" placeholder="Nombre del jugador..." onkeydown="if(event.key==='Enter')searchClan()"/><button class="search-btn" style="border-radius:8px;padding:12px 24px;" onclick="searchClan()">BUSCAR</button></div>
         </div>
-        <div class="clan-platform-sel" style="margin-bottom:10px;">
-          <button class="clan-plat-btn active" data-cplat="psn" onclick="setClanPlatform('psn',this)">PlayStation</button>
-          <button class="clan-plat-btn" data-cplat="xbox" onclick="setClanPlatform('xbox',this)">Xbox</button>
-        </div>
-        <div class="clan-search-box" style="margin-bottom:0;"><input class="clan-input" id="clanPlayerInput" placeholder="Nombre del jugador..." onkeydown="if(event.key==='Enter')searchClan()"/><button class="search-btn" style="border-radius:8px;padding:12px 24px;" onclick="searchClan()">BUSCAR</button></div>
       </div>
       <div id="clanResults"></div>
       <!-- Community Discord invite -->
@@ -3259,6 +3267,55 @@ async function doPublishClan(tag,name,memberCount,level){
   }catch(e){
     btn.disabled=false;btn.innerHTML='&#x1F4E2; PUBLICAR CLAN EN RANKING';
     alert('Error: '+e.message+'. Puede que la base de datos no este configurada aun.');
+  }
+}
+function setClanSearchTab(mode){
+  const nameTab=document.getElementById('clanSearchByNameTab');
+  const playerTab=document.getElementById('clanSearchByPlayerTab');
+  const namePanel=document.getElementById('clanSearchByNamePanel');
+  const playerPanel=document.getElementById('clanSearchByPlayerPanel');
+  if(mode==='name'){
+    nameTab.style.background='var(--accent)';nameTab.style.color='var(--bg-primary)';
+    playerTab.style.background='var(--bg-secondary)';playerTab.style.color='var(--text-dim)';
+    namePanel.style.display='block';playerPanel.style.display='none';
+  }else{
+    playerTab.style.background='var(--accent)';playerTab.style.color='var(--bg-primary)';
+    nameTab.style.background='var(--bg-secondary)';nameTab.style.color='var(--text-dim)';
+    playerPanel.style.display='block';namePanel.style.display='none';
+  }
+}
+async function searchClanByName(){
+  const q=document.getElementById('clanNameInput').value.trim();
+  if(!q){alert('Escribe el nombre o tag de un clan');return;}
+  const res=document.getElementById('clanNameResults');
+  res.innerHTML='<div style="text-align:center;padding:12px;color:var(--text-dim);font-size:.75rem;">Buscando clanes...</div>';
+  try{
+    const resp=await fetch('/clans/search/'+encodeURIComponent(q));
+    if(!resp.ok)throw new Error('Error buscando');
+    const data=await resp.json();
+    if(!data.clans||data.clans.length===0){
+      res.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:.75rem;">No se encontraron clanes con "'+esc(q)+'".<br><span style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="setClanSearchTab(\'player\')">Buscar por jugador</span></div>';
+      return;
+    }
+    let h='<div style="font-size:.7rem;color:var(--text-dim);margin-bottom:8px;font-family:Rajdhani,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;">'+data.clans.length+' clan'+(data.clans.length>1?'es':'')+' encontrado'+(data.clans.length>1?'s':'')+'</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:6px;">';
+    data.clans.forEach(cl=>{
+      h+='<div onclick="loadClanPage(\''+esc(cl.tag)+'\');history.pushState(null,\'\',\'/clan/'+esc(cl.tag)+'\');" style="cursor:pointer;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:12px 16px;transition:all .2s;display:flex;align-items:center;gap:12px;" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.background=\'rgba(0,240,255,0.04)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--bg-secondary)\'">';
+      h+='<div style="width:36px;height:36px;border-radius:8px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-size:.6rem;font-weight:900;color:var(--accent);flex-shrink:0;">'+esc(cl.tag).slice(0,4)+'</div>';
+      h+='<div style="flex:1;min-width:0;">';
+      h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+      h+='<span style="font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:var(--accent);">['+esc(cl.tag)+']</span>';
+      if(cl.name)h+='<span style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-primary);">'+esc(cl.name)+'</span>';
+      h+='</div>';
+      h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:2px;">'+((cl.active_members||0))+' miembros</div>';
+      h+='</div>';
+      h+='<div style="font-size:.65rem;color:var(--accent);font-family:Rajdhani,sans-serif;font-weight:600;">VER &rarr;</div>';
+      h+='</div>';
+    });
+    h+='</div>';
+    res.innerHTML=h;
+  }catch(e){
+    res.innerHTML='<div style="text-align:center;padding:12px;color:var(--accent-orange);font-size:.75rem;">Error buscando clanes. Intenta de nuevo.</div>';
   }
 }
 async function searchClan(){
