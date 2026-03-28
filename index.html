@@ -717,6 +717,15 @@ footer a { color: var(--accent); text-decoration: none; }
 <div class="bg-radial"></div>
 
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text" id="mainLoaderStep">Buscando jugador...</div><div class="loader-timer" id="mainLoaderTimer" style="display:none;">0.0s</div></div>
+<div id="adminModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+<div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:16px;color:var(--accent);">ADMIN</div>
+<input type="password" id="adminPwdInput" placeholder="Contraseña" style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:1rem;margin-bottom:12px;outline:none;box-sizing:border-box;">
+<div style="display:flex;gap:8px;justify-content:center;">
+<button id="adminPwdOk" style="padding:10px 24px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer;">ENTRAR</button>
+<button id="adminPwdCancel" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;">Cancelar</button>
+</div>
+</div></div>
 
 <header>
   <div class="header-inner">
@@ -1188,9 +1197,10 @@ async function syncFavoritesToServer(){
   }catch(e){console.error('Sync error:',e);}
 }
 
-// Check for Discord OAuth callback token in URL
+// Check for Discord OAuth callback token in hash fragment (secure — not sent to server)
 (function(){
-  const params=new URLSearchParams(location.search);
+  const hash=location.hash.substring(1);
+  const params=new URLSearchParams(hash);
   const token=params.get('auth_token');
   if(token){
     authToken=token;localStorage.setItem('v4nz_token',token);
@@ -1210,7 +1220,9 @@ const API_BASE=IS_PROXIED?'/api/shards':'https://api.pubg.com/shards';
 let API_KEY=IS_PROXIED?'proxy':localStorage.getItem('pubg_api_key')||'';
 let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
 let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null,currentSurvivalData=null;
-let isUsingDemo=false,recentSearches=JSON.parse(localStorage.getItem('recent_searches')||'[]'),favorites=JSON.parse(localStorage.getItem('pubg_favorites')||'[]');
+function safeParse(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let isUsingDemo=false,recentSearches=safeParse('recent_searches',[]),favorites=safeParse('pubg_favorites',[]);
 let lbPlatform='console',lbRegion='eu',lbMode='squad';
 let cmpPlatform='psn',cmpMode='squad';
 function setCmpMode(m){cmpMode=m;['squad','squad-fpp','solo','duo'].forEach(k=>{const el=document.getElementById('cmpMode-'+k);if(el)el.classList.toggle('active',k===m);});}
@@ -1270,8 +1282,8 @@ const DEMO_CLAN={name:'V4NZ GAMING',tag:'V4NZ',members:[
 ]};
 let clanPlatform='psn';
 let clanComparePlatform='psn';
-let clanHistory=JSON.parse(localStorage.getItem('pubg_clan_history')||'[]');
-let myClan=JSON.parse(localStorage.getItem('pubg_my_clan')||'null');
+let clanHistory=safeParse('pubg_clan_history',[]);
+let myClan=safeParse('pubg_my_clan',null);
 
 function saveClanToHistory(clanName,clanTag,memberCount,level,platform,memberNames){
   const existing=clanHistory.findIndex(c=>c.tag===clanTag);
@@ -1307,7 +1319,7 @@ async function loadClanFromHistory(tag){
   setClanPlatform(clan.platform,document.querySelector('.clan-plat-btn[data-cplat="'+clan.platform+'"]'));
   document.getElementById('clanPlayerInput').value='';
   const cr=document.getElementById('clanResults');
-  cr.innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+clan.tag.charAt(0)+'</div><div><div class="clan-name">'+clan.name+'</div><div class="clan-tag">['+clan.tag+'] &mdash; Nivel '+clan.level+' &mdash; '+clan.memberCount+' miembros</div></div></div></div>';
+  cr.innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+esc(clan.tag.charAt(0))+'</div><div><div class="clan-name">'+esc(clan.name)+'</div><div class="clan-tag">['+esc(clan.tag)+'] &mdash; Nivel '+clan.level+' &mdash; '+clan.memberCount+' miembros</div></div></div></div>';
   // Try to load members from DB
   try{
     const dbResp=await fetch('/clans/'+encodeURIComponent(clan.tag));
@@ -1593,10 +1605,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
     loadPendingRequests();
   }
-  // Check if on /admin route and show password prompt (verified server-side)
+  // Check if on /admin route and show admin login modal (verified server-side)
   if(location.pathname==='/admin'){
-    const pwd=prompt('Contraseña de administrador:');
-    if(pwd){
+    const modal=document.getElementById('adminModal');modal.style.display='flex';
+    const inp=document.getElementById('adminPwdInput');setTimeout(()=>inp.focus(),100);
+    function doAdminLogin(){
+      const pwd=inp.value;if(!pwd){inp.focus();return;}
       fetch('/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})})
       .then(r=>r.json()).then(d=>{
         if(d.ok){
@@ -1604,10 +1618,13 @@ document.addEventListener('DOMContentLoaded',()=>{
           sessionStorage.setItem('adminToken',d.token);
           const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
           loadPendingRequests();
-        }else{alert('Contraseña incorrecta');}
-        history.replaceState(null,'','/');
-      }).catch(()=>{alert('Error de conexión');history.replaceState(null,'','/');});
-    }else{history.replaceState(null,'','/');}
+        }else{inp.value='';inp.placeholder='Incorrecta — intenta de nuevo';inp.focus();return;}
+        modal.style.display='none';history.replaceState(null,'','/');
+      }).catch(()=>{modal.style.display='none';history.replaceState(null,'','/');});
+    }
+    document.getElementById('adminPwdOk').onclick=doAdminLogin;
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin();});
+    document.getElementById('adminPwdCancel').onclick=()=>{modal.style.display='none';history.replaceState(null,'','/');};
   }
 });
 
@@ -3434,7 +3451,7 @@ async function importFromPubgclans(){
     const data=await resp.json();
     if(!resp.ok)throw new Error(data.error||'Error al importar');
     if(statusEl){
-      statusEl.innerHTML='<div style="color:var(--accent-green);font-size:.75rem;font-weight:600;">&#x2705; Clan ['+data.tag+'] '+data.name+' importado!</div>'+
+      statusEl.innerHTML='<div style="color:var(--accent-green);font-size:.75rem;font-weight:600;">&#x2705; Clan ['+esc(data.tag)+'] '+esc(data.name)+' importado!</div>'+
         '<div style="font-size:.7rem;color:var(--text-secondary);margin-top:4px;">'+data.members+' miembros ('+data.activeMembers+' activos) · '+data.totalKills+' kills · K/D '+data.avgKd+' · Win Rate '+data.winRate+'%</div>'+
         '<div style="margin-top:8px;"><a href="/clan/'+data.tag+'" style="color:var(--accent);font-size:.75rem;font-weight:600;text-decoration:none;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+data.tag+'\');showClanDetail(\''+data.tag+'\');">&#x27A1; VER CLAN EN EL RANKING</a></div>';
     }
