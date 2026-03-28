@@ -543,13 +543,34 @@ footer a { color: var(--accent); text-decoration: none; }
 .fun-stat-card:nth-child(1){animation-delay:.03s}.fun-stat-card:nth-child(2){animation-delay:.06s}.fun-stat-card:nth-child(3){animation-delay:.09s}.fun-stat-card:nth-child(4){animation-delay:.12s}.fun-stat-card:nth-child(5){animation-delay:.15s}.fun-stat-card:nth-child(6){animation-delay:.18s}
 .panel { display:none; opacity:0; } .panel.active { display:block; animation: fadeIn .3s ease forwards; }
 /* FAVORITES */
-.fav-section { margin-bottom:8px; }
+.fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
 .recent-tag { position:relative; }
 .fav-star { display:inline-block; cursor:pointer; margin-left:4px; font-size:.8rem; opacity:.4; transition:all .2s; vertical-align:middle; }
 .fav-star:hover, .fav-star.active { opacity:1; color:var(--accent-yellow); }
 .fav-tag { background:var(--accent-yellow)11; border:1px solid var(--accent-yellow)33; }
 .fav-tag .fav-star { opacity:1; color:var(--accent-yellow); }
+/* FAVORITES PANEL */
+.fav-panel { max-width:680px; margin:16px auto 0; }
+.fav-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; }
+.fav-search { background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary); padding:6px 12px; border-radius:20px; font-size:.75rem; font-family:'Rajdhani',sans-serif; width:180px; outline:none; transition:border-color .2s; }
+.fav-search:focus { border-color:var(--accent); }
+.fav-group-btn { background:var(--bg-card); border:1px solid var(--border); color:var(--text-dim); padding:5px 12px; border-radius:16px; font-size:.65rem; font-family:'Rajdhani',sans-serif; font-weight:600; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.fav-group-btn:hover, .fav-group-btn.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+.fav-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:10px 14px; cursor:pointer; transition:all .2s; position:relative; overflow:hidden; }
+.fav-card:hover { border-color:var(--accent); box-shadow:var(--shadow-card-hover); transform:translateY(-2px); }
+.fav-card-name { font-family:'Orbitron',sans-serif; font-weight:700; font-size:.8rem; color:var(--text-primary); margin-bottom:2px; word-break:break-all; }
+.fav-card-platform { font-size:.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; }
+.fav-card-group { position:absolute; top:0; right:0; background:var(--accent-dim); color:var(--accent); font-size:.5rem; font-family:'Rajdhani',sans-serif; font-weight:700; padding:2px 8px; border-radius:0 12px 0 8px; text-transform:uppercase; letter-spacing:.5px; }
+.fav-card-actions { display:flex; gap:4px; margin-top:6px; }
+.fav-card-actions button { background:none; border:none; cursor:pointer; font-size:.7rem; padding:2px 6px; border-radius:4px; transition:all .15s; }
+.fav-card-actions .fav-remove { color:var(--text-dim); }
+.fav-card-actions .fav-remove:hover { color:var(--accent-red); background:rgba(255,51,85,0.1); }
+.fav-card-actions .fav-group-set { color:var(--text-dim); }
+.fav-card-actions .fav-group-set:hover { color:var(--accent); background:var(--accent-dim); }
+.fav-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; }
+.fav-show-all { background:none; border:1px dashed var(--border); color:var(--text-dim); padding:8px 16px; border-radius:12px; font-family:'Rajdhani',sans-serif; font-size:.75rem; cursor:pointer; transition:all .2s; width:100%; margin-top:8px; }
+.fav-show-all:hover { border-color:var(--accent); color:var(--accent); }
 /* COPY LINK BTN */
 .copy-link-btn { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); padding:6px 14px; border-radius:6px; font-size:.75rem; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:all .2s; margin-left:8px; }
 .copy-link-btn:hover { border-color:var(--accent); color:var(--accent); }
@@ -1543,10 +1564,74 @@ async function setSeasonType(type){
     renderOverviewStats();renderFunStats();renderPersonality();
   }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
 }
-function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,8);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
-function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const idx=favorites.findIndex(f=>f.name===name);if(idx>=0)favorites.splice(idx,1);else favorites.push({name,platform});localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
+function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,12);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
+const FAV_GROUPS=['Mi Squad','Rivales','Amigos'];
+let favFilterGroup='all',favFilterText='',favShowAll=false;
+function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const idx=favorites.findIndex(f=>f.name===name);if(idx>=0)favorites.splice(idx,1);else favorites.push({name,platform,group:''});localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
+function setFavGroup(name,group,evt){if(evt)evt.stopPropagation();const f=favorites.find(f=>f.name===name);if(f){f.group=f.group===group?'':group;localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}}
+function cycleFavGroup(name,evt){if(evt)evt.stopPropagation();const f=favorites.find(fv=>fv.name===name);if(!f)return;const groups=[''].concat(FAV_GROUPS);const cur=groups.indexOf(f.group||'');f.group=groups[(cur+1)%groups.length];localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
 function isFavorite(name){return favorites.some(f=>f.name===name);}
-function renderRecentSearches(){const c=document.getElementById('recentSearches');let h='';if(favorites.length){h+='<div class="fav-section"><div class="fav-section-title">Favoritos</div><div style="display:flex;flex-wrap:wrap;gap:6px;">';favorites.forEach(s=>{h+='<div class="recent-tag fav-tag" onclick="document.getElementById(\'searchInput\').value=\''+s.name+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span><span class="fav-star active" onclick="toggleFavorite(\''+s.name+'\',\''+s.platform+'\',event)">&#9733;</span></div>';});h+='</div></div>';}const nonFavRecents=recentSearches.filter(s=>!isFavorite(s.name));if(nonFavRecents.length){h+='<div class="fav-section"><div class="fav-section-title">Recientes</div><div style="display:flex;flex-wrap:wrap;gap:6px;">';nonFavRecents.forEach(s=>{h+='<div class="recent-tag" onclick="document.getElementById(\'searchInput\').value=\''+s.name+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span><span class="fav-star" onclick="toggleFavorite(\''+s.name+'\',\''+s.platform+'\',event)">&#9734;</span></div>';});h+='</div></div>';}c.innerHTML=h;}
+function renderRecentSearches(){
+  const c=document.getElementById('recentSearches');let h='';
+  if(favorites.length){
+    h+='<div class="fav-panel">';
+    /* Toolbar */
+    h+='<div class="fav-toolbar">';
+    h+='<input class="fav-search" placeholder="Buscar favorito..." oninput="favFilterText=this.value.toLowerCase();renderRecentSearches();" value="'+(favFilterText||'')+'">';
+    h+='<button class="fav-group-btn'+(favFilterGroup==='all'?' active':'')+'" onclick="favFilterGroup=\'all\';renderRecentSearches();">Todos ('+favorites.length+')</button>';
+    FAV_GROUPS.forEach(g=>{
+      const cnt=favorites.filter(f=>f.group===g).length;
+      if(cnt)h+='<button class="fav-group-btn'+(favFilterGroup===g?' active':'')+'" onclick="favFilterGroup=\''+g+'\';renderRecentSearches();">'+g+' ('+cnt+')</button>';
+    });
+    const noGroup=favorites.filter(f=>!f.group).length;
+    if(noGroup&&noGroup<favorites.length)h+='<button class="fav-group-btn'+(favFilterGroup==='sin-grupo'?' active':'')+'" onclick="favFilterGroup=\'sin-grupo\';renderRecentSearches();">Sin grupo ('+noGroup+')</button>';
+    h+='</div>';
+    /* Filter */
+    let filtered=favorites;
+    if(favFilterGroup!=='all'){
+      if(favFilterGroup==='sin-grupo')filtered=favorites.filter(f=>!f.group);
+      else filtered=favorites.filter(f=>f.group===favFilterGroup);
+    }
+    if(favFilterText)filtered=filtered.filter(f=>f.name.toLowerCase().includes(favFilterText));
+    /* Cards */
+    const MAX_SHOW=8;
+    const show=favShowAll?filtered:filtered.slice(0,MAX_SHOW);
+    h+='<div class="fav-section-title" style="text-align:center;">&#9733; Favoritos</div>';
+    h+='<div class="fav-grid">';
+    show.forEach(s=>{
+      const esc=s.name.replace(/'/g,"\\'");
+      h+='<div class="fav-card" onclick="document.getElementById(\'searchInput\').value=\''+esc+'\';setPlatform(\''+s.platform+'\');searchPlayer();">';
+      if(s.group)h+='<div class="fav-card-group">'+s.group+'</div>';
+      h+='<div class="fav-card-name">'+s.name+'</div>';
+      h+='<div class="fav-card-platform">'+s.platform.toUpperCase()+'</div>';
+      h+='<div class="fav-card-actions">';
+      h+='<button class="fav-group-set" onclick="cycleFavGroup(\''+esc+'\',event)" title="Cambiar grupo">\u{1F3F7}\u{FE0F}</button>';
+      h+='<button class="fav-remove" onclick="toggleFavorite(\''+esc+'\',\''+s.platform+'\',event)" title="Quitar favorito">\u{2716}</button>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+    if(!favShowAll&&filtered.length>MAX_SHOW){
+      h+='<button class="fav-show-all" onclick="favShowAll=true;renderRecentSearches();">Ver todos ('+filtered.length+')</button>';
+    }else if(favShowAll&&filtered.length>MAX_SHOW){
+      h+='<button class="fav-show-all" onclick="favShowAll=false;renderRecentSearches();">Mostrar menos</button>';
+    }
+    if(filtered.length===0&&favFilterText){h+='<div style="text-align:center;color:var(--text-dim);font-size:.75rem;margin-top:8px;">No se encontro ningun favorito</div>';}
+    h+='</div>';
+  }
+  /* Recientes */
+  const nonFavRecents=recentSearches.filter(s=>!isFavorite(s.name));
+  if(nonFavRecents.length){
+    h+='<div class="fav-section" style="max-width:680px;margin:12px auto 0;"><div class="fav-section-title" style="text-align:center;">Recientes</div><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">';
+    nonFavRecents.forEach(s=>{
+      const esc=s.name.replace(/'/g,"\\'");
+      h+='<div class="recent-tag" onclick="document.getElementById(\'searchInput\').value=\''+esc+'\';setPlatform(\''+s.platform+'\');searchPlayer();">'+s.name+' <span style="opacity:.5;font-size:.6rem;">'+s.platform.toUpperCase()+'</span><span class="fav-star" onclick="toggleFavorite(\''+esc+'\',\''+s.platform+'\',event)">\u2734</span></div>';
+    });
+    h+='</div></div>';
+  }
+  c.innerHTML=h;
+  /* Re-focus search if typing */
+  if(favFilterText){const inp=c.querySelector('.fav-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}}
+}
 
 function renderNarrativeInsights(){
   const s=getActiveStats();const kd=parseFloat(calcKD(s));let kdTier,kdClass,kdEmoji;if(kd>3){kdTier='Elite';kdClass='kd-elite';kdEmoji='👑';}else if(kd>2){kdTier='Muy bueno';kdClass='kd-good';kdEmoji='⭐';}else if(kd>1.5){kdTier='Bueno';kdClass='kd-good';kdEmoji='✓';}else if(kd>1){kdTier='Promedio';kdClass='kd-avg';kdEmoji='→';}else{kdTier='En progreso';kdClass='kd-progress';kdEmoji='📈';}
