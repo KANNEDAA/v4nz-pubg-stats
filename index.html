@@ -298,6 +298,30 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .personality-tag { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-family: 'Rajdhani', sans-serif; }
 .personality-share { margin-top: 16px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
 .personality-share:hover { border-color: var(--accent); color: var(--accent); }
+/* ADN Share Card (offscreen, rendered by html2canvas) */
+.adn-share-card { position:fixed; left:-9999px; top:0; width:540px; height:960px; background:linear-gradient(170deg,#0b0b12 0%,#0f1024 40%,#12081f 100%); border-radius:0; font-family:'Rajdhani',sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:40px 36px 30px; box-sizing:border-box; overflow:hidden; z-index:99999; }
+.asc-bg { position:absolute; top:0; left:0; right:0; bottom:0; background:radial-gradient(ellipse at 50% 30%,rgba(0,240,255,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(168,85,247,0.04) 0%,transparent 50%); pointer-events:none; }
+.asc-header { text-align:center; position:relative; z-index:1; }
+.asc-logo { font-family:'Orbitron',sans-serif; font-size:2rem; font-weight:900; background:linear-gradient(135deg,#00f0ff,#ff6b00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:6px; }
+.asc-subtitle { font-size:.8rem; color:#666; text-transform:uppercase; letter-spacing:3px; margin-top:2px; }
+.asc-player { text-align:center; position:relative; z-index:1; }
+.asc-name { font-family:'Orbitron',sans-serif; font-size:1.6rem; font-weight:800; color:#fff; letter-spacing:2px; text-transform:uppercase; }
+.asc-plat { font-size:.75rem; color:#888; text-transform:uppercase; letter-spacing:2px; margin-top:2px; }
+.asc-role-icon { font-size:3.5rem; position:relative; z-index:1; }
+.asc-role { font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:800; text-transform:uppercase; letter-spacing:3px; position:relative; z-index:1; text-align:center; }
+.asc-radar-wrap { position:relative; z-index:1; }
+.asc-bars { width:100%; position:relative; z-index:1; display:flex; flex-direction:column; gap:6px; }
+.asc-bar-row { display:flex; align-items:center; gap:8px; }
+.asc-bar-label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#888; width:100px; text-align:right; }
+.asc-bar-track { flex:1; height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+.asc-bar-fill { height:100%; border-radius:4px; }
+.asc-bar-val { font-family:'Orbitron',sans-serif; font-size:.72rem; font-weight:700; width:30px; }
+.asc-stats-row { display:flex; justify-content:space-around; width:100%; position:relative; z-index:1; background:rgba(255,255,255,0.03); border-radius:12px; padding:14px 8px; border:1px solid rgba(255,255,255,0.06); }
+.asc-stat { text-align:center; }
+.asc-stat-val { font-family:'Orbitron',sans-serif; font-size:1.1rem; font-weight:800; color:#fff; }
+.asc-stat-lbl { font-size:.6rem; color:#666; text-transform:uppercase; letter-spacing:1.5px; margin-top:2px; }
+.asc-footer { display:flex; justify-content:space-between; width:100%; position:relative; z-index:1; }
+.asc-footer span { font-size:.65rem; color:#555; text-transform:uppercase; letter-spacing:2px; }
 .dna-layout { display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; }
 .dna-radar-wrap { flex-shrink: 0; }
 .dna-radar-wrap canvas { display: block; }
@@ -1234,6 +1258,7 @@ footer a { color: var(--accent); text-decoration: none; }
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 // THEME TOGGLE
 function toggleTheme(){
@@ -2601,11 +2626,72 @@ function renderPersonality(){
     {label:'Soporte',val:dn.soporte,col:'#00f0ff'}
   ];
   const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" style="width:'+b.val+'%;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
-  document.getElementById('personalitySection').innerHTML='<div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="personality-icon">'+ic+'</div><div class="personality-title" style="color:'+co+';">'+ti+'</div><div class="personality-desc">'+de+'</div><div class="personality-tags">'+tg.map(t=>'<span class="personality-tag" style="background:'+co+'22;color:'+co+';border:1px solid '+co+'44;">'+t+'</span>').join('')+'</div><div class="dna-bars">'+barsHtml+'</div><button class="personality-share" onclick="sharePersonality(\''+ti+'\')">COMPARTIR MI ADN</button></div></div>';
+  document.getElementById('personalitySection').innerHTML='<div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="personality-icon">'+ic+'</div><div class="personality-title" style="color:'+co+';">'+ti+'</div><div class="personality-desc">'+de+'</div><div class="personality-tags">'+tg.map(t=>'<span class="personality-tag" style="background:'+co+'22;color:'+co+';border:1px solid '+co+'44;">'+t+'</span>').join('')+'</div><div class="dna-bars">'+barsHtml+'</div><div style="display:flex;gap:8px;margin-top:16px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:'+co+'18;border-color:'+co+'44;color:'+co+';" onclick="shareAdnImage()">&#x1F4F8; COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\''+ti+'\')">&#x1F517; COMPARTIR TEXTO</button></div></div></div>';
   document.getElementById('personalitySection').classList.add('visible');
   drawDnaRadar('dnaRadarCanvas',dn,coHex);
 }
 function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi ADN PUBG es: '+t+'! Descubre el tuyo en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://www.v4nz.com'});else{navigator.clipboard?.writeText(x+' https://www.v4nz.com');alert('Copiado al portapapeles!');}}
+async function shareAdnImage(){
+  const s=getActiveStats();if(!s.roundsPlayed)return;
+  const name=currentPlayerData?.attributes?.name||'Jugador';
+  const plat=currentPlatform==='psn'?'PlayStation':'Xbox';
+  const dn=calcDnaScores(s);
+  const kd=calcKD(s),wr=calcWinRate(s),ad=calcAvgDmg(s),hs=calcHSRate(s);
+  const role=getPersonalityType();
+  const roleMap={'Francotirador':{ic:'&#x1F3AF;',col:'#a855f7'},'Depredador':{ic:'&#x1F525;',col:'#ff3355'},'Campeon':{ic:'&#x1F3C6;',col:'#ffd700'},'Medico de Combate':{ic:'&#x1FA7A;',col:'#00ff88'},'Piloto Loco':{ic:'&#x1F697;',col:'#ff6b00'},'Guerrero':{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'},'Superviviente':{ic:'&#x1F9BE;',col:'#00ff88'},'Novato Prometedor':{ic:'&#x1F476;',col:'#00f0ff'}};
+  const rm=roleMap[role]||{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'};
+  const bars=[{l:'Agresividad',v:dn.agresividad,c:'#ff3355'},{l:'Precision',v:dn.precision,c:'#a855f7'},{l:'Supervivencia',v:dn.supervivencia,c:'#00ff88'},{l:'Movilidad',v:dn.movilidad,c:'#ff6b00'},{l:'Soporte',v:dn.soporte,c:'#00f0ff'}];
+  // Create offscreen card
+  const card=document.createElement('div');
+  card.className='adn-share-card';
+  card.innerHTML=
+    '<div class="asc-bg"></div>'+
+    '<div class="asc-header"><div class="asc-logo">V4NZ</div><div class="asc-subtitle">PUBG Console Stats</div></div>'+
+    '<div class="asc-player"><div class="asc-name">'+name+'</div><div class="asc-plat">'+plat+' &mdash; '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase()+'</div></div>'+
+    '<div class="asc-role-icon">'+rm.ic+'</div>'+
+    '<div class="asc-role" style="color:'+rm.col+';">'+role.toUpperCase()+'</div>'+
+    '<div class="asc-radar-wrap"><canvas id="adnShareRadar" width="280" height="280"></canvas></div>'+
+    '<div class="asc-bars">'+bars.map(b=>
+      '<div class="asc-bar-row"><span class="asc-bar-label">'+b.l+'</span><div class="asc-bar-track"><div class="asc-bar-fill" style="width:'+b.v+'%;background:'+b.c+';"></div></div><span class="asc-bar-val" style="color:'+b.c+';">'+b.v+'</span></div>'
+    ).join('')+'</div>'+
+    '<div class="asc-stats-row">'+
+      '<div class="asc-stat"><div class="asc-stat-val">'+kd+'</div><div class="asc-stat-lbl">K/D</div></div>'+
+      '<div class="asc-stat"><div class="asc-stat-val">'+wr+'%</div><div class="asc-stat-lbl">Win Rate</div></div>'+
+      '<div class="asc-stat"><div class="asc-stat-val">'+ad+'</div><div class="asc-stat-lbl">Avg DMG</div></div>'+
+      '<div class="asc-stat"><div class="asc-stat-val">'+hs+'%</div><div class="asc-stat-lbl">HS%</div></div>'+
+    '</div>'+
+    '<div class="asc-footer"><span>v4nz.com</span><span>Descubre tu ADN PUBG</span></div>';
+  document.body.appendChild(card);
+  // Draw radar on the card canvas
+  const rc=document.getElementById('adnShareRadar');
+  if(rc){
+    const ctx=rc.getContext('2d');const size=280,cx=140,cy=140,R=105;
+    const labels=['AGR','PRE','SUP','MOV','SOP'];
+    const vals=[dn.agresividad,dn.precision,dn.supervivencia,dn.movilidad,dn.soporte];
+    const n=5,ang=-Math.PI/2;
+    for(let r=1;r<=4;r++){ctx.beginPath();for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const rr=R*(r/4);ctx.lineTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a));}ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;ctx.stroke();}
+    for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.stroke();}
+    ctx.beginPath();for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const v=R*(vals[i]/100);ctx.lineTo(cx+v*Math.cos(a),cy+v*Math.sin(a));}
+    ctx.closePath();ctx.fillStyle=rm.col+'33';ctx.fill();ctx.strokeStyle=rm.col;ctx.lineWidth=2.5;ctx.stroke();
+    for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const v=R*(vals[i]/100);ctx.beginPath();ctx.arc(cx+v*Math.cos(a),cy+v*Math.sin(a),4,0,Math.PI*2);ctx.fillStyle=rm.col;ctx.fill();}
+    ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const lx=cx+(R+20)*Math.cos(a),ly=cy+(R+20)*Math.sin(a);ctx.fillStyle='#aaa';ctx.fillText(labels[i],lx,ly);}
+  }
+  // Render to image
+  try{
+    const canvas=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,logging:false});
+    card.remove();
+    canvas.toBlob(async blob=>{
+      if(!blob)return;
+      const file=new File([blob],name+'_ADN_PUBG.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Mi ADN PUBG — V4NZ',text:'Mi ADN PUBG es: '+role+'! Descubre el tuyo en v4nz.com'});
+      }else{
+        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name+'_ADN_PUBG.png';a.click();URL.revokeObjectURL(url);
+      }
+    },'image/png');
+  }catch(e){console.error('Share ADN image error:',e);card.remove();sharePersonality(role);}
+}
 
 /* === STATS CARD POLYFILL === */
 if(!CanvasRenderingContext2D.prototype.roundRect){
