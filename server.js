@@ -75,7 +75,16 @@ async function initDB() {
         UNIQUE(clan_tag, player_name, status)
       );
       CREATE INDEX IF NOT EXISTS idx_member_requests_pending ON member_requests(status) WHERE status = 'pending';
+      CREATE TABLE IF NOT EXISTS api_cache (
+        cache_key VARCHAR(500) PRIMARY KEY,
+        response_data TEXT NOT NULL,
+        status_code INT DEFAULT 200,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_api_cache_created ON api_cache(created_at);
     `);
+    // Cleanup old cache entries on startup (older than 1 hour)
+    await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour'").catch(() => {});
     // Alter existing columns to support larger values (safe to run multiple times)
     await pool.query(`
       ALTER TABLE clans ALTER COLUMN avg_kd TYPE NUMERIC(6,2);
@@ -622,7 +631,26 @@ setInterval(() => {
   }
 }, 300000);
 
-// ═══ PUBG API PROXY ═══
+// ═══ PUBG API PROXY WITH CACHE ═══
+// Cache TTL in minutes per endpoint type
+const CACHE_TTL = {
+  seasons: 60,       // Seasons change rarely — cache 1 hour
+  players: 10,       // Player search — cache 10 min
+  'players/.*seasons': 10,  // Season stats — cache 10 min
+  'players/.*matches': 5,   // Match list — cache 5 min
+  leaderboards: 30,  // Leaderboards — cache 30 min
+  default: 10        // Everything else — 10 min
+};
+
+function getCacheTTL(pubgPath) {
+  if (/\/seasons$/.test(pubgPath)) return CACHE_TTL.seasons;
+  if (/\/leaderboards\//.test(pubgPath)) return CACHE_TTL.leaderboards;
+  if (/\/players\/.*\/seasons\//.test(pubgPath)) return CACHE_TTL['players/.*seasons'];
+  if (/\/players\/.*\/matches/.test(pubgPath)) return CACHE_TTL['players/.*matches'];
+  if (/\/players/.test(pubgPath)) return CACHE_TTL.players;
+  return CACHE_TTL.default;
+}
+
 app.all('/api/*', rateLimit, async (req, res) => {
   const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
   const originalQuery = req.originalUrl.split('?')[1] || '';
@@ -632,20 +660,74 @@ app.all('/api/*', rateLimit, async (req, res) => {
   const apiKey = SERVER_API_KEY ? 'Bearer ' + SERVER_API_KEY : req.headers.authorization;
   if (!apiKey) return res.status(401).json({ error: 'Missing API Key' });
 
+  // Only cache GET requests
+  const cacheKey = req.method === 'GET' ? pubgUrl : null;
+  const ttlMinutes = getCacheTTL(pubgPath);
+
+  // Try to serve from cache
+  if (cacheKey && pool) {
+    try {
+      const cached = await pool.query(
+        "SELECT response_data, status_code FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '1 minute' * $2",
+        [cacheKey, ttlMinutes]
+      );
+      if (cached.rows.length > 0) {
+        res.status(cached.rows[0].status_code);
+        res.set('Content-Type', 'application/vnd.api+json');
+        res.set('X-Cache', 'HIT');
+        res.send(cached.rows[0].response_data);
+        return;
+      }
+    } catch (e) { /* cache miss, continue to API */ }
+  }
+
   try {
     const response = await fetch(pubgUrl, {
       method: req.method,
       headers: { 'Authorization': apiKey, 'Accept': 'application/vnd.api+json' },
     });
     const data = await response.text();
+
+    // Save to cache if GET and successful (2xx)
+    if (cacheKey && pool && response.status >= 200 && response.status < 300) {
+      pool.query(
+        "INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, status_code = $3, created_at = NOW()",
+        [cacheKey, data, response.status]
+      ).catch(() => {}); // Fire and forget — don't block response
+    }
+
     res.status(response.status);
     res.set('Content-Type', 'application/vnd.api+json');
+    res.set('X-Cache', 'MISS');
     res.send(data);
   } catch (err) {
+    // On API error, try to serve stale cache (better than nothing)
+    if (cacheKey && pool) {
+      try {
+        const stale = await pool.query(
+          "SELECT response_data, status_code FROM api_cache WHERE cache_key = $1",
+          [cacheKey]
+        );
+        if (stale.rows.length > 0) {
+          res.status(stale.rows[0].status_code);
+          res.set('Content-Type', 'application/vnd.api+json');
+          res.set('X-Cache', 'STALE');
+          res.send(stale.rows[0].response_data);
+          return;
+        }
+      } catch (e) { /* no stale cache either */ }
+    }
     console.error('Proxy error:', err.message);
     res.status(500).json({ error: 'Proxy error', details: err.message });
   }
 });
+
+// Cleanup old cache entries every 30 minutes
+setInterval(async () => {
+  if (!pool) return;
+  try { await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '2 hours'"); }
+  catch (e) { /* silent */ }
+}, 1800000);
 
 // Sitemap for SEO — dynamic with clan URLs
 app.get('/sitemap.xml', async (req, res) => {
