@@ -27,12 +27,13 @@
 <meta name="theme-color" content="#00f0ff">
 <link rel="canonical" href="https://v4nz.com">
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.svg">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0f'/%3E%3Cpath d='M16 4C9.4 4 5.3 9.6 5.3 15.9v2.8c0 1.4.7 2.8 1.7 3.5l1.4 1v4.2c0 1.4 1 2.4 2.4 2.4h12.5c1.4 0 2.4-1 2.4-2.4v-4.2l1.4-1c1-0.7 1.7-2.1 1.7-3.5v-2.8C29 9.6 24.6 4 16 4z' fill='%23f2a900' opacity='.9'/%3E%3Crect x='8' y='12.6' width='18' height='5.6' rx='1.4' fill='%230a0a0f' opacity='.85'/%3E%3Crect x='8.7' y='13.3' width='16.6' height='4.2' rx='1' fill='none' stroke='%2300f0ff' stroke-width='.7' opacity='.7'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <style>
 :root {
   --bg-primary: #0b0b12;
@@ -730,15 +731,8 @@ footer a { color: var(--accent); text-decoration: none; }
 <header>
   <div class="header-inner">
     <div class="logo-area" onclick="location.reload()">
-      <div id="logoContainer">
-        <img src="logo.png" alt="V4NZ" style="height:44px;width:auto;border-radius:8px;filter:drop-shadow(0 0 8px rgba(0,240,255,0.4));" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
-        <div id="logoFallback" class="logo-fallback" style="display:none">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-            <rect width="44" height="44" rx="10" fill="#12121a" stroke="#2a2a3a" stroke-width="1"/>
-            <text x="22" y="20" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="11" font-weight="900" fill="#00f0ff">V4NZ</text>
-            <text x="22" y="34" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="9" font-weight="800" fill="#f2a900">PUBG</text>
-          </svg>
-        </div>
+      <div id="logoContainer" style="width:48px;height:48px;border-radius:10px;overflow:hidden;background:#0b0b12;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,240,255,0.15);box-shadow:0 0 12px rgba(0,240,255,0.15);">
+        <img src="v4nz-logo.png" alt="V4NZ" style="width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(0,240,255,0.3));" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'font-family:Orbitron,sans-serif;font-size:11px;font-weight:900;color:#00f0ff;line-height:1.2;text-align:center;\'>V4NZ<br><span style=\'font-size:9px;color:#f2a900;\'>PUBG</span></div>';">
       </div>
       <div>
         <div class="logo-text" style="display:flex;align-items:center;gap:8px;">V4NZ <span style="background:linear-gradient(135deg,#f2a900,#e8740c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:.85rem;letter-spacing:3px;">PUBG</span></div>
@@ -782,9 +776,10 @@ footer a { color: var(--accent); text-decoration: none; }
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.102 21.033C6.211 22.881 8.977 24 12 24s5.789-1.119 7.898-2.967c1.074-1.065-.534-3.86-2.192-5.857-1.419-1.58-3.218-3.485-5.706-5.669-2.488 2.184-4.287 4.089-5.706 5.669-1.658 1.997-3.266 4.792-2.192 5.857zM12 0C9.626 0 7.417.843 5.63 2.282c1.09-.222 2.834.397 4.734 2.074.913.806 1.636 1.548 1.636 1.548s.723-.742 1.636-1.548c1.9-1.677 3.644-2.296 4.734-2.074C16.583.843 14.374 0 12 0zM3.48 3.527C1.335 5.512 0 8.436 0 11.707c0 2.386.674 4.607 1.833 6.496-.094-1.811.603-3.677 1.722-5.055 1.383-1.704 3.062-3.597 5.003-5.519C6.494 5.637 4.833 4.163 3.48 3.527zM20.52 3.527c-1.353.636-3.014 2.11-5.078 4.102 1.941 1.922 3.62 3.815 5.003 5.519 1.119 1.378 1.816 3.244 1.722 5.055C23.326 16.314 24 14.093 24 11.707c0-3.271-1.335-6.195-3.48-8.18z"/></svg> XBOX
       </button>
     </div>
-    <input type="text" class="search-input" id="searchInput" placeholder="Escribe el gamertag del jugador..." autocomplete="off"/>
-    <button class="search-btn" onclick="searchPlayer()">BUSCAR</button>
+    <input type="text" class="search-input" id="searchInput" placeholder="Gamertag o nombre de clan..." autocomplete="off"/>
+    <button class="search-btn" onclick="smartSearch()">BUSCAR</button>
   </div>
+  <div id="searchClanResults" style="display:none;margin-top:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:600px;margin-left:auto;margin-right:auto;"></div>
   <div class="recent-searches" id="recentSearches"></div>
 </section>
 
@@ -792,7 +787,7 @@ footer a { color: var(--accent); text-decoration: none; }
 <!-- KANNEDA BANNER — Podcast + Codigo Creador -->
 <div style="max-width:1400px;margin:0 auto;padding:0 2rem;">
 <div class="streamer-banner" id="streamerBanner">
-  <div class="streamer-banner-avatar" style="padding:0;overflow:hidden;background:#000;"><img src="kanneda-logo.png" alt="KANNEDA" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.style.background='var(--gradient-orange)';this.parentElement.textContent='K';"></div>
+  <div class="streamer-banner-avatar" style="padding:0;overflow:hidden;background:#000;"><img src="v4nz-logo.png" alt="V4NZ" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';this.parentElement.style.background='var(--gradient-orange)';this.parentElement.textContent='K';"></div>
   <div class="streamer-banner-info">
     <div class="streamer-banner-name"><span>KANNEDA</span> — Creador de Contenido PUBG</div>
     <div class="streamer-banner-desc">Codigo de Creador: <strong style="color:#c5ff00;">KANNEDA</strong> — <a href="https://accounts.krafton.com/v2/es/web/login-select" target="_blank" style="color:var(--accent);text-decoration:underline;font-weight:600;">Activalo aqui</a> &nbsp;|&nbsp; Escucha <strong style="color:var(--accent);">El Drop de KANNEDA</strong> — el podcast de PUBG</div>
@@ -1667,7 +1662,7 @@ async function loadClanPage(tag){
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
   renderClanHistoryUI();
-  document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
+  document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER or /clan/TAG
@@ -1765,6 +1760,44 @@ async function findPlayer(name,platform){
     throw e1;
   }
 }
+// Smart search: tries clan DB first, then falls back to player search
+async function smartSearch(){
+  const name=document.getElementById('searchInput').value.trim();
+  if(!name){showError('Escribe un gamertag o nombre de clan');return;}
+  const scr=document.getElementById('searchClanResults');scr.style.display='none';scr.innerHTML='';
+  // Try clan search first (fast, local DB)
+  try{
+    const resp=await fetch('/clans/search/'+encodeURIComponent(name));
+    if(resp.ok){
+      const data=await resp.json();
+      if(data.clans&&data.clans.length>0){
+        // Show clan results with option to search as player
+        let h='<div style="font-size:.7rem;color:var(--text-dim);margin-bottom:8px;font-family:Rajdhani,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;">&#x1F50D; Clanes encontrados</div>';
+        h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">';
+        data.clans.forEach(cl=>{
+          h+='<div onclick="document.getElementById(\'searchClanResults\').style.display=\'none\';showClanByTag(\''+esc(cl.tag)+'\');" style="cursor:pointer;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 14px;transition:all .2s;display:flex;align-items:center;gap:8px;" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
+          h+='<span style="font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:var(--accent);">['+esc(cl.tag)+']</span>';
+          if(cl.name)h+='<span style="font-size:.75rem;color:var(--text-secondary);">'+esc(cl.name)+'</span>';
+          h+='<span style="font-size:.6rem;color:var(--text-dim);margin-left:4px;">'+((cl.active_members||0))+' miembros</span>';
+          h+='</div>';
+        });
+        h+='</div>';
+        h+='<div style="border-top:1px solid var(--border);padding-top:8px;text-align:center;">';
+        h+='<span style="font-size:.7rem;color:var(--text-dim);">No es un clan? </span>';
+        h+='<a href="#" onclick="event.preventDefault();document.getElementById(\'searchClanResults\').style.display=\'none\';searchPlayer();" style="font-size:.7rem;color:var(--accent);text-decoration:underline;font-weight:600;">Buscar como jugador &rarr;</a>';
+        h+='</div>';
+        scr.innerHTML=h;scr.style.display='block';
+        return;
+      }
+    }
+  }catch(e){/* clan search failed, proceed to player search */}
+  // No clan found — search as player directly
+  searchPlayer();
+}
+// Show a clan detail by tag (called from smart search results)
+function showClanByTag(tag){
+  loadClanPage(tag);
+}
 async function searchPlayer(){
   if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name){showError('Escribe el nombre de un jugador para buscar sus estadísticas');return;}
   showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';
@@ -1784,8 +1817,15 @@ async function searchPlayer(){
     currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
     populateSeasonDropdown(sr.data,cs.id);
     setLoaderStep('Cargando partidas...');
-    const mids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]).slice(0,8);
-    currentMatchData=(await Promise.all(mids.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)))).filter(Boolean);
+    const mids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]).slice(0,20);
+    // Load matches in batches of 5 to avoid rate limits
+    currentMatchData=[];
+    for(let b=0;b<mids.length;b+=5){
+      const batch=mids.slice(b,b+5);
+      const results=await Promise.all(batch.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)));
+      currentMatchData.push(...results.filter(Boolean));
+      if(b+5<mids.length)setLoaderStep('Cargando partidas ('+(b+5)+'/'+mids.length+')...');
+    }
     setLoaderStep('Casi listo...');
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
@@ -3374,7 +3414,7 @@ async function requestAddPlayer(clanTag){
   const statusEl=document.getElementById('requestStatus_'+clanTag);
   if(!input||!input.value.trim()){alert('Escribe el gamertag del jugador');return;}
   const playerName=input.value.trim();
-  statusEl.innerHTML='<span style="color:var(--accent);">Enviando solicitud...</span>';
+  statusEl.innerHTML='<span style="color:var(--accent);">&#x1F50D; Verificando jugador en PUBG...</span>';
   try{
     const resp=await fetch('/clans/request-member',{
       method:'POST',
@@ -3383,10 +3423,16 @@ async function requestAddPlayer(clanTag){
     });
     const data=await resp.json();
     if(!resp.ok)throw new Error(data.error||'Error al enviar solicitud');
-    statusEl.innerHTML='<span style="color:var(--accent-green);">&#x2705; Solicitud enviada! Un admin la revisara pronto.</span>';
+    if(data.autoAdded){
+      statusEl.innerHTML='<span style="color:var(--accent-green);">&#x2705; <b>'+(data.playerName||playerName)+'</b> verificado y anadido al clan! Recarga para verlo.</span>';
+    }else if(data.message&&data.message.includes('ya esta')){
+      statusEl.innerHTML='<span style="color:var(--accent-yellow);">&#x26A0;&#xFE0F; '+data.message+'</span>';
+    }else{
+      statusEl.innerHTML='<span style="color:var(--accent-orange);">&#x23F3; '+data.message+'</span>';
+    }
     input.value='';
   }catch(e){
-    statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
+    statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
   }
 }
 async function refreshClanStats(clanTag,btn){
