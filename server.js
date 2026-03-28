@@ -171,16 +171,21 @@ app.get('/clans/leaderboard', async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit) || 50, 100);
     const orderMap = {
       kills: 'total_kills DESC', kd: 'avg_kd DESC', wins: 'total_wins DESC',
-      winrate: 'win_rate DESC', members: 'active_members DESC', rounds: 'total_rounds DESC'
+      winrate: 'win_rate DESC', members: 'active_members DESC', rounds: 'total_rounds DESC',
+      recent: 'created_at DESC'
     };
     const order = orderMap[sort] || 'total_kills DESC';
-    const { rows } = await pool.query(
-      `SELECT tag, name, member_count, level, platform, total_kills, total_wins,
-              avg_kd, avg_damage, total_rounds, win_rate, active_members,
-              stats_updated_at, created_at
-       FROM clans WHERE active_members > 0 ORDER BY ${order} LIMIT $1`, [limit]
-    );
-    res.json({ clans: rows, total: rows.length });
+    const [{ rows }, countRes] = await Promise.all([
+      pool.query(
+        `SELECT tag, name, member_count, level, platform, total_kills, total_wins,
+                avg_kd, avg_damage, total_rounds, win_rate, active_members,
+                stats_updated_at, created_at
+         FROM clans WHERE active_members > 0 ORDER BY ${order} LIMIT $1`, [limit]
+      ),
+      pool.query('SELECT COUNT(*)::int AS cnt, SUM(active_members)::int AS players, SUM(total_kills)::int AS kills FROM clans WHERE active_members > 0')
+    ]);
+    const stats = countRes.rows[0] || {};
+    res.json({ clans: rows, total: stats.cnt || rows.length, totalPlayers: stats.players || 0, totalKills: stats.kills || 0 });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 

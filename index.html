@@ -322,6 +322,35 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .asc-stat-lbl { font-size:.6rem; color:#666; text-transform:uppercase; letter-spacing:1.5px; margin-top:2px; }
 .asc-footer { display:flex; justify-content:space-between; width:100%; position:relative; z-index:1; }
 .asc-footer span { font-size:.65rem; color:#555; text-transform:uppercase; letter-spacing:2px; }
+/* HOMEPAGE CONTENT */
+.home-counters { display:flex; justify-content:center; gap:40px; margin:30px 0 28px; flex-wrap:wrap; }
+.home-counter { text-align:center; }
+.home-counter-val { font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:800; color:var(--text-primary); }
+.home-counter-lbl { font-family:'Rajdhani',sans-serif; font-size:.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-top:2px; }
+.home-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+.home-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:20px; box-shadow:var(--shadow-card); }
+.home-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.home-card-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); }
+.home-card-link { background:none; border:none; color:var(--text-dim); font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:color .2s; }
+.home-card-link:hover { color:var(--accent); }
+.home-clan-list { display:flex; flex-direction:column; gap:6px; }
+.home-clan-row { display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--bg-secondary); border-radius:8px; cursor:pointer; transition:background .2s; }
+.home-clan-row:hover { background:var(--bg-card-hover); }
+.home-clan-pos { font-family:'Orbitron',sans-serif; font-size:.75rem; font-weight:700; color:var(--text-dim); width:22px; text-align:center; }
+.home-clan-pos.gold { color:var(--accent-yellow); }
+.home-clan-pos.silver { color:#c0c0c0; }
+.home-clan-pos.bronze { color:#cd7f32; }
+.home-clan-tag { font-family:'Orbitron',sans-serif; font-size:.8rem; font-weight:700; color:var(--accent); }
+.home-clan-name { font-size:.72rem; color:var(--text-secondary); flex:1; }
+.home-clan-stat { font-family:'Orbitron',sans-serif; font-size:.7rem; font-weight:600; color:var(--text-dim); }
+.home-clan-new { font-size:.65rem; color:var(--text-dim); margin-left:auto; }
+.home-loading { font-size:.75rem; color:var(--text-dim); text-align:center; padding:16px; }
+.home-features { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.home-feature { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:20px 16px; text-align:center; transition:border-color .2s, transform .2s; }
+.home-feature:hover { border-color:rgba(0,240,255,0.2); transform:translateY(-2px); }
+.home-feature-icon { font-size:1.8rem; margin-bottom:8px; }
+.home-feature-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.82rem; color:var(--text-primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+.home-feature-desc { font-size:.7rem; color:var(--text-dim); line-height:1.5; }
 .dna-layout { display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; }
 .dna-radar-wrap { flex-shrink: 0; }
 .dna-radar-wrap canvas { display: block; }
@@ -722,6 +751,10 @@ footer a { color: var(--accent); text-decoration: none; }
   .tabs{width:100%}
   .tab-btn{flex:0 1 auto;text-align:center;padding:8px 10px;font-size:.7rem;letter-spacing:.5px}
   .section-title{font-size:.85rem}
+  .home-grid{grid-template-columns:1fr}
+  .home-features{grid-template-columns:repeat(2,1fr)}
+  .home-counters{gap:24px}
+  .home-counter-val{font-size:1.4rem}
 }
 @media(max-width:480px){
   .stats-grid{grid-template-columns:1fr}
@@ -733,6 +766,10 @@ footer a { color: var(--accent); text-decoration: none; }
   .streamer-banner{flex-direction:column;text-align:center}
   .streamer-banner-links{justify-content:center}
   .tab-btn{padding:7px 8px;font-size:.65rem;letter-spacing:.3px}
+  .home-features{grid-template-columns:1fr 1fr}
+  .home-feature{padding:14px 12px}
+  .home-counter-val{font-size:1.2rem}
+  .home-counters{gap:16px;margin:20px 0}
 }
 .telemetry-feed { max-height: 300px; overflow-y: auto; margin-top: 16px; }
 .telem-event { padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 0.8rem; font-family: 'Rajdhani', sans-serif; }
@@ -856,6 +893,69 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="recent-searches" id="recentSearches"></div>
 </section>
 
+<!-- HOMEPAGE CONTENT — visible only when no player loaded -->
+<section id="homepageContent" style="max-width:1400px;margin:0 auto;padding:0 2rem;">
+  <!-- Live stats counters -->
+  <div class="home-counters" id="homeCounters">
+    <div class="home-counter">
+      <div class="home-counter-val" id="hcClans">--</div>
+      <div class="home-counter-lbl">Clanes Registrados</div>
+    </div>
+    <div class="home-counter">
+      <div class="home-counter-val" id="hcPlayers">--</div>
+      <div class="home-counter-lbl">Jugadores Trackeados</div>
+    </div>
+    <div class="home-counter">
+      <div class="home-counter-val" id="hcKills">--</div>
+      <div class="home-counter-lbl">Kills Totales</div>
+    </div>
+  </div>
+
+  <!-- Two-column: Top clanes + Features -->
+  <div class="home-grid">
+    <!-- Mini leaderboard -->
+    <div class="home-card">
+      <div class="home-card-header">
+        <span class="home-card-title">Top Clanes</span>
+        <button class="home-card-link" onclick="switchTab('clans');setTimeout(()=>{const b=document.querySelector('.clan-mode-tab:last-child');if(b)b.click();},100);">Ver ranking</button>
+      </div>
+      <div id="homeTopClans" class="home-clan-list"><div class="home-loading">Cargando...</div></div>
+    </div>
+
+    <!-- Ultimos clanes registrados -->
+    <div class="home-card">
+      <div class="home-card-header">
+        <span class="home-card-title">Ultimos Clanes</span>
+        <button class="home-card-link" onclick="switchTab('clans')">Explorar</button>
+      </div>
+      <div id="homeRecentClans" class="home-clan-list"><div class="home-loading">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- Features showcase -->
+  <div class="home-features">
+    <div class="home-feature">
+      <div class="home-feature-icon">&#x1F50D;</div>
+      <div class="home-feature-title">Stats en Tiempo Real</div>
+      <div class="home-feature-desc">K/D, Win Rate, Damage, HS% y mas directamente de la API oficial de PUBG</div>
+    </div>
+    <div class="home-feature">
+      <div class="home-feature-icon">&#x1F9EC;</div>
+      <div class="home-feature-title">ADN del Jugador</div>
+      <div class="home-feature-desc">Descubre tu rol unico: Depredador, Francotirador, Campeon... y compartelo</div>
+    </div>
+    <div class="home-feature">
+      <div class="home-feature-icon">&#x1F3AE;</div>
+      <div class="home-feature-title">Analiza tu Squad</div>
+      <div class="home-feature-desc">Roles, fortalezas y debilidades de tu equipo en una sola pagina</div>
+    </div>
+    <div class="home-feature">
+      <div class="home-feature-icon">&#x1F3C6;</div>
+      <div class="home-feature-title">Sistema de Clanes</div>
+      <div class="home-feature-desc">Registra tu clan, compara stats y compite en el ranking de consola</div>
+    </div>
+  </div>
+</section>
 
 <!-- KANNEDA BANNER — Podcast + Codigo Creador -->
 <div style="max-width:1400px;margin:0 auto;padding:0 2rem;">
@@ -1758,9 +1858,61 @@ async function loadClanPage(tag){
 }
 
 // INIT
+async function loadHomepageContent(){
+  const hc=document.getElementById('homepageContent');if(!hc)return;
+  try{
+    // Fetch top clans + recent clans in parallel
+    const [topRaw,recentRaw]=await Promise.all([
+      fetch('/clans/leaderboard?sort=kills&limit=5').then(r=>r.ok?r.json():{clans:[]}).catch(()=>({clans:[]})),
+      fetch('/clans/leaderboard?sort=recent&limit=5').then(r=>r.ok?r.json():{clans:[]}).catch(()=>({clans:[]}))
+    ]);
+    const topRes=topRaw.clans||topRaw||[];
+    const recentRes=recentRaw.clans||recentRaw||[];
+    // Counters from server aggregation
+    const totalClans=topRaw.total||topRes.length;
+    const totalPlayers=topRaw.totalPlayers||0;
+    const totalKills=topRaw.totalKills||0;
+    const fmtNum=n=>n>=1000?(n/1000).toFixed(1).replace('.0','')+'K':n.toString();
+    const hcClans=document.getElementById('hcClans');
+    const hcPlayers=document.getElementById('hcPlayers');
+    const hcKills=document.getElementById('hcKills');
+    if(hcClans)hcClans.textContent=totalClans>0?totalClans:'--';
+    if(hcPlayers)hcPlayers.textContent=totalPlayers>0?fmtNum(totalPlayers):'--';
+    if(hcKills)hcKills.textContent=totalKills>0?fmtNum(totalKills):'--';
+    // Render top clans
+    const topEl=document.getElementById('homeTopClans');
+    if(topEl&&topRes.length){
+      const posClass=i=>i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      topEl.innerHTML=topRes.map((c,i)=>
+        '<div class="home-clan-row" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+c.tag+'\';searchClanByName();">'+
+        '<span class="home-clan-pos '+posClass(i)+'">'+(i+1)+'</span>'+
+        '<span class="home-clan-tag">'+c.tag+'</span>'+
+        '<span class="home-clan-name">'+(c.name||'')+'</span>'+
+        '<span class="home-clan-stat">'+fmtNum(c.total_kills||0)+' kills</span>'+
+        '</div>'
+      ).join('');
+    }else if(topEl){topEl.innerHTML='<div class="home-loading">Sin datos aun</div>';}
+    // Render recent clans
+    const recEl=document.getElementById('homeRecentClans');
+    if(recEl&&recentRes.length){
+      recEl.innerHTML=recentRes.map(c=>{
+        const ago=c.created_at?getTimeAgoMatch(new Date(c.created_at)):'';
+        return '<div class="home-clan-row" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+c.tag+'\';searchClanByName();">'+
+        '<span class="home-clan-tag">'+c.tag+'</span>'+
+        '<span class="home-clan-name">'+(c.name||'')+'</span>'+
+        '<span class="home-clan-new">'+(ago?ago:'nuevo')+'</span>'+
+        '</div>';
+      }).join('');
+    }else if(recEl){recEl.innerHTML='<div class="home-loading">Sin datos aun</div>';}
+  }catch(e){console.error('Homepage content error:',e);}
+}
+function hideHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='none';}
+function showHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='block';}
+
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
   renderClanHistoryUI();
+  loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
@@ -1900,7 +2052,7 @@ function showClanByTag(tag){
 }
 async function searchPlayer(){
   if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name){showError('Escribe el nombre de un jugador para buscar sus estadísticas');return;}
-  showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';
+  showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';hideHomepageContent();
   try{
     setLoaderStep('Buscando jugador '+name+'...');
     const pr=await findPlayer(name,currentPlatform);
@@ -1981,8 +2133,9 @@ function switchTab(t){
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
   if(t==='leaderboard')renderLeaderboard();
-  // Scroll hero into view when clicking "Buscar" with no player loaded
-  if(t==='overview'&&!currentPlayerData){const hero=document.getElementById('searchHero');if(hero)hero.scrollIntoView({behavior:'smooth'});}
+  // Homepage content: show only when on overview with no player
+  if(t==='overview'&&!currentPlayerData){showHomepageContent();const hero=document.getElementById('searchHero');if(hero)hero.scrollIntoView({behavior:'smooth'});}
+  else{hideHomepageContent();}
 }
 function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
 function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
