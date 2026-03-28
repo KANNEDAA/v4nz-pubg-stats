@@ -771,7 +771,7 @@ footer a { color: var(--accent); text-decoration: none; }
     </div>
   </div>
   <h1>PUBG <span>CONSOLE</span> STATS</h1>
-  <p style="color:var(--text-secondary);font-size:.95rem;margin-bottom:30px;">La herramienta definitiva de estadisticas PUBG para PlayStation & Xbox &mdash; en espanol</p>
+  <p style="color:var(--text-secondary);font-size:.95rem;margin-bottom:30px;">De jugadores, para jugadores &mdash; La herramienta definitiva de stats PUBG para PlayStation & Xbox</p>
   <p style="font-size:.7rem;color:var(--text-dim);margin-top:-20px;margin-bottom:8px;">Powered by <span style="color:var(--accent-orange);font-weight:600;">PUBG Official API</span> &mdash; Datos en tiempo real</p>
   <div class="search-box">
     <div class="platform-selector">
@@ -1009,7 +1009,7 @@ footer a { color: var(--accent); text-decoration: none; }
     </div>
     <div id="leaderboardContent"><div class="empty-state"><p>Selecciona plataforma y modo</p></div></div>
   </div>
-  <div class="empty-state" id="emptyState" style="display:none;"><p>Busca un jugador para ver sus stats</p></div>
+  <div class="empty-state" id="emptyState"><p>Busca un jugador para ver sus stats</p></div>
 </div>
 
 <!-- MATCH DETAIL POPUP -->
@@ -1058,7 +1058,67 @@ footer a { color: var(--accent); text-decoration: none; }
   <p style="margin-bottom:6px;">Codigo de Creador PUBG: <strong style="color:var(--accent);">KANNEDA</strong> &mdash; <a href="https://accounts.krafton.com/v2/es/web/login-select" target="_blank" style="color:#c5ff00;">Activa tu codigo aqui</a></p>
   <p>V4NZ PUBG Console Stats &mdash; Datos en tiempo real via <a href="https://developer.pubg.com/" target="_blank">PUBG Official API</a></p>
   <p style="margin-top:6px;opacity:.5;">No afiliado con KRAFTON, Inc. Todos los datos provienen de la API publica de PUBG.</p>
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.04);display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:.68rem;">
+    <a href="#" onclick="event.preventDefault();document.getElementById('legalModal').style.display='flex';document.getElementById('legalContent').innerHTML=document.getElementById('legalAviso').innerHTML;" style="color:var(--text-dim);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">Aviso Legal</a>
+    <a href="#" onclick="event.preventDefault();document.getElementById('legalModal').style.display='flex';document.getElementById('legalContent').innerHTML=document.getElementById('legalPrivacidad').innerHTML;" style="color:var(--text-dim);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">Politica de Privacidad</a>
+    <a href="#" onclick="event.preventDefault();document.getElementById('legalModal').style.display='flex';document.getElementById('legalContent').innerHTML=document.getElementById('legalCookies').innerHTML;" style="color:var(--text-dim);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">Politica de Cookies</a>
+  </div>
 </footer>
+
+<!-- LEGAL MODAL -->
+<div id="legalModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);justify-content:center;align-items:center;padding:20px;" onclick="if(event.target===this)this.style.display='none';">
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;max-width:680px;width:100%;max-height:85vh;overflow-y:auto;padding:32px;position:relative;">
+    <button onclick="document.getElementById('legalModal').style.display='none';" style="position:sticky;top:0;float:right;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);font-size:1.1rem;cursor:pointer;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;z-index:2;">&times;</button>
+    <div id="legalContent" style="font-size:.82rem;line-height:1.7;color:var(--text-secondary);"></div>
+  </div>
+</div>
+
+<!-- LEGAL TEXTS (hidden, loaded into modal) -->
+<div id="legalAviso" style="display:none;">
+  <h2 style="font-family:Orbitron,sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:16px;">AVISO LEGAL</h2>
+  <p style="margin-bottom:12px;"><strong style="color:var(--text-primary);">Titular:</strong> V4NZ / KANNEDA (proyecto personal sin animo de lucro)</p>
+  <p style="margin-bottom:12px;"><strong style="color:var(--text-primary);">Contacto:</strong> A traves de <a href="https://discord.com/invite/Kw4NA3b8p8" target="_blank" style="color:var(--accent);">Discord</a> o <a href="https://www.kanneda.com" target="_blank" style="color:var(--accent);">kanneda.com</a></p>
+  <p style="margin-bottom:12px;"><strong style="color:var(--text-primary);">Objeto:</strong> V4NZ es una herramienta gratuita de consulta de estadisticas publicas de PUBG: BATTLEGROUNDS para PlayStation y Xbox, creada por y para jugadores de la comunidad.</p>
+  <p style="margin-bottom:12px;"><strong style="color:var(--text-primary);">Propiedad intelectual:</strong> PUBG: BATTLEGROUNDS es marca registrada de KRAFTON, Inc. V4NZ no esta afiliado, patrocinado ni respaldado por KRAFTON. Todos los datos se obtienen de la API publica oficial de PUBG (<a href="https://developer.pubg.com" target="_blank" style="color:var(--accent);">developer.pubg.com</a>). Los logos, nombres y marcas de PlayStation y Xbox pertenecen a sus respectivos propietarios.</p>
+  <p style="margin-bottom:12px;"><strong style="color:var(--text-primary);">Responsabilidad:</strong> V4NZ muestra datos proporcionados por terceros (PUBG API) y no garantiza su exactitud, integridad o disponibilidad. El uso de la web es bajo la responsabilidad del usuario.</p>
+  <p><strong style="color:var(--text-primary);">Legislacion aplicable:</strong> Este aviso legal se rige por la legislacion espanola. Para cualquier controversia seran competentes los juzgados y tribunales del domicilio del titular.</p>
+</div>
+
+<div id="legalPrivacidad" style="display:none;">
+  <h2 style="font-family:Orbitron,sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:16px;">POLITICA DE PRIVACIDAD</h2>
+  <p style="margin-bottom:12px;">De conformidad con el Reglamento General de Proteccion de Datos (RGPD) y la Ley Organica 3/2018 de Proteccion de Datos Personales (LOPDGDD), te informamos:</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">1. Responsable del tratamiento</strong></p>
+  <p style="margin-bottom:12px;">V4NZ / KANNEDA — Contacto: Discord o kanneda.com</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">2. Datos que recopilamos</strong></p>
+  <p style="margin-bottom:4px;">- <strong>Sin registro:</strong> No recopilamos ningun dato personal. Las busquedas se realizan contra la API publica de PUBG.</p>
+  <p style="margin-bottom:4px;">- <strong>Con registro via Discord:</strong> ID de Discord, nombre de usuario de Discord y email (proporcionados por Discord OAuth2).</p>
+  <p style="margin-bottom:12px;">- <strong>Con registro via email:</strong> Direccion de email y contrasena (almacenada cifrada con bcrypt).</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">3. Finalidad</strong></p>
+  <p style="margin-bottom:12px;">Gestionar tu cuenta de usuario, sincronizar tus jugadores favoritos entre dispositivos y mejorar tu experiencia en la plataforma. No enviamos emails comerciales ni compartimos datos con terceros.</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">4. Base legal</strong></p>
+  <p style="margin-bottom:12px;">Consentimiento del usuario al registrarse voluntariamente (art. 6.1.a RGPD).</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">5. Conservacion</strong></p>
+  <p style="margin-bottom:12px;">Tus datos se conservan mientras mantengas tu cuenta activa. Puedes solicitar la eliminacion de tu cuenta y todos tus datos en cualquier momento contactandonos por Discord.</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">6. Derechos</strong></p>
+  <p style="margin-bottom:12px;">Tienes derecho a acceder, rectificar, suprimir, limitar y portar tus datos, asi como a retirar tu consentimiento. Para ejercer estos derechos, contactanos por Discord o a traves de kanneda.com.</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">7. Seguridad</strong></p>
+  <p style="margin-bottom:12px;">Las contrasenas se almacenan cifradas (bcrypt). Las sesiones utilizan tokens JWT con expiracion. La comunicacion se realiza mediante HTTPS.</p>
+  <p><strong style="color:var(--text-primary);">8. Alojamiento</strong></p>
+  <p>Los datos se alojan en Railway (servidores en la UE/EEUU). El dominio se gestiona a traves de Cloudflare.</p>
+</div>
+
+<div id="legalCookies" style="display:none;">
+  <h2 style="font-family:Orbitron,sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:16px;">POLITICA DE COOKIES</h2>
+  <p style="margin-bottom:12px;"><strong style="color:var(--text-primary);">Que son las cookies:</strong> Las cookies son pequenos archivos de texto que se almacenan en tu navegador cuando visitas un sitio web.</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">Cookies que utiliza V4NZ:</strong></p>
+  <p style="margin-bottom:4px;">- <strong>Cookies tecnicas/de sesion:</strong> Token JWT almacenado en sessionStorage para mantener tu sesion iniciada. Se elimina al cerrar el navegador. <em>Base legal: necesarias para el funcionamiento.</em></p>
+  <p style="margin-bottom:4px;">- <strong>localStorage:</strong> Preferencias del usuario (tema claro/oscuro, busquedas recientes, jugadores favoritos, plataforma seleccionada). No son cookies en sentido estricto pero almacenan datos localmente. <em>Base legal: necesarias para la funcionalidad solicitada por el usuario.</em></p>
+  <p style="margin-bottom:12px;">- <strong>Cookies de terceros:</strong> El reproductor de Spotify incrustado puede establecer sus propias cookies segun la politica de Spotify. Cloudflare puede establecer cookies de seguridad (__cf_bm).</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">Cookies analiticas:</strong></p>
+  <p style="margin-bottom:12px;">V4NZ no utiliza cookies de analitica (Google Analytics, etc.) ni cookies publicitarias.</p>
+  <p style="margin-bottom:8px;"><strong style="color:var(--text-primary);">Como desactivar cookies:</strong></p>
+  <p>Puedes configurar tu navegador para rechazar cookies o eliminar las existentes. Ten en cuenta que desactivar las cookies tecnicas puede afectar al funcionamiento de la web (por ejemplo, perder tu sesion o preferencias).</p>
+</div>
 
 <!-- AUTH POPUP -->
 <div class="auth-popup" id="authPopup" onclick="if(event.target===this)closeAuthPopup();">
@@ -1615,7 +1675,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
   else if(clanMatch){loadClanPage(decodeURIComponent(clanMatch[1]));}
-  else{loadDemoData();}
+  else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
   // Back/forward browser navigation
   window.addEventListener('popstate',()=>{
     const m=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
