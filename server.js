@@ -941,6 +941,18 @@ setInterval(async () => {
   catch (e) { /* silent */ }
 }, 1800000);
 
+// Admin verification endpoint — password never exposed in frontend
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'v4nz2024admin';
+app.post('/auth/admin', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ ok: true, token });
+  } else {
+    res.status(401).json({ error: 'Contraseña incorrecta' });
+  }
+});
+
 // Sitemap for SEO — dynamic with clan URLs
 app.get('/sitemap.xml', async (req, res) => {
   res.set('Content-Type', 'application/xml');
