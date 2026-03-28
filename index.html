@@ -783,25 +783,55 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
   <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
   <div class="panel" id="panel-compare">
-    <div class="section-title">Comparar Jugadores</div>
-    <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
-      <button class="lb-btn active" id="cmpPlat-psn" onclick="cmpPlatform='psn';this.classList.add('active');document.getElementById('cmpPlat-xbox').classList.remove('active');">PlayStation</button>
-      <button class="lb-btn" id="cmpPlat-xbox" onclick="cmpPlatform='xbox';this.classList.add('active');document.getElementById('cmpPlat-psn').classList.remove('active');">Xbox</button>
-      <span style="width:8px;display:inline-block;"></span>
-      <button class="lb-btn active" id="cmpMode-squad" onclick="setCmpMode('squad')">Squad</button>
-      <button class="lb-btn" id="cmpMode-squad-fpp" onclick="setCmpMode('squad-fpp')">Squad FPP</button>
-      <button class="lb-btn" id="cmpMode-solo" onclick="setCmpMode('solo')">Solo</button>
-      <button class="lb-btn" id="cmpMode-duo" onclick="setCmpMode('duo')">Duo</button>
+    <!-- COMPARE MODE TABS: 1v1 vs Mi Squad -->
+    <div style="display:flex;justify-content:center;gap:4px;margin-bottom:20px;">
+      <button class="lb-btn active" id="cmpTab-1v1" onclick="switchCompareMode('1v1')" style="padding:10px 24px;font-size:.8rem;">&#x2694;&#xFE0F; 1 vs 1</button>
+      <button class="lb-btn" id="cmpTab-squad" onclick="switchCompareMode('squad')" style="padding:10px 24px;font-size:.8rem;">&#x1F3AE; Mi Squad</button>
     </div>
-    <div class="compare-container">
-      <div><div class="compare-search"><input class="compare-input" id="compare1Input" placeholder="Jugador 1..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard1"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
-      <div class="compare-vs">VS</div>
-      <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+
+    <!-- 1v1 MODE (existing) -->
+    <div id="compareMode1v1">
+      <div class="section-title">Comparar Jugadores</div>
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="lb-btn active" id="cmpPlat-psn" onclick="cmpPlatform='psn';this.classList.add('active');document.getElementById('cmpPlat-xbox').classList.remove('active');">PlayStation</button>
+        <button class="lb-btn" id="cmpPlat-xbox" onclick="cmpPlatform='xbox';this.classList.add('active');document.getElementById('cmpPlat-psn').classList.remove('active');">Xbox</button>
+        <span style="width:8px;display:inline-block;"></span>
+        <button class="lb-btn active" id="cmpMode-squad" onclick="setCmpMode('squad')">Squad</button>
+        <button class="lb-btn" id="cmpMode-squad-fpp" onclick="setCmpMode('squad-fpp')">Squad FPP</button>
+        <button class="lb-btn" id="cmpMode-solo" onclick="setCmpMode('solo')">Solo</button>
+        <button class="lb-btn" id="cmpMode-duo" onclick="setCmpMode('duo')">Duo</button>
+      </div>
+      <div class="compare-container">
+        <div><div class="compare-search"><input class="compare-input" id="compare1Input" placeholder="Jugador 1..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard1"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+        <div class="compare-vs">VS</div>
+        <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+      </div>
+      <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
+      <div id="compareRadarWrap" style="display:none;margin-top:24px;text-align:center;"><canvas id="compareRadarCanvas" width="500" height="500" style="max-width:100%;"></canvas></div>
+      <div id="compareVerdict" style="display:none;margin-top:16px;"></div>
+      <div id="compareBarChart" style="margin-top:20px;"></div>
     </div>
-    <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
-    <div id="compareRadarWrap" style="display:none;margin-top:24px;text-align:center;"><canvas id="compareRadarCanvas" width="500" height="500" style="max-width:100%;"></canvas></div>
-    <div id="compareVerdict" style="display:none;margin-top:16px;"></div>
-    <div id="compareBarChart" style="margin-top:20px;"></div>
+
+    <!-- SQUAD MODE (new) -->
+    <div id="compareModeSquad" style="display:none;">
+      <div class="section-title">&#x1F3AE; Analiza tu Squad</div>
+      <p style="color:var(--text-secondary);font-size:.8rem;margin-bottom:16px;text-align:center;">Mete los gamertags de tu equipo y descubre como es tu squad: roles, fortalezas, debilidades y quimca.</p>
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="lb-btn active" id="sqPlat-psn" onclick="sqPlatform='psn';this.classList.add('active');document.getElementById('sqPlat-xbox').classList.remove('active');">PlayStation</button>
+        <button class="lb-btn" id="sqPlat-xbox" onclick="sqPlatform='xbox';this.classList.add('active');document.getElementById('sqPlat-psn').classList.remove('active');">Xbox</button>
+        <span style="width:8px;display:inline-block;"></span>
+        <button class="lb-btn active" id="sqMode-squad" onclick="setSqMode('squad')">Squad</button>
+        <button class="lb-btn" id="sqMode-squad-fpp" onclick="setSqMode('squad-fpp')">Squad FPP</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;margin:0 auto;">
+        <input class="compare-input" id="sq1Input" placeholder="Jugador 1..." style="text-align:center;border:2px solid rgba(0,240,255,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq2Input').focus()">
+        <input class="compare-input" id="sq2Input" placeholder="Jugador 2..." style="text-align:center;border:2px solid rgba(255,107,0,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq3Input').focus()">
+        <input class="compare-input" id="sq3Input" placeholder="Jugador 3..." style="text-align:center;border:2px solid rgba(0,255,136,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq4Input').focus()">
+        <input class="compare-input" id="sq4Input" placeholder="Jugador 4 (opcional)..." style="text-align:center;border:2px solid rgba(168,85,247,0.2);" onkeydown="if(event.key==='Enter')analyzeSquad()">
+      </div>
+      <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;padding:12px 32px;" onclick="analyzeSquad()">&#x1F50D; ANALIZAR SQUAD</button></div>
+      <div id="squadResults" style="margin-top:24px;"></div>
+    </div>
   </div>
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
@@ -2398,6 +2428,206 @@ function renderCompareCards(n1,s1,n2,s2){
   let bh='';
   stats.forEach(s=>{const nv1=parseFloat(s.v1),nv2=parseFloat(s.v2);const mx=Math.max(nv1,nv2,1);const p1=Math.round((nv1/mx)*100),p2=Math.round((nv2/mx)*100);const c1=nv1>=nv2?'var(--accent)':'var(--text-dim)',c2=nv2>=nv1?'var(--accent-orange)':'var(--text-dim)';bh+='<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-secondary);margin-bottom:3px;"><span>'+s.v1+s.u+'</span><span style="font-weight:600;text-transform:uppercase;letter-spacing:1px;">'+s.l+'</span><span>'+s.v2+s.u+'</span></div><div style="display:flex;gap:4px;height:6px;"><div style="flex:1;display:flex;justify-content:flex-end;"><div style="width:'+p1+'%;background:'+c1+';border-radius:3px 0 0 3px;transition:width .5s;"></div></div><div style="flex:1;"><div style="width:'+p2+'%;background:'+c2+';border-radius:0 3px 3px 0;transition:width .5s;"></div></div></div></div>';});
   document.getElementById('compareBarChart').innerHTML=bh;
+}
+
+/* ═══ SQUAD ANALYZER ═══ */
+let sqPlatform='psn',sqMode='squad';
+function setSqMode(m){sqMode=m;['squad','squad-fpp'].forEach(k=>{const el=document.getElementById('sqMode-'+k);if(el)el.classList.toggle('active',k===m);});}
+function switchCompareMode(mode){
+  document.getElementById('compareMode1v1').style.display=mode==='1v1'?'':'none';
+  document.getElementById('compareModeSquad').style.display=mode==='squad'?'':'none';
+  document.getElementById('cmpTab-1v1').classList.toggle('active',mode==='1v1');
+  document.getElementById('cmpTab-squad').classList.toggle('active',mode==='squad');
+}
+
+async function analyzeSquad(){
+  const inputs=[document.getElementById('sq1Input').value.trim(),document.getElementById('sq2Input').value.trim(),document.getElementById('sq3Input').value.trim(),document.getElementById('sq4Input').value.trim()].filter(v=>v);
+  if(inputs.length<2){alert('Introduce al menos 2 gamertags');return;}
+  showLoading(true);
+  const SQ_COLORS=['#00f0ff','#ff6b00','#00ff88','#a855f7'];
+  const SQ_COLORS_DIM=['rgba(0,240,255,0.12)','rgba(255,107,0,0.12)','rgba(0,255,136,0.12)','rgba(168,85,247,0.12)'];
+  try{
+    setLoaderStep('Obteniendo temporada...');
+    const sr=await apiGet(API_BASE+'/'+sqPlatform+'/seasons');
+    const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
+    const players=[];
+    for(let i=0;i<inputs.length;i++){
+      const name=inputs[i];
+      let stats,realName=name;
+      if(name.toUpperCase()==='KANNEDA'){stats=DEMO_DATA.seasonStats.data.attributes.gameModeStats[sqMode]||{};realName='KANNEDA';}
+      else{
+        setLoaderStep('Buscando '+name+' ('+(i+1)+'/'+inputs.length+')...');
+        const p=await findPlayer(name,sqPlatform);realName=p.data[0].attributes.name;
+        setLoaderStep('Stats de '+realName+'...');
+        const ss=await apiGet(API_BASE+'/'+sqPlatform+'/players/'+p.data[0].id+'/seasons/'+cs.id);
+        stats=ss.data.attributes.gameModeStats[sqMode]||ss.data.attributes.gameModeStats.squad||{};
+      }
+      players.push({name:realName,stats,color:SQ_COLORS[i],colorDim:SQ_COLORS_DIM[i]});
+    }
+    renderSquadResults(players);
+  }catch(e){
+    console.error('Squad error:',e);
+    document.getElementById('squadResults').innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:20px;">'+e.message+'</div>';
+  }finally{showLoading(false);}
+}
+
+function getSquadRole(s){
+  const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
+  const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;
+  const ar=s.roundsPlayed?(s.assists||0)/s.roundsPlayed:0;
+  const lk=s.longestKill||0;
+  if(hs>25&&lk>150)return{role:'Francotirador',icon:'\u{1F3AF}',desc:'Preciso a larga distancia'};
+  if(kd>2.5&&ad>250)return{role:'Entry Fragger',icon:'\u{1F525}',desc:'Abre camino y consigue kills'};
+  if(wr>20&&kd>1.5)return{role:'Clutcher',icon:'\u{1F451}',desc:'Cierra rondas y gana partidas'};
+  if(rr>0.3&&ar>0.4)return{role:'Support',icon:'\u{1FA7A}',desc:'Revive y asiste al equipo'};
+  if(ad>200&&kd>1.5)return{role:'Slayer',icon:'\u{2694}\u{FE0F}',desc:'Alto dano y poder ofensivo'};
+  if(parseFloat(calcTop10Rate(s))>50)return{role:'Superviviente',icon:'\u{1F6E1}\u{FE0F}',desc:'Llega lejos consistentemente'};
+  if(ar>0.5)return{role:'IGL / Cerebro',icon:'\u{1F9E0}',desc:'Juego de equipo y asistencias'};
+  return{role:'Soldado',icon:'\u{1F3AE}',desc:'Jugador versatil'};
+}
+
+function renderSquadResults(players){
+  const n=players.length;
+  let h='';
+
+  /* === PLAYER CARDS WITH ROLES === */
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;">';
+  players.forEach((p,i)=>{
+    const s=p.stats;const role=getSquadRole(s);
+    h+='<div style="background:var(--bg-card);border:2px solid '+p.color+'33;border-radius:14px;padding:16px;text-align:center;position:relative;overflow:hidden;">';
+    h+='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+p.color+';"></div>';
+    h+='<div style="font-size:1.4rem;margin-bottom:4px;">'+role.icon+'</div>';
+    h+='<div style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.85rem;color:'+p.color+';margin-bottom:2px;word-break:break-all;">'+p.name+'</div>';
+    h+='<div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-primary);margin-bottom:2px;">'+role.role+'</div>';
+    h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">'+role.desc+'</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.7rem;">';
+    h+='<div style="background:var(--bg-secondary);border-radius:6px;padding:4px;"><div style="color:var(--text-dim);font-size:.6rem;">K/D</div><div style="color:var(--text-primary);font-weight:700;">'+calcKD(s)+'</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:6px;padding:4px;"><div style="color:var(--text-dim);font-size:.6rem;">WIN%</div><div style="color:var(--text-primary);font-weight:700;">'+calcWinRate(s)+'%</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:6px;padding:4px;"><div style="color:var(--text-dim);font-size:.6rem;">ADR</div><div style="color:var(--text-primary);font-weight:700;">'+calcAvgDmg(s)+'</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:6px;padding:4px;"><div style="color:var(--text-dim);font-size:.6rem;">HS%</div><div style="color:var(--text-primary);font-weight:700;">'+calcHSRate(s)+'%</div></div>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+
+  /* === SQUAD RADAR CHART === */
+  h+='<div style="text-align:center;margin-bottom:24px;"><canvas id="squadRadarCanvas" width="520" height="520" style="max-width:100%;"></canvas></div>';
+
+  /* === COMBINED SQUAD STATS === */
+  const totalKills=players.reduce((a,p)=>a+(p.stats.kills||0),0);
+  const totalWins=players.reduce((a,p)=>a+(p.stats.wins||0),0);
+  const totalRounds=players.reduce((a,p)=>a+(p.stats.roundsPlayed||0),0);
+  const avgKD=(players.reduce((a,p)=>a+parseFloat(calcKD(p.stats)),0)/n).toFixed(2);
+  const avgWR=(players.reduce((a,p)=>a+parseFloat(calcWinRate(p.stats)),0)/n).toFixed(1);
+  const avgDmg=(players.reduce((a,p)=>a+parseFloat(calcAvgDmg(p.stats)),0)/n).toFixed(0);
+  const avgHS=(players.reduce((a,p)=>a+parseFloat(calcHSRate(p.stats)),0)/n).toFixed(1);
+  const totalAssists=players.reduce((a,p)=>a+(p.stats.assists||0),0);
+  const totalRevives=players.reduce((a,p)=>a+(p.stats.revives||0),0);
+
+  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px;">';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);text-align:center;margin-bottom:14px;">Stats del Squad Combinadas</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;text-align:center;">';
+  const sqStats=[{l:'Kills Totales',v:totalKills,c:'var(--accent)'},{l:'Victorias',v:totalWins,c:'var(--accent-green)'},{l:'K/D Medio',v:avgKD,c:'var(--accent-orange)'},{l:'Win Rate Medio',v:avgWR+'%',c:'var(--accent-yellow)'},{l:'ADR Medio',v:avgDmg,c:'var(--accent-purple)'},{l:'HS% Medio',v:avgHS+'%',c:'var(--accent-red)'},{l:'Assists Totales',v:totalAssists,c:'var(--accent)'},{l:'Revives Totales',v:totalRevives,c:'var(--accent-green)'}];
+  sqStats.forEach(s=>{
+    h+='<div style="background:var(--bg-secondary);border-radius:10px;padding:10px 6px;">';
+    h+='<div style="font-family:Orbitron,sans-serif;font-weight:700;font-size:1.1rem;color:'+s.c+';">'+s.v+'</div>';
+    h+='<div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">'+s.l+'</div></div>';
+  });
+  h+='</div></div>';
+
+  /* === WHO LEADS EACH STAT === */
+  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px;">';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);text-align:center;margin-bottom:14px;">Quien Lidera Cada Stat</div>';
+  const leaderStats=[{l:'Mas Kills',fn:p=>p.stats.kills||0},{l:'Mejor K/D',fn:p=>parseFloat(calcKD(p.stats))},{l:'Mas Victorias',fn:p=>p.stats.wins||0},{l:'Mejor Win Rate',fn:p=>parseFloat(calcWinRate(p.stats))},{l:'Mas Dano Medio',fn:p=>parseFloat(calcAvgDmg(p.stats))},{l:'Mejor Headshot%',fn:p=>parseFloat(calcHSRate(p.stats))},{l:'Kill Mas Lejano',fn:p=>p.stats.longestKill||0},{l:'Mas Revives',fn:p=>p.stats.revives||0}];
+  leaderStats.forEach(ls=>{
+    let best=0,bestIdx=0;
+    players.forEach((p,i)=>{const v=ls.fn(p);if(v>best){best=v;bestIdx=i;}});
+    const bp=players[bestIdx];
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">';
+    h+='<span style="font-family:Rajdhani,sans-serif;font-size:.75rem;color:var(--text-secondary);">'+ls.l+'</span>';
+    h+='<span style="font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+bp.color+';">'+bp.name+' <span style="color:var(--text-dim);font-size:.7rem;">('+Math.round(best*100)/100+')</span></span>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  /* === SQUAD VERDICT === */
+  const roles=players.map(p=>getSquadRole(p.stats).role);
+  const hasFragger=roles.some(r=>r==='Entry Fragger'||r==='Slayer');
+  const hasSupport=roles.some(r=>r==='Support'||r==='IGL / Cerebro');
+  const hasSniper=roles.some(r=>r==='Francotirador');
+  const hasClutcher=roles.some(r=>r==='Clutcher');
+  let squadType='',squadAdvice='',squadEmoji='';
+  const avgKDn=parseFloat(avgKD);
+  if(avgKDn>2){squadType='Squad Depredador';squadEmoji='\u{1F525}';squadAdvice='Nivel muy alto. Vuestro poder ofensivo es brutal.';}
+  else if(avgKDn>1.5){squadType='Squad Competitivo';squadEmoji='\u{1F3C6}';squadAdvice='Squad solido con buen nivel. Podeis competir contra cualquiera.';}
+  else if(avgKDn>1){squadType='Squad Equilibrado';squadEmoji='\u{2696}\u{FE0F}';squadAdvice='Buen equilibrio general. Consistentes y peligrosos.';}
+  else{squadType='Squad en Progreso';squadEmoji='\u{1F4AA}';squadAdvice='Seguid jugando juntos, la quimica se nota con el tiempo.';}
+
+  let tips=[];
+  if(!hasFragger)tips.push('Os falta un Entry Fragger — nadie abre camino agresivamente.');
+  if(!hasSupport)tips.push('Sin Support claro — necesitais alguien que reviva y asista mas.');
+  if(!hasSniper&&players.every(p=>(p.stats.longestKill||0)<150))tips.push('Nadie tira a distancia — un francotirador os vendria bien.');
+  if(hasFragger&&hasSupport&&(hasSniper||hasClutcher))tips.push('Squad muy completo! Teneis todos los roles cubiertos.');
+  if(tips.length===0)tips.push('Buen reparto de roles. Seguid asi!');
+
+  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;">';
+  h+='<div style="font-size:2rem;margin-bottom:6px;">'+squadEmoji+'</div>';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:1.2rem;font-weight:800;color:var(--accent);margin-bottom:4px;">'+squadType+'</div>';
+  h+='<div style="font-size:.8rem;color:var(--text-secondary);margin-bottom:14px;">'+squadAdvice+'</div>';
+  h+='<div style="text-align:left;max-width:400px;margin:0 auto;">';
+  tips.forEach(t=>{
+    h+='<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:.75rem;color:var(--text-secondary);"><span style="color:var(--accent-yellow);flex-shrink:0;">\u{1F4A1}</span><span>'+t+'</span></div>';
+  });
+  h+='</div></div>';
+
+  document.getElementById('squadResults').innerHTML=h;
+
+  /* === DRAW SQUAD RADAR === */
+  const canvas=document.getElementById('squadRadarCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,R=Math.min(W,H)*0.36;
+  ctx.clearRect(0,0,W,H);
+  const labels=['K/D','Win Rate','ADR','Headshot%','Top 10%','Supervivencia'];
+  const axes=labels.length;
+  const angleStep=Math.PI*2/axes;
+  const startAngle=-Math.PI/2;
+
+  // Calc values per player
+  const allVals=players.map(p=>{
+    const s=p.stats;
+    const surv=s.roundsPlayed?((s.timeSurvived||0)/s.roundsPlayed/60):0;
+    return[parseFloat(calcKD(s)),parseFloat(calcWinRate(s)),parseFloat(calcAvgDmg(s)),parseFloat(calcHSRate(s)),parseFloat(calcTop10Rate(s)),parseFloat(surv.toFixed(1))];
+  });
+  const maxVals=labels.map((_,i)=>Math.max(...allVals.map(v=>v[i]),0.01));
+
+  // Grid
+  for(let ring=1;ring<=4;ring++){
+    const rr=R*(ring/4);ctx.beginPath();
+    for(let i=0;i<=axes;i++){const a=startAngle+angleStep*i;ctx.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}
+    ctx.closePath();ctx.strokeStyle='rgba(255,255,255,'+(ring===4?0.1:0.04)+')';ctx.lineWidth=1;ctx.stroke();
+  }
+  // Axis lines
+  for(let i=0;i<axes;i++){const a=startAngle+angleStep*i;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();}
+  // Labels
+  ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<axes;i++){const a=startAngle+angleStep*i;const lx=cx+Math.cos(a)*(R+24);const ly=cy+Math.sin(a)*(R+24);ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fillText(labels[i],lx,ly);}
+
+  // Draw polygons
+  players.forEach((p,pi)=>{
+    const norms=allVals[pi].map((v,i)=>v/maxVals[i]);
+    ctx.beginPath();
+    for(let i=0;i<=axes;i++){const idx=i%axes;const a=startAngle+angleStep*idx;const r=R*Math.max(norms[idx],0.05);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+    ctx.closePath();ctx.fillStyle=p.colorDim;ctx.fill();ctx.strokeStyle=p.color;ctx.lineWidth=2.5;ctx.stroke();
+    // Dots
+    for(let i=0;i<axes;i++){const a=startAngle+angleStep*i;const r=R*Math.max(norms[i],0.05);ctx.beginPath();ctx.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,4,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();}
+  });
+
+  // Legend
+  ctx.font='bold 12px Rajdhani,sans-serif';
+  players.forEach((p,i)=>{
+    const lx=20+i*(W/n);
+    ctx.fillStyle=p.color;ctx.textAlign='left';ctx.fillText(p.name,lx,H-12);
+  });
 }
 
 function setClanMode(mode,btn){
