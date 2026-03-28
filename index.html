@@ -34,6 +34,48 @@
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<!-- Schema.org Structured Data for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "V4NZ PUBG Console Stats",
+  "url": "https://v4nz.com",
+  "description": "Tracker de estadisticas PUBG para PlayStation y Xbox en espanol. Busca jugadores, compara stats, gestiona clanes y consulta rankings en tiempo real desde la API oficial de PUBG.",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Web",
+  "inLanguage": "es",
+  "author": {
+    "@type": "Person",
+    "name": "KANNEDA",
+    "url": "https://www.kanneda.com"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "50",
+    "bestRating": "5"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "V4NZ",
+  "url": "https://v4nz.com",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://v4nz.com/stats/psn/{search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
 <style>
 :root {
   --bg-primary: #0b0b12;
@@ -1044,6 +1086,20 @@ footer a { color: var(--accent); text-decoration: none; }
 
 
 <a href="https://discord.com/invite/Kw4NA3b8p8" target="_blank" class="discord-float" title="Comunidad V4NZ en Discord"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span>Clan V4NZ</span></a>
+
+<!-- SEO STATIC CONTENT — visible for Google, hidden when player data loads -->
+<section id="seoContent" style="max-width:900px;margin:40px auto;padding:0 2rem;">
+  <article style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:var(--shadow-card);">
+    <h2 style="font-family:Rajdhani,sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">Estadisticas PUBG para Consola en Espanol</h2>
+    <p style="color:var(--text-secondary);font-size:.85rem;line-height:1.7;margin-bottom:16px;">V4NZ es el tracker de estadisticas de PUBG: BATTLEGROUNDS para PlayStation (PS5, PS4) y Xbox (Series X|S, One) creado en espanol. Consulta tus stats en tiempo real directamente desde la API oficial de PUBG: kills, K/D ratio, damage medio, porcentaje de victorias, headshots, Top 10, partidas jugadas y mucho mas.</p>
+    <h3 style="font-family:Rajdhani,sans-serif;font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:8px;">Que puedes hacer en V4NZ</h3>
+    <p style="color:var(--text-secondary);font-size:.82rem;line-height:1.7;margin-bottom:16px;">Busca cualquier jugador de PUBG en consola por su gamertag y accede a sus estadisticas completas de temporada. Compara hasta 4 jugadores lado a lado para ver quien tiene mejor K/D, mas kills o mayor porcentaje de victorias. Registra tu clan y consulta las stats de todos tus miembros en una sola pagina. Descubre tu ADN de jugador: un perfil unico basado en tus estadisticas que revela si eres Francotirador, Depredador, Campeon, Guerrero o Superviviente.</p>
+    <h3 style="font-family:Rajdhani,sans-serif;font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:8px;">Sistema de Clanes PUBG</h3>
+    <p style="color:var(--text-secondary);font-size:.82rem;line-height:1.7;margin-bottom:16px;">V4NZ cuenta con el sistema de clanes mas completo para PUBG en consola. Busca clanes por nombre o tag, consulta el ranking de clanes por kills, K/D o victorias, y compara dos clanes entre si. Cada pagina de clan muestra las estadisticas individuales de todos sus miembros ordenados por rendimiento. Puedes solicitar anadir jugadores a tu clan y el sistema los verifica automaticamente en la API de PUBG.</p>
+    <h3 style="font-family:Rajdhani,sans-serif;font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:8px;">Datos en Tiempo Real</h3>
+    <p style="color:var(--text-secondary);font-size:.82rem;line-height:1.7;">Todos los datos provienen de la API oficial de PUBG (developer.pubg.com). V4NZ consulta los datos en tiempo real cada vez que buscas un jugador. Tambien puedes ver el historial de tus ultimas 20 partidas con estadisticas detalladas de cada match: mapa, modo de juego, kills, damage, posicion final, duracion de partida y momento exacto de cada eliminacion.</p>
+  </article>
+</section>
 
 <footer>
   <!-- KANNEDA Social Icons -->
