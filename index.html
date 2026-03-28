@@ -54,6 +54,47 @@
   --shadow-card: 0 2px 12px rgba(0,0,0,0.35);
   --shadow-card-hover: 0 8px 30px rgba(0,0,0,0.45), 0 0 20px rgba(0,240,255,0.06);
 }
+[data-theme="light"] {
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f5f7fa;
+  --bg-input: #ffffff;
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,140,200,0.3);
+  --accent: #0088cc;
+  --accent-dim: rgba(0,136,204,0.1);
+  --accent-orange: #e55a00;
+  --accent-orange-dim: rgba(229,90,0,0.1);
+  --accent-green: #00a854;
+  --accent-red: #e02040;
+  --accent-yellow: #d4a000;
+  --accent-purple: #8b3fd4;
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a5a7a;
+  --text-dim: #8a8aa8;
+  --gradient-main: linear-gradient(135deg, #0088cc, #0060aa);
+  --gradient-orange: linear-gradient(135deg, #e55a00, #e02040);
+  --gradient-card: linear-gradient(180deg, rgba(0,136,204,0.03) 0%, transparent 100%);
+  --shadow-glow: 0 0 20px rgba(0,136,204,0.06);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-card-hover: 0 8px 30px rgba(0,0,0,0.12), 0 0 20px rgba(0,136,204,0.05);
+}
+[data-theme="light"] body { background: var(--bg-primary); }
+[data-theme="light"] header { background: rgba(240,242,245,0.95); border-bottom-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .bg-radial { background: radial-gradient(ellipse, rgba(0,136,204,0.06) 0%, transparent 70%); }
+[data-theme="light"] .loading-overlay { background: rgba(240,242,245,0.97); }
+[data-theme="light"] .telem-popup { background: rgba(240,242,245,0.97); }
+[data-theme="light"] .telem-canvas-wrap { background: #e8eaef; }
+[data-theme="light"] .match-detail-popup { background: rgba(240,242,245,0.94); }
+[data-theme="light"] .card-modal { background: rgba(240,242,245,0.94); }
+[data-theme="light"] #mainNav.mobile-open { background: rgba(240,242,245,0.97); }
+[data-theme="light"] ::-webkit-scrollbar-track { background: var(--bg-primary); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+[data-theme="light"] .logo-fallback svg rect { fill: #ffffff; stroke: #ddd; }
+/* THEME TOGGLE */
+.theme-toggle { background:none; border:1px solid var(--border); color:var(--text-secondary); width:36px; height:36px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem; transition:all .25s; margin-left:8px; flex-shrink:0; }
+.theme-toggle:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
@@ -624,7 +665,6 @@ footer a { color: var(--accent); text-decoration: none; }
         <div class="logo-sub">Console Stats Tracker</div>
       </div>
     </div>
-    <button class="hamburger" id="hamburgerBtn" onclick="this.classList.toggle('open');document.getElementById('mainNav').classList.toggle('mobile-open');"><span></span><span></span><span></span></button>
     <nav id="mainNav">
       <a href="#" class="active" data-tab="overview">Jugador</a>
       <a href="#" data-tab="matches">Partidas</a>
@@ -633,6 +673,10 @@ footer a { color: var(--accent); text-decoration: none; }
       <a href="#" data-tab="clanranking">Ranking Clanes</a>
       <a href="#" data-tab="leaderboard">Top 500</a>
     </nav>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema">&#x1F319;</button>
+      <button class="hamburger" id="hamburgerBtn" onclick="this.classList.toggle('open');document.getElementById('mainNav').classList.toggle('mobile-open');"><span></span><span></span><span></span></button>
+    </div>
   </div>
 </header>
 
@@ -692,7 +736,7 @@ footer a { color: var(--accent); text-decoration: none; }
   </div>
   <div id="narrativeInsights"></div>
   <div class="personality-section" id="personalitySection"></div>
-  <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><span id="seasonDates" style="color:var(--text-dim);">Temporada actual</span></div>
+  <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><select id="seasonSelect" onchange="switchSeason(this.value)" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;margin-left:8px;display:none;"></select><span id="seasonDates" style="color:var(--text-dim);margin-left:8px;">Temporada actual</span></div>
   <div class="season-type-selector" id="seasonTypeSelector" style="display:none;margin-bottom:16px;"><button class="season-type-btn active" onclick="setSeasonType('season')">Temporada</button><button class="season-type-btn" onclick="setSeasonType('ranked')">Ranked</button><button class="season-type-btn" onclick="setSeasonType('lifetime')">Lifetime</button></div>
   <div class="tabs-container" id="tabsContainer">
     <div class="tabs" id="mainTabs">
@@ -718,7 +762,7 @@ footer a { color: var(--accent); text-decoration: none; }
     <div id="chartsContainer"></div>
     <div class="stats-grid" id="overviewStats"></div>
   </div>
-  <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div class="match-list" id="matchList"></div></div>
+  <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div class="match-list" id="matchList"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
   <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
   <div class="panel" id="panel-compare">
@@ -738,6 +782,8 @@ footer a { color: var(--accent); text-decoration: none; }
       <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
     </div>
     <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
+    <div id="compareRadarWrap" style="display:none;margin-top:24px;text-align:center;"><canvas id="compareRadarCanvas" width="500" height="500" style="max-width:100%;"></canvas></div>
+    <div id="compareVerdict" style="display:none;margin-top:16px;"></div>
     <div id="compareBarChart" style="margin-top:20px;"></div>
   </div>
   <div class="panel" id="panel-clans">
@@ -884,6 +930,26 @@ footer a { color: var(--accent); text-decoration: none; }
 </footer>
 
 <script>
+// THEME TOGGLE
+function toggleTheme(){
+  const html=document.documentElement;
+  const cur=html.getAttribute('data-theme');
+  const next=cur==='light'?'dark':'light';
+  html.setAttribute('data-theme',next);
+  localStorage.setItem('v4nz_theme',next);
+  document.getElementById('themeToggle').innerHTML=next==='light'?'&#x2600;&#xFE0F;':'&#x1F319;';
+  document.querySelector('meta[name="theme-color"]').content=next==='light'?'#0088cc':'#00f0ff';
+}
+(function(){
+  const saved=localStorage.getItem('v4nz_theme');
+  if(saved==='light'){
+    document.documentElement.setAttribute('data-theme','light');
+    document.querySelector('meta[name="theme-color"]').content='#0088cc';
+    const btn=document.getElementById('themeToggle');
+    if(btn) btn.innerHTML='&#x2600;&#xFE0F;';
+  }
+})();
+
 const IS_PROXIED=location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname.includes('railway.app')||location.hostname.includes('v4nz.com');
 const API_BASE=IS_PROXIED?'/api/shards':'https://api.pubg.com/shards';
 let API_KEY=IS_PROXIED?'proxy':localStorage.getItem('pubg_api_key')||'';
@@ -893,7 +959,7 @@ let isUsingDemo=false,recentSearches=JSON.parse(localStorage.getItem('recent_sea
 let lbPlatform='console',lbRegion='eu',lbMode='squad';
 let cmpPlatform='psn',cmpMode='squad';
 function setCmpMode(m){cmpMode=m;['squad','squad-fpp','solo','duo'].forEach(k=>{const el=document.getElementById('cmpMode-'+k);if(el)el.classList.toggle('active',k===m);});}
-let seasonTypeMode='season',currentSeasonId=null,currentRankedData=null,currentLifetimeData=null;
+let seasonTypeMode='season',currentSeasonId=null,currentRankedData=null,currentLifetimeData=null,allSeasons=null;
 
 const MAP_NAMES={'Baltic_Main':'Erangel','Chimera_Main':'Paramo','Desert_Main':'Miramar','DihorOtok_Main':'Vikendi','Erangel_Main':'Erangel','Heaven_Main':'Haven','Kiki_Main':'Deston','Range_Main':'Camp Jackal','Savage_Main':'Sanhok','Summerland_Main':'Karakin','Tiger_Main':'Taego','Neon_Main':'Rondo'};
 const MAP_COLORS={'Erangel':'#4caf50','Miramar':'#ff9800','Sanhok':'#8bc34a','Vikendi':'#90caf9','Karakin':'#e6a23c','Taego':'#66bb6a','Deston':'#5c6bc0','Haven':'#ef5350','Paramo':'#78909c','Rondo':'#ab47bc','Camp Jackal':'#ffa726'};
@@ -1358,9 +1424,10 @@ async function searchPlayer(){
     history.pushState(null,'','/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name));
     document.title='V4NZ — '+currentPlayerData.attributes.name+' | PUBG '+currentPlatform.toUpperCase()+' Stats';
     setLoaderStep('Cargando temporada actual...');
-    const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);currentSeasonId=cs.id;
+    const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');allSeasons=sr.data;const cs=sr.data.find(s=>s.attributes.isCurrentSeason);currentSeasonId=cs.id;
     setLoaderStep('Obteniendo estadisticas de temporada...');
     currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
+    populateSeasonDropdown(sr.data,cs.id);
     setLoaderStep('Descargando partidas recientes...');
     const mids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]).slice(0,8);
     currentMatchData=(await Promise.all(mids.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)))).filter(Boolean);
@@ -1446,6 +1513,38 @@ function copyPlayerLink(btn){const n=currentPlayerData?.attributes?.name;if(!n)r
 function renderSeasonBar(season){document.getElementById('seasonName').textContent=season.id.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 
+function populateSeasonDropdown(seasons,currentId){
+  const sel=document.getElementById('seasonSelect');
+  /* Sort seasons by number descending, show last 10 */
+  const sorted=seasons.filter(s=>!s.attributes.isOffSeason).sort((a,b)=>{
+    const na=parseInt(a.id.replace(/\D/g,''))||0,nb=parseInt(b.id.replace(/\D/g,''))||0;return nb-na;
+  }).slice(0,10);
+  sel.innerHTML=sorted.map(s=>{
+    const num=s.id.replace('division.bro.official.console-','T').replace('division.bro.official.pc-','T');
+    const isCurrent=s.id===currentId;
+    return'<option value="'+s.id+'"'+(isCurrent?' selected':'')+'>'+num+(isCurrent?' (actual)':'')+'</option>';
+  }).join('');
+  sel.style.display=sorted.length>1?'inline-block':'none';
+}
+
+async function switchSeason(seasonId){
+  if(!currentPlayerData||!seasonId||seasonId===currentSeasonId)return;
+  showLoading(true);setLoaderStep('Cargando temporada...');
+  try{
+    currentSeasonId=seasonId;currentRankedData=null;currentLifetimeData=null;seasonTypeMode='season';
+    document.querySelectorAll('.season-type-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes('temp')));
+    currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+seasonId);
+    const seasonObj=allSeasons?allSeasons.find(s=>s.id===seasonId):null;
+    if(seasonObj){
+      const num=seasonId.replace('division.bro.official.console-','Temporada ').replace('division.bro.official.pc-','Temporada ');
+      document.getElementById('seasonName').textContent=num;
+      document.getElementById('seasonDates').textContent=seasonObj.attributes.isCurrentSeason?'Temporada actual':'Temporada anterior';
+    }
+    autoBestMode();renderOverviewStats();renderWLGrid();renderCharts();try{renderFunStats();}catch(e){}try{renderPersonality();}catch(e){}renderNarrativeInsights();renderRankBadge();
+  }catch(e){console.error('Switch season error:',e);showError('Error al cargar temporada: '+e.message);}
+  finally{showLoading(false);}
+}
+
 function renderOverviewStats(){
   const s=getActiveStats();document.getElementById('modeTabs').style.display='flex';
   const kd=calcKD(s),wr=calcWinRate(s),ad=calcAvgDmg(s),t10=calcTop10Rate(s),hs=calcHSRate(s);
@@ -1509,6 +1608,124 @@ function showMatchDetail(idx){
   document.querySelector('.match-detail-card').scrollTop=0;
 }
 function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');}
+
+/* ===== HEATMAP DE KILLS ===== */
+async function generateHeatmap(){
+  if(!currentMatchData||!currentMatchData.length){showError('No hay partidas cargadas');return;}
+  const pn=currentPlayerData.attributes.name.toLowerCase();
+  const popup=document.getElementById('telemPopup');
+  const content=document.getElementById('telemContent');
+  content.innerHTML='<div style="text-align:center;padding:60px 20px;"><div style="font-family:Orbitron,sans-serif;font-size:1rem;color:var(--accent-orange);margin-bottom:12px;">Generando Heatmap...</div><div style="font-size:.75rem;color:var(--text-dim);">Descargando telemetria de '+currentMatchData.length+' partidas</div></div>';
+  popup.classList.add('active');
+  try{
+    /* Get telemetry URLs for all matches */
+    const telemUrls=currentMatchData.map(m=>{const a=(m.included||[]).find(i=>i.type==='asset');return a?{url:a.attributes.URL,mapName:m.data.attributes.mapName}:null;}).filter(Boolean);
+    /* Group by map */
+    const byMap={};telemUrls.forEach(t=>{if(!byMap[t.mapName])byMap[t.mapName]=[];byMap[t.mapName].push(t.url);});
+    /* Pick the map with most matches, or first map */
+    const mapEntries=Object.entries(byMap).sort((a,b)=>b[1].length-a[1].length);
+    const targetMap=mapEntries[0][0];const targetUrls=mapEntries[0][1];
+    const mapSize=TELEM_MAP_SIZES[targetMap]||816000;
+    const mn=MAP_NAMES[targetMap]||targetMap;
+
+    /* Fetch all telemetries */
+    const allKills=[];const allDeaths=[];const allPositions=[];
+    for(let i=0;i<targetUrls.length;i++){
+      content.querySelector('div:first-child').textContent='Descargando '+(i+1)+'/'+targetUrls.length+'...';
+      try{
+        const resp=await fetch(targetUrls[i]);const telem=await resp.json();
+        telem.forEach(ev=>{
+          if(ev._T==='LogPlayerKillV2'&&ev.killer&&ev.killer.name&&ev.killer.name.toLowerCase()===pn&&ev.victim&&ev.victim.location){
+            allKills.push({x:ev.victim.location.x,y:ev.victim.location.y,victim:ev.victim.name,weapon:ev.killerDamageInfo?cleanWeaponName(ev.killerDamageInfo.damageCauserName):'?'});
+          }
+          if(ev._T==='LogPlayerKillV2'&&ev.victim&&ev.victim.name&&ev.victim.name.toLowerCase()===pn&&ev.victim.location){
+            allDeaths.push({x:ev.victim.location.x,y:ev.victim.location.y});
+          }
+          if(ev._T==='LogPlayerPosition'&&ev.character&&ev.character.name&&ev.character.name.toLowerCase()===pn&&ev.character.location){
+            allPositions.push({x:ev.character.location.x,y:ev.character.location.y});
+          }
+        });
+      }catch(e){console.error('Heatmap telem error:',e);}
+    }
+
+    /* Build HTML */
+    let h='<div class="telem-header"><h3>'+mn+' &mdash; Heatmap de Kills</h3><div class="telem-sub">'+currentPlayerData.attributes.name+' &bull; '+allKills.length+' kills en '+targetUrls.length+' partidas</div></div>';
+    h+='<div class="telem-canvas-wrap"><canvas id="telemCanvas" width="800" height="800"></canvas></div>';
+    h+='<div class="telem-legend">';
+    h+='<span><span class="dot" style="background:#ff3355;box-shadow:0 0 6px #ff3355;"></span> Tus kills</span>';
+    h+='<span><span class="dot" style="background:#ff3355;opacity:.3;"></span> Zona caliente</span>';
+    h+='<span><span class="dot" style="background:#fff;box-shadow:0 0 4px red;"></span> Tus muertes</span>';
+    h+='</div>';
+    h+='<div class="telem-stats-row">';
+    h+='<div class="telem-stat-pill"><b>'+allKills.length+'</b> Kills totales</div>';
+    h+='<div class="telem-stat-pill"><b>'+allDeaths.length+'</b> Muertes</div>';
+    h+='<div class="telem-stat-pill"><b>'+targetUrls.length+'</b> Partidas</div>';
+    /* Most used weapon */
+    const weaponCounts={};allKills.forEach(k=>{weaponCounts[k.weapon]=(weaponCounts[k.weapon]||0)+1;});
+    const topWeapon=Object.entries(weaponCounts).sort((a,b)=>b[1]-a[1])[0];
+    if(topWeapon)h+='<div class="telem-stat-pill"><b>'+topWeapon[0]+'</b> Arma favorita ('+topWeapon[1]+')</div>';
+    h+='</div>';
+    h+='<button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">&#x2190; Cerrar Heatmap</button>';
+    content.innerHTML=h;
+
+    /* Draw heatmap on canvas */
+    const canvas=document.getElementById('telemCanvas');
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width,H=canvas.height;
+    const toX=v=>(v/mapSize)*W;const toY=v=>(v/mapSize)*H;
+
+    function drawHeatmap(bgImg){
+      if(bgImg){ctx.drawImage(bgImg,0,0,W,H);ctx.fillStyle='rgba(10,10,18,0.5)';ctx.fillRect(0,0,W,H);}
+      else{ctx.fillStyle='#0a0a12';ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(255,255,255,0.03)';for(let i=0;i<W;i+=W/10){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}}
+
+      /* Heatmap layer: draw radial gradients at each kill position */
+      const heatCanvas=document.createElement('canvas');heatCanvas.width=W;heatCanvas.height=H;
+      const hctx=heatCanvas.getContext('2d');
+      allKills.forEach(k=>{
+        const kx=toX(k.x),ky=toY(k.y);
+        const grad=hctx.createRadialGradient(kx,ky,0,kx,ky,30);
+        grad.addColorStop(0,'rgba(255,51,85,0.5)');grad.addColorStop(1,'rgba(255,51,85,0)');
+        hctx.fillStyle=grad;hctx.fillRect(kx-30,ky-30,60,60);
+      });
+      ctx.drawImage(heatCanvas,0,0);
+
+      /* Individual kill dots */
+      allKills.forEach(k=>{
+        const kx=toX(k.x),ky=toY(k.y);
+        ctx.beginPath();ctx.arc(kx,ky,4,0,Math.PI*2);ctx.fillStyle='rgba(255,51,85,0.8)';ctx.fill();
+        ctx.beginPath();ctx.arc(kx,ky,6,0,Math.PI*2);ctx.strokeStyle='rgba(255,51,85,0.3)';ctx.lineWidth=1;ctx.stroke();
+      });
+
+      /* Death markers */
+      allDeaths.forEach(d=>{
+        const dx=toX(d.x),dy=toY(d.y);
+        ctx.save();ctx.translate(dx,dy);
+        ctx.strokeStyle='#ffffff';ctx.lineWidth=2.5;ctx.lineCap='round';
+        ctx.beginPath();ctx.moveTo(-6,-6);ctx.lineTo(6,6);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(6,-6);ctx.lineTo(-6,6);ctx.stroke();
+        ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.restore();
+      });
+
+      /* Kill labels (only if few enough to be readable) */
+      if(allKills.length<=15){
+        ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+        allKills.forEach(k=>{
+          ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillText(k.victim.slice(0,10),toX(k.x),toY(k.y)-10);
+          ctx.fillStyle='rgba(255,107,0,0.6)';ctx.font='8px Rajdhani,sans-serif';ctx.fillText(k.weapon,toX(k.x),toY(k.y)+16);
+          ctx.font='bold 9px Rajdhani,sans-serif';
+        });
+      }
+    }
+
+    const imgUrl=TELEM_MAP_IMGS[targetMap];
+    if(imgUrl){const img=new Image();img.crossOrigin='anonymous';img.onload=()=>drawHeatmap(img);img.onerror=()=>drawHeatmap(null);img.src=imgUrl;}
+    else{drawHeatmap(null);}
+  }catch(e){
+    console.error('Heatmap error:',e);
+    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);">Error: '+e.message+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
+  }
+}
 
 function cleanWeaponName(id){let n=id.replace('Item_Weapon_','').replace('_C','');const MAP={'AK47':'AKM','HK416':'M416','Beryl':'Beryl M762','Mini14':'Mini 14','Win94':'Win94','Kar98k':'Kar98k','M16A4':'M16A4','SCAR-L':'SCAR-L','UMP':'UMP45','Vector':'Vector','Thompson':'Tommy Gun','Mk47Mutant':'Mk47','DesertEagle':'Deagle','P90':'P90','MP5K':'MP5K','FNFal':'SLR','Mk14':'Mk14','SKS':'SKS','QBZ':'QBZ','QBU':'QBU','Mosin':'Mosin','M249':'M249','DP28':'DP-28','S686':'S686','S12K':'S12K','S1897':'S1897','Pan':'Pan','Machete':'Machete','Sickle':'Sickle','Crossbow':'Crossbow','VSS':'VSS','AWM':'AWM','M24':'M24','Groza':'Groza','AUG':'AUG','Bizon':'Bizon','MG3':'MG3','L6':'Lynx AMR','ACE32':'ACE32','MP9':'MP9','P1911':'P1911','Rhino':'Rhino','M9':'P92','NagantM1895':'Nagant','G36C':'G36C','FlareGun':'Flare Gun','Mortar':'Mortar','PanzerFaust':'Panzerfaust','M79':'M79','Drone':'Drone','EMT':'EMT Gear','Decoy':'Decoy','BluezoneGrenade':'Bluehole Grenade','Sticky':'Sticky Bomb','C4':'C4','Grenade':'Grenade','SmokeBomb':'Smoke'};return MAP[n]||n;}
 function renderWeaponStatsDemo(){let h='';DEMO_DATA.weapons.forEach((w,i)=>{const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';h+='<div class="weapon-card animate-in"><div class="weapon-rank '+rc+'">#'+(i+1)+'</div><div class="weapon-info"><div class="weapon-name">'+w.name+'</div><div class="weapon-type">'+(WEAPON_TYPES[w.name]||'')+'</div></div><div class="weapon-stats-mini"><div class="weapon-mini-stat"><div class="wm-val">'+w.kills+'</div><div class="wm-label">Kills</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.headshots+'</div><div class="wm-label">HS</div></div><div class="weapon-mini-stat"><div class="wm-val">'+w.longestKill+'m</div><div class="wm-label">Max</div></div></div></div>';});document.getElementById('weaponGrid').innerHTML=h;}
@@ -1750,6 +1967,19 @@ function renderFunStats(){
     '<div class="fun-stat-card"><div class="fun-icon">&#x1F4AA;</div><div class="fun-value">'+(s.maxKillStreaks||'?')+'</div><div class="fun-label">Racha Maxima</div><div class="fun-detail">Kills seguidos</div></div>';
 }
 
+function getPersonalityType(){
+  const s=getActiveStats();if(!s||!s.roundsPlayed)return'';
+  const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
+  const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;const rd=s.roundsPlayed?(s.rideDistance||0)/s.roundsPlayed:0;
+  if(hs>25&&(s.longestKill||0)>150)return'Francotirador';
+  if(kd>2.5&&ad>250)return'Depredador';
+  if(wr>25)return'Campeon';
+  if(rr>0.5)return'Medico de Combate';
+  if(rd>2000)return'Piloto Loco';
+  if(kd>1.5&&ad>150)return'Guerrero';
+  if(parseFloat(calcTop10Rate(s))>60)return'Superviviente';
+  return'Novato Prometedor';
+}
 function renderPersonality(){
   const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('personalitySection').classList.remove('visible');return;}
   const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
@@ -1781,87 +2011,103 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
 
 function generateStatsCard(){
   const c=document.getElementById('statsCardCanvas');const ctx=c.getContext('2d');
-  c.width=700;c.height=420;
+  c.width=800;c.height=480;const W=800,H=480;
   const s=getActiveStats();const n=currentPlayerData?.attributes?.name||'???';
 
-  // Background with gradient
-  const bg=ctx.createLinearGradient(0,0,700,420);
-  bg.addColorStop(0,'#0a0a0f');bg.addColorStop(.5,'#12121a');bg.addColorStop(1,'#0a0a0f');
-  ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(0,0,700,420,16);ctx.fill();
+  /* Background */
+  const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#08080e');bg.addColorStop(.4,'#10101c');bg.addColorStop(1,'#08080e');
+  ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(0,0,W,H,16);ctx.fill();
 
-  // Top accent gradient line
-  const tg=ctx.createLinearGradient(0,0,700,0);
-  tg.addColorStop(0,'#00f0ff');tg.addColorStop(.5,'#ff6b00');tg.addColorStop(1,'#c5ff00');
-  ctx.fillStyle=tg;ctx.fillRect(0,0,700,3);
+  /* Top gradient line */
+  const tg=ctx.createLinearGradient(0,0,W,0);tg.addColorStop(0,'#00f0ff');tg.addColorStop(.5,'#ff6b00');tg.addColorStop(1,'#a855f7');
+  ctx.fillStyle=tg;ctx.fillRect(0,0,W,3);
 
-  // Subtle glow background for top section
-  const glowGrad=ctx.createLinearGradient(0,0,700,100);
-  glowGrad.addColorStop(0,'rgba(0,240,255,0.04)');glowGrad.addColorStop(1,'rgba(0,240,255,0)');
-  ctx.fillStyle=glowGrad;ctx.fillRect(0,3,700,97);
+  /* Subtle corner glow */
+  const cg=ctx.createRadialGradient(0,0,0,0,0,300);cg.addColorStop(0,'rgba(0,240,255,0.06)');cg.addColorStop(1,'rgba(0,240,255,0)');
+  ctx.fillStyle=cg;ctx.fillRect(0,0,300,300);
 
-  // Border
-  ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(0,0,700,420,16);ctx.stroke();
+  /* Border */
+  ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(0,0,W,H,16);ctx.stroke();
 
-  // Avatar circle with glow effect
-  ctx.shadowColor='rgba(0,240,255,0.3)';ctx.shadowBlur=12;ctx.fillStyle='#00f0ff';ctx.beginPath();ctx.arc(60,55,28,0,Math.PI*2);ctx.fill();
-  ctx.shadowColor='transparent';
-  ctx.fillStyle='#0a0a0f';ctx.font='bold 24px Orbitron,sans-serif';ctx.textAlign='center';
-  ctx.fillText(n.charAt(0).toUpperCase(),60,63);
+  /* Avatar */
+  ctx.shadowColor='rgba(0,240,255,0.35)';ctx.shadowBlur=16;ctx.fillStyle='#00f0ff';ctx.beginPath();ctx.arc(50,50,26,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#08080e';ctx.font='bold 22px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(n.charAt(0).toUpperCase(),50,58);
 
-  // Player name - prominent
-  ctx.fillStyle='#e8e8f0';ctx.font='bold 26px Orbitron,sans-serif';ctx.textAlign='left';
-  ctx.fillText(n,100,52);
+  /* Name */
+  ctx.fillStyle='#eaeaf2';ctx.font='bold 24px Orbitron,sans-serif';ctx.textAlign='left';ctx.fillText(n,88,48);
 
-  // Platform and mode badge
-  ctx.fillStyle='#8888a0';ctx.font='600 12px Rajdhani,sans-serif';
-  const platformStr=(currentPlatform==='psn'?'PlayStation':'Xbox')+' | '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase();
-  ctx.fillText(platformStr,100,72);
+  /* Platform + mode */
+  const plat=(currentPlatform==='psn'?'PlayStation':'Xbox')+' \u2022 '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase();
+  ctx.fillStyle='#6e6e8a';ctx.font='600 12px Rajdhani,sans-serif';ctx.fillText(plat,88,68);
 
-  // Divider line
-  ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.moveTo(30,95);ctx.lineTo(670,95);ctx.stroke();
+  /* Personality tag */
+  const pType=getPersonalityType?getPersonalityType():'';
+  if(pType){ctx.fillStyle='rgba(0,240,255,0.15)';ctx.beginPath();ctx.roundRect(88,74,ctx.measureText(pType.toUpperCase()).width+16,20,4);ctx.fill();ctx.fillStyle='#00f0ff';ctx.font='bold 10px Rajdhani,sans-serif';ctx.fillText(pType.toUpperCase(),96,88);}
 
-  // Stats grid - 4 columns, 2 rows
-  const stats=[
-    {label:'K/D RATIO',value:calcKD(s),color:'#00f0ff'},
-    {label:'VICTORIAS',value:''+(s.wins||0),color:'#ffd700'},
-    {label:'KILLS',value:''+(s.kills||0),color:'#ff3355'},
-    {label:'DANO PROM.',value:calcAvgDmg(s),color:'#ff6b00'},
-    {label:'WIN RATE',value:calcWinRate(s)+'%',color:'#00ff88'},
-    {label:'HEADSHOT %',value:calcHSRate(s)+'%',color:'#a855f7'},
-    {label:'TOP 10 %',value:calcTop10Rate(s)+'%',color:'#00ff88'},
-    {label:'PARTIDAS',value:''+(s.roundsPlayed||0),color:'#00f0ff'}
+  /* Divider */
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.moveTo(24,105);ctx.lineTo(W-24,105);ctx.stroke();
+
+  /* ---- Stats grid: LEFT side (4 cols x 2 rows) ---- */
+  const gridStats=[
+    {l:'K/D RATIO',v:calcKD(s),c:'#00f0ff'},{l:'VICTORIAS',v:''+(s.wins||0),c:'#ffd700'},
+    {l:'KILLS',v:''+(s.kills||0),c:'#ff3355'},{l:'DANO MEDIO',v:calcAvgDmg(s),c:'#ff6b00'},
+    {l:'WIN RATE',v:calcWinRate(s)+'%',c:'#00ff88'},{l:'HEADSHOT %',v:calcHSRate(s)+'%',c:'#a855f7'},
+    {l:'TOP 10 %',v:calcTop10Rate(s)+'%',c:'#00ff88'},{l:'PARTIDAS',v:''+(s.roundsPlayed||0),c:'#8888a0'}
   ];
-
-  const cols=4,cw=160,ch=80,sx=30,sy=115;
-  stats.forEach((st,i)=>{
+  const cols=4,cw=125,ch=72,sx=24,sy=118;
+  gridStats.forEach((st,i)=>{
     const col=i%cols,row=Math.floor(i/cols);
-    const x=sx+col*cw,y=sy+row*(ch+15);
-
-    // Stat card background with subtle accent
-    ctx.fillStyle='#16161f';ctx.beginPath();ctx.roundRect(x,y,cw-10,ch,10);ctx.fill();
-
-    // Accent left border for color coding
-    ctx.fillStyle=st.color;ctx.fillRect(x,y,3,ch);
-
-    // Border
-    ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.roundRect(x,y,cw-10,ch,10);ctx.stroke();
-
-    // Value - larger and colored
-    ctx.fillStyle=st.color;ctx.font='bold 28px Orbitron,sans-serif';ctx.textAlign='center';
-    ctx.fillText(st.value,x+(cw-10)/2,y+38);
-
-    // Label - smaller gray text
-    ctx.fillStyle='#8888a0';ctx.font='600 11px Rajdhani,sans-serif';ctx.textAlign='center';
-    ctx.fillText(st.label,x+(cw-10)/2,y+60);
+    const x=sx+col*cw,y=sy+row*(ch+10);
+    ctx.fillStyle='#13131e';ctx.beginPath();ctx.roundRect(x,y,cw-8,ch,8);ctx.fill();
+    ctx.fillStyle=st.c;ctx.fillRect(x,y+4,2.5,ch-8);
+    ctx.strokeStyle='#1e1e2e';ctx.beginPath();ctx.roundRect(x,y,cw-8,ch,8);ctx.stroke();
+    ctx.fillStyle=st.c;ctx.font='bold 24px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(st.v,x+(cw-8)/2,y+35);
+    ctx.fillStyle='#6e6e8a';ctx.font='bold 10px Rajdhani,sans-serif';ctx.fillText(st.l,x+(cw-8)/2,y+55);
   });
 
-  // Footer with branding
-  ctx.fillStyle='#555570';ctx.font='600 12px Rajdhani,sans-serif';ctx.textAlign='center';
-  ctx.fillText('V4NZ.COM — PUBG Console Stats Tracker',350,390);
-  ctx.fillStyle='#00f0ff';ctx.font='bold 13px Orbitron,sans-serif';
-  ctx.fillText('V4NZ',350,410);
+  /* ---- Mini Radar: RIGHT side ---- */
+  const radarCx=640,radarCy=180,radarR=65,rn=6;
+  const radarLabels=['K/D','Win%','Dano','HS%','Top10%','Surv'];
+  const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),ad=parseFloat(calcAvgDmg(s)),hs=parseFloat(calcHSRate(s)),t10=parseFloat(calcTop10Rate(s));
+  const surv=s.roundsPlayed?(s.timeSurvived/s.roundsPlayed/60):0;
+  const radarVals=[Math.min(kd/3,1),Math.min(wr/25,1),Math.min(ad/400,1),Math.min(hs/30,1),Math.min(t10/50,1),Math.min(surv/20,1)];
+  const rStep=Math.PI*2/rn,rStart=-Math.PI/2;
+  /* Rings */
+  for(let r=1;r<=3;r++){const rr=radarR*(r/3);ctx.beginPath();for(let i=0;i<=rn;i++){const a=rStart+rStep*i;ctx.lineTo(radarCx+Math.cos(a)*rr,radarCy+Math.sin(a)*rr);}ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();}
+  /* Data polygon */
+  ctx.beginPath();for(let i=0;i<=rn;i++){const idx=i%rn;const a=rStart+rStep*idx;const r=radarR*Math.max(radarVals[idx],0.08);ctx.lineTo(radarCx+Math.cos(a)*r,radarCy+Math.sin(a)*r);}
+  ctx.closePath();ctx.fillStyle='rgba(0,240,255,0.15)';ctx.fill();ctx.strokeStyle='rgba(0,240,255,0.6)';ctx.lineWidth=2;ctx.stroke();
+  /* Dots + labels */
+  ctx.font='600 9px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<rn;i++){const a=rStart+rStep*i;const r=radarR*Math.max(radarVals[i],0.08);ctx.beginPath();ctx.arc(radarCx+Math.cos(a)*r,radarCy+Math.sin(a)*r,3,0,Math.PI*2);ctx.fillStyle='#00f0ff';ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.fillText(radarLabels[i],radarCx+Math.cos(a)*(radarR+14),radarCy+Math.sin(a)*(radarR+14));}
 
-  // Show modal
+  /* ---- Extra stats below radar ---- */
+  const extraY=270;
+  const extras=[{l:'KNOCKS',v:''+(s.DBNOs||0)},{l:'ASSISTS',v:''+(s.assists||0)},{l:'REVIVES',v:''+(s.revives||0)},{l:'KILL LEJANO',v:Math.round(s.longestKill||0)+'m'}];
+  extras.forEach((e,i)=>{const x=520+i%2*130,y=extraY+Math.floor(i/2)*50;
+    ctx.fillStyle='#6e6e8a';ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';ctx.fillText(e.l,x+50,y);
+    ctx.fillStyle='#eaeaf2';ctx.font='bold 18px Orbitron,sans-serif';ctx.fillText(e.v,x+50,y+20);});
+
+  /* ---- Rank badge (if ranked data available) ---- */
+  if(currentRankedData&&currentRankedData.data&&currentRankedData.data.attributes){
+    const rAttr=currentRankedData.data.attributes;const rMode=rAttr.rankedGameModeStats&&(rAttr.rankedGameModeStats['squad']||rAttr.rankedGameModeStats['squad-fpp']);
+    if(rMode&&rMode.currentTier&&rMode.currentTier.tier!=='Unranked'){
+      const tier=rMode.currentTier.tier;const sub=rMode.currentTier.subTier;const rp=rMode.currentRankPoint||0;
+      ctx.fillStyle='#13131e';ctx.beginPath();ctx.roundRect(520,380,260,50,8);ctx.fill();ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.roundRect(520,380,260,50,8);ctx.stroke();
+      ctx.fillStyle='#ffd700';ctx.font='bold 14px Orbitron,sans-serif';ctx.textAlign='left';ctx.fillText(tier+' '+sub,536,402);
+      ctx.fillStyle='#6e6e8a';ctx.font='600 11px Rajdhani,sans-serif';ctx.fillText(rp+' RP',536,420);
+    }
+  }
+
+  /* ---- Footer ---- */
+  ctx.fillStyle='#3a3a50';ctx.font='600 11px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('V4NZ.COM \u2014 PUBG Console Stats Tracker \u2014 Datos de PUBG Official API',W/2,H-20);
+  ctx.fillStyle='#00f0ff';ctx.font='bold 14px Orbitron,sans-serif';ctx.fillText('V4NZ',W/2,H-38);
+
+  /* Bottom gradient line */
+  ctx.fillStyle=tg;ctx.fillRect(0,H-3,W,3);
+
   document.getElementById('cardModal').classList.add('active');
 }
 function downloadStatsCard(){
@@ -2066,15 +2312,74 @@ async function comparePlayers(){
   finally{showLoading(false);}
 }
 function renderCompareCards(n1,s1,n2,s2){
-  const stats=[{l:'K/D',v1:calcKD(s1),v2:calcKD(s2),u:''},{l:'Kills',v1:s1.kills||0,v2:s2.kills||0,u:''},{l:'Partidas',v1:s1.roundsPlayed||0,v2:s2.roundsPlayed||0,u:''},{l:'Victorias',v1:s1.wins||0,v2:s2.wins||0,u:''},{l:'Win Rate',v1:calcWinRate(s1),v2:calcWinRate(s2),u:'%'},{l:'Dano Promedio',v1:calcAvgDmg(s1),v2:calcAvgDmg(s2),u:''},{l:'Top 10',v1:s1.top10s||0,v2:s2.top10s||0,u:''},{l:'Headshot %',v1:calcHSRate(s1),v2:calcHSRate(s2),u:'%'},{l:'Kill Lejano',v1:Math.round(s1.longestKill||0),v2:Math.round(s2.longestKill||0),u:'m'},{l:'Revives',v1:s1.revives||0,v2:s2.revives||0,u:''}];
-  function card(name,side){return'<div style="font-family:\'Orbitron\',sans-serif;font-weight:700;font-size:1rem;margin-bottom:14px;text-align:center;color:var(--accent);">'+name+'</div>'+stats.map(s=>{const v=side===1?s.v1:s.v2;const vo=side===1?s.v2:s.v1;const nv=parseFloat(v);const nvo=parseFloat(vo);const w=nv>nvo?'winner':nv<nvo?'loser':'';return'<div class="compare-stat-row"><span class="compare-stat-name">'+s.l+'</span><span class="compare-stat-val '+w+'">'+v+s.u+'</span></div>';}).join('');}
+  const stats=[{l:'K/D',v1:calcKD(s1),v2:calcKD(s2),u:''},{l:'Kills',v1:s1.kills||0,v2:s2.kills||0,u:''},{l:'Partidas',v1:s1.roundsPlayed||0,v2:s2.roundsPlayed||0,u:''},{l:'Victorias',v1:s1.wins||0,v2:s2.wins||0,u:''},{l:'Win Rate',v1:calcWinRate(s1),v2:calcWinRate(s2),u:'%'},{l:'Dano Medio',v1:calcAvgDmg(s1),v2:calcAvgDmg(s2),u:''},{l:'Top 10',v1:s1.top10s||0,v2:s2.top10s||0,u:''},{l:'Headshot %',v1:calcHSRate(s1),v2:calcHSRate(s2),u:'%'},{l:'Kill Lejano',v1:Math.round(s1.longestKill||0),v2:Math.round(s2.longestKill||0),u:'m'},{l:'Revives',v1:s1.revives||0,v2:s2.revives||0,u:''},{l:'Assists',v1:s1.assists||0,v2:s2.assists||0,u:''},{l:'Top 10 %',v1:calcTop10Rate(s1),v2:calcTop10Rate(s2),u:'%'}];
+  function card(name,side){return'<div style="font-family:\'Orbitron\',sans-serif;font-weight:700;font-size:1rem;margin-bottom:14px;text-align:center;color:'+(side===1?'var(--accent)':'var(--accent-orange)')+';">'+name+'</div>'+stats.map(s=>{const v=side===1?s.v1:s.v2;const vo=side===1?s.v2:s.v1;const nv=parseFloat(v);const nvo=parseFloat(vo);const w=nv>nvo?'winner':nv<nvo?'loser':'';return'<div class="compare-stat-row"><span class="compare-stat-name">'+s.l+'</span><span class="compare-stat-val '+w+'">'+v+s.u+'</span></div>';}).join('');}
   document.getElementById('compareCard1').innerHTML=card(n1,1);document.getElementById('compareCard2').innerHTML=card(n2,2);
-  // Render visual bar chart
+
+  /* === RADAR CHART === */
+  const radarLabels=['K/D','Win Rate','Dano Medio','Headshot %','Top 10 %','Supervivencia'];
+  const survRate1=s1.roundsPlayed?((s1.timeSurvived||0)/s1.roundsPlayed/60).toFixed(1):0;
+  const survRate2=s2.roundsPlayed?((s2.timeSurvived||0)/s2.roundsPlayed/60).toFixed(1):0;
+  const radarVals1=[parseFloat(calcKD(s1)),parseFloat(calcWinRate(s1)),parseFloat(calcAvgDmg(s1)),parseFloat(calcHSRate(s1)),parseFloat(calcTop10Rate(s1)),parseFloat(survRate1)];
+  const radarVals2=[parseFloat(calcKD(s2)),parseFloat(calcWinRate(s2)),parseFloat(calcAvgDmg(s2)),parseFloat(calcHSRate(s2)),parseFloat(calcTop10Rate(s2)),parseFloat(survRate2)];
+  const radarMax=radarVals1.map((v,i)=>Math.max(v,radarVals2[i],0.01));
+  const norm1=radarVals1.map((v,i)=>v/radarMax[i]);
+  const norm2=radarVals2.map((v,i)=>v/radarMax[i]);
+
+  const canvas=document.getElementById('compareRadarCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,R=Math.min(W,H)*0.38;
+  ctx.clearRect(0,0,W,H);
+  const n=radarLabels.length;
+  const angleStep=Math.PI*2/n;
+  const startAngle=-Math.PI/2;
+
+  /* Grid rings */
+  for(let ring=1;ring<=4;ring++){
+    const rr=R*(ring/4);
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){const a=startAngle+angleStep*i;ctx.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}
+    ctx.closePath();ctx.strokeStyle='rgba(255,255,255,'+(ring===4?0.1:0.04)+')';ctx.lineWidth=1;ctx.stroke();
+  }
+  /* Axis lines */
+  for(let i=0;i<n;i++){const a=startAngle+angleStep*i;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();}
+  /* Labels */
+  ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<n;i++){const a=startAngle+angleStep*i;const lx=cx+Math.cos(a)*(R+22);const ly=cy+Math.sin(a)*(R+22);ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fillText(radarLabels[i],lx,ly);}
+
+  function drawPoly(norms,fillColor,strokeColor){
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){const idx=i%n;const a=startAngle+angleStep*idx;const r=R*Math.max(norms[idx],0.05);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+    ctx.closePath();ctx.fillStyle=fillColor;ctx.fill();ctx.strokeStyle=strokeColor;ctx.lineWidth=2;ctx.stroke();
+  }
+  drawPoly(norm1,'rgba(0,240,255,0.12)','rgba(0,240,255,0.7)');
+  drawPoly(norm2,'rgba(255,107,0,0.12)','rgba(255,107,0,0.7)');
+  /* Dots */
+  for(let i=0;i<n;i++){const a=startAngle+angleStep*i;
+    const r1=R*Math.max(norm1[i],0.05);ctx.beginPath();ctx.arc(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1,4,0,Math.PI*2);ctx.fillStyle='#00f0ff';ctx.fill();
+    const r2=R*Math.max(norm2[i],0.05);ctx.beginPath();ctx.arc(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2,4,0,Math.PI*2);ctx.fillStyle='#ff6b00';ctx.fill();
+  }
+  /* Legend on canvas */
+  ctx.font='bold 12px Rajdhani,sans-serif';
+  ctx.fillStyle='#00f0ff';ctx.textAlign='left';ctx.fillText(n1,20,H-20);
+  ctx.fillStyle='#ff6b00';ctx.textAlign='right';ctx.fillText(n2,W-20,H-20);
+  document.getElementById('compareRadarWrap').style.display='block';
+
+  /* === VERDICT === */
+  let w1=0,w2=0;stats.forEach(s=>{const nv1=parseFloat(s.v1),nv2=parseFloat(s.v2);if(nv1>nv2)w1++;else if(nv2>nv1)w2++;});
+  const winner=w1>w2?n1:w2>w1?n2:null;
+  const winColor=w1>w2?'var(--accent)':w2>w1?'var(--accent-orange)':'var(--text-secondary)';
+  let vh='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">';
+  vh+='<div style="font-family:Orbitron,sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:8px;">Veredicto</div>';
+  if(winner){vh+='<div style="font-family:Orbitron,sans-serif;font-size:1.4rem;font-weight:800;color:'+winColor+';">'+winner+' GANA</div>';}
+  else{vh+='<div style="font-family:Orbitron,sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent-yellow);">EMPATE</div>';}
+  vh+='<div style="margin-top:10px;font-size:.8rem;color:var(--text-secondary);"><span style="color:var(--accent);font-weight:700;">'+w1+'</span> stats vs <span style="color:var(--accent-orange);font-weight:700;">'+w2+'</span> stats'+(stats.length-w1-w2>0?' &bull; <span style="color:var(--text-dim);">'+(stats.length-w1-w2)+' empates</span>':'')+'</div>';
+  vh+='</div>';
+  document.getElementById('compareVerdict').innerHTML=vh;document.getElementById('compareVerdict').style.display='block';
+
+  /* === BAR CHART === */
   let bh='';
   stats.forEach(s=>{const nv1=parseFloat(s.v1),nv2=parseFloat(s.v2);const mx=Math.max(nv1,nv2,1);const p1=Math.round((nv1/mx)*100),p2=Math.round((nv2/mx)*100);const c1=nv1>=nv2?'var(--accent)':'var(--text-dim)',c2=nv2>=nv1?'var(--accent-orange)':'var(--text-dim)';bh+='<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-secondary);margin-bottom:3px;"><span>'+s.v1+s.u+'</span><span style="font-weight:600;text-transform:uppercase;letter-spacing:1px;">'+s.l+'</span><span>'+s.v2+s.u+'</span></div><div style="display:flex;gap:4px;height:6px;"><div style="flex:1;display:flex;justify-content:flex-end;"><div style="width:'+p1+'%;background:'+c1+';border-radius:3px 0 0 3px;transition:width .5s;"></div></div><div style="flex:1;"><div style="width:'+p2+'%;background:'+c2+';border-radius:0 3px 3px 0;transition:width .5s;"></div></div></div></div>';});
-  // Count wins
-  let w1=0,w2=0;stats.forEach(s=>{const nv1=parseFloat(s.v1),nv2=parseFloat(s.v2);if(nv1>nv2)w1++;else if(nv2>nv1)w2++;});
-  bh+='<div style="text-align:center;margin-top:16px;font-family:Orbitron,sans-serif;font-size:.85rem;"><span style="color:var(--accent);font-weight:700;">'+w1+'</span> <span style="color:var(--text-dim);font-size:.7rem;">stats ganadas</span> <span style="color:var(--text-dim);margin:0 8px;">vs</span> <span style="color:var(--accent-orange);font-weight:700;">'+w2+'</span> <span style="color:var(--text-dim);font-size:.7rem;">stats ganadas</span></div>';
   document.getElementById('compareBarChart').innerHTML=bh;
 }
 
