@@ -218,7 +218,7 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .api-loader { display:flex; flex-direction:column; align-items:center; gap:12px; padding:30px 0; }
 .api-loader .spinner { width:36px; height:36px; border:3px solid var(--bg-card-hover); border-top-color:var(--accent); border-radius:50%; animation:spin-loader .8s linear infinite; }
 .api-loader .loader-text { font-family:'Rajdhani',sans-serif; font-size:.85rem; color:var(--text-secondary); }
-.api-loader .loader-timer { font-family:'Orbitron',sans-serif; font-size:1.1rem; color:var(--accent); font-weight:700; }
+.api-loader .loader-timer { display:none; }
 .skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%); background-size: 400px 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: 8px; }
 .skeleton-header { height: 100px; border-radius: 16px; margin-bottom: 24px; }
 .skeleton-personality { height: 160px; border-radius: 14px; margin-bottom: 24px; }
@@ -247,6 +247,21 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .personality-tag { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-family: 'Rajdhani', sans-serif; }
 .personality-share { margin-top: 16px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
 .personality-share:hover { border-color: var(--accent); color: var(--accent); }
+.dna-layout { display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; }
+.dna-radar-wrap { flex-shrink: 0; }
+.dna-radar-wrap canvas { display: block; }
+.dna-info { text-align: left; max-width: 320px; }
+.dna-bars { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.dna-bar-row { display: flex; align-items: center; gap: 10px; }
+.dna-bar-label { font-family: 'Rajdhani', sans-serif; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); width: 90px; text-align: right; }
+.dna-bar-track { flex: 1; height: 6px; background: var(--bg-card-hover); border-radius: 3px; overflow: hidden; }
+.dna-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.dna-bar-val { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 700; width: 32px; }
+@media(max-width:700px){
+  .dna-layout { flex-direction: column; }
+  .dna-info { text-align: center; max-width: 100%; }
+  .dna-bar-label { width: 75px; font-size: 0.65rem; }
+}
 
 /* NARRATIVE INSIGHTS */
 #narrativeInsights { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); }
@@ -701,7 +716,7 @@ footer a { color: var(--accent); text-decoration: none; }
 <div class="bg-grid"></div>
 <div class="bg-radial"></div>
 
-<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Cargando estadísticas...</div><div class="loader-timer" id="mainLoaderTimer" style="font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--accent);font-weight:700;margin-top:8px;">0.0s</div><div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;" id="mainLoaderStep">Buscando jugador...</div></div>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text" id="mainLoaderStep">Buscando jugador...</div><div class="loader-timer" id="mainLoaderTimer" style="display:none;">0.0s</div></div>
 
 <header>
   <div class="header-inner">
@@ -1578,19 +1593,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
     loadPendingRequests();
   }
-  // Check if on /admin route and show password prompt
+  // Check if on /admin route and show password prompt (verified server-side)
   if(location.pathname==='/admin'){
-    const pwd=prompt('Ingresa la contraseña de administrador:');
-    if(pwd==='v4nz2024admin'){
-      sessionStorage.setItem('adminMode','true');
-      const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
-      loadPendingRequests();
-      // Go back to home
-      history.replaceState(null,'','/');
-    }else{
-      alert('Contraseña incorrecta');
-      history.replaceState(null,'','/');
-    }
+    const pwd=prompt('Contraseña de administrador:');
+    if(pwd){
+      fetch('/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})})
+      .then(r=>r.json()).then(d=>{
+        if(d.ok){
+          sessionStorage.setItem('adminMode','true');
+          sessionStorage.setItem('adminToken',d.token);
+          const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
+          loadPendingRequests();
+        }else{alert('Contraseña incorrecta');}
+        history.replaceState(null,'','/');
+      }).catch(()=>{alert('Error de conexión');history.replaceState(null,'','/');});
+    }else{history.replaceState(null,'','/');}
   }
 });
 
@@ -1598,10 +1615,9 @@ function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-b
 function checkApiKey(){return true;}
 function saveApiKey(){}
 async function apiGet(u){const h={'Accept':'application/vnd.api+json'};const r=await fetch(u,{headers:h});if(!r.ok){let msg='Error '+r.status;try{const j=JSON.parse(await r.text());if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;}catch(e){}if(r.status===404)msg='No se encontró ningún jugador con ese nombre. Revisa que esté bien escrito y selecciona la plataforma correcta (PS/Xbox).';if(r.status===429)msg='Demasiadas consultas seguidas. Espera unos segundos e inténtalo de nuevo.';if(r.status===401||r.status===403)msg='Error de conexión con el servidor. Inténtalo de nuevo en unos minutos.';if(r.status>=500)msg='El servidor de PUBG no responde. Inténtalo más tarde.';const err=new Error(msg);err.status=r.status;throw err;}return r.json();}
-function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div><div class="loader-timer" id="loader-timer-'+targetId+'">0.0s</div></div>';const start=Date.now();const iv=setInterval(()=>{const t=document.getElementById('loader-timer-'+targetId);if(t)t.textContent=((Date.now()-start)/1000).toFixed(1)+'s';else clearInterval(iv);},100);return iv;}
-function stopApiLoader(iv){if(iv)clearInterval(iv);}
-let mainLoaderIv=null;
-function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);if(v){const start=Date.now();mainLoaderIv=setInterval(()=>{const t=document.getElementById('mainLoaderTimer');if(t)t.textContent=((Date.now()-start)/1000).toFixed(1)+'s';},100);}else{if(mainLoaderIv){clearInterval(mainLoaderIv);mainLoaderIv=null;}}}
+function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div></div>';return null;}
+function stopApiLoader(iv){}
+function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);}
 function setLoaderStep(msg){const el=document.getElementById('mainLoaderStep');if(el)el.textContent=msg;}
 let errorTimeout=null;function showError(m){const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.textContent=m;e.classList.add('visible');errorTimeout=setTimeout(()=>{e.classList.remove('visible');errorTimeout=null;},10000);}
 function hideError(){const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.classList.remove('visible');errorTimeout=null;}
@@ -1638,12 +1654,12 @@ async function findPlayer(name,platform){
   try{return await apiGet(url+encodeURIComponent(name));}catch(e1){
     if(e1.status&&e1.status!==404)throw e1;
     if(!e1.status&&e1.message&&!e1.message.includes('fetch'))throw e1;
-    setLoaderStep('Reintentando variaciones de nombre...');
+    setLoaderStep('Buscando jugador...');
     const vars=nameVariations(name);
     // Try remaining variations on same platform
     for(let i=1;i<vars.length;i++){await wait(300);try{return await apiGet(url+encodeURIComponent(vars[i]));}catch(e){if(e.status&&e.status!==404)throw e;}}
     // Try all variations on other platform
-    setLoaderStep('Buscando en otra plataforma...');
+    setLoaderStep('Buscando jugador...');
     const alt=platform==='psn'?'xbox':'psn';
     const altUrl=API_BASE+'/'+alt+'/players?filter[playerNames]=';
     for(let i=0;i<vars.length;i++){await wait(300);try{return await apiGet(altUrl+encodeURIComponent(vars[i]));}catch(e){if(e.status&&e.status!==404)throw e;}}
@@ -1663,15 +1679,15 @@ async function searchPlayer(){
     addRecentSearch(currentPlayerData.attributes.name,currentPlatform);
     history.pushState(null,'','/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name));
     document.title='V4NZ — '+currentPlayerData.attributes.name+' | PUBG '+currentPlatform.toUpperCase()+' Stats';
-    setLoaderStep('Cargando temporada actual...');
+    setLoaderStep('Cargando stats...');
     const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');allSeasons=sr.data;const cs=sr.data.find(s=>s.attributes.isCurrentSeason);currentSeasonId=cs.id;
-    setLoaderStep('Obteniendo estadisticas de temporada...');
+    setLoaderStep('Cargando stats...');
     currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
     populateSeasonDropdown(sr.data,cs.id);
-    setLoaderStep('Descargando partidas recientes...');
+    setLoaderStep('Cargando partidas...');
     const mids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]).slice(0,8);
     currentMatchData=(await Promise.all(mids.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)))).filter(Boolean);
-    setLoaderStep('Cargando maestria de armas...');
+    setLoaderStep('Casi listo...');
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
     showSkeletons(false);autoBestMode();renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
@@ -2284,6 +2300,38 @@ function getPersonalityType(){
   if(parseFloat(calcTop10Rate(s))>60)return'Superviviente';
   return'Novato Prometedor';
 }
+function calcDnaScores(s){
+  const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s)),t10=parseFloat(calcTop10Rate(s));
+  const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;
+  const rd=s.roundsPlayed?(s.rideDistance||0)/s.roundsPlayed:0;
+  // Scores 0-100
+  const agresividad=Math.min(100,Math.round((kd/4)*40+(ad/400)*40+(s.kills||0)/Math.max(s.roundsPlayed,1)/3*20));
+  const precision=Math.min(100,Math.round(hs*2.5+((s.longestKill||0)/500)*25));
+  const supervivencia=Math.min(100,Math.round(t10*1.2+wr*1.5));
+  const movilidad=Math.min(100,Math.round(Math.min(rd/3000,1)*60+((s.walkDistance||0)/s.roundsPlayed/2000)*40));
+  const soporte=Math.min(100,Math.round(rr*100+((s.assists||0)/Math.max(s.roundsPlayed,1))*50+((s.heals||0)/Math.max(s.roundsPlayed,1))*10));
+  return{agresividad,precision,supervivencia,movilidad,soporte};
+}
+function drawDnaRadar(canvasId,scores,color){
+  const c=document.getElementById(canvasId);if(!c)return;const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;const size=200;c.width=size*dpr;c.height=size*dpr;c.style.width=size+'px';c.style.height=size+'px';ctx.scale(dpr,dpr);
+  const cx=size/2,cy=size/2,R=75,labels=['AGR','PRE','SUP','MOV','SOP'];
+  const vals=[scores.agresividad,scores.precision,scores.supervivencia,scores.movilidad,scores.soporte];
+  const n=5;const ang=-Math.PI/2;
+  // Grid rings
+  for(let r=1;r<=4;r++){ctx.beginPath();for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const rr=R*(r/4);ctx.lineTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a));}ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();}
+  // Grid lines
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.stroke();}
+  // Data polygon
+  ctx.beginPath();
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const v=R*(vals[i]/100);ctx.lineTo(cx+v*Math.cos(a),cy+v*Math.sin(a));}
+  ctx.closePath();ctx.fillStyle=color+'22';ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+  // Data points
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const v=R*(vals[i]/100);ctx.beginPath();ctx.arc(cx+v*Math.cos(a),cy+v*Math.sin(a),3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+  // Labels
+  ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const lx=cx+(R+16)*Math.cos(a),ly=cy+(R+16)*Math.sin(a);ctx.fillStyle='#8888a0';ctx.fillText(labels[i],lx,ly);}
+}
 function renderPersonality(){
   const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('personalitySection').classList.remove('visible');return;}
   const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
@@ -2297,10 +2345,22 @@ function renderPersonality(){
   else if(kd>1.5&&ad>150){ic='&#x2694;&#xFE0F;';ti='GUERRERO';de='Equilibrio entre agresion y supervivencia. Un jugador completo.';co='var(--accent)';tg=['Equilibrado','Versatil','Fiable'];}
   else if(parseFloat(calcTop10Rate(s))>60){ic='&#x1F9BE;';ti='SUPERVIVIENTE';de='Maestro de la zona. Siempre llegas al final.';co='var(--accent-green)';tg=['Cauteloso','Top 10','Paciencia'];}
   else{ic='&#x1F476;';ti='NOVATO PROMETEDOR';de='En camino a la grandeza. Cada partida es una leccion.';co='var(--accent)';tg=['Aprendiendo','Potencial','Progreso'];}
-  document.getElementById('personalitySection').innerHTML='<div class="personality-icon">'+ic+'</div><div class="personality-title" style="color:'+co+';">'+ti+'</div><div class="personality-desc">'+de+'</div><div class="personality-tags">'+tg.map(t=>'<span class="personality-tag" style="background:'+co+'22;color:'+co+';border:1px solid '+co+'44;">'+t+'</span>').join('')+'</div><button class="personality-share" onclick="sharePersonality(\''+ti+'\')">COMPARTIR MI PERSONALIDAD</button>';
+  const dn=calcDnaScores(s);
+  const coMap={'var(--accent-purple)':'#a855f7','var(--accent-red)':'#ff3355','var(--accent-yellow)':'#ffd700','var(--accent-green)':'#00ff88','var(--accent-orange)':'#ff6b00','var(--accent)':'#00f0ff'};
+  const coHex=coMap[co]||'#00f0ff';
+  const bars=[
+    {label:'Agresividad',val:dn.agresividad,col:'#ff3355'},
+    {label:'Precision',val:dn.precision,col:'#a855f7'},
+    {label:'Supervivencia',val:dn.supervivencia,col:'#00ff88'},
+    {label:'Movilidad',val:dn.movilidad,col:'#ff6b00'},
+    {label:'Soporte',val:dn.soporte,col:'#00f0ff'}
+  ];
+  const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" style="width:'+b.val+'%;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
+  document.getElementById('personalitySection').innerHTML='<div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="personality-icon">'+ic+'</div><div class="personality-title" style="color:'+co+';">'+ti+'</div><div class="personality-desc">'+de+'</div><div class="personality-tags">'+tg.map(t=>'<span class="personality-tag" style="background:'+co+'22;color:'+co+';border:1px solid '+co+'44;">'+t+'</span>').join('')+'</div><div class="dna-bars">'+barsHtml+'</div><button class="personality-share" onclick="sharePersonality(\''+ti+'\')">COMPARTIR MI ADN</button></div></div>';
   document.getElementById('personalitySection').classList.add('visible');
+  drawDnaRadar('dnaRadarCanvas',dn,coHex);
 }
-function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi personalidad PUBG es: '+t+'! Descubre la tuya en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://v4nz.com'});else{navigator.clipboard?.writeText(x+' https://v4nz.com');alert('Copiado al portapapeles!');}}
+function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi ADN PUBG es: '+t+'! Descubre el tuyo en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://v4nz.com'});else{navigator.clipboard?.writeText(x+' https://v4nz.com');alert('Copiado al portapapeles!');}}
 
 /* === STATS CARD POLYFILL === */
 if(!CanvasRenderingContext2D.prototype.roundRect){
@@ -2603,7 +2663,7 @@ async function comparePlayers(){
   try{
     let s1,s2,rn1=n1,rn2=n2;
     // Fetch season first
-    setLoaderStep('Obteniendo temporada...');
+    setLoaderStep('Cargando datos...');
     const sr=await apiGet(API_BASE+'/'+cmpPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
     // Player 1
     if(n1.toUpperCase()==='KANNEDA'){s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats[cmpMode]||{};}
@@ -2704,7 +2764,7 @@ async function analyzeSquad(){
   const SQ_COLORS=['#00f0ff','#ff6b00','#00ff88','#a855f7'];
   const SQ_COLORS_DIM=['rgba(0,240,255,0.12)','rgba(255,107,0,0.12)','rgba(0,255,136,0.12)','rgba(168,85,247,0.12)'];
   try{
-    setLoaderStep('Obteniendo temporada...');
+    setLoaderStep('Cargando datos...');
     const sr=await apiGet(API_BASE+'/'+sqPlatform+'/seasons');
     const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
     const players=[];
@@ -3599,7 +3659,7 @@ async function renderLeaderboard(){
   let sid=currentSeasonId;
   if(!sid||sid==='demo'){
     try{
-      lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-timer">Obteniendo temporada...</div></div></div>';
+      lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando ranking...</div></div></div>';
       const fetchPlat=lbPlatform==='console'?'psn':lbPlatform;
       const sr=await apiGet(API_BASE+'/'+fetchPlat+'/seasons');
       const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
@@ -3607,7 +3667,7 @@ async function renderLeaderboard(){
     }catch(e){console.error('Failed to fetch season for LB:',e);renderLeaderboardDemo();return;}
   }
   try{
-    lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-timer">Cargando Top 500...</div></div></div>';
+    lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500...</div></div></div>';
     const gm=lbMode;
     if(lbPlatform==='console'){
       // Fetch both PSN and Xbox, merge and sort
