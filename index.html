@@ -1589,7 +1589,7 @@ async function loadClanRanking(){
     h+='<p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">'+d.clans.length+' clanes registrados &mdash; Publica tu clan para aparecer aqui</p>';
     el.innerHTML=h;
   }catch(e){
-    el.innerHTML='<div class="empty-state"><p>'+e.message+'</p></div>';
+    el.innerHTML='<div class="empty-state"><p>'+esc(e.message)+'</p></div>';
   }
 }
 
@@ -1644,7 +1644,7 @@ async function toggleClanMembers(tag,cardEl){
     container.innerHTML=mh;
     container.dataset.loaded='1';
   }catch(e){
-    container.innerHTML='<p style="font-size:.75rem;color:var(--accent-orange);text-align:center;">'+e.message+'</p>';
+    container.innerHTML='<p style="font-size:.75rem;color:var(--accent-orange);text-align:center;">'+esc(e.message)+'</p>';
   }
 }
 
@@ -2277,7 +2277,7 @@ async function generateHeatmap(){
     else{drawHeatmap(null);}
   }catch(e){
     console.error('Heatmap error:',e);
-    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);">Error: '+e.message+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
+    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);">Error: '+esc(e.message)+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
   }
 }
 
@@ -2493,7 +2493,7 @@ async function openTelemMap(url,playerName,mapName,matchIdx){
 
   }catch(e){
     console.error('Telemetry error:',e);
-    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);font-size:1rem;margin-bottom:8px;">Error al cargar telemetria</div><div style="color:var(--text-dim);font-size:.8rem;">'+e.message+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
+    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);font-size:1rem;margin-bottom:8px;">Error al cargar telemetria</div><div style="color:var(--text-dim);font-size:.8rem;">'+esc(e.message)+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
   }
 }
 
@@ -2906,7 +2906,7 @@ async function comparePlayers(){
     if(n2.toUpperCase()==='KANNEDA'){s2=DEMO_DATA.seasonStats.data.attributes.gameModeStats[cmpMode]||{};}
     else{setLoaderStep('Buscando '+n2+'...');const p2=await findPlayer(n2,cmpPlatform);rn2=p2.data[0].attributes.name;setLoaderStep('Stats de '+rn2+'...');const ss2=await apiGet(API_BASE+'/'+cmpPlatform+'/players/'+p2.data[0].id+'/seasons/'+cs.id);s2=ss2.data.attributes.gameModeStats[cmpMode]||ss2.data.attributes.gameModeStats.squad||{};}
     renderCompareCards(rn1,s1,rn2,s2);
-  }catch(e){console.error('Compare error:',e);document.getElementById('compareCard1').innerHTML='<div class="empty-state"><p style="color:var(--accent-orange);">'+(''+e.message||'Error desconocido')+'</p></div>';document.getElementById('compareCard2').innerHTML='<div class="empty-state"><p>Revisa los nombres e intentalo de nuevo</p></div>';document.getElementById('compareBarChart').innerHTML='';}
+  }catch(e){console.error('Compare error:',e);document.getElementById('compareCard1').innerHTML='<div class="empty-state"><p style="color:var(--accent-orange);">'+esc(''+e.message||'Error desconocido')+'</p></div>';document.getElementById('compareCard2').innerHTML='<div class="empty-state"><p>Revisa los nombres e intentalo de nuevo</p></div>';document.getElementById('compareBarChart').innerHTML='';}
   finally{showLoading(false);}
 }
 function renderCompareCards(n1,s1,n2,s2){
@@ -3018,7 +3018,7 @@ async function analyzeSquad(){
     renderSquadResults(players);
   }catch(e){
     console.error('Squad error:',e);
-    document.getElementById('squadResults').innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:20px;">'+e.message+'</div>';
+    document.getElementById('squadResults').innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:20px;">'+esc(e.message)+'</div>';
   }finally{showLoading(false);}
 }
 
@@ -3325,7 +3325,7 @@ async function doPublishClan(tag,name,memberCount,level){
     history.pushState(null,'','/clan/'+tag);
   }catch(e){
     btn.disabled=false;btn.innerHTML='&#x1F4E2; PUBLICAR CLAN EN RANKING';
-    alert('Error: '+e.message+'. Puede que la base de datos no este configurada aun.');
+    alert('Error: '+esc(e.message)+'. Puede que la base de datos no este configurada aun.');
   }
 }
 function setClanSearchTab(mode){
@@ -3521,7 +3521,7 @@ async function searchClan(){
       }
     }
   }catch(e){
-    document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+    document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(e.message)+'</p>';
   }finally{showLoading(false);}
 }
 // Request to add a player to a clan
@@ -3579,7 +3579,7 @@ async function refreshClanStats(clanTag,btn){
     setTimeout(()=>{loadClanFromHistory(clanTag);},1200);
   }catch(e){
     console.error('Refresh clan error:',e);
-    btn.innerHTML='&#x274C; '+e.message;btn.style.color='var(--accent-orange)';
+    btn.innerHTML='&#x274C; '+esc(e.message);btn.style.color='var(--accent-orange)';
     setTimeout(()=>{btn.innerHTML=origText;btn.disabled=false;btn.style.opacity='1';btn.style.color='';},3000);
   }
 }
@@ -3588,7 +3588,8 @@ async function loadPendingRequests(){
   const container=document.getElementById('adminPendingRequests');
   if(!container)return;
   try{
-    const r=await fetch('/clans/requests/pending');
+    const adminTk=sessionStorage.getItem('adminToken');
+    const r=await fetch('/clans/requests/pending',{headers:{'Authorization':'Bearer '+adminTk}});
     const d=await r.json();
     if(!d.requests||!d.requests.length){
       container.innerHTML='<div style="font-size:.72rem;color:var(--text-dim);text-align:center;padding:8px;">No hay solicitudes pendientes</div>';
@@ -3610,14 +3611,14 @@ async function loadPendingRequests(){
 async function approveRequest(id,btn){
   btn.disabled=true;btn.textContent='...';
   try{
-    await fetch('/clans/requests/'+id+'/approve',{method:'POST'});
+    await fetch('/clans/requests/'+id+'/approve',{method:'POST',headers:{'Authorization':'Bearer '+(sessionStorage.getItem('adminToken')||'')}});
     btn.parentElement.style.opacity='0.3';btn.parentElement.innerHTML+='<span style="color:var(--accent-green);font-size:.65rem;margin-left:8px;">Aprobado</span>';
   }catch(e){btn.textContent='ERR';}
 }
 async function rejectRequest(id,btn){
   btn.disabled=true;btn.textContent='...';
   try{
-    await fetch('/clans/requests/'+id+'/reject',{method:'POST'});
+    await fetch('/clans/requests/'+id+'/reject',{method:'POST',headers:{'Authorization':'Bearer '+(sessionStorage.getItem('adminToken')||'')}});
     btn.parentElement.style.opacity='0.3';btn.parentElement.innerHTML+='<span style="color:var(--accent-red);font-size:.65rem;margin-left:8px;">Rechazado</span>';
   }catch(e){btn.textContent='ERR';}
 }
@@ -3646,7 +3647,7 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
   try{
     const resp=await fetch('/clans/discover-members',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sessionStorage.getItem('adminToken')||'')},
       body:JSON.stringify({gamertag:seed,platform:clanPlatform})
     });
     const data=await resp.json();
@@ -3701,7 +3702,7 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
       });});
     }
   }catch(e){
-    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
   }
 }
 
@@ -3730,7 +3731,7 @@ async function importFromPubgclans(){
     // Refresh leaderboard
     loadClanRanking();
   }catch(e){
-    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+e.message+'</span>';
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
   }
 }
 
@@ -3758,7 +3759,7 @@ async function analyzeClanMembers(clanName,clanTag,memberCount,level){
     // Update history with member names
     saveClanToHistory(clanName,clanTag,memberCount,level,clanPlatform,names);
   }catch(e){
-    document.getElementById('clanResults').innerHTML+='<p style="color:var(--accent-orange);font-size:.85rem;margin-top:10px;">'+e.message+'</p>';
+    document.getElementById('clanResults').innerHTML+='<p style="color:var(--accent-orange);font-size:.85rem;margin-top:10px;">'+esc(e.message)+'</p>';
   }finally{showLoading(false);}
 }
 
@@ -3933,7 +3934,7 @@ async function compareClans(){
     h+='</div>';
     cr.innerHTML=h;
   }catch(e){
-    cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+e.message+'</p>';
+    cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(e.message)+'</p>';
   }finally{showLoading(false);}
 }
 

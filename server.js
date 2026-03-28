@@ -25,8 +25,22 @@ const pool = process.env.DATABASE_URL ? new Pool({
   ssl: { rejectUnauthorized: false }
 }) : null;
 
-app.use(cors());
+// ═══ SECURITY: CORS restricted to v4nz.com only ═══
+app.use(cors({
+  origin: ['https://v4nz.com', 'https://www.v4nz.com', 'http://localhost:3000'],
+  credentials: true
+}));
 app.use(express.json());
+
+// ═══ SECURITY HEADERS ═══
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 app.use(express.static(path.join(__dirname)));
 
@@ -150,11 +164,11 @@ app.get('/clans/leaderboard', async (req, res) => {
        FROM clans WHERE active_members > 0 ORDER BY ${order} LIMIT $1`, [limit]
     );
     res.json({ clans: rows, total: rows.length });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // GET /clans/requests/pending — Admin: list pending requests (MUST be before :tag wildcard)
-app.get('/clans/requests/pending', async (req, res) => {
+app.get('/clans/requests/pending', requireAdmin, async (req, res) => {
   if (!pool) return res.json({ requests: [] });
   try {
     const { rows } = await pool.query(
@@ -162,7 +176,7 @@ app.get('/clans/requests/pending', async (req, res) => {
        FROM member_requests WHERE status = 'pending' ORDER BY created_at DESC LIMIT 50`
     );
     res.json({ requests: rows });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // GET /clans/search/:query — Search clans by name or tag (MUST be before :tag wildcard)
@@ -176,7 +190,7 @@ app.get('/clans/search/:query', async (req, res) => {
        ORDER BY active_members DESC LIMIT 20`, [q]
     );
     res.json({ clans: rows });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // GET /clans/:tag — Get clan detail with members
@@ -191,11 +205,11 @@ app.get('/clans/:tag', async (req, res) => {
       [tag]
     );
     res.json({ clan: clan.rows[0], members: members.rows });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // POST /clans/register — Register or update a clan with member stats
-app.post('/clans/register', async (req, res) => {
+app.post('/clans/register', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
   try {
     const { tag, name, memberCount, level, platform, registeredBy, members } = req.body;
@@ -252,7 +266,7 @@ app.post('/clans/register', async (req, res) => {
     }
 
     res.json({ ok: true, tag: cleanTag, members: validMembers.length, url: `/clan/${cleanTag}` });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // ═══ MEMBER REQUEST SYSTEM ═══
@@ -317,11 +331,11 @@ app.post('/clans/request-member', async (req, res) => {
       console.log(`[request] Queued for review (not verified): ${cleanName} -> [${cleanTag}]`);
       res.json({ ok: true, message: 'Jugador no encontrado en PUBG — solicitud enviada para revision manual', autoAdded: false });
     }
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // POST /clans/requests/:id/approve — Admin: approve a member request
-app.post('/clans/requests/:id/approve', async (req, res) => {
+app.post('/clans/requests/:id/approve', requireAdmin, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   try {
     const requestId = parseInt(req.params.id);
@@ -341,21 +355,21 @@ app.post('/clans/requests/:id/approve', async (req, res) => {
     await pool.query("UPDATE member_requests SET status = 'approved', reviewed_at = NOW() WHERE id = $1", [requestId]);
     console.log(`[request] Approved: ${r.player_name} -> [${r.clan_tag}]`);
     res.json({ ok: true, playerName: r.player_name, clanTag: r.clan_tag });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // POST /clans/requests/:id/reject — Admin: reject a member request
-app.post('/clans/requests/:id/reject', async (req, res) => {
+app.post('/clans/requests/:id/reject', requireAdmin, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   try {
     await pool.query("UPDATE member_requests SET status = 'rejected', reviewed_at = NOW() WHERE id = $1", [parseInt(req.params.id)]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // ═══ IMPORT CLAN FROM PUBGCLANS.NET ═══
 // POST /clans/import-pubgclans — Import a clan using pubgclans.net data + PUBG API metadata
-app.post('/clans/import-pubgclans', async (req, res) => {
+app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
   const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
   const { clanId, gameMode } = req.body;
@@ -514,13 +528,13 @@ app.post('/clans/import-pubgclans', async (req, res) => {
 
   } catch (e) {
     console.error('[import] Error:', e.message);
-    res.status(500).json({ error: e.message });
+    console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
 // ═══ AUTO-DISCOVER CLAN MEMBERS FROM MATCHES ═══
 // POST /clans/discover-members — Given one gamertag, find frequent teammates
-app.post('/clans/discover-members', async (req, res) => {
+app.post('/clans/discover-members', requireAdmin, async (req, res) => {
   const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
   const { gamertag, platform } = req.body;
   if (!gamertag || !platform) return res.status(400).json({ error: 'gamertag and platform required' });
@@ -675,7 +689,7 @@ app.post('/clans/discover-members', async (req, res) => {
 
   } catch (e) {
     console.error('[discover] Error:', e.message);
-    res.status(500).json({ error: e.message });
+    console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -726,6 +740,18 @@ function requireAuth(req, res, next) {
   catch (e) { return res.status(401).json({ error: 'Token invalido' }); }
 }
 
+// Require admin — blocks if no valid admin token
+function requireAdmin(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    req.user = decoded;
+    next();
+  } catch (e) { return res.status(401).json({ error: 'Token invalido' }); }
+}
+
 function generateToken(user) {
   return jwt.sign({ id: user.id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '30d' });
 }
@@ -735,7 +761,7 @@ app.post('/auth/register', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password, displayName, gamertag, platform } = req.body;
   if (!email || !password || !displayName) return res.status(400).json({ error: 'Email, contrasena y nombre son obligatorios' });
-  if (password.length < 4) return res.status(400).json({ error: 'La contrasena debe tener al menos 4 caracteres' });
+  if (password.length < 8) return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
   try {
     const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
     if (exists.rows.length) return res.status(409).json({ error: 'Este email ya esta registrado' });
@@ -747,7 +773,7 @@ app.post('/auth/register', async (req, res) => {
     const user = result.rows[0];
     const token = generateToken(user);
     res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // POST /auth/login — Email + password login
@@ -765,7 +791,7 @@ app.post('/auth/login', async (req, res) => {
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     const token = generateToken(user);
     res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // GET /auth/discord — Redirect to Discord OAuth
@@ -838,7 +864,7 @@ app.get('/auth/me', requireAuth, async (req, res) => {
     const result = await pool.query('SELECT id, display_name, gamertag, platform, email, discord_name, avatar_url FROM users WHERE id = $1', [req.user.id]);
     if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json({ user: result.rows[0] });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // ═══ FAVORITES SYNC ═══
@@ -849,7 +875,7 @@ app.get('/favorites', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT name, platform, fav_type, fav_group FROM user_favorites WHERE user_id = $1 ORDER BY added_at DESC', [req.user.id]);
     res.json({ favorites: rows });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // POST /favorites — Add a favorite
@@ -863,7 +889,7 @@ app.post('/favorites', requireAuth, async (req, res) => {
       [req.user.id, name, platform || 'psn', type || 'player', group || '']
     );
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // DELETE /favorites/:name — Remove a favorite
@@ -872,7 +898,7 @@ app.delete('/favorites/:name', requireAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM user_favorites WHERE user_id = $1 AND name = $2', [req.user.id, req.params.name]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // POST /favorites/sync — Full sync (replace all favorites)
@@ -889,7 +915,7 @@ app.post('/favorites/sync', requireAuth, async (req, res) => {
       );
     }
     res.json({ ok: true, count: favs.length });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // ═══ PUBG API PROXY WITH CACHE ═══
@@ -979,7 +1005,7 @@ app.all('/api/*', rateLimit, async (req, res) => {
       } catch (e) { /* no stale cache either */ }
     }
     console.error('Proxy error:', err.message);
-    res.status(500).json({ error: 'Proxy error', details: err.message });
+    console.error('Proxy error:', err.message); res.status(500).json({ error: 'Error al consultar datos' });
   }
 });
 
