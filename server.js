@@ -739,9 +739,10 @@ app.get('/auth/discord', (req, res) => {
 
 // GET /auth/discord/callback — Discord OAuth callback
 app.get('/auth/discord/callback', async (req, res) => {
+  if (!pool) return res.redirect('/#auth_error=db_unavailable');
   const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
   const { code } = req.query;
-  if (!code) return res.redirect('/?auth_error=no_code');
+  if (!code) return res.redirect('/#auth_error=no_code');
   try {
     // Exchange code for token
     const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
@@ -780,15 +781,16 @@ app.get('/auth/discord/callback', async (req, res) => {
     }
     const jwtToken = generateToken(user);
     // Redirect back to app with token in URL (frontend picks it up)
-    res.redirect('/?auth_token=' + jwtToken);
+    res.redirect('/#auth_token=' + jwtToken);
   } catch (e) {
     console.error('Discord OAuth error:', e.message);
-    res.redirect('/?auth_error=server_error');
+    res.redirect('/#auth_error=server_error');
   }
 });
 
 // GET /auth/me — Get current user info
 app.get('/auth/me', requireAuth, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
     const result = await pool.query('SELECT id, display_name, gamertag, platform, email, discord_name, avatar_url FROM users WHERE id = $1', [req.user.id]);
     if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -800,6 +802,7 @@ app.get('/auth/me', requireAuth, async (req, res) => {
 
 // GET /favorites — Get user's favorites
 app.get('/favorites', requireAuth, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
     const { rows } = await pool.query('SELECT name, platform, fav_type, fav_group FROM user_favorites WHERE user_id = $1 ORDER BY added_at DESC', [req.user.id]);
     res.json({ favorites: rows });
@@ -808,6 +811,7 @@ app.get('/favorites', requireAuth, async (req, res) => {
 
 // POST /favorites — Add a favorite
 app.post('/favorites', requireAuth, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { name, platform, type, group } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre obligatorio' });
   try {
@@ -821,6 +825,7 @@ app.post('/favorites', requireAuth, async (req, res) => {
 
 // DELETE /favorites/:name — Remove a favorite
 app.delete('/favorites/:name', requireAuth, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
     await pool.query('DELETE FROM user_favorites WHERE user_id = $1 AND name = $2', [req.user.id, req.params.name]);
     res.json({ ok: true });
@@ -829,6 +834,7 @@ app.delete('/favorites/:name', requireAuth, async (req, res) => {
 
 // POST /favorites/sync — Full sync (replace all favorites)
 app.post('/favorites/sync', requireAuth, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { favorites: favs } = req.body;
   if (!Array.isArray(favs)) return res.status(400).json({ error: 'Formato invalido' });
   try {
@@ -942,10 +948,11 @@ setInterval(async () => {
 }, 1800000);
 
 // Admin verification endpoint — password never exposed in frontend
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'v4nz2024admin';
-app.post('/auth/admin', (req, res) => {
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+app.post('/auth/admin', rateLimit, (req, res) => {
+  if (!ADMIN_PASSWORD) return res.status(503).json({ error: 'Admin no configurado' });
   const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
+  if (password && password === ADMIN_PASSWORD) {
     const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ ok: true, token });
   } else {
