@@ -8,10 +8,16 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
+const JWT_SECRET = process.env.JWT_SECRET || 'v4nz_secret_' + Math.random().toString(36).slice(2);
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
+const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://v4nz.com/auth/discord/callback';
 
 // PostgreSQL connection (Railway provides DATABASE_URL automatically)
 const pool = process.env.DATABASE_URL ? new Pool({
@@ -82,6 +88,32 @@ async function initDB() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_api_cache_created ON api_cache(created_at);
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE,
+        password_hash VARCHAR(255),
+        discord_id VARCHAR(50) UNIQUE,
+        discord_name VARCHAR(100),
+        display_name VARCHAR(50) NOT NULL,
+        gamertag VARCHAR(50),
+        platform VARCHAR(10) DEFAULT 'psn',
+        avatar_url TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        last_login TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_users_discord ON users(discord_id);
+      CREATE TABLE IF NOT EXISTS user_favorites (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        fav_type VARCHAR(10) DEFAULT 'player',
+        name VARCHAR(50) NOT NULL,
+        platform VARCHAR(10) DEFAULT 'psn',
+        fav_group VARCHAR(30) DEFAULT '',
+        added_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, fav_type, name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_favorites_user ON user_favorites(user_id);
     `);
     // Cleanup old cache entries on startup (older than 1 hour)
     await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour'").catch(() => {});
@@ -630,6 +662,186 @@ setInterval(() => {
     if (now - entry.start > RATE_LIMIT_WINDOW * 2) rateLimitMap.delete(ip);
   }
 }, 300000);
+
+// ═══ AUTH SYSTEM ═══
+
+// JWT middleware — extracts user from token (optional, doesn't block)
+function authMiddleware(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token) {
+    try { req.user = jwt.verify(token, JWT_SECRET); }
+    catch (e) { req.user = null; }
+  }
+  next();
+}
+
+// Require auth — blocks if no valid token
+function requireAuth(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No autorizado' });
+  try { req.user = jwt.verify(token, JWT_SECRET); next(); }
+  catch (e) { return res.status(401).json({ error: 'Token invalido' }); }
+}
+
+function generateToken(user) {
+  return jwt.sign({ id: user.id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '30d' });
+}
+
+// POST /auth/register — Email + password registration
+app.post('/auth/register', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
+  const { email, password, displayName, gamertag, platform } = req.body;
+  if (!email || !password || !displayName) return res.status(400).json({ error: 'Email, contrasena y nombre son obligatorios' });
+  if (password.length < 4) return res.status(400).json({ error: 'La contrasena debe tener al menos 4 caracteres' });
+  try {
+    const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (exists.rows.length) return res.status(409).json({ error: 'Este email ya esta registrado' });
+    const hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash, display_name, gamertag, platform) VALUES ($1, $2, $3, $4, $5) RETURNING id, display_name, gamertag, platform',
+      [email.toLowerCase(), hash, displayName.slice(0, 50), (gamertag || '').slice(0, 50), platform || 'psn']
+    );
+    const user = result.rows[0];
+    const token = generateToken(user);
+    res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /auth/login — Email + password login
+app.post('/auth/login', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email y contrasena son obligatorios' });
+  try {
+    const result = await pool.query('SELECT id, display_name, password_hash, gamertag, platform FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (!result.rows.length) return res.status(401).json({ error: 'Email o contrasena incorrectos' });
+    const user = result.rows[0];
+    if (!user.password_hash) return res.status(401).json({ error: 'Esta cuenta usa Discord para entrar' });
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Email o contrasena incorrectos' });
+    await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+    const token = generateToken(user);
+    res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /auth/discord — Redirect to Discord OAuth
+app.get('/auth/discord', (req, res) => {
+  if (!DISCORD_CLIENT_ID) return res.status(503).json({ error: 'Discord OAuth no configurado' });
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: DISCORD_REDIRECT_URI,
+    response_type: 'code',
+    scope: 'identify email'
+  });
+  res.redirect('https://discord.com/api/oauth2/authorize?' + params.toString());
+});
+
+// GET /auth/discord/callback — Discord OAuth callback
+app.get('/auth/discord/callback', async (req, res) => {
+  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+  const { code } = req.query;
+  if (!code) return res.redirect('/?auth_error=no_code');
+  try {
+    // Exchange code for token
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: DISCORD_CLIENT_ID, client_secret: DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code', code, redirect_uri: DISCORD_REDIRECT_URI
+      })
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) return res.redirect('/?auth_error=token_failed');
+
+    // Get Discord user info
+    const userRes = await fetch('https://discord.com/api/users/@me', {
+      headers: { 'Authorization': 'Bearer ' + tokenData.access_token }
+    });
+    const discordUser = await userRes.json();
+    if (!discordUser.id) return res.redirect('/?auth_error=user_failed');
+
+    // Upsert user in DB
+    let user;
+    const existing = await pool.query('SELECT id, display_name, gamertag, platform FROM users WHERE discord_id = $1', [discordUser.id]);
+    if (existing.rows.length) {
+      user = existing.rows[0];
+      await pool.query('UPDATE users SET discord_name = $1, avatar_url = $2, last_login = NOW() WHERE id = $3',
+        [discordUser.username, discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null, user.id]);
+    } else {
+      const result = await pool.query(
+        'INSERT INTO users (discord_id, discord_name, display_name, avatar_url, email) VALUES ($1, $2, $3, $4, $5) RETURNING id, display_name, gamertag, platform',
+        [discordUser.id, discordUser.username, discordUser.global_name || discordUser.username,
+         discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null,
+         discordUser.email || null]
+      );
+      user = result.rows[0];
+    }
+    const jwtToken = generateToken(user);
+    // Redirect back to app with token in URL (frontend picks it up)
+    res.redirect('/?auth_token=' + jwtToken);
+  } catch (e) {
+    console.error('Discord OAuth error:', e.message);
+    res.redirect('/?auth_error=server_error');
+  }
+});
+
+// GET /auth/me — Get current user info
+app.get('/auth/me', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, display_name, gamertag, platform, email, discord_name, avatar_url FROM users WHERE id = $1', [req.user.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ user: result.rows[0] });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══ FAVORITES SYNC ═══
+
+// GET /favorites — Get user's favorites
+app.get('/favorites', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT name, platform, fav_type, fav_group FROM user_favorites WHERE user_id = $1 ORDER BY added_at DESC', [req.user.id]);
+    res.json({ favorites: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /favorites — Add a favorite
+app.post('/favorites', requireAuth, async (req, res) => {
+  const { name, platform, type, group } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nombre obligatorio' });
+  try {
+    await pool.query(
+      'INSERT INTO user_favorites (user_id, name, platform, fav_type, fav_group) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id, fav_type, name) DO UPDATE SET fav_group = $5, platform = $3',
+      [req.user.id, name, platform || 'psn', type || 'player', group || '']
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /favorites/:name — Remove a favorite
+app.delete('/favorites/:name', requireAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM user_favorites WHERE user_id = $1 AND name = $2', [req.user.id, req.params.name]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /favorites/sync — Full sync (replace all favorites)
+app.post('/favorites/sync', requireAuth, async (req, res) => {
+  const { favorites: favs } = req.body;
+  if (!Array.isArray(favs)) return res.status(400).json({ error: 'Formato invalido' });
+  try {
+    await pool.query('DELETE FROM user_favorites WHERE user_id = $1', [req.user.id]);
+    for (const f of favs) {
+      await pool.query(
+        'INSERT INTO user_favorites (user_id, name, platform, fav_type, fav_group) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING',
+        [req.user.id, f.name, f.platform || 'psn', f.type || 'player', f.group || '']
+      );
+    }
+    res.json({ ok: true, count: favs.length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ═══ PUBG API PROXY WITH CACHE ═══
 // Cache TTL in minutes per endpoint type
