@@ -183,19 +183,27 @@ nav a.active { color: var(--accent); }
 nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 24px; height: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 8px rgba(0,240,255,0.4); }
 
 /* SEARCH */
-.search-hero { position: relative; z-index: 1; text-align: center; padding: 50px 2rem 36px; }
-.search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 3px; }
+.search-hero { position: relative; z-index: 1; text-align: center; padding: 70px 2rem 44px; }
+.search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 2.6rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 4px; line-height:1.1; }
 .search-hero h1 span { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.search-box { display: flex; align-items: center; max-width: 640px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; box-shadow: var(--shadow-card); }
-.search-box:focus-within { border-color: rgba(0,240,255,0.35); box-shadow: 0 0 30px rgba(0,240,255,0.1), var(--shadow-card); }
-.platform-selector { display: flex; gap: 2px; padding: 6px 8px; border-right: 1px solid var(--border); }
+.hero-tagline { color:var(--text-secondary); font-size:1.05rem; margin-bottom:10px; font-family:'Inter',sans-serif; font-weight:400; }
+.hero-powered { font-size:.72rem; color:var(--text-dim); margin-bottom:28px; }
+.hero-powered span { color:var(--accent-orange); font-weight:600; }
+.hero-platform-toggle { display:flex; justify-content:center; gap:8px; margin-bottom:18px; }
+.hero-platform-toggle .platform-btn { background:var(--bg-card); border:2px solid var(--border); color:var(--text-dim); cursor:pointer; padding:12px 28px; border-radius:12px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.88rem; text-transform:uppercase; letter-spacing:1.5px; transition:all .25s; display:inline-flex; align-items:center; gap:8px; }
+.hero-platform-toggle .platform-btn:hover { color:var(--text-primary); border-color:rgba(255,255,255,0.15); }
+.hero-platform-toggle .platform-btn.active { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); box-shadow:0 0 20px rgba(0,240,255,0.1); }
+.hero-platform-toggle .platform-btn svg { width:22px; height:22px; }
+.search-box { display: flex; align-items: center; max-width: 700px; margin: 0 auto; background: var(--bg-card); border: 2px solid var(--border); border-radius: 16px; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; box-shadow: var(--shadow-card); }
+.search-box:focus-within { border-color: rgba(0,240,255,0.4); box-shadow: 0 0 40px rgba(0,240,255,0.12), 0 0 80px rgba(0,240,255,0.04), var(--shadow-card); }
+.platform-selector { display: none; }
 .platform-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 10px 14px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.25s; }
 .platform-btn:hover { color: var(--text-primary); }
 .platform-btn.active { color: var(--accent); background: var(--accent-dim); }
 .platform-btn svg { width: 18px; height: 18px; vertical-align: middle; margin-right: 4px; }
-.search-input { flex: 1; background: transparent; border: none; color: var(--text-primary); font-size: 1rem; padding: 16px 20px; outline: none; font-family: 'Inter', sans-serif; }
-.search-input::placeholder { color: var(--text-dim); }
-.search-btn { background: var(--gradient-main); border: none; color: #000; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; padding: 16px 30px; cursor: pointer; transition: all 0.25s; }
+.search-input { flex: 1; background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; padding: 20px 24px; outline: none; font-family: 'Inter', sans-serif; }
+.search-input::placeholder { color: var(--text-dim); font-size:1rem; }
+.search-btn { background: var(--gradient-main); border: none; color: #000; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 2px; padding: 20px 36px; cursor: pointer; transition: all 0.25s; }
 .search-btn:hover { opacity: 0.92; transform: translateY(-1px); }
 .recent-searches { max-width: 680px; margin: 16px auto 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .recent-tag { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 600; transition: all 0.2s; text-transform: uppercase; }
@@ -663,9 +671,11 @@ footer a { color: var(--accent); text-decoration: none; }
 @media(max-width:900px){
   .header-inner{flex-direction:column;height:auto;padding:10px 0;gap:6px}
   nav{justify-content:center}
-  .search-hero h1{font-size:1.5rem;letter-spacing:2px}
-  .search-hero{padding:36px 1rem 28px}
-  .search-box{flex-direction:column}
+  .search-hero h1{font-size:1.6rem;letter-spacing:2px}
+  .search-hero{padding:44px 1rem 30px}
+  .search-box{flex-direction:column;border-radius:14px}
+  .hero-platform-toggle{gap:6px}
+  .hero-platform-toggle .platform-btn{padding:10px 20px;font-size:.8rem}
   .platform-selector{border-right:none;border-bottom:1px solid var(--border);justify-content:center}
   .player-header.visible{flex-direction:column;text-align:center;padding:20px}
   .player-quick-stats{margin-left:0;justify-content:center;flex-wrap:wrap}
@@ -692,6 +702,9 @@ footer a { color: var(--accent); text-decoration: none; }
 @media(max-width:480px){
   .stats-grid{grid-template-columns:1fr}
   .search-hero h1{font-size:1.2rem}
+  .hero-platform-toggle .platform-btn{padding:10px 16px;font-size:.75rem}
+  .search-input{font-size:1rem;padding:16px 18px}
+  .search-btn{padding:16px 24px;font-size:.85rem}
   .player-info h2{font-size:1.1rem}
   .streamer-banner{flex-direction:column;text-align:center}
   .streamer-banner-links{justify-content:center}
@@ -798,30 +811,26 @@ footer a { color: var(--accent); text-decoration: none; }
 </header>
 
 <section class="search-hero" id="searchHero">
-  <div style="margin-bottom:16px;">
-    <img src="pubg-logo.png" alt="PUBG" style="height:70px;width:auto;filter:drop-shadow(0 0 15px rgba(242,169,0,0.4));" onerror="this.style.display='none';document.getElementById('heroTextFallback').style.display='block'">
-    <div id="heroTextFallback" style="display:none;">
-      <svg width="200" height="50" viewBox="0 0 200 50">
-        <text x="100" y="38" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="36" font-weight="900" fill="#f2a900" stroke="#e8740c" stroke-width="1" style="filter:drop-shadow(0 0 10px rgba(242,169,0,0.5));">PUBG</text>
-      </svg>
-    </div>
+  <h1>El tracker <span>PUBG</span> para consola</h1>
+  <p class="hero-tagline">Stats en tiempo real para PlayStation y Xbox &mdash; en espanol</p>
+  <p class="hero-powered">Powered by <span>PUBG Official API</span> &mdash; Gratis, sin anuncios, hecho por jugadores</p>
+  <div class="hero-platform-toggle">
+    <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.21-1.263-4.834-4.003-5.676-1.47-.448-3.828-.926-5.828-1.648zM18.875 16.155c-1.478-.396-3.055-.208-4.673.467l-.537.222v3.076l.793-.34c.832-.346 1.684-.574 2.47-.414.557.112.682.413.682.736 0 .382-.193.683-.782.87-1.324.419-3.816-.313-3.816-.313v2.611s1.795.645 3.535.645c1.7 0 3.453-.553 3.453-2.813 0-2.115-1.333-3.308-4.125-3.947zM1.125 18.527c1.657.573 4.087.773 5.456.396 1.47-.405 2.586-1.28 2.586-3.236 0-1.853-.822-2.964-2.758-3.606-1.157-.378-2.41-.912-2.41-1.554 0-.456.342-.73.988-.758.862-.039 1.85.222 2.752.602v-2.546c-.872-.267-1.795-.392-2.744-.392-2.388 0-4.12 1.074-4.12 3.303 0 1.688.884 2.822 2.768 3.506 1.177.419 1.644.771 1.644 1.405 0 .611-.503.927-1.415.927-.935 0-2.168-.35-3.17-.87l.424 2.823z"/></svg> PlayStation
+    </button>
+    <button class="platform-btn" data-platform="xbox" onclick="setPlatform('xbox')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.102 21.033C6.211 22.881 8.977 24 12 24s5.789-1.119 7.898-2.967c1.074-1.065-.534-3.86-2.192-5.857-1.419-1.58-3.218-3.485-5.706-5.669-2.488 2.184-4.287 4.089-5.706 5.669-1.658 1.997-3.266 4.792-2.192 5.857zM12 0C9.626 0 7.417.843 5.63 2.282c1.09-.222 2.834.397 4.734 2.074.913.806 1.636 1.548 1.636 1.548s.723-.742 1.636-1.548c1.9-1.677 3.644-2.296 4.734-2.074C16.583.843 14.374 0 12 0zM3.48 3.527C1.335 5.512 0 8.436 0 11.707c0 2.386.674 4.607 1.833 6.496-.094-1.811.603-3.677 1.722-5.055 1.383-1.704 3.062-3.597 5.003-5.519C6.494 5.637 4.833 4.163 3.48 3.527zM20.52 3.527c-1.353.636-3.014 2.11-5.078 4.102 1.941 1.922 3.62 3.815 5.003 5.519 1.119 1.378 1.816 3.244 1.722 5.055C23.326 16.314 24 14.093 24 11.707c0-3.271-1.335-6.195-3.48-8.18z"/></svg> Xbox
+    </button>
   </div>
-  <h1>PUBG <span>CONSOLE</span> STATS</h1>
-  <p style="color:var(--text-secondary);font-size:.95rem;margin-bottom:30px;">De jugadores, para jugadores &mdash; La herramienta definitiva de stats PUBG para PlayStation & Xbox</p>
-  <p style="font-size:.7rem;color:var(--text-dim);margin-top:-20px;margin-bottom:8px;">Powered by <span style="color:var(--accent-orange);font-weight:600;">PUBG Official API</span> &mdash; Datos en tiempo real</p>
   <div class="search-box">
     <div class="platform-selector">
-      <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.21-1.263-4.834-4.003-5.676-1.47-.448-3.828-.926-5.828-1.648zM18.875 16.155c-1.478-.396-3.055-.208-4.673.467l-.537.222v3.076l.793-.34c.832-.346 1.684-.574 2.47-.414.557.112.682.413.682.736 0 .382-.193.683-.782.87-1.324.419-3.816-.313-3.816-.313v2.611s1.795.645 3.535.645c1.7 0 3.453-.553 3.453-2.813 0-2.115-1.333-3.308-4.125-3.947zM1.125 18.527c1.657.573 4.087.773 5.456.396 1.47-.405 2.586-1.28 2.586-3.236 0-1.853-.822-2.964-2.758-3.606-1.157-.378-2.41-.912-2.41-1.554 0-.456.342-.73.988-.758.862-.039 1.85.222 2.752.602v-2.546c-.872-.267-1.795-.392-2.744-.392-2.388 0-4.12 1.074-4.12 3.303 0 1.688.884 2.822 2.768 3.506 1.177.419 1.644.771 1.644 1.405 0 .611-.503.927-1.415.927-.935 0-2.168-.35-3.17-.87l.424 2.823z"/></svg> PS
-      </button>
-      <button class="platform-btn" data-platform="xbox" onclick="setPlatform('xbox')">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.102 21.033C6.211 22.881 8.977 24 12 24s5.789-1.119 7.898-2.967c1.074-1.065-.534-3.86-2.192-5.857-1.419-1.58-3.218-3.485-5.706-5.669-2.488 2.184-4.287 4.089-5.706 5.669-1.658 1.997-3.266 4.792-2.192 5.857zM12 0C9.626 0 7.417.843 5.63 2.282c1.09-.222 2.834.397 4.734 2.074.913.806 1.636 1.548 1.636 1.548s.723-.742 1.636-1.548c1.9-1.677 3.644-2.296 4.734-2.074C16.583.843 14.374 0 12 0zM3.48 3.527C1.335 5.512 0 8.436 0 11.707c0 2.386.674 4.607 1.833 6.496-.094-1.811.603-3.677 1.722-5.055 1.383-1.704 3.062-3.597 5.003-5.519C6.494 5.637 4.833 4.163 3.48 3.527zM20.52 3.527c-1.353.636-3.014 2.11-5.078 4.102 1.941 1.922 3.62 3.815 5.003 5.519 1.119 1.378 1.816 3.244 1.722 5.055C23.326 16.314 24 14.093 24 11.707c0-3.271-1.335-6.195-3.48-8.18z"/></svg> XBOX
-      </button>
+      <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">PS</button>
+      <button class="platform-btn" data-platform="xbox" onclick="setPlatform('xbox')">XBOX</button>
     </div>
-    <input type="text" class="search-input" id="searchInput" placeholder="Gamertag o nombre de clan..." autocomplete="off"/>
+    <input type="text" class="search-input" id="searchInput" placeholder="Escribe tu gamertag..." autocomplete="off"/>
     <button class="search-btn" onclick="smartSearch()">BUSCAR</button>
   </div>
-  <div id="searchClanResults" style="display:none;margin-top:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:600px;margin-left:auto;margin-right:auto;"></div>
+  <div id="searchClanResults" style="display:none;margin-top:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:700px;margin-left:auto;margin-right:auto;"></div>
   <div class="recent-searches" id="recentSearches"></div>
 </section>
 
