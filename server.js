@@ -255,9 +255,10 @@ app.post('/clans/register', async (req, res) => {
 });
 
 // ═══ MEMBER REQUEST SYSTEM ═══
-// POST /clans/request-member — Public: request to add a player to a clan (admin reviews)
+// POST /clans/request-member — Auto-add if player exists in PUBG API, otherwise queue for admin
 app.post('/clans/request-member', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
+  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
   try {
     const { clanTag, playerName, requestedBy } = req.body;
     if (!clanTag || !playerName) return res.status(400).json({ error: 'clanTag and playerName required' });
@@ -265,15 +266,56 @@ app.post('/clans/request-member', async (req, res) => {
     const cleanName = playerName.trim().slice(0, 50);
     // Check if player already exists in clan
     const existing = await pool.query('SELECT id FROM clan_members WHERE clan_tag = $1 AND player_name = $2', [cleanTag, cleanName]);
-    if (existing.rows.length) return res.json({ ok: true, message: 'Este jugador ya esta en el clan' });
-    // Check for duplicate pending request
-    await pool.query(`
-      INSERT INTO member_requests (clan_tag, player_name, requested_by)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (clan_tag, player_name, status) DO NOTHING
-    `, [cleanTag, cleanName, requestedBy || 'web_user']);
-    console.log(`[request] New member request: ${cleanName} -> [${cleanTag}]`);
-    res.json({ ok: true, message: 'Solicitud enviada correctamente' });
+    if (existing.rows.length) return res.json({ ok: true, message: 'Este jugador ya esta en el clan', autoAdded: false });
+    // Get clan platform
+    const clanRow = await pool.query('SELECT platform FROM clans WHERE tag = $1', [cleanTag]);
+    const platform = clanRow.rows.length ? clanRow.rows[0].platform : 'psn';
+    // Try to verify player exists in PUBG API
+    let verified = false;
+    let realName = cleanName;
+    const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+    const platforms = [platform, platform === 'psn' ? 'xbox' : 'psn'];
+    for (const plat of platforms) {
+      try {
+        const pResp = await fetch('https://api.pubg.com/shards/' + plat + '/players?filter[playerNames]=' + encodeURIComponent(cleanName), { headers });
+        if (pResp.ok) {
+          const pData = await pResp.json();
+          if (pData.data && pData.data.length > 0) {
+            realName = pData.data[0].attributes.name; // Use exact casing from API
+            verified = true;
+            break;
+          }
+        }
+      } catch (e) { /* try next platform */ }
+    }
+    if (verified) {
+      // Auto-add player directly — they exist in PUBG API
+      await pool.query(`
+        INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
+        VALUES ($1, $2, 0, 0, 0, 0, 0, true, $3)
+        ON CONFLICT (clan_tag, player_name) DO NOTHING
+      `, [cleanTag, realName, 'auto_verified']);
+      // Update clan active_members count
+      const countResult = await pool.query('SELECT COUNT(*) FROM clan_members WHERE clan_tag = $1 AND active = true', [cleanTag]);
+      await pool.query('UPDATE clans SET active_members = $1, updated_at = NOW() WHERE tag = $2', [countResult.rows[0].count, cleanTag]);
+      // Log in member_requests for record-keeping
+      await pool.query(`
+        INSERT INTO member_requests (clan_tag, player_name, requested_by, status)
+        VALUES ($1, $2, $3, 'approved')
+        ON CONFLICT DO NOTHING
+      `, [cleanTag, realName, requestedBy || 'web_auto']);
+      console.log(`[request] Auto-added verified player: ${realName} -> [${cleanTag}]`);
+      res.json({ ok: true, message: 'Jugador verificado y anadido al clan!', autoAdded: true, playerName: realName });
+    } else {
+      // Player not found in PUBG API — queue for manual review
+      await pool.query(`
+        INSERT INTO member_requests (clan_tag, player_name, requested_by)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (clan_tag, player_name, status) DO NOTHING
+      `, [cleanTag, cleanName, requestedBy || 'web_user']);
+      console.log(`[request] Queued for review (not verified): ${cleanName} -> [${cleanTag}]`);
+      res.json({ ok: true, message: 'Jugador no encontrado en PUBG — solicitud enviada para revision manual', autoAdded: false });
+    }
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
