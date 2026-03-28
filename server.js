@@ -10,6 +10,10 @@ const fs = require('fs');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const compression = require('compression');
+
+// Single dynamic import for node-fetch (ESM)
+const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,8 +26,21 @@ const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://v4nz.c
 // PostgreSQL connection (Railway provides DATABASE_URL automatically)
 const pool = process.env.DATABASE_URL ? new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  max: 20,                        // Max connections (default was 10)
+  idleTimeoutMillis: 30000,       // Close idle connections after 30s
+  connectionTimeoutMillis: 5000   // Fail fast if can't connect in 5s
 }) : null;
+
+// ═══ PERFORMANCE: Fetch with timeout helper ═══
+function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetchFn(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+// ═══ PERFORMANCE: Gzip compression ═══
+app.use(compression());
 
 // ═══ SECURITY: CORS restricted to v4nz.com only ═══
 app.use(cors({
@@ -273,7 +290,7 @@ app.post('/clans/register', rateLimit, async (req, res) => {
 // POST /clans/request-member — Auto-add if player exists in PUBG API, otherwise queue for admin
 app.post('/clans/request-member', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
-  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+
   try {
     const { clanTag, playerName, requestedBy } = req.body;
     if (!clanTag || !playerName) return res.status(400).json({ error: 'clanTag and playerName required' });
@@ -292,7 +309,7 @@ app.post('/clans/request-member', async (req, res) => {
     const platforms = [platform, platform === 'psn' ? 'xbox' : 'psn'];
     for (const plat of platforms) {
       try {
-        const pResp = await fetch('https://api.pubg.com/shards/' + plat + '/players?filter[playerNames]=' + encodeURIComponent(cleanName), { headers });
+        const pResp = await fetchWithTimeout(fetch, 'https://api.pubg.com/shards/' + plat + '/players?filter[playerNames]=' + encodeURIComponent(cleanName), { headers }, 8000);
         if (pResp.ok) {
           const pData = await pResp.json();
           if (pData.data && pData.data.length > 0) {
@@ -371,7 +388,7 @@ app.post('/clans/requests/:id/reject', requireAdmin, async (req, res) => {
 // POST /clans/import-pubgclans — Import a clan using pubgclans.net data + PUBG API metadata
 app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
-  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+
   const { clanId, gameMode } = req.body;
   if (!clanId) return res.status(400).json({ error: 'clanId required (e.g. clan.bc03cc7f04a347ef81e48070f004283c)' });
 
@@ -384,7 +401,7 @@ app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
     let detectedPlatform = 'xbox';
     for (const shard of ['xbox', 'psn', 'steam']) {
       try {
-        const clanResp = await fetch(`https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers });
+        const clanResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers }, 8000);
         if (clanResp.ok) {
           const clanData = await clanResp.json();
           clanMeta = clanData.data?.attributes;
@@ -404,7 +421,7 @@ app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
     for (const gm of gameModes) {
       try {
         const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${gm}`;
-        const pcnResp = await fetch(pcnUrl);
+        const pcnResp = await fetchWithTimeout(fetch, pcnUrl, {}, 10000);
         if (!pcnResp.ok) { console.log(`[import] pubgclans.net ${gm}: HTTP ${pcnResp.status}`); continue; }
         const pcnData = await pcnResp.json();
         if (!Array.isArray(pcnData)) continue;
@@ -535,7 +552,7 @@ app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
 // ═══ AUTO-DISCOVER CLAN MEMBERS FROM MATCHES ═══
 // POST /clans/discover-members — Given one gamertag, find frequent teammates
 app.post('/clans/discover-members', requireAdmin, async (req, res) => {
-  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+
   const { gamertag, platform } = req.body;
   if (!gamertag || !platform) return res.status(400).json({ error: 'gamertag and platform required' });
   if (!SERVER_API_KEY) return res.status(503).json({ error: 'No API key configured on server' });
@@ -546,9 +563,9 @@ app.post('/clans/discover-members', requireAdmin, async (req, res) => {
   try {
     // Step 1: Look up the player to get their account ID and recent matches
     console.log(`[discover] Looking up player: ${gamertag} on ${shard}`);
-    const playerResp = await fetch(
+    const playerResp = await fetchWithTimeout(fetch,
       `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(gamertag)}`,
-      { headers }
+      { headers }, 8000
     );
     if (!playerResp.ok) {
       const errText = await playerResp.text();
@@ -574,7 +591,7 @@ app.post('/clans/discover-members', requireAdmin, async (req, res) => {
         if (matchesProcessed > 0) await new Promise(r => setTimeout(r, 1200));
 
         console.log(`[discover] Fetching match ${matchesProcessed + 1}/${matchIds.length}: ${matchId}`);
-        const matchResp = await fetch(`https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers });
+        const matchResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers }, 10000);
         if (!matchResp.ok) continue;
         const matchData = await matchResp.json();
 
@@ -809,26 +826,26 @@ app.get('/auth/discord', (req, res) => {
 // GET /auth/discord/callback — Discord OAuth callback
 app.get('/auth/discord/callback', async (req, res) => {
   if (!pool) return res.redirect('/#auth_error=db_unavailable');
-  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+
   const { code } = req.query;
   if (!code) return res.redirect('/#auth_error=no_code');
   try {
     // Exchange code for token
-    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+    const tokenRes = await fetchWithTimeout(fetch, 'https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: DISCORD_CLIENT_ID, client_secret: DISCORD_CLIENT_SECRET,
         grant_type: 'authorization_code', code, redirect_uri: DISCORD_REDIRECT_URI
       })
-    });
+    }, 8000);
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) return res.redirect('/?auth_error=token_failed');
 
     // Get Discord user info
-    const userRes = await fetch('https://discord.com/api/users/@me', {
+    const userRes = await fetchWithTimeout(fetch, 'https://discord.com/api/users/@me', {
       headers: { 'Authorization': 'Bearer ' + tokenData.access_token }
-    });
+    }, 8000);
     const discordUser = await userRes.json();
     if (!discordUser.id) return res.redirect('/?auth_error=user_failed');
 
@@ -939,7 +956,7 @@ function getCacheTTL(pubgPath) {
 }
 
 app.all('/api/*', rateLimit, async (req, res) => {
-  const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+
   const originalQuery = req.originalUrl.split('?')[1] || '';
   const pubgPath = req.params[0];
   const pubgUrl = `https://api.pubg.com/${pubgPath}${originalQuery ? '?' + originalQuery : ''}`;
@@ -969,10 +986,10 @@ app.all('/api/*', rateLimit, async (req, res) => {
   }
 
   try {
-    const response = await fetch(pubgUrl, {
+    const response = await fetchWithTimeout(fetch, pubgUrl, {
       method: req.method,
       headers: { 'Authorization': apiKey, 'Accept': 'application/vnd.api+json' },
-    });
+    }, 15000);
     const data = await response.text();
 
     // Save to cache if GET and successful (2xx)
