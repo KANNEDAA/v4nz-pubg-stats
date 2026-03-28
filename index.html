@@ -696,7 +696,7 @@ footer a { color: var(--accent); text-decoration: none; }
   .insight-chips{gap:8px}
   .insight-chip{padding:6px 12px;font-size:.72rem}
   .tabs{width:100%}
-  .tab-btn{flex:1;text-align:center;padding:8px 10px;font-size:.7rem}
+  .tab-btn{flex:0 1 auto;text-align:center;padding:8px 10px;font-size:.7rem;letter-spacing:.5px}
   .section-title{font-size:.85rem}
 }
 @media(max-width:480px){
@@ -708,6 +708,7 @@ footer a { color: var(--accent); text-decoration: none; }
   .player-info h2{font-size:1.1rem}
   .streamer-banner{flex-direction:column;text-align:center}
   .streamer-banner-links{justify-content:center}
+  .tab-btn{padding:7px 8px;font-size:.65rem;letter-spacing:.3px}
 }
 .telemetry-feed { max-height: 300px; overflow-y: auto; margin-top: 16px; }
 .telem-event { padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 0.8rem; font-family: 'Rajdhani', sans-serif; }
@@ -795,12 +796,9 @@ footer a { color: var(--accent); text-decoration: none; }
       </div>
     </div>
     <nav id="mainNav">
-      <a href="#" class="active" data-tab="overview">Jugador</a>
-      <a href="#" data-tab="matches">Partidas</a>
-      <a href="#" data-tab="compare">Comparar</a>
+      <a href="#" class="active" data-tab="overview">Buscar</a>
       <a href="#" data-tab="clans">Clanes</a>
-      <a href="#" data-tab="clanranking">Ranking Clanes</a>
-      <a href="#" data-tab="leaderboard">Top 500</a>
+      <a href="#" data-tab="leaderboard">Rankings</a>
     </nav>
     <div style="display:flex;align-items:center;gap:6px;">
       <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()">Iniciar Sesion</button>
@@ -888,8 +886,10 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="tabs-container" id="tabsContainer">
     <div class="tabs" id="mainTabs">
       <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Resumen</button>
+      <button class="tab-btn" data-tab="matches" onclick="switchTab('matches')">Partidas</button>
       <button class="tab-btn" data-tab="weapons" onclick="switchTab('weapons')">Armas</button>
       <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')">Curiosidades</button>
+      <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')">Comparar</button>
     </div>
     <div class="mode-selector"><button class="mode-btn active" onclick="setGameMode('tpp')">TPP</button><button class="mode-btn" onclick="setGameMode('fpp')">FPP</button></div>
   </div>
@@ -969,6 +969,7 @@ footer a { color: var(--accent); text-decoration: none; }
     <div class="clan-mode-tabs">
       <button class="clan-mode-tab active" onclick="setClanMode('search',this)">Buscar Clan</button>
       <button class="clan-mode-tab" onclick="setClanMode('compare',this)">Comparar Clanes</button>
+      <button class="clan-mode-tab" onclick="setClanMode('ranking',this)">Ranking</button>
     </div>
     <div id="clanSearchMode">
       <div id="myClanBanner"></div>
@@ -1039,18 +1040,18 @@ footer a { color: var(--accent); text-decoration: none; }
       <div style="text-align:center;margin-bottom:20px;"><button class="search-btn" style="border-radius:8px;padding:12px 30px;" onclick="compareClans()">COMPARAR CLANES</button></div>
       <div id="clanCompareResults"></div>
     </div>
-  </div>
-  <div class="panel" id="panel-clanranking">
-    <div class="section-title">Ranking de Clanes</div>
-    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Los mejores clanes de consola clasificados por stats reales. Publica tu clan desde la pestana de Clanes para aparecer aqui.</p>
-    <div class="leaderboard-controls">
-      <button class="lb-btn active" onclick="setCRSort('kills',this)">Kills</button>
-      <button class="lb-btn" onclick="setCRSort('kd',this)">K/D</button>
-      <button class="lb-btn" onclick="setCRSort('wins',this)">Victorias</button>
-      <button class="lb-btn" onclick="setCRSort('winrate',this)">Win Rate</button>
-      <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
+    <div id="clanRankingMode" style="display:none;">
+      <div class="section-title">Ranking de Clanes</div>
+      <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Los mejores clanes de consola clasificados por stats reales.</p>
+      <div class="leaderboard-controls">
+        <button class="lb-btn active" onclick="setCRSort('kills',this)">Kills</button>
+        <button class="lb-btn" onclick="setCRSort('kd',this)">K/D</button>
+        <button class="lb-btn" onclick="setCRSort('wins',this)">Victorias</button>
+        <button class="lb-btn" onclick="setCRSort('winrate',this)">Win Rate</button>
+        <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
+      </div>
+      <div id="clanRankingContent"><div class="empty-state"><p>Cargando ranking de clanes...</p></div></div>
     </div>
-    <div id="clanRankingContent"><div class="empty-state"><p>Cargando ranking de clanes...</p></div></div>
   </div>
   <div class="panel" id="panel-leaderboard">
     <div class="section-title">Top 500 &mdash; Leaderboard Consola</div>
@@ -1938,25 +1939,25 @@ function switchTab(t){
   const seo=document.getElementById('seoContent');if(seo)seo.style.display='none';
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  // All player-related sub-tabs highlight "Buscar" in main nav
+  const playerTabs=['overview','matches','weapons','funstats','compare'];
   document.querySelectorAll('#mainNav a').forEach(a=>{
-    // Nav items that map to sub-tabs (overview/weapons/funstats) all highlight "Jugador"
     const navTab=a.dataset.tab;
-    if(navTab==='overview') a.classList.toggle('active',t==='overview'||t==='weapons'||t==='funstats');
+    if(navTab==='overview') a.classList.toggle('active',playerTabs.includes(t));
     else a.classList.toggle('active',navTab===t);
   });
   const p=document.getElementById('panel-'+t);if(p)p.classList.add('active');
-  // Show sub-tabs only for player-related views (overview, weapons, funstats)
-  const playerTabs=['overview','weapons','funstats'];
+  // Show player sub-tabs for all player-related views
   if(playerTabs.includes(t)&&currentPlayerData)document.getElementById('tabsContainer').style.display='block';
   else document.getElementById('tabsContainer').style.display='none';
-  // Reset URL when navigating away from stats (to CLANES, COMPARAR, etc)
-  const statsTabNames=['overview','weapons','funstats'];
-  if(!statsTabNames.includes(t)){
+  // Reset URL when navigating away from stats
+  if(!playerTabs.includes(t)){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
   if(t==='leaderboard')renderLeaderboard();
-  if(t==='clanranking')loadClanRanking();
+  // Scroll hero into view when clicking "Buscar" with no player loaded
+  if(t==='overview'&&!currentPlayerData){const hero=document.getElementById('searchHero');if(hero)hero.scrollIntoView({behavior:'smooth'});}
 }
 function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
 function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
@@ -3195,6 +3196,8 @@ function setClanMode(mode,btn){
   document.querySelectorAll('.clan-mode-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('clanSearchMode').style.display=mode==='search'?'block':'none';
   document.getElementById('clanCompareMode').style.display=mode==='compare'?'block':'none';
+  document.getElementById('clanRankingMode').style.display=mode==='ranking'?'block':'none';
+  if(mode==='ranking')loadClanRanking();
 }
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
 function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
