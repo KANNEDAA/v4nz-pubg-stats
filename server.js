@@ -1012,13 +1012,13 @@ app.get('/sitemap.xml', async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT tag FROM clans WHERE active_members > 0 ORDER BY total_kills DESC LIMIT 500');
       rows.forEach(r => {
-        clanUrls += `  <url><loc>https://v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
+        clanUrls += `  <url><loc>https://www.v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
       });
     } catch(e) { console.error('Sitemap clan error:', e.message); }
   }
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
   <url><loc>https://v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
   <url><loc>https://v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
   <url><loc>https://v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
@@ -1035,7 +1035,7 @@ app.get('/googlef2390246b37ad8b0.html', (req, res) => {
 // Robots.txt
 app.get('/robots.txt', (req, res) => {
   res.set('Content-Type', 'text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://v4nz.com/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://www.v4nz.com/sitemap.xml');
 });
 
 // PWA files
@@ -1107,7 +1107,7 @@ app.get('*', (req, res) => {
       const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
       title = `Clan [${clanTag}] — PUBG Stats Consola | V4NZ`;
       desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
-      canonicalUrl = `https://v4nz.com/clan/${encodeURIComponent(clanTag)}`;
+      canonicalUrl = `https://www.v4nz.com/clan/${encodeURIComponent(clanTag)}`;
     } else if (spaPages[req.path]) {
       title = spaPages[req.path].title;
       desc = spaPages[req.path].desc;
