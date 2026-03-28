@@ -351,6 +351,17 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .home-feature-icon { font-size:1.8rem; margin-bottom:8px; }
 .home-feature-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.82rem; color:var(--text-primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
 .home-feature-desc { font-size:.7rem; color:var(--text-dim); line-height:1.5; }
+/* COTILLEO SECTION */
+.cotilleo-section { margin-top:24px; }
+.cotilleo-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.9rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-primary); margin-bottom:14px; text-align:center; }
+.cotilleo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:10px; }
+.cotilleo-card { display:flex; align-items:flex-start; gap:12px; background:var(--bg-card); border:1px solid var(--border); border-left:3px solid; border-radius:10px; padding:14px 16px; position:relative; transition:transform .15s,box-shadow .15s; }
+.cotilleo-card:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+.cotilleo-icon { font-size:1.6rem; flex-shrink:0; margin-top:2px; }
+.cotilleo-info { flex:1; min-width:0; }
+.cotilleo-name { font-family:'Orbitron',sans-serif; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
+.cotilleo-text { font-size:.75rem; color:var(--text-secondary); line-height:1.5; }
+.cotilleo-tag { position:absolute; top:8px; right:10px; font-size:.55rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:10px; font-family:'Rajdhani',sans-serif; }
 .dna-layout { display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; }
 .dna-radar-wrap { flex-shrink: 0; }
 .dna-radar-wrap canvas { display: block; }
@@ -2708,7 +2719,120 @@ function renderFunStats(){
     '<div class="fun-stat-card"><div class="fun-icon">&#x1F91D;</div><div class="fun-value">'+(s.revives||0)+'</div><div class="fun-label">Revives</div><div class="fun-detail">'+((s.revives||0)>(s.kills||0)*.3?'Medico del equipo':'Prefieres matar')+'</div></div>'+
     '<div class="fun-stat-card"><div class="fun-icon">&#x1F480;</div><div class="fun-value">'+(s.suicides||0)+'</div><div class="fun-label">Autoeliminaciones</div><div class="fun-detail">'+((s.suicides||0)===0?'Cuidado al maximo':'Accidentes pasan')+'</div></div>'+
     '<div class="fun-stat-card"><div class="fun-icon">&#x1F4AA;</div><div class="fun-value">'+(s.maxKillStreaks||'?')+'</div><div class="fun-label">Racha Maxima</div><div class="fun-detail">Kills seguidos</div></div>';
+  // === COTILLEO SECTION ===
+  // Remove previous cotilleo if re-rendering
+  const oldCot=document.querySelector('.cotilleo-section');if(oldCot)oldCot.remove();
+  renderCotilleo(s);
 }
+function renderCotilleo(s){
+  const el=document.getElementById('funStatsGrid');if(!el)return;
+  const pn=(currentPlayerData?.attributes?.name||'').toLowerCase();
+  const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),t10=parseFloat(calcTop10Rate(s)),ad=parseFloat(calcAvgDmg(s));
+  const rpp=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;
+  const dpp=s.roundsPlayed?s.damageDealt/s.roundsPlayed:0;
+  const kpp=s.roundsPlayed?(s.kills||0)/s.roundsPlayed:0;
+  const cards=[];
+  // --- SEASON STATS COTILLEO ---
+  // 1. "El que trabaja para otros" — high damage per kill
+  if(s.kills>0){
+    const dpk=Math.round(s.damageDealt/s.kills);
+    if(dpk>400)cards.push({ic:'&#x1F6E0;',ti:'El Currito',tx:'Haces '+dpk+' de dano por cada kill. Trabajas para que otros rematen.',col:'#ff6b00',tag:'vergonzoso'});
+    else if(dpk<200&&kd>1.5)cards.push({ic:'&#x1F3AF;',ti:'Rematador Letal',tx:'Solo '+dpk+' de dano por kill. No desperdicias balas.',col:'#00ff88',tag:'habilidad'});
+  }
+  // 2. "Eterno subcampeon"
+  if(t10>45&&wr<8&&s.roundsPlayed>20)cards.push({ic:'&#x1F948;',ti:'Eterno Subcampeon',tx:'Llegas al Top 10 el '+t10.toFixed(0)+'% de las veces, pero solo ganas el '+wr+'%. Siempre cerca, nunca campeon.',col:'#c0c0c0',tag:'vergonzoso'});
+  else if(wr>20&&s.roundsPlayed>20)cards.push({ic:'&#x1F451;',ti:'El Que Cierra',tx:'Win rate del '+wr+'%. Cuando llegas al final, lo cierras.',col:'#ffd700',tag:'habilidad'});
+  // 3. "Egoista del squad"
+  if(s.roundsPlayed>15&&rpp<0.05&&kd>1)cards.push({ic:'&#x1F9CA;',ti:'El Egoista',tx:'Solo '+Math.round(rpp*100)+'% de tus rondas tienen revive. Tu squad puede confirmar.',col:'#ff3355',tag:'vergonzoso'});
+  else if(rpp>0.4)cards.push({ic:'&#x1FA7A;',ti:'Angel Guardian',tx:'Revives en el '+(rpp*100).toFixed(0)+'% de las partidas. Tu squad te necesita.',col:'#00ff88',tag:'social'});
+  // 4. Dependencia del squad — compare solo vs squad
+  const gms=currentSeasonData?.data?.attributes?.gameModeStats||{};
+  const soloR=(gms['solo']?.roundsPlayed||0)+(gms['solo-fpp']?.roundsPlayed||0);
+  const squadR=(gms['squad']?.roundsPlayed||0)+(gms['squad-fpp']?.roundsPlayed||0);
+  if(soloR>10&&squadR>10){
+    const soloW=((gms['solo']?.wins||0)+(gms['solo-fpp']?.wins||0));
+    const squadW=((gms['squad']?.wins||0)+(gms['squad-fpp']?.wins||0));
+    const soloWR=(soloW/soloR*100).toFixed(1);
+    const squadWR=(squadW/squadR*100).toFixed(1);
+    if(parseFloat(squadWR)>parseFloat(soloWR)*2.5)cards.push({ic:'&#x1F465;',ti:'Dependiente del Squad',tx:'Win rate en squad: '+squadWR+'% vs solo: '+soloWR+'%. Sin tu equipo, no funciones.',col:'#a855f7',tag:'social'});
+    else if(parseFloat(soloWR)>parseFloat(squadWR)*2)cards.push({ic:'&#x1F93A;',ti:'Lobo Solitario',tx:'Solo WR: '+soloWR+'% vs squad: '+squadWR+'%. Mejor solo que mal acompanado.',col:'#00f0ff',tag:'habilidad'});
+  }
+  // 5. Suicidas
+  if((s.suicides||0)>3&&s.roundsPlayed>15){const sp=((s.suicides/s.roundsPlayed)*100).toFixed(1);cards.push({ic:'&#x1F4A3;',ti:'Autodestructivo',tx:'Te has autoeliminado '+(s.suicides)+' veces ('+sp+'% de partidas). Cuidado con las granadas.',col:'#ff3355',tag:'vergonzoso'});}
+  // 6. Lootero — much weapon acquisition, low kills
+  if(s.roundsPlayed>10){
+    const wpp=(s.weaponsAcquired||0)/s.roundsPlayed;
+    if(wpp>8&&kpp<1)cards.push({ic:'&#x1F392;',ti:'Rata de Loot',tx:'Recoges '+wpp.toFixed(1)+' armas por partida pero solo matas '+kpp.toFixed(1)+'. Tienes inventario para 3 personas.',col:'#ff6b00',tag:'vergonzoso'});
+  }
+  // 7. Road rage
+  if((s.roadKills||0)>=3)cards.push({ic:'&#x1F697;',ti:'Road Rage',tx:s.roadKills+' atropellos. El vehiculo es tu arma principal.',col:'#ff6b00',tag:'curiosidad'});
+  // --- MATCH HISTORY COTILLEO ---
+  if(currentMatchData&&currentMatchData.length>2){
+    let zoneDeaths=0,ghostGames=0,totalMatches=0;
+    const hourMap={};const tiltRuns=[];let loseStreak=0;
+    const teammateWins={},teammateLosses={};
+    currentMatchData.forEach(match=>{
+      if(!match||!match.data)return;
+      const a=match.data.attributes;
+      const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn);
+      if(!pp)return;
+      totalMatches++;
+      const ps=pp.attributes.stats;
+      // Zone deaths
+      if(ps.deathType==='byzone')zoneDeaths++;
+      // Ghost games (0 kills, <50 damage)
+      if(ps.kills===0&&ps.damageDealt<50)ghostGames++;
+      // Hour tracking
+      const h=new Date(a.createdAt).getHours();hourMap[h]=(hourMap[h]||0)+1;
+      // Tilt detection
+      if(ps.winPlace>50)loseStreak++;else{if(loseStreak>=3)tiltRuns.push(loseStreak);loseStreak=0;}
+      // Frequent teammate win/loss
+      if(a.gameMode&&a.gameMode.includes('squad')){
+        const roster=(match.included||[]).find(i=>i.type==='roster'&&(i.relationships?.participants?.data||[]).some(p=>p.id===pp.id));
+        if(roster){
+          const rosterPids=(roster.relationships?.participants?.data||[]).map(p=>p.id);
+          const teammates=(match.included||[]).filter(i=>i.type==='participant'&&rosterPids.includes(i.id)&&i.attributes.stats.name.toLowerCase()!==pn);
+          teammates.forEach(t=>{
+            const tn=t.attributes.stats.name;
+            if(ps.winPlace===1){teammateWins[tn]=(teammateWins[tn]||0)+1;}
+            else{teammateLosses[tn]=(teammateLosses[tn]||0)+1;}
+          });
+        }
+      }
+    });
+    if(loseStreak>=3)tiltRuns.push(loseStreak);
+    // 8. Zone deaths
+    if(zoneDeaths>0&&totalMatches>3){const zp=Math.round(zoneDeaths/totalMatches*100);if(zp>=20)cards.push({ic:'&#x1F300;',ti:'El Circulo Te Odia',tx:zp+'% de tus muertes recientes son por zona. Mira el mapa de vez en cuando.',col:'#ff3355',tag:'vergonzoso'});}
+    // 9. Ghost games
+    if(ghostGames>=2&&totalMatches>3){cards.push({ic:'&#x1F47B;',ti:'El Fantasma',tx:ghostGames+' de tus ultimas '+totalMatches+' partidas sin disparar un tiro. Turismo por Erangel.',col:'#a855f7',tag:'vergonzoso'});}
+    // 10. Peak hours
+    const peakHour=Object.entries(hourMap).sort((a,b)=>b[1]-a[1])[0];
+    if(peakHour){
+      const h=parseInt(peakHour[0]),cnt=peakHour[1],pct=Math.round(cnt/totalMatches*100);
+      if(pct>=30){
+        const periodo=h>=1&&h<6?'madrugada ('+h+':00)':h>=6&&h<12?'manana ('+h+':00)':h>=12&&h<18?'tarde ('+h+':00)':'noche ('+h+':00)';
+        const comment=h>=1&&h<5?'Alguien no duerme.':h>=22||h<1?'Gamer nocturno.':'';
+        cards.push({ic:'&#x23F0;',ti:'Hora Punta',tx:'El '+pct+'% de tus partidas recientes son de '+periodo+' '+comment,col:'#ffd700',tag:'habitos'});
+      }
+    }
+    // 11. Tilt detector
+    if(tiltRuns.length>0){const maxTilt=Math.max(...tiltRuns);cards.push({ic:'&#x1F621;',ti:'Detector de Tilt',tx:'Racha de '+maxTilt+' partidas seguidas con posicion 50+. Cuando pierdes, sigues jugando enfadado.',col:'#ff3355',tag:'habitos'});}
+    // 12. Best/worst teammate
+    const bestMate=Object.entries(teammateWins).sort((a,b)=>b[1]-a[1])[0];
+    const worstMate=Object.entries(teammateLosses).sort((a,b)=>b[1]-a[1])[0];
+    if(bestMate&&bestMate[1]>=2)cards.push({ic:'&#x1F91D;',ti:'Tu Mejor Companero',tx:'Con '+bestMate[0]+' has ganado '+bestMate[1]+' de las ultimas partidas. No lo pierdas.',col:'#00ff88',tag:'social'});
+    if(worstMate&&worstMate[1]>=3)cards.push({ic:'&#x1F4A9;',ti:'El Gafe',tx:'Con '+worstMate[0]+' has perdido '+worstMate[1]+' veces. Puede que no sea casualidad.',col:'#ff6b00',tag:'social'});
+  }
+  // Render cotilleo cards
+  if(cards.length>0){
+    const tagIcons={vergonzoso:'&#x1F631;',habilidad:'&#x1F4AA;',social:'&#x1F465;',habitos:'&#x1F440;',curiosidad:'&#x1F914;'};
+    let ch='<div class="cotilleo-section"><div class="cotilleo-title">&#x1F575;&#xFE0F; Lo que tus stats dicen de ti</div><div class="cotilleo-grid">';
+    cards.forEach(c=>{
+      ch+='<div class="cotilleo-card" style="border-color:'+c.col+'22;"><div class="cotilleo-icon">'+c.ic+'</div><div class="cotilleo-info"><div class="cotilleo-name" style="color:'+c.col+';">'+c.ti+'</div><div class="cotilleo-text">'+c.tx+'</div></div><div class="cotilleo-tag" style="color:'+c.col+';background:'+c.col+'15;">'+(tagIcons[c.tag]||'')+' '+c.tag+'</div></div>';
+    });
+    ch+='</div></div>';
+    el.insertAdjacentHTML('afterend',ch);
+  }
 
 function getPersonalityType(){
   const s=getActiveStats();if(!s||!s.roundsPlayed)return'';
