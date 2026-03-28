@@ -647,16 +647,33 @@ app.all('/api/*', rateLimit, async (req, res) => {
   }
 });
 
-// Sitemap for SEO
-app.get('/sitemap.xml', (req, res) => {
+// Sitemap for SEO — dynamic with clan URLs
+app.get('/sitemap.xml', async (req, res) => {
   res.set('Content-Type', 'application/xml');
+  const today = new Date().toISOString().split('T')[0];
+  let clanUrls = '';
+  if (pool) {
+    try {
+      const { rows } = await pool.query('SELECT tag FROM clans WHERE active_members > 0 ORDER BY total_kills DESC LIMIT 500');
+      rows.forEach(r => {
+        clanUrls += `  <url><loc>https://v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
+      });
+    } catch(e) { console.error('Sitemap clan error:', e.message); }
+  }
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
-  <url><loc>https://v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
-  <url><loc>https://v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
-  <url><loc>https://v4nz.com/top500</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
-</urlset>`);
+  <url><loc>https://v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/comparar</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>
+${clanUrls}</urlset>`);
+});
+
+// Google Search Console verification
+app.get('/googlef2390246b37ad8b0.html', (req, res) => {
+  res.set('Content-Type', 'text/html');
+  res.send('google-site-verification: googlef2390246b37ad8b0.html');
 });
 
 // Robots.txt
@@ -712,39 +729,52 @@ app.get('*', (req, res) => {
   const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   const clanMatch = req.path.match(/^\/clan\/(.+)$/i);
 
-  if (statsMatch || clanMatch) {
-    // Inject dynamic OG meta tags for player/clan URLs (for social sharing)
-    try {
-      let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-      if (statsMatch) {
-        const platform = statsMatch[1].toUpperCase();
-        const playerName = decodeURIComponent(statsMatch[2]);
-        const title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
-        const desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
-        const url = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
-        html = html
-          .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
-          .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${title}">`)
-          .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${desc}">`)
-          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${url}">`)
-          .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${title}">`)
-          .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${desc}">`)
-          .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${desc}">`);
-      } else if (clanMatch) {
-        const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
-        const title = `Clan [${clanTag}] — PUBG Stats | V4NZ`;
-        const desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
-        html = html
-          .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
-          .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${title}">`)
-          .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${desc}">`);
-      }
-      res.set('Content-Type', 'text/html');
-      res.send(html);
-    } catch (e) {
-      res.sendFile(path.join(__dirname, 'index.html'));
+  // Map SPA paths to SEO titles/descriptions for crawlers
+  const spaPages = {
+    '/clanes': { title: 'Clanes PUBG Consola — Busca y Compara | V4NZ', desc: 'Busca clanes de PUBG en PlayStation y Xbox. Compara estadísticas, miembros, kills y ranking entre clanes.' },
+    '/ranking': { title: 'Ranking de Clanes PUBG — Top Clanes Consola | V4NZ', desc: 'Ranking de los mejores clanes de PUBG en consola. Clasificación por kills, K/D, victorias y más.' },
+    '/top500': { title: 'Top 500 PUBG Consola — Leaderboard Oficial | V4NZ', desc: 'Top 500 jugadores de PUBG en PlayStation y Xbox. Leaderboard oficial con stats en tiempo real.' },
+    '/comparar': { title: 'Comparar Jugadores PUBG — Stats vs Stats | V4NZ', desc: 'Compara estadísticas de dos jugadores de PUBG en consola. K/D, victorias, daño, headshots y más cara a cara.' }
+  };
+
+  try {
+    let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+    let title, desc, canonicalUrl;
+
+    if (statsMatch) {
+      const platform = statsMatch[1].toUpperCase();
+      const playerName = decodeURIComponent(statsMatch[2]);
+      title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
+      desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
+      canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
+    } else if (clanMatch) {
+      const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
+      title = `Clan [${clanTag}] — PUBG Stats Consola | V4NZ`;
+      desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
+      canonicalUrl = `https://v4nz.com/clan/${encodeURIComponent(clanTag)}`;
+    } else if (spaPages[req.path]) {
+      title = spaPages[req.path].title;
+      desc = spaPages[req.path].desc;
+      canonicalUrl = `https://v4nz.com${req.path}`;
     }
-  } else {
+
+    if (title) {
+      html = html
+        .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
+        .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${title}">`)
+        .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${desc}">`)
+        .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${title}">`)
+        .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${desc}">`)
+        .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${desc}">`);
+      if (canonicalUrl) {
+        html = html
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${canonicalUrl}">`)
+          .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${canonicalUrl}">`);
+      }
+    }
+    res.set('Content-Type', 'text/html');
+    res.send(html);
+  } catch (e) {
     res.sendFile(path.join(__dirname, 'index.html'));
   }
 });
