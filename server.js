@@ -11,6 +11,8 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const compression = require('compression');
+let sharp;
+try { sharp = require('sharp'); } catch(e) { console.warn('⚠️  sharp not installed — OG images will serve as SVG fallback'); }
 
 // Single dynamic import for node-fetch (ESM)
 const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
@@ -1086,6 +1088,98 @@ app.get('/robots.txt', (req, res) => {
   res.send('User-agent: *\nAllow: /\nSitemap: https://www.v4nz.com/sitemap.xml');
 });
 
+// ═══ Dynamic OG Image (SVG → PNG via sharp) ═══
+function escXml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+
+function buildPlayerSvg(player, platform) {
+  const platIcon = platform === 'PSN' ? 'PlayStation' : 'Xbox';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#12081f"/></linearGradient>
+      <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#ff6b00"/></linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect y="0" width="1200" height="4" fill="url(#accent)"/>
+    <text x="80" y="100" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
+    <text x="190" y="100" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#666" letter-spacing="3">PUBG CONSOLE STATS</text>
+    <text x="80" y="220" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="2">${escXml(player)}</text>
+    <text x="80" y="280" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#888" letter-spacing="3">${platIcon}</text>
+    <text x="80" y="430" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">STATS EN TIEMPO REAL · K/D · WIN RATE · ADN PUBG</text>
+    <text x="80" y="480" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#00f0ff" letter-spacing="1">Descubre tus estadisticas en v4nz.com</text>
+    <rect x="80" y="520" width="200" height="40" rx="8" fill="#00f0ff" opacity="0.15"/>
+    <text x="180" y="547" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#00f0ff" text-anchor="middle" letter-spacing="2">VER STATS</text>
+    <circle cx="1060" cy="315" r="120" fill="none" stroke="#00f0ff" stroke-width="2" opacity="0.15"/>
+    <circle cx="1060" cy="315" r="80" fill="none" stroke="#00f0ff" stroke-width="1" opacity="0.1"/>
+    <text x="1060" y="330" font-family="Arial,Helvetica,sans-serif" font-size="48" font-weight="900" fill="#00f0ff" text-anchor="middle" opacity="0.3">${escXml(player.charAt(0).toUpperCase())}</text>
+  </svg>`;
+}
+
+function buildClanSvg(tag) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#12081f"/></linearGradient>
+      <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#ff6b00"/></linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect y="0" width="1200" height="4" fill="url(#accent)"/>
+    <text x="80" y="100" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
+    <text x="190" y="100" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#666" letter-spacing="3">PUBG CONSOLE STATS</text>
+    <text x="80" y="200" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#ff6b00" letter-spacing="3">CLAN</text>
+    <text x="80" y="300" font-family="Arial,Helvetica,sans-serif" font-size="96" font-weight="900" fill="#ffffff" letter-spacing="4">[${escXml(tag)}]</text>
+    <text x="80" y="430" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">MIEMBROS · KILLS · K/D · RANKING</text>
+    <text x="80" y="480" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#00f0ff" letter-spacing="1">Ver estadisticas del clan en v4nz.com</text>
+    <rect x="80" y="520" width="200" height="40" rx="8" fill="#ff6b00" opacity="0.15"/>
+    <text x="180" y="547" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#ff6b00" text-anchor="middle" letter-spacing="2">VER CLAN</text>
+  </svg>`;
+}
+
+async function svgToPng(svgStr) {
+  if (!sharp) return null;
+  return sharp(Buffer.from(svgStr)).png().toBuffer();
+}
+
+// Player OG image — PNG preferred, SVG fallback
+app.get('/og-image/stats/:platform/:player.png', async (req, res) => {
+  try {
+    const platform = req.params.platform.toUpperCase();
+    const player = decodeURIComponent(req.params.player);
+    const svg = buildPlayerSvg(player, platform);
+    const png = await svgToPng(svg);
+    if (png) {
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.send(png);
+    }
+    // Fallback to SVG if sharp not available
+    res.set('Content-Type', 'image/svg+xml');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(svg);
+  } catch (e) {
+    console.error('OG image error:', e.message);
+    res.status(500).send('Error generating image');
+  }
+});
+
+// Clan OG image — PNG preferred, SVG fallback
+app.get('/og-image/clan/:tag.png', async (req, res) => {
+  try {
+    const tag = decodeURIComponent(req.params.tag).toUpperCase();
+    const svg = buildClanSvg(tag);
+    const png = await svgToPng(svg);
+    if (png) {
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.send(png);
+    }
+    res.set('Content-Type', 'image/svg+xml');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(svg);
+  } catch (e) {
+    console.error('OG image error:', e.message);
+    res.status(500).send('Error generating image');
+  }
+});
+
 // PWA files
 app.get('/manifest.json', (req, res) => res.sendFile(path.join(__dirname, 'manifest.json')));
 app.get('/sw.js', (req, res) => {
@@ -1143,7 +1237,7 @@ app.get('*', (req, res) => {
 
   try {
     let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-    let title, desc, canonicalUrl;
+    let title, desc, canonicalUrl, ogImage;
 
     if (statsMatch) {
       const platform = statsMatch[1].toUpperCase();
@@ -1151,11 +1245,13 @@ app.get('*', (req, res) => {
       title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
       desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
       canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
+      ogImage = `https://www.v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
     } else if (clanMatch) {
       const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
       title = `Clan [${clanTag}] — PUBG Stats Consola | V4NZ`;
       desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
       canonicalUrl = `https://www.v4nz.com/clan/${encodeURIComponent(clanTag)}`;
+      ogImage = `https://www.v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
     } else if (spaPages[req.path]) {
       title = spaPages[req.path].title;
       desc = spaPages[req.path].desc;
@@ -1174,6 +1270,11 @@ app.get('*', (req, res) => {
         html = html
           .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${canonicalUrl}">`)
           .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${canonicalUrl}">`);
+      }
+      if (ogImage) {
+        html = html
+          .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${ogImage}">`)
+          .replace(/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${ogImage}">`);
       }
     }
     res.set('Content-Type', 'text/html');
