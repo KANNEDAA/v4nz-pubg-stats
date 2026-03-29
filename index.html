@@ -1456,7 +1456,7 @@ async function doLogin(){
   const pass=document.getElementById('loginPass').value;
   if(!email||!pass){showAuthError('authLoginError','Introduce email y contrasena');return;}
   try{
-    const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({email,password:pass})});
     const d=await r.json();
     if(!r.ok){showAuthError('authLoginError',d.error||'Error al entrar');return;}
     authToken=d.token;currentUser=d.user;
@@ -1473,7 +1473,7 @@ async function doRegister(){
   if(!name||!email||!pass){showAuthError('authRegError','Nombre, email y contrasena son obligatorios');return;}
   if(pass.length<4){showAuthError('authRegError','La contrasena debe tener al menos 4 caracteres');return;}
   try{
-    const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,displayName:name,gamertag:gt,platform:currentPlatform})});
+    const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({email,password:pass,displayName:name,gamertag:gt,platform:currentPlatform})});
     const d=await r.json();
     if(!r.ok){showAuthError('authRegError',d.error||'Error al registrar');return;}
     authToken=d.token;currentUser=d.user;
@@ -1485,13 +1485,14 @@ async function doRegister(){
 function doLogout(){
   authToken=null;currentUser=null;
   localStorage.removeItem('v4nz_token');
+  fetch('/auth/logout',{method:'POST',credentials:'include'}).catch(()=>{});
   updateAuthUI();closeAuthPopup();
 }
 
 async function loadFavoritesFromServer(){
   if(!authToken)return;
   try{
-    const r=await fetch('/favorites',{headers:{'Authorization':'Bearer '+authToken}});
+    const r=await fetch('/favorites',{headers:{'Authorization':'Bearer '+authToken},credentials:'include'});
     if(!r.ok)return;
     const d=await r.json();
     if(d.favorites&&d.favorites.length){
@@ -1506,7 +1507,7 @@ async function syncFavoritesToServer(){
   if(!authToken){openAuthPopup();return;}
   try{
     const favs=favorites.map(f=>({name:f.name,platform:f.platform,type:'player',group:f.group||''}));
-    const r=await fetch('/favorites/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({favorites:favs})});
+    const r=await fetch('/favorites/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({favorites:favs})});
     const d=await r.json();
     if(d.ok)alert('Favoritos sincronizados! ('+d.count+' guardados en servidor)');
   }catch(e){console.error('Sync error:',e);}
@@ -1521,12 +1522,18 @@ async function syncFavoritesToServer(){
     authToken=token;localStorage.setItem('v4nz_token',token);
     history.replaceState(null,'',location.pathname);
   }
-  // Auto-login if token exists
+  // Auto-login: try cookie first, then localStorage token
   if(authToken){
-    fetch('/auth/me',{headers:{'Authorization':'Bearer '+authToken}})
+    fetch('/auth/me',{headers:{'Authorization':'Bearer '+authToken},credentials:'include'})
       .then(r=>{if(!r.ok)throw new Error();return r.json();})
       .then(d=>{currentUser=d.user;updateAuthUI();loadFavoritesFromServer();})
       .catch(()=>{authToken=null;localStorage.removeItem('v4nz_token');updateAuthUI();});
+  }else{
+    // No localStorage token — maybe there's an HttpOnly cookie from previous session
+    fetch('/auth/me',{credentials:'include'})
+      .then(r=>{if(!r.ok)throw new Error();return r.json();})
+      .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();})
+      .catch(()=>{});
   }
 })();
 
@@ -2085,7 +2092,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const inp=document.getElementById('adminPwdInput');setTimeout(()=>inp.focus(),100);
     function doAdminLogin(){
       const pwd=inp.value;if(!pwd){inp.focus();return;}
-      fetch('/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})})
+      fetch('/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({password:pwd})})
       .then(r=>r.json()).then(d=>{
         if(d.ok){
           sessionStorage.setItem('adminMode','true');

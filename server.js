@@ -11,6 +11,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const compression = require('compression');
+const crypto = require('crypto');
 let sharp;
 try { sharp = require('sharp'); } catch(e) { console.warn('⚠️  sharp not installed — OG images will serve as SVG fallback'); }
 
@@ -51,15 +52,50 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// ═══ SECURITY HEADERS ═══
+// ═══ SECURITY HEADERS + CSP ═══
 app.use((req, res, next) => {
+  // Basic security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https://cdn.discordapp.com https://www.v4nz.com",
+    "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://www.pubgclans.net https://api.pubg.report https://discord.com",
+    "frame-src https://open.spotify.com https://discord.com",
+    "media-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self' https://discord.com"
+  ].join('; ');
+  res.setHeader('Content-Security-Policy', csp);
   next();
 });
+
+// ═══ COOKIE HELPER ═══
+function parseCookies(req) {
+  const cookies = {};
+  (req.headers.cookie || '').split(';').forEach(c => {
+    const [k, ...v] = c.trim().split('=');
+    if (k) cookies[k] = decodeURIComponent(v.join('='));
+  });
+  return cookies;
+}
+function setAuthCookie(res, token) {
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+  res.append('Set-Cookie', `v4nz_token=${token}; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=${30 * 24 * 3600}`);
+}
+function clearAuthCookie(res) {
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+  res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
+}
 
 app.use(express.static(path.join(__dirname)));
 
@@ -748,7 +784,7 @@ setInterval(() => {
 
 // JWT middleware — extracts user from token (optional, doesn't block)
 function authMiddleware(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = getTokenFromRequest(req);
   if (token) {
     try { req.user = jwt.verify(token, JWT_SECRET); }
     catch (e) { req.user = null; }
@@ -757,8 +793,18 @@ function authMiddleware(req, res, next) {
 }
 
 // Require auth — blocks if no valid token
+function getTokenFromRequest(req) {
+  // 1. HttpOnly cookie (preferred, secure)
+  const cookies = parseCookies(req);
+  if (cookies.v4nz_token) return cookies.v4nz_token;
+  // 2. Authorization header (backwards compatibility + mobile)
+  const auth = req.headers.authorization;
+  if (auth && auth.startsWith('Bearer ')) return auth.slice(7);
+  return null;
+}
+
 function requireAuth(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = getTokenFromRequest(req);
   if (!token) return res.status(401).json({ error: 'No autorizado' });
   try { req.user = jwt.verify(token, JWT_SECRET); next(); }
   catch (e) { return res.status(401).json({ error: 'Token invalido' }); }
@@ -766,7 +812,7 @@ function requireAuth(req, res, next) {
 
 // Require admin — blocks if no valid admin token
 function requireAdmin(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = getTokenFromRequest(req);
   if (!token) return res.status(401).json({ error: 'No autorizado' });
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -796,6 +842,7 @@ app.post('/auth/register', async (req, res) => {
     );
     const user = result.rows[0];
     const token = generateToken(user);
+    setAuthCookie(res, token);
     res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
@@ -814,28 +861,48 @@ app.post('/auth/login', async (req, res) => {
     if (!valid) return res.status(401).json({ error: 'Email o contrasena incorrectos' });
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     const token = generateToken(user);
+    setAuthCookie(res, token);
     res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// GET /auth/discord — Redirect to Discord OAuth
+// POST /auth/logout — Clear cookie
+app.post('/auth/logout', (req, res) => {
+  clearAuthCookie(res);
+  res.json({ ok: true });
+});
+
+// GET /auth/discord — Redirect to Discord OAuth (with state for CSRF protection)
 app.get('/auth/discord', (req, res) => {
   if (!DISCORD_CLIENT_ID) return res.status(503).json({ error: 'Discord OAuth no configurado' });
+  const state = crypto.randomBytes(16).toString('hex');
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+  res.setHeader('Set-Cookie', `oauth_state=${state}; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=600`);
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: DISCORD_REDIRECT_URI,
     response_type: 'code',
-    scope: 'identify email'
+    scope: 'identify email',
+    state
   });
   res.redirect('https://discord.com/api/oauth2/authorize?' + params.toString());
 });
 
-// GET /auth/discord/callback — Discord OAuth callback
+// GET /auth/discord/callback — Discord OAuth callback (with state verification)
 app.get('/auth/discord/callback', async (req, res) => {
   if (!pool) return res.redirect('/#auth_error=db_unavailable');
 
-  const { code } = req.query;
+  const { code, state } = req.query;
   if (!code) return res.redirect('/#auth_error=no_code');
+  // Verify OAuth state to prevent CSRF
+  const cookies = parseCookies(req);
+  if (!state || !cookies.oauth_state || state !== cookies.oauth_state) {
+    console.warn('Discord OAuth state mismatch — possible CSRF attempt');
+    return res.redirect('/#auth_error=invalid_state');
+  }
+  // Clear the state cookie
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+  res.append('Set-Cookie', `oauth_state=; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
   try {
     // Exchange code for token
     const tokenRes = await fetchWithTimeout(fetch, 'https://discord.com/api/oauth2/token', {
@@ -873,7 +940,8 @@ app.get('/auth/discord/callback', async (req, res) => {
       user = result.rows[0];
     }
     const jwtToken = generateToken(user);
-    // Redirect back to app with token in URL (frontend picks it up)
+    // Set HttpOnly cookie (primary) + URL token (for frontend state init)
+    setAuthCookie(res, jwtToken);
     res.redirect('/#auth_token=' + jwtToken);
   } catch (e) {
     console.error('Discord OAuth error:', e.message);
