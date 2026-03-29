@@ -1798,7 +1798,13 @@ async function loadClanFromHistory(tag){
         mh+='<div id="requestStatus_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
         mh+='</div></div>';
         if(members.length>=3){mh+=renderClanAnalytics(members,c);}
+        // Clan Feed placeholder
+        mh+='<div id="clanFeedSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;display:none;">';
+        mh+='<div class="section-title" style="font-size:.9rem;margin-bottom:14px;">&#x1F4E1; Actividad Reciente</div>';
+        mh+='<div id="clanFeedContent"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Cargando actividad...</div></div></div>';
+        mh+='</div>';
         cr.innerHTML+=mh;
+        loadClanFeed(c.tag);
         return;
       }
     }
@@ -2011,10 +2017,59 @@ async function loadClanPage(tag){
     }
     // Clan Analytics
     if(members.length>=3){h+=renderClanAnalytics(members,c);}
+    // Clan Feed placeholder
+    h+='<div id="clanFeedSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;display:none;">';
+    h+='<div class="section-title" style="font-size:.9rem;margin-bottom:14px;">&#x1F4E1; Actividad Reciente</div>';
+    h+='<div id="clanFeedContent"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Cargando actividad...</div></div></div>';
+    h+='</div>';
     cr.innerHTML=h;
+    // Load feed async
+    loadClanFeed(c.tag);
   }catch(e){
     // Not in DB — try searching via PUBG API
     cr.innerHTML='<div class="empty-state"><p style="color:var(--text-secondary);">Este clan aun no esta publicado en V4NZ.</p><p style="font-size:.8rem;color:var(--text-dim);">Busca un jugador del clan arriba para encontrarlo y publicarlo.</p></div>';
+  }
+}
+
+async function loadClanFeed(tag){
+  const section=document.getElementById('clanFeedSection');
+  const content=document.getElementById('clanFeedContent');
+  if(!section||!content)return;
+  try{
+    const r=await fetch('/clans/'+encodeURIComponent(tag)+'/feed');
+    if(!r.ok)throw new Error('Feed error');
+    const d=await r.json();
+    if(!d.feed||!d.feed.length){
+      section.style.display='none';return;
+    }
+    section.style.display='';
+    let h='';
+    d.feed.forEach(e=>{
+      const mapName=MAP_NAMES[e.map]||e.map||'?';
+      const mc=MAP_COLORS[mapName]||'#888';
+      const pc=e.place===1?'var(--accent-yellow)':e.place<=10?'var(--accent-green)':'var(--text-dim)';
+      const placeIcon=e.place===1?'&#x1F3C6;':e.place<=3?'&#x1F3C5;':'#'+e.place;
+      const ago=getTimeAgoMatch(new Date(e.date));
+      const mode=(e.mode||'').toUpperCase();
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;transition:all .2s;">';
+      // Player name (clickable)
+      h+='<div style="min-width:90px;max-width:110px;"><span style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;color:var(--accent);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(e.player)+'\';switchTab(\'overview\');searchPlayer();">'+esc(e.player)+'</span></div>';
+      // Place
+      h+='<div style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.75rem;color:'+pc+';min-width:36px;text-align:center;">'+placeIcon+'</div>';
+      // Mode + Map
+      h+='<div style="flex:1;min-width:0;"><div style="font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;color:var(--text-primary);">'+mode+'</div><div style="font-size:.6rem;color:var(--text-dim);display:flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:'+mc+';display:inline-block;"></span>'+esc(mapName)+'</div></div>';
+      // Stats
+      h+='<div style="display:flex;gap:10px;font-size:.65rem;text-align:center;">';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;color:var(--accent-blue);">'+e.kills+'</div><div style="color:var(--text-dim);">Kills</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;color:var(--accent-orange);">'+e.damage+'</div><div style="color:var(--text-dim);">Dano</div></div>';
+      h+='</div>';
+      // Time ago
+      h+='<div style="font-size:.6rem;color:var(--text-dim);min-width:50px;text-align:right;">'+ago+'</div>';
+      h+='</div>';
+    });
+    content.innerHTML=h;
+  }catch(e){
+    section.style.display='none';
   }
 }
 

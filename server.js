@@ -772,6 +772,105 @@ app.post('/clans/discover-members', requireAdmin, async (req, res) => {
   }
 });
 
+// ═══ CLAN FEED — Recent activity of clan members ═══
+app.get('/clans/:tag/feed', async (req, res) => {
+  if (!pool || !SERVER_API_KEY) return res.status(503).json({ error: 'Servicio no disponible' });
+  const tag = req.params.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+  try {
+    // Get top 5 active members by rounds played
+    const membersResult = await pool.query(
+      'SELECT player_name FROM clan_members WHERE clan_tag = $1 AND active = true ORDER BY rounds DESC NULLS LAST LIMIT 5',
+      [tag]
+    );
+    if (!membersResult.rows.length) return res.json({ feed: [], message: 'No hay miembros activos' });
+
+    // Check feed cache (10 min TTL)
+    const feedCacheKey = `clan_feed_${tag}`;
+    const cached = await pool.query("SELECT data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '10 minutes'", [feedCacheKey]);
+    if (cached.rows.length) return res.json(cached.rows[0].data);
+
+    const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+    const feed = [];
+    const clanResult = await pool.query('SELECT platform FROM clans WHERE tag = $1', [tag]);
+    const platform = clanResult.rows[0]?.platform || 'psn';
+
+    // For each member, get recent matches (max 3 per member)
+    for (const row of membersResult.rows) {
+      const playerName = row.player_name;
+      try {
+        // Look up player on PUBG API
+        const playerResp = await fetchWithTimeout(fetch,
+          `https://api.pubg.com/shards/${platform}/players?filter[playerNames]=${encodeURIComponent(playerName)}`,
+          { headers }, 8000);
+        if (!playerResp.ok) continue;
+        const playerData = await playerResp.json();
+        const player = playerData.data?.[0];
+        if (!player) continue;
+
+        const matchIds = (player.relationships?.matches?.data || []).map(m => m.id).slice(0, 3);
+        for (const matchId of matchIds) {
+          try {
+            // Check match cache first
+            const matchCacheKey = `match_${matchId}`;
+            let matchData;
+            const mcached = await pool.query("SELECT data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 minutes'", [matchCacheKey]);
+            if (mcached.rows.length) {
+              matchData = mcached.rows[0].data;
+            } else {
+              await new Promise(r => setTimeout(r, 500)); // Rate limit PUBG API
+              const matchResp = await fetchWithTimeout(fetch,
+                `https://api.pubg.com/shards/${platform}/matches/${matchId}`,
+                { headers }, 10000);
+              if (!matchResp.ok) continue;
+              matchData = await matchResp.json();
+              // Cache match data (30 min)
+              await pool.query(
+                'INSERT INTO api_cache (cache_key, data, created_at, ttl_seconds) VALUES ($1, $2, NOW(), 1800) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW()',
+                [matchCacheKey, JSON.stringify(matchData)]
+              );
+            }
+
+            // Extract this player's stats from the match
+            const participants = (matchData.included || matchData.data?.included || []).filter(i => i.type === 'participant');
+            const pp = participants.find(p => p.attributes?.stats?.name?.toLowerCase() === playerName.toLowerCase());
+            if (!pp) continue;
+
+            const ps = pp.attributes.stats;
+            const attrs = matchData.data?.attributes || matchData.attributes || {};
+            feed.push({
+              player: playerName,
+              matchId: matchId,
+              map: attrs.mapName || '?',
+              mode: attrs.gameMode || '?',
+              place: ps.winPlace || 99,
+              kills: ps.kills || 0,
+              damage: Math.round(ps.damageDealt || 0),
+              timeSurvived: ps.timeSurvived || 0,
+              date: attrs.createdAt || new Date().toISOString()
+            });
+          } catch (me) { /* skip match */ }
+        }
+        await new Promise(r => setTimeout(r, 600)); // Rate limit between players
+      } catch (pe) { /* skip player */ }
+    }
+
+    // Sort by date descending, limit to 15 entries
+    feed.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const result = { feed: feed.slice(0, 15) };
+
+    // Cache the feed result (10 min)
+    await pool.query(
+      'INSERT INTO api_cache (cache_key, data, created_at, ttl_seconds) VALUES ($1, $2, NOW(), 600) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW()',
+      [feedCacheKey, JSON.stringify(result)]
+    ).catch(() => {});
+
+    res.json(result);
+  } catch (e) {
+    console.error('[clan-feed] Error:', e.message);
+    res.status(500).json({ error: 'Error al cargar feed del clan' });
+  }
+});
+
 // ═══ RATE LIMITER (in-memory, no deps) ═══
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
