@@ -227,6 +227,8 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .player-avatar { width: 72px; height: 72px; border-radius: 16px; background: var(--accent-dim); border: 2px solid rgba(0,240,255,0.3); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); flex-shrink: 0; }
 .player-info h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
 .platform-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; font-family: 'Rajdhani', sans-serif; }
+.player-clan-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.25); color:var(--accent-orange); padding:4px 12px; border-radius:20px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-top:6px; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:all .2s; text-decoration:none; }
+.player-clan-badge:hover { background:rgba(255,107,0,0.2); border-color:rgba(255,107,0,0.4); }
 .player-quick-stats { margin-left: auto; display: flex; gap: 20px; }
 .quick-stat { text-align: center; padding: 8px 16px; background: var(--bg-secondary); border-radius: 12px; min-width: 80px; }
 .quick-stat .value { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--accent); line-height: 1.1; }
@@ -550,6 +552,17 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .rival-chip .rival-name { font-family:Orbitron,sans-serif; font-weight:700; font-size:.7rem; color:var(--text-primary); }
 .rival-chip .rival-count { font-size:.55rem; color:var(--accent-red); font-family:Rajdhani,sans-serif; font-weight:700; background:rgba(255,51,85,0.12); padding:1px 6px; border-radius:10px; }
 .rival-chip .rival-context { font-size:.5rem; color:var(--text-dim); font-family:Rajdhani,sans-serif; }
+.quick-pick { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px; }
+.quick-pick-title { font-family:Rajdhani,sans-serif; font-size:.7rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; text-align:center; }
+.quick-pick-chips { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; }
+.qp-chip { display:inline-flex; align-items:center; gap:4px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:16px; padding:4px 10px; cursor:pointer; transition:all .2s; font-size:.68rem; font-family:Rajdhani,sans-serif; font-weight:600; color:var(--text-primary); white-space:nowrap; }
+.qp-chip:hover { border-color:var(--accent); background:var(--accent-dim); }
+.qp-chip .qp-group { font-size:.5rem; padding:1px 5px; border-radius:8px; font-weight:700; }
+.qp-chip[data-group="Mi Squad"] .qp-group { background:rgba(0,240,255,0.12); color:var(--accent); }
+.qp-chip[data-group="Rivales"] .qp-group { background:rgba(255,51,85,0.12); color:var(--accent-red); }
+.qp-chip[data-group="Amigos"] .qp-group { background:rgba(0,255,136,0.12); color:var(--accent-green); }
+.qp-chip[data-group="Seguimiento"] .qp-group { background:rgba(168,85,247,0.12); color:var(--accent-purple); }
+.qp-chip[data-group="Tramposos"] .qp-group { background:rgba(255,107,0,0.15); color:var(--accent-orange); }
 
 /* WEAPONS */
 .weapon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
@@ -1017,7 +1030,7 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="error-msg" id="errorMsg"></div>
   <div class="player-header" id="playerHeader">
     <div class="player-avatar" id="playerAvatar"></div>
-    <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div></div>
+    <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div><div id="playerClanBadge" style="display:none;"></div></div>
     <div class="player-quick-stats" id="quickStats"></div>
     <div class="rank-badge-area" id="rankBadge"></div>
     <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
@@ -1087,6 +1100,7 @@ footer a { color: var(--accent); text-decoration: none; }
         <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
       </div>
       <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
+      <div id="quickPick1v1" style="margin-top:12px;"></div>
       <div id="compareRadarWrap" style="display:none;margin-top:24px;text-align:center;"><canvas id="compareRadarCanvas" width="500" height="500" style="max-width:100%;"></canvas></div>
       <div id="compareVerdict" style="display:none;margin-top:16px;"></div>
       <div id="compareBarChart" style="margin-top:20px;"></div>
@@ -1110,6 +1124,7 @@ footer a { color: var(--accent); text-decoration: none; }
         <input class="compare-input" id="sq4Input" placeholder="Jugador 4 (opcional)..." style="text-align:center;border:2px solid rgba(168,85,247,0.2);" onkeydown="if(event.key==='Enter')analyzeSquad()">
       </div>
       <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;padding:12px 32px;" onclick="analyzeSquad()">&#x1F50D; ANALIZAR SQUAD</button></div>
+      <div id="quickPickSquad" style="margin-top:12px;"></div>
       <div id="squadResults" style="margin-top:24px;"></div>
     </div>
   </div>
@@ -1877,11 +1892,115 @@ async function loadClanPage(tag){
       });
       h+='</div>';
     }
+    // Clan Analytics
+    if(members.length>=3){h+=renderClanAnalytics(members,c);}
     cr.innerHTML=h;
   }catch(e){
     // Not in DB — try searching via PUBG API
     cr.innerHTML='<div class="empty-state"><p style="color:var(--text-secondary);">Este clan aun no esta publicado en V4NZ.</p><p style="font-size:.8rem;color:var(--text-dim);">Busca un jugador del clan arriba para encontrarlo y publicarlo.</p></div>';
   }
+}
+
+function renderClanAnalytics(members,clan){
+  const active=members.filter(m=>m.active!==false&&(m.kills>0||m.rounds>0));
+  if(active.length<2)return'';
+  let h='<div style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;">';
+  h+='<div class="section-title" style="font-size:.9rem;margin-bottom:16px;">&#x1F4CA; Radiografia del Clan</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">';
+
+  // 1. K/D Distribution
+  const kdBands=[{label:'<1.0',min:0,max:1,color:'var(--accent-red)'},{label:'1.0-2.0',min:1,max:2,color:'var(--accent-orange)'},{label:'2.0-3.0',min:2,max:3,color:'var(--accent-yellow)'},{label:'3.0+',min:3,max:99,color:'var(--accent-green)'}];
+  const kdCounts=kdBands.map(b=>({...b,count:active.filter(m=>{const kd=parseFloat(m.kd)||0;return kd>=b.min&&kd<b.max;}).length}));
+  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
+  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Distribucion K/D</div>';
+  kdCounts.forEach(b=>{
+    const pct=active.length>0?Math.round((b.count/active.length)*100):0;
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+    h+='<span style="font-size:.65rem;color:var(--text-dim);min-width:40px;">'+b.label+'</span>';
+    h+='<div style="flex:1;height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+b.color+';border-radius:4px;transition:width .4s;"></div></div>';
+    h+='<span style="font-family:Orbitron;font-size:.6rem;font-weight:700;color:'+b.color+';min-width:30px;text-align:right;">'+b.count+'</span>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // 2. Top Performers (MVP cards)
+  const byKD=[...active].sort((a,b)=>(parseFloat(b.kd)||0)-(parseFloat(a.kd)||0));
+  const byKills=[...active].sort((a,b)=>(b.kills||0)-(a.kills||0));
+  const byWins=[...active].sort((a,b)=>(b.wins||0)-(a.wins||0));
+  const byDmg=[...active].sort((a,b)=>(parseFloat(b.damage)||0)-(parseFloat(a.damage)||0));
+  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
+  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">MVPs del Clan</div>';
+  const mvps=[
+    {icon:'&#x1F3AF;',label:'Mejor K/D',name:byKD[0]?.player_name,val:(parseFloat(byKD[0]?.kd)||0).toFixed(2),color:'var(--accent-green)'},
+    {icon:'&#x1F480;',label:'Mas Kills',name:byKills[0]?.player_name,val:(byKills[0]?.kills||0).toLocaleString(),color:'var(--accent-red)'},
+    {icon:'&#x1F3C6;',label:'Mas Wins',name:byWins[0]?.player_name,val:''+(byWins[0]?.wins||0),color:'var(--accent-yellow)'},
+    {icon:'&#x1F4A5;',label:'Mas Dano',name:byDmg[0]?.player_name,val:Math.round(parseFloat(byDmg[0]?.damage)||0).toLocaleString(),color:'var(--accent-orange)'}
+  ];
+  mvps.forEach(m=>{
+    if(!m.name)return;
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:4px 8px;background:var(--bg-secondary);border-radius:6px;cursor:pointer;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.name)+'\';setPlatform(\''+(clan.platform||'psn')+'\');switchTab(\'overview\');searchPlayer();">';
+    h+='<span style="font-size:.9rem;">'+m.icon+'</span>';
+    h+='<span style="font-size:.65rem;color:var(--text-dim);min-width:60px;">'+m.label+'</span>';
+    h+='<span style="font-family:Rajdhani;font-weight:700;font-size:.75rem;color:var(--text-primary);flex:1;">'+esc(m.name)+'</span>';
+    h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;color:'+m.color+';">'+m.val+'</span>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // 3. Clan Health / Activity
+  const activeRate=members.length>0?Math.round((active.length/members.length)*100):0;
+  const totalKills=active.reduce((s,m)=>s+(m.kills||0),0);
+  const totalRounds=active.reduce((s,m)=>s+(m.rounds||0),0);
+  const avgKillsPerMember=active.length>0?Math.round(totalKills/active.length):0;
+  const avgRoundsPerMember=active.length>0?Math.round(totalRounds/active.length):0;
+  const clanKPR=totalRounds>0?(totalKills/totalRounds).toFixed(2):'0';
+  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
+  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Salud del Clan</div>';
+  // Activity bar
+  const actColor=activeRate>=70?'var(--accent-green)':activeRate>=40?'var(--accent-orange)':'var(--accent-red)';
+  h+='<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-dim);margin-bottom:3px;"><span>Actividad</span><span style="color:'+actColor+';font-weight:700;">'+activeRate+'% activos ('+active.length+'/'+members.length+')</span></div>';
+  h+='<div style="height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+activeRate+'%;background:'+actColor+';border-radius:4px;"></div></div></div>';
+  // Avg stats
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent);">'+avgKillsPerMember.toLocaleString()+'</div><div style="font-size:.55rem;color:var(--text-dim);">Kills/Miembro</div></div>';
+  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent-orange);">'+avgRoundsPerMember.toLocaleString()+'</div><div style="font-size:.55rem;color:var(--text-dim);">Partidas/Miembro</div></div>';
+  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent-yellow);">'+clanKPR+'</div><div style="font-size:.55rem;color:var(--text-dim);">Kills/Partida</div></div>';
+  const topCarrier=byKills[0];const carrierPct=totalKills>0&&topCarrier?Math.round(((topCarrier.kills||0)/totalKills)*100):0;
+  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent-purple);">'+carrierPct+'%</div><div style="font-size:.55rem;color:var(--text-dim);">Peso del Top1</div></div>';
+  h+='</div></div>';
+
+  // 4. Cotilleo del Clan
+  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
+  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">&#x1F575;&#xFE0F; Cotilleo del Clan</div>';
+  const gossip=[];
+  // Who carries?
+  if(carrierPct>=40&&topCarrier)gossip.push({icon:'&#x1F4AA;',text:esc(topCarrier.player_name)+' carga al clan con el '+carrierPct+'% de las kills totales. Sin el, esto se hunde.'});
+  else if(carrierPct<=15&&active.length>=5)gossip.push({icon:'&#x2696;',text:'Las kills estan bien repartidas. Clan equilibrado, nadie manda mas que otro.'});
+  // Inactive shame
+  const inactiveCount=members.length-active.length;
+  if(inactiveCount>=3)gossip.push({icon:'&#x1F4A4;',text:inactiveCount+' miembros no han jugado. Estan de adorno o se fueron de vacaciones.'});
+  // K/D shame
+  const lowKD=active.filter(m=>(parseFloat(m.kd)||0)<0.5);
+  if(lowKD.length>=2)gossip.push({icon:'&#x1F480;',text:lowKD.length+' miembros tienen K/D menor a 0.5. Alguien deberia darles clase.'});
+  // Monster K/D
+  const monsters=active.filter(m=>(parseFloat(m.kd)||0)>=3.0);
+  if(monsters.length)gossip.push({icon:'&#x1F47E;',text:monsters.map(m=>esc(m.player_name)).join(', ')+(monsters.length===1?' es una bestia':' son bestias')+' con K/D de 3+.'});
+  // Win machine
+  const winRateEstimate=totalRounds>0?(active.reduce((s,m)=>s+(m.wins||0),0)/totalRounds*100):0;
+  if(winRateEstimate>=20)gossip.push({icon:'&#x1F3C6;',text:'Este clan gana '+winRateEstimate.toFixed(1)+'% de las partidas. Lobby de miedo.'});
+  else if(winRateEstimate<5&&totalRounds>100)gossip.push({icon:'&#x1F622;',text:'Win rate del clan: '+winRateEstimate.toFixed(1)+'%. Se necesita refuerzos urgentemente.'});
+  // Fill if empty
+  if(!gossip.length)gossip.push({icon:'&#x1F50D;',text:'Clan discreto. No hay mucho que contar... todavia.'});
+  gossip.forEach(g=>{
+    h+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;">';
+    h+='<span style="font-size:.9rem;flex-shrink:0;">'+g.icon+'</span>';
+    h+='<span style="font-size:.72rem;color:var(--text-secondary);line-height:1.4;">'+g.text+'</span>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  h+='</div></div>';
+  return h;
 }
 
 // INIT
@@ -2115,6 +2234,8 @@ async function searchPlayer(){
     try{renderFrequentTeammates();}catch(e){console.error('Frequent teammates error:',e);}
     // PUBG Report clips — async, no bloquea la carga
     checkPubgReport().catch(e=>console.log('PUBG Report check error:',e.message));
+    // Detect player's clan and auto-register
+    detectPlayerClan().catch(e=>console.log('Clan detection error:',e.message));
   }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';document.getElementById('frequentTeammates').style.display='none';const prBtn=document.getElementById('pubgReportBtn');if(prBtn)prBtn.style.display='none';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
@@ -2162,6 +2283,7 @@ function switchTab(t){
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
   if(t==='leaderboard')renderLeaderboard();
+  if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
   // Homepage content: show only when on overview with no player
   if(t==='overview'&&!currentPlayerData){showHomepageContent();const hero=document.getElementById('searchHero');if(hero)hero.scrollIntoView({behavior:'smooth'});}
   else{hideHomepageContent();}
@@ -2180,7 +2302,7 @@ async function setSeasonType(type){
   }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
 }
 function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,12);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
-const FAV_GROUPS=['Mi Squad','Rivales','Amigos'];
+const FAV_GROUPS=['Mi Squad','Rivales','Amigos','Seguimiento','Tramposos'];
 let favFilterGroup='all',favFilterText='',favShowAll=false;
 function toggleFavoriteFromHeader(){const n=currentPlayerData?.attributes?.name;if(!n)return;toggleFavorite(n,currentPlatform);updateFavHeaderBtn();}
 function updateFavHeaderBtn(){const btn=document.getElementById('favHeaderBtn');if(!btn||!currentPlayerData)return;const n=currentPlayerData.attributes.name;const fav=isFavorite(n);btn.innerHTML=fav?'&#x2605;':'&#x2606;';btn.classList.toggle('active',fav);btn.title=fav?'Quitar de favoritos':'Guardar en favoritos';}
@@ -2258,6 +2380,41 @@ function renderNarrativeInsights(){
 }
 
 function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;let platformHtml=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';if(currentSurvivalData&&currentSurvivalData.data&&currentSurvivalData.data.attributes){platformHtml+=' <span style="margin-left:12px;font-size:.8rem;color:var(--accent-green);">Supervivencia Lv. '+currentSurvivalData.data.attributes.level+'</span>';}document.getElementById('playerPlatform').innerHTML=platformHtml;const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';const cl=document.getElementById('copyLinkBtn');if(cl)cl.style.display='inline-flex';updateFavHeaderBtn();}
+/* ===== DETECTAR CLAN DEL JUGADOR Y AUTO-REGISTRAR ===== */
+async function detectPlayerClan(){
+  const badge=document.getElementById('playerClanBadge');
+  if(!badge){return;}badge.style.display='none';badge.innerHTML='';
+  if(!currentPlayerData||!currentPlayerData.attributes)return;
+  const clanId=currentPlayerData.attributes.clanId;
+  if(!clanId){return;}
+  try{
+    // Fetch clan info from PUBG API
+    const cData=await apiGet(API_BASE+'/'+currentPlatform+'/clans/'+clanId);
+    if(!cData||!cData.data)return;
+    const attr=cData.data.attributes||{};
+    const tag=attr.clanTag||'???';
+    const name=attr.clanName||tag;
+    const level=attr.clanLevel||0;
+    const members=attr.clanMemberCount||0;
+    // Show clan badge in player header
+    badge.innerHTML='<a class="player-clan-badge" href="javascript:void(0)" onclick="switchTab(\'clans\');setTimeout(()=>{document.getElementById(\'clanSearchInput\')&&(document.getElementById(\'clanSearchInput\').value=\''+escJs(tag)+'\');searchClan();},200);">&#x1F6E1; ['+esc(tag)+'] '+esc(name)+'</a>';
+    badge.style.display='block';
+    // Auto-register clan in V4NZ if not already there
+    try{
+      const checkResp=await fetch('/clans/'+encodeURIComponent(tag));
+      if(checkResp.ok){
+        const existing=await checkResp.json();
+        if(existing&&existing.clan){console.log('Clan ['+tag+'] ya registrado en V4NZ');return;}
+      }
+      // Not in DB — auto-import from pubgclans.net
+      console.log('Auto-registrando clan ['+tag+'] en V4NZ...');
+      const importResp=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,gameMode:'squad'})});
+      if(importResp.ok){console.log('Clan ['+tag+'] registrado exitosamente en V4NZ');}
+      else{console.log('No se pudo importar clan ['+tag+'] desde pubgclans.net');}
+    }catch(e){console.log('Auto-register clan error:',e.message);}
+  }catch(e){console.log('Clan detection error:',e.message);}
+}
+
 function copyPlayerLink(btn){const n=currentPlayerData?.attributes?.name;if(!n)return;const url='https://www.v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);navigator.clipboard?.writeText(url).then(()=>{btn.classList.add('copied');btn.innerHTML='&#x2705; Copiado!';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='&#x1F517; Copiar Enlace';},2000);}).catch(()=>{prompt('Copia este enlace:',url);});}
 function renderSeasonBar(season){document.getElementById('seasonName').textContent=getSeasonLabel(season.id);document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
@@ -2410,6 +2567,13 @@ function renderFrequentTeammates(){
   listEl.innerHTML=h;el.style.display='block';
 }
 
+function searchRival(name){
+  const inp=document.getElementById('searchInput');if(!inp)return;
+  inp.value=name;inp.focus();
+  switchTab('overview');
+  searchPlayer();
+}
+
 /* ===== RIVALES HABITUALES (todos los jugadores, no solo equipo) ===== */
 function renderMatchRivals(){
   const el=document.getElementById('matchRivals');const listEl=document.getElementById('matchRivalsList');
@@ -2437,10 +2601,10 @@ function renderMatchRivals(){
   let h='';sorted.forEach(([name,data])=>{
     const ctx=data.sameTeam>0?(data.sameTeam===data.count?'aliado':'mixto'):'enemigo';
     const ctxColor=ctx==='aliado'?'var(--accent-green)':ctx==='enemigo'?'var(--accent-red)':'var(--accent-orange)';
-    h+='<div class="rival-chip" onclick="document.getElementById(\'searchInput\').value=\''+escJs(name)+'\';searchPlayer();">';
-    h+='<span class="rival-name">'+esc(name)+'</span>';
-    h+='<span class="rival-count">'+data.count+'x</span>';
-    h+='<span class="rival-context" style="color:'+ctxColor+';">'+ctx+'</span>';
+    h+='<div class="rival-chip" onclick="event.stopPropagation();searchRival(\''+escJs(name)+'\');">';
+    h+='<span class="rival-name" style="pointer-events:none;">'+esc(name)+'</span>';
+    h+='<span class="rival-count" style="pointer-events:none;">'+data.count+'x</span>';
+    h+='<span class="rival-context" style="color:'+ctxColor+';pointer-events:none;">'+ctx+'</span>';
     h+='</div>';
   });
   listEl.innerHTML=h;el.style.display='block';
@@ -3543,6 +3707,72 @@ function switchCompareMode(mode){
   document.getElementById('compareModeSquad').style.display=mode==='squad'?'':'none';
   document.getElementById('cmpTab-1v1').classList.toggle('active',mode==='1v1');
   document.getElementById('cmpTab-squad').classList.toggle('active',mode==='squad');
+  if(mode==='1v1')renderQuickPick1v1();
+  if(mode==='squad')renderQuickPickSquad();
+}
+
+/* ===== QUICK PICK — selector rápido de jugadores ===== */
+function getQuickPickPlayers(){
+  // Combine favorites + recents, deduplicate, favorites first
+  const all=[];const seen=new Set();
+  // Current player always first if loaded
+  if(currentPlayerData&&currentPlayerData.attributes){
+    const n=currentPlayerData.attributes.name;
+    all.push({name:n,platform:currentPlatform,group:'Actual'});seen.add(n.toLowerCase());
+  }
+  favorites.forEach(f=>{if(!seen.has(f.name.toLowerCase())){all.push(f);seen.add(f.name.toLowerCase());}});
+  recentSearches.forEach(s=>{if(!seen.has(s.name.toLowerCase())){all.push({name:s.name,platform:s.platform,group:'Reciente'});seen.add(s.name.toLowerCase());}});
+  return all;
+}
+
+function buildQPChip(player,targetInputId){
+  const g=player.group||'';
+  const gLabel=g?'<span class="qp-group">'+esc(g)+'</span>':'';
+  return '<div class="qp-chip" data-group="'+esc(g)+'" onclick="document.getElementById(\''+targetInputId+'\').value=\''+escJs(player.name)+'\';document.getElementById(\''+targetInputId+'\').focus();this.style.opacity=\'.5\';">'+esc(player.name)+gLabel+'</div>';
+}
+
+function renderQuickPick1v1(){
+  const el=document.getElementById('quickPick1v1');if(!el)return;
+  const players=getQuickPickPlayers();
+  if(!players.length){el.innerHTML='';return;}
+  let h='<div class="quick-pick"><div class="quick-pick-title">Seleccion rapida — pulsa para rellenar</div>';
+  h+='<div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">';
+  h+='<div style="flex:1;min-width:140px;"><div style="font-size:.6rem;color:var(--text-dim);text-align:center;margin-bottom:4px;">Jugador 1</div><div class="quick-pick-chips">';
+  players.forEach(p=>{h+=buildQPChip(p,'compare1Input');});
+  h+='</div></div>';
+  h+='<div style="flex:1;min-width:140px;"><div style="font-size:.6rem;color:var(--text-dim);text-align:center;margin-bottom:4px;">Jugador 2</div><div class="quick-pick-chips">';
+  players.forEach(p=>{h+=buildQPChip(p,'compare2Input');});
+  h+='</div></div>';
+  h+='</div></div>';
+  el.innerHTML=h;
+}
+
+function renderQuickPickSquad(){
+  const el=document.getElementById('quickPickSquad');if(!el)return;
+  const players=getQuickPickPlayers();
+  if(!players.length){el.innerHTML='';return;}
+  // For squad, show all players as chips, clicking fills next empty slot
+  let h='<div class="quick-pick"><div class="quick-pick-title">Pulsa para añadir al squad</div>';
+  h+='<div class="quick-pick-chips">';
+  players.forEach(p=>{
+    const nameEsc=escJs(p.name);
+    const g=p.group||'';
+    const gLabel=g?'<span class="qp-group">'+esc(g)+'</span>':'';
+    h+='<div class="qp-chip" data-group="'+esc(g)+'" onclick="fillNextSquadSlot(\''+nameEsc+'\');this.style.opacity=\'.4\';">'+esc(p.name)+gLabel+'</div>';
+  });
+  h+='</div></div>';
+  el.innerHTML=h;
+}
+
+function fillNextSquadSlot(name){
+  const ids=['sq1Input','sq2Input','sq3Input','sq4Input'];
+  for(let i=0;i<ids.length;i++){
+    const inp=document.getElementById(ids[i]);
+    if(inp&&!inp.value.trim()){inp.value=name;inp.style.borderColor='var(--accent)';setTimeout(()=>{inp.style.borderColor='';},800);return;}
+  }
+  // All full — replace last one
+  const last=document.getElementById('sq4Input');
+  if(last)last.value=name;
 }
 
 async function analyzeSquad(){

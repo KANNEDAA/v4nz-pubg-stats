@@ -1088,6 +1088,41 @@ app.get('/robots.txt', (req, res) => {
   res.send('User-agent: *\nAllow: /\nSitemap: https://www.v4nz.com/sitemap.xml');
 });
 
+// ═══ PUBG Report Proxy (evita CORS) ═══
+app.get('/api/pubg-report/:accountId', async (req, res) => {
+  const accountId = req.params.accountId;
+  try {
+    const resp = await fetch('https://api.pubg.report/v1/players/' + encodeURIComponent(accountId));
+    if (!resp.ok) return res.status(resp.status).json({ error: 'pubg.report returned ' + resp.status });
+    const data = await resp.json();
+    // Parse encounters and extract clips with matchIds
+    let encounters = [];
+    if (Array.isArray(data)) encounters = data;
+    else if (data.encounters) encounters = data.encounters;
+    else if (data.data && Array.isArray(data.data)) encounters = data.data;
+    else if (data.matches) encounters = data.matches;
+    const clips = {};
+    encounters.forEach(enc => {
+      const mid = enc.match_id || enc.matchId || enc.MatchId || enc.id || (enc.match && enc.match.id) || '';
+      if (!mid) return;
+      let clipUrl = '', streamer = '';
+      if (enc.clips && enc.clips.length) {
+        clipUrl = enc.clips[0].url || enc.clips[0].clip_url || '';
+        streamer = enc.clips[0].broadcaster_name || enc.clips[0].streamer || enc.clips[0].channel || '';
+      } else if (enc.clip_url) { clipUrl = enc.clip_url; streamer = enc.streamer_name || ''; }
+      else if (enc.url) { clipUrl = enc.url; streamer = enc.streamer || ''; }
+      if (!clipUrl) clipUrl = 'https://pubg.report/players/' + encodeURIComponent(accountId);
+      if (!streamer) streamer = 'Streamer';
+      clips[mid] = { url: clipUrl, streamer };
+    });
+    res.set('Cache-Control', 'public, max-age=600');
+    res.json({ clips, total: Object.keys(clips).length, raw_format: Array.isArray(data) ? 'array' : typeof data });
+  } catch (e) {
+    console.error('PUBG Report proxy error:', e.message);
+    res.status(502).json({ error: 'Failed to reach pubg.report', detail: e.message });
+  }
+});
+
 // ═══ Dynamic OG Image (SVG → PNG via sharp) ═══
 function escXml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
 
