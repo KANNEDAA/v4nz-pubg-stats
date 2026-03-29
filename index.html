@@ -684,6 +684,16 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .clan-compare-bar-val { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 600; width: 50px; }
 @media(max-width:768px){ .clan-compare-container { grid-template-columns: 1fr; } .clan-compare-vs { padding-top: 0; font-size: 1.1rem; } }
 
+/* CLAN AUTOCOMPLETE */
+.clan-ac-wrap { position: relative; }
+.clan-ac-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 50; background: var(--bg-card); border: 1px solid var(--accent); border-top: none; border-radius: 0 0 10px 10px; max-height: 220px; overflow-y: auto; display: none; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.clan-ac-list.show { display: block; }
+.clan-ac-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background .15s; }
+.clan-ac-item:hover { background: rgba(0,240,255,0.06); }
+.clan-ac-tag { font-family: Orbitron, sans-serif; font-size: .7rem; font-weight: 700; color: var(--accent); min-width: 48px; }
+.clan-ac-name { font-family: Rajdhani, sans-serif; font-size: .8rem; font-weight: 600; color: var(--text-primary); flex: 1; }
+.clan-ac-meta { font-size: .6rem; color: var(--text-dim); }
+
 /* MI CLAN & HISTORIAL */
 .my-clan-banner { background: linear-gradient(135deg, rgba(255,107,0,0.12), rgba(255,51,85,0.08)); border: 1px solid rgba(255,107,0,0.25); border-radius: 12px; padding: 16px; margin-bottom: 16px; cursor: pointer; transition: all .25s; position: relative; overflow: hidden; }
 .my-clan-banner:hover { border-color: var(--accent-orange); box-shadow: 0 0 20px rgba(255,107,0,0.1); }
@@ -1318,8 +1328,8 @@ footer a { color: var(--accent); text-decoration: none; }
         <button class="clan-plat-btn" data-ccplat="xbox" onclick="setClanComparePlatform('xbox',this)">Xbox</button>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-        <div class="clan-search-box" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Nombre del clan o tag..." onkeydown="if(event.key==='Enter')compareClans()"/></div>
-        <div class="clan-search-box" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Nombre del clan o tag..." onkeydown="if(event.key==='Enter')compareClans()"/></div>
+        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Nombre del clan o tag..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC1')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC1"></div></div>
+        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Nombre del clan o tag..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC2')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC2"></div></div>
       </div>
       <div style="text-align:center;margin-bottom:20px;"><button class="search-btn" style="border-radius:8px;padding:12px 30px;" onclick="compareClans()">COMPARAR CLANES</button></div>
       <div id="clanCompareResults"></div>
@@ -2162,7 +2172,7 @@ async function loadClanFeed(tag){
       const mode=(e.mode||'').toUpperCase();
       h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;transition:all .2s;">';
       // Player name (clickable)
-      h+='<div style="min-width:90px;max-width:110px;"><span style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;color:var(--accent);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(e.player)+'\';switchTab(\'overview\');searchPlayer();">'+esc(e.player)+'</span></div>';
+      h+='<div style="min-width:90px;max-width:110px;"><span style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;color:var(--accent);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" onclick="goToPlayer(\''+escJs(e.player)+'\');">'+esc(e.player)+'</span></div>';
       // Place
       h+='<div style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.75rem;color:'+pc+';min-width:36px;text-align:center;">'+placeIcon+'</div>';
       // Mode + Map
@@ -2648,8 +2658,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER or /clan/TAG
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
-  if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
-  else if(clanMatch){loadClanPage(decodeURIComponent(clanMatch[1]));}
+  if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
+  else if(clanMatch){setTimeout(()=>loadClanPage(decodeURIComponent(clanMatch[1])),100);}
   else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
   // Back/forward browser navigation
   window.addEventListener('popstate',()=>{
@@ -2657,7 +2667,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     const clanM=location.pathname.match(/^\/clan\/(.+)$/i);
     if(statsM){const plat=statsM[1].toLowerCase(),pname=decodeURIComponent(statsM[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
     else if(clanM){loadClanPage(decodeURIComponent(clanM[1]));}
-    else if(location.pathname==='/'||location.pathname===''){switchTab('overview');document.getElementById('emptyState').style.display='block';}
+    else if(location.pathname==='/'||location.pathname===''){
+      // Volver a home limpio
+      document.getElementById('searchInput').value='';
+      document.getElementById('playerHeader').classList.remove('visible');
+      document.getElementById('seasonBar').classList.remove('visible');
+      document.getElementById('tabsContainer').classList.remove('visible');
+      document.getElementById('narrativeInsights').classList.remove('visible');
+      document.getElementById('personalitySection').classList.remove('visible');
+      document.getElementById('emptyState').style.display='block';
+      const bib=document.getElementById('botIndexBadge');if(bib){bib.style.display='none';bib.innerHTML='';}
+      const pcb=document.getElementById('playerClanBadge');if(pcb){pcb.style.display='none';pcb.innerHTML='';}
+      document.getElementById('frequentTeammates').style.display='none';
+      document.title='V4NZ — PUBG Stats Tracker';
+      switchTab('overview');
+    }
     else{location.reload();}
   });
   // Admin panel: check if admin is stored in sessionStorage from /admin route
@@ -2691,13 +2715,30 @@ document.addEventListener('DOMContentLoaded',()=>{
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
 function checkApiKey(){return true;}
 function saveApiKey(){}
-async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;try{r=await fetch(u,{headers:h});}catch(netErr){const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=JSON.parse(await r.text());if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429)msg='Demasiadas consultas. Espera unos segundos y vuelve a intentarlo.';if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return r.json();}
+async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;try{r=await fetch(u,{headers:h});}catch(netErr){const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=JSON.parse(await r.text());if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';showRateLimitCountdown();}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return r.json();}
 function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div></div>';return null;}
 function stopApiLoader(iv){}
 function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);}
 function setLoaderStep(msg){const el=document.getElementById('mainLoaderStep');if(el)el.textContent=msg;}
-let errorTimeout=null;function showError(m){const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.textContent=m;e.classList.add('visible');errorTimeout=setTimeout(()=>{e.classList.remove('visible');errorTimeout=null;},10000);}
+let errorTimeout=null;let rateLimitInterval=null;
+function showError(m){
+  if(m==='__RATELIMIT__')return; // handled by countdown
+  const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.textContent=m;e.classList.add('visible');errorTimeout=setTimeout(()=>{e.classList.remove('visible');errorTimeout=null;},10000);
+}
 function hideError(){const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.classList.remove('visible');errorTimeout=null;}
+function showRateLimitCountdown(){
+  const e=document.getElementById('errorMsg');
+  if(rateLimitInterval)clearInterval(rateLimitInterval);
+  if(errorTimeout)clearTimeout(errorTimeout);
+  let secs=15;
+  e.innerHTML='&#x23F3; Demasiadas consultas. Puedes reintentar en <strong>'+secs+'s</strong>';
+  e.classList.add('visible');
+  rateLimitInterval=setInterval(()=>{
+    secs--;
+    if(secs<=0){clearInterval(rateLimitInterval);rateLimitInterval=null;e.innerHTML='&#x2705; Ya puedes buscar de nuevo';setTimeout(()=>{e.classList.remove('visible');},2000);return;}
+    e.innerHTML='&#x23F3; Demasiadas consultas. Puedes reintentar en <strong>'+secs+'s</strong>';
+  },1000);
+}
 function showDataPanels(){document.getElementById('tabsContainer').classList.add('visible');document.getElementById('emptyState').style.display='none';}
 function formatTime(s){return Math.floor(s/60)+'m '+Math.floor(s%60)+'s';}
 function getTimeAgoMatch(d){const t=typeof d==='number'?d:d.getTime();const h=Math.floor((Date.now()-t)/3600000);if(h<1)return'ahora';if(h<24)return h+'h';return Math.floor(h/24)+'d';}
@@ -3192,7 +3233,7 @@ function showMatchDetail(idx){
   if(ps.heals)lootItems.push({l:'Heals',v:ps.heals});if(ps.boosts)lootItems.push({l:'Boosts',v:ps.boosts});if(ps.weaponsAcquired)lootItems.push({l:'Armas',v:ps.weaponsAcquired});if(ps.roadKills)lootItems.push({l:'Atropellos',v:ps.roadKills});if(ps.vehicleDestroys)lootItems.push({l:'Vehiculos',v:ps.vehicleDestroys});if(ps.longestKill)lootItems.push({l:'Kill lejano',v:Math.round(ps.longestKill)+'m'});if(ps.swimDistance>0)lootItems.push({l:'Nado',v:((ps.swimDistance)/1000).toFixed(2)+'km'});
   if(lootItems.length){h+='<div class="md-loot-grid">';lootItems.forEach(i=>{h+='<div class="md-loot-item"><span class="loot-val">'+i.v+'</span>'+i.l+'</div>';});h+='</div>';}
   const myRoster=(match.included||[]).find(i=>i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(p=>p.id===pp.id));let teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){const partIds=myRoster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>b.kills-a.kills);}
-  if(teammates.length>0){h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:12px;">Tu Equipo</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">';teammates.forEach(tm=>{const isMe=tm.name.toLowerCase()===pn.toLowerCase();h+='<div style="background:var(--bg-secondary);padding:8px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'')+'"><div style="color:'+(isMe?'var(--accent)':'var(--text-primary)')+';font-weight:600;margin-bottom:3px;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+esc(tm.name)+'\';searchPlayer();" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-primary)\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.6rem;opacity:.6;">(tu)</span>':'')+'</div><div style="color:var(--accent);font-size:.7rem;margin-bottom:2px;">'+tm.kills+' kills</div><div style="color:var(--accent-orange);font-size:.7rem;">'+Math.round(tm.damageDealt)+' dano</div></div>';});h+='</div></div>';}
+  if(teammates.length>0){h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:12px;">Tu Equipo</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">';teammates.forEach(tm=>{const isMe=tm.name.toLowerCase()===pn.toLowerCase();h+='<div style="background:var(--bg-secondary);padding:8px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'')+'"><div style="color:'+(isMe?'var(--accent)':'var(--text-primary)')+';font-weight:600;margin-bottom:3px;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();goToPlayer(\''+escJs(tm.name)+'\');" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-primary)\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.6rem;opacity:.6;">(tu)</span>':'')+'</div><div style="color:var(--accent);font-size:.7rem;margin-bottom:2px;">'+tm.kills+' kills</div><div style="color:var(--accent-orange);font-size:.7rem;">'+Math.round(tm.damageDealt)+' dano</div></div>';});h+='</div></div>';}
   const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
   // Top killer warning in detail view
   const allParts=(match.included||[]).filter(i=>i.type==='participant');
@@ -3202,7 +3243,7 @@ function showMatchDetail(idx){
     h+='<div style="margin-top:16px;background:rgba(255,51,85,0.08);border:1px solid rgba(255,51,85,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;">';
     h+='<span style="font-size:1.2rem;">'+(detailTopKills>=15?'&#x26A0;&#xFE0F;':'&#x1F525;')+'</span>';
     h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">Top Killer de la Partida</div>';
-    h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+escJs(detailTopK)+'\';searchPlayer();">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
+    h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(detailTopK)+'\');">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
     h+='</div></div>';
   }
   // Kill Tree section
@@ -3391,7 +3432,7 @@ async function loadKillTree(telemUrl,playerName,btn){
         const dist=k.distance?Math.round(k.distance/100):0;
         const isHs=k.killerDamageInfo?.additionalInfo==='HeadShot'||k.isHeadShot;
         h+='<div class="kt-node kt-kill">';
-        h+='<span class="kt-player" style="cursor:pointer;color:var(--accent-green);" onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+escJs(victim)+'\';searchPlayer();">'+esc(victim)+'</span>';
+        h+='<span class="kt-player" style="cursor:pointer;color:var(--accent-green);" onclick="closeMatchDetail();goToPlayer(\''+escJs(victim)+'\');">'+esc(victim)+'</span>';
         h+=' <span class="kt-weapon">'+esc(weapon)+(isHs?' &#x1F3AF;':'')+'</span>';
         if(dist>0)h+=' <span class="kt-distance">'+dist+'m</span>';
         h+='</div>';
@@ -3417,7 +3458,7 @@ async function loadKillTree(telemUrl,playerName,btn){
         const nodeClass=i===0?'kt-death':'kt-kill';
         const label=i===0?'te mato':'mato a '+esc(killChain[i-1].player);
         h+='<div class="kt-node '+nodeClass+'">';
-        h+='<span class="kt-player" style="cursor:pointer;" onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+escJs(k.player)+'\';searchPlayer();">'+esc(k.player)+'</span>';
+        h+='<span class="kt-player" style="cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(k.player)+'\');">'+esc(k.player)+'</span>';
         h+=' <span style="font-size:.6rem;color:var(--text-dim);">'+label+'</span>';
         h+=' <span class="kt-weapon">'+esc(k.weapon)+'</span>';
         if(k.distance>0)h+=' <span class="kt-distance">'+k.distance+'m</span>';
@@ -3452,7 +3493,7 @@ function renderFrequentTeammates(){
   const sorted=Object.entries(tmCount).sort((a,b)=>b[1]-a[1]).filter(e=>e[1]>=2).slice(0,8);
   if(!sorted.length){el.style.display='none';return;}
   let h='';sorted.forEach(([name,count])=>{
-    h+='<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .2s;white-space:nowrap;" onclick="document.getElementById(\'searchInput\').value=\''+esc(name)+'\';searchPlayer();" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.boxShadow=\'0 0 8px rgba(0,240,255,0.15)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.boxShadow=\'none\'">';
+    h+='<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .2s;white-space:nowrap;" onclick="setPlatform(\''+currentPlatform+'\');document.getElementById(\'searchInput\').value=\''+escJs(name)+'\';searchPlayer();" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.boxShadow=\'0 0 8px rgba(0,240,255,0.15)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.boxShadow=\'none\'">';
     h+='<span style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.7rem;color:var(--text-primary);">'+esc(name)+'</span>';
     h+='<span style="font-size:.55rem;color:var(--accent);font-family:Rajdhani,sans-serif;font-weight:700;background:var(--accent-dim);padding:1px 6px;border-radius:10px;">'+count+'x</span>';
     h+='</div>';
@@ -3460,7 +3501,10 @@ function renderFrequentTeammates(){
   listEl.innerHTML=h;el.style.display='block';
 }
 
-function searchRival(name){
+function searchRival(name){goToPlayer(name);}
+function goToPlayer(name,plat){
+  if(plat)setPlatform(plat);
+  else if(currentPlatform)setPlatform(currentPlatform);
   const inp=document.getElementById('searchInput');if(!inp)return;
   inp.value=name;inp.focus();
   switchTab('overview');
@@ -3814,9 +3858,9 @@ async function openTelemMap(url,playerName,mapName,matchIdx){
     /* Kill feed */
     if(kills.length>0||deathEvent){
       h+='<div class="telem-kill-feed"><div class="feed-title">Feed de Combate</div>';
-      kills.forEach((k,i)=>{h+='<div class="telem-event telem-kill"><span style="color:var(--accent-green);font-weight:600;">'+esc(playerName)+'</span> elimino a <span style="color:var(--text-primary);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();document.getElementById(\'searchInput\').value=\''+escJs(k.victim)+'\';searchPlayer();">'+esc(k.victim)+'</span> con <span class="telem-weapon">'+cleanWeaponName(k.weapon)+'</span> <span class="telem-distance">('+k.dist+'m)</span></div>';});
-      knocks.forEach(k=>{h+='<div class="telem-event telem-knock"><span style="color:var(--accent-yellow);font-weight:600;">'+esc(playerName)+'</span> noqueo a <span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();document.getElementById(\'searchInput\').value=\''+escJs(k.victim)+'\';searchPlayer();">'+esc(k.victim)+'</span></div>';});
-      if(deathEvent){h+='<div class="telem-event telem-death"><span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();document.getElementById(\'searchInput\').value=\''+escJs(deathEvent.killer)+'\';searchPlayer();">'+esc(deathEvent.killer)+'</span> elimino a <span style="color:var(--accent-red);font-weight:600;">'+esc(playerName)+'</span>'+(deathEvent.weapon?' con <span class="telem-weapon">'+cleanWeaponName(deathEvent.weapon)+'</span>':'')+(deathEvent.dist?' <span class="telem-distance">('+deathEvent.dist+'m)</span>':'')+'</div>';}
+      kills.forEach((k,i)=>{h+='<div class="telem-event telem-kill"><span style="color:var(--accent-green);font-weight:600;">'+esc(playerName)+'</span> elimino a <span style="color:var(--text-primary);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(k.victim)+'\');">'+esc(k.victim)+'</span> con <span class="telem-weapon">'+cleanWeaponName(k.weapon)+'</span> <span class="telem-distance">('+k.dist+'m)</span></div>';});
+      knocks.forEach(k=>{h+='<div class="telem-event telem-knock"><span style="color:var(--accent-yellow);font-weight:600;">'+esc(playerName)+'</span> noqueo a <span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(k.victim)+'\');">'+esc(k.victim)+'</span></div>';});
+      if(deathEvent){h+='<div class="telem-event telem-death"><span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(deathEvent.killer)+'\');">'+esc(deathEvent.killer)+'</span> elimino a <span style="color:var(--accent-red);font-weight:600;">'+esc(playerName)+'</span>'+(deathEvent.weapon?' con <span class="telem-weapon">'+cleanWeaponName(deathEvent.weapon)+'</span>':'')+(deathEvent.dist?' <span class="telem-distance">('+deathEvent.dist+'m)</span>':'')+'</div>';}
       h+='</div>';
     }
 
@@ -4961,6 +5005,39 @@ function setClanMode(mode,btn){
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
 function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
 
+// ═══ CLAN AUTOCOMPLETE (Compare inputs) ═══
+let _acTimer=null;
+function clanAutocomplete(inp,listId){
+  clearTimeout(_acTimer);
+  const q=inp.value.trim();
+  const list=document.getElementById(listId);
+  if(q.length<2){list.classList.remove('show');list.innerHTML='';return;}
+  _acTimer=setTimeout(async()=>{
+    try{
+      const r=await fetch('/clans/search/'+encodeURIComponent(q));
+      if(!r.ok){list.classList.remove('show');return;}
+      const d=await r.json();
+      if(!d.clans||d.clans.length===0){list.innerHTML='<div style="padding:10px 14px;font-size:.7rem;color:var(--text-dim);">Sin resultados</div>';list.classList.add('show');return;}
+      let h='';
+      d.clans.forEach(cl=>{
+        h+='<div class="clan-ac-item" onmousedown="selectClanAC(\''+esc(cl.tag)+'\',\''+inp.id+'\',\''+listId+'\')">';
+        h+='<span class="clan-ac-tag">['+esc(cl.tag)+']</span>';
+        h+='<span class="clan-ac-name">'+(cl.name?esc(cl.name):'')+'</span>';
+        h+='<span class="clan-ac-meta">'+((cl.active_members||0))+' miembros</span>';
+        h+='</div>';
+      });
+      list.innerHTML=h;list.classList.add('show');
+    }catch(e){list.classList.remove('show');}
+  },300);
+}
+function selectClanAC(tag,inputId,listId){
+  document.getElementById(inputId).value=tag;
+  const list=document.getElementById(listId);
+  list.classList.remove('show');list.innerHTML='';
+}
+function closeClanAC(){document.querySelectorAll('.clan-ac-list').forEach(l=>{l.classList.remove('show');l.innerHTML='';});}
+document.addEventListener('click',function(e){if(!e.target.closest('.clan-ac-wrap'))closeClanAC();});
+
 // ═══ CLAN ANALYSIS HUB ═══
 async function loadClanAnalysisHub(){
   const container=document.getElementById('clanAnalysisContent');
@@ -5063,7 +5140,7 @@ function renderClanCard(clan, targetId){
     h+='<div class="section-title" style="font-size:.85rem;">Roster del Clan</div>';
     members.forEach(m=>{
       const mName=m.attributes?m.attributes.name:(m.id||'Desconocido');
-      h+='<div class="clan-member"><div><span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+mName+'\';switchTab(\'overview\');searchPlayer();">'+mName+'</span></div></div>';
+      h+='<div class="clan-member"><div><span class="clan-member-name" onclick="goToPlayer(\''+escJs(mName)+'\');">'+mName+'</span></div></div>';
     });
   }
   h+='</div>';
@@ -5147,7 +5224,7 @@ function renderClanEnhanced(clanInfo,memberStats,targetId){
     const actDot=m.active?'<span style="color:var(--accent-green);font-size:.5rem;margin-left:4px;">&#x25CF;</span>':'<span style="color:var(--text-dim);font-size:.5rem;margin-left:4px;">&#x25CB;</span>';
     h+='<div class="animate-in" style="display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:center;padding:8px 10px;background:var(--bg-secondary);border-radius:8px;margin-bottom:6px;border:1px solid var(--border);">';
     h+='<div style="text-align:center;">'+medal+'</div>';
-    h+='<div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span class="clan-member-name" style="font-size:.8rem;" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';switchTab(\'overview\');searchPlayer();">'+m.name+actDot+'</span><span style="font-size:.7rem;color:var(--text-dim);">'+m.stats.kills+' kills &mdash; K/D '+kd+' &mdash; WR '+wr+'%</span></div>';
+    h+='<div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span class="clan-member-name" style="font-size:.8rem;" onclick="goToPlayer(\''+escJs(m.name)+'\');">'+m.name+actDot+'</span><span style="font-size:.7rem;color:var(--text-dim);">'+m.stats.kills+' kills &mdash; K/D '+kd+' &mdash; WR '+wr+'%</span></div>';
     h+='<div style="height:4px;border-radius:2px;background:var(--bg-card);overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:2px;transition:width .5s;"></div></div></div></div>';
   });
   // Unanalyzed members
@@ -5623,7 +5700,7 @@ async function analyzeClanMembers(clanName,clanTag,memberCount,level){
 
 function renderClanDemo(targetId){
   const c=DEMO_CLAN;const tk=c.members.reduce((a,m)=>a+m.kills,0);const ak=(c.members.reduce((a,m)=>a+m.kd,0)/c.members.length).toFixed(2);const tw=c.members.reduce((a,m)=>a+m.wins,0);
-  document.getElementById(targetId).innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+c.tag.charAt(0)+'</div><div><div class="clan-name">'+c.name+'</div><div class="clan-tag">['+c.tag+'] &mdash; '+c.members.length+' miembros</div></div></div><div class="clan-stats-grid"><div class="clan-stat"><div class="cs-val">'+tk+'</div><div class="cs-label">Total Kills</div></div><div class="clan-stat"><div class="cs-val">'+ak+'</div><div class="cs-label">K/D Medio</div></div><div class="clan-stat"><div class="cs-val">'+tw+'</div><div class="cs-label">Victorias</div></div><div class="clan-stat"><div class="cs-val">'+c.members.length+'</div><div class="cs-label">Miembros</div></div></div><div class="section-title" style="font-size:.85rem;">Roster del Clan</div>'+c.members.map(m=>'<div class="clan-member"><div><span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.name+'\';searchPlayer();">'+m.name+'</span> <span style="font-size:.65rem;color:var(--accent-orange);">'+m.role+'</span></div><div class="clan-member-stats"><div>Kills: <span>'+m.kills+'</span></div><div>K/D: <span>'+m.kd+'</span></div><div>Wins: <span>'+m.wins+'</span></div></div></div>').join('')+'</div><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:12px;">Datos demo &mdash; Introduce tu API Key para buscar clanes reales</p>';
+  document.getElementById(targetId).innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+c.tag.charAt(0)+'</div><div><div class="clan-name">'+c.name+'</div><div class="clan-tag">['+c.tag+'] &mdash; '+c.members.length+' miembros</div></div></div><div class="clan-stats-grid"><div class="clan-stat"><div class="cs-val">'+tk+'</div><div class="cs-label">Total Kills</div></div><div class="clan-stat"><div class="cs-val">'+ak+'</div><div class="cs-label">K/D Medio</div></div><div class="clan-stat"><div class="cs-val">'+tw+'</div><div class="cs-label">Victorias</div></div><div class="clan-stat"><div class="cs-val">'+c.members.length+'</div><div class="cs-label">Miembros</div></div></div><div class="section-title" style="font-size:.85rem;">Roster del Clan</div>'+c.members.map(m=>'<div class="clan-member"><div><span class="clan-member-name" onclick="goToPlayer(\''+escJs(m.name)+'\');">'+m.name+'</span> <span style="font-size:.65rem;color:var(--accent-orange);">'+m.role+'</span></div><div class="clan-member-stats"><div>Kills: <span>'+m.kills+'</span></div><div>K/D: <span>'+m.kd+'</span></div><div>Wins: <span>'+m.wins+'</span></div></div></div>').join('')+'</div><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:12px;">Datos demo &mdash; Introduce tu API Key para buscar clanes reales</p>';
 }
 
 async function compareClans(){
@@ -5774,7 +5851,7 @@ async function compareClans(){
       h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent-orange);margin-bottom:8px;">Top 5 ['+tag1+']</div>';
       m1.slice(0,5).forEach((m,i)=>{
         const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
-        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';switchTab(\'overview\');searchPlayer();">';
+        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
         h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
         if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
         h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
@@ -5785,7 +5862,7 @@ async function compareClans(){
       h+='</div><div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px;">Top 5 ['+tag2+']</div>';
       m2.slice(0,5).forEach((m,i)=>{
         const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
-        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';switchTab(\'overview\');searchPlayer();">';
+        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
         h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
         if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
         h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
@@ -5903,7 +5980,7 @@ async function renderLeaderboard(){
 function renderLeaderboardDemo(){
   let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
   DEMO_LB.forEach(p=>{const rc=p.r===1?'r1':p.r===2?'r2':p.r===3?'r3':'';const ik=p.n==='KANNEDA';
-    h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+p.r+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="document.getElementById(\'searchInput\').value=\''+p.n+'\';searchPlayer();">'+p.n+'</td><td class="sc">'+p.k+'</td><td class="sc">'+p.w+'</td><td class="sc">'+p.kd+'</td><td class="sc">'+p.d+'</td></tr>';
+    h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+p.r+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(p.n)+'\');">'+p.n+'</td><td class="sc">'+p.k+'</td><td class="sc">'+p.w+'</td><td class="sc">'+p.kd+'</td><td class="sc">'+p.d+'</td></tr>';
   });h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 20 demo &mdash; Con servidor activo se cargan Top 500 reales via PUBG API</p>';
   document.getElementById('leaderboardContent').innerHTML=h;
 }
