@@ -1404,10 +1404,38 @@ footer a { color: var(--accent); text-decoration: none; }
       <!-- Logged in view -->
       <div id="authLoggedView" style="display:none;">
         <div style="text-align:center;">
-          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem;color:var(--accent);margin-bottom:12px;" id="authUserName"></div>
-          <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px;" id="authUserInfo"></div>
-          <button class="auth-submit" onclick="syncFavoritesToServer()" style="margin-bottom:8px;">Sincronizar Favoritos</button>
-          <button class="auth-submit" onclick="doLogout()" style="background:var(--gradient-orange);">Cerrar Sesion</button>
+          <div id="authAvatarWrap" style="margin-bottom:10px;display:none;"><img id="authAvatar" style="width:56px;height:56px;border-radius:50%;border:2px solid var(--accent);" alt="avatar"></div>
+          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem;color:var(--accent);margin-bottom:4px;" id="authUserName"></div>
+          <div style="font-size:.72rem;color:var(--text-dim);margin-bottom:14px;" id="authUserInfo"></div>
+          <!-- Mi Perfil: vincular gamertag -->
+          <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;text-align:left;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Mi Gamertag PUBG</div>
+            <div id="profileGamertagLinked" style="display:none;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span id="profileGTIcon" style="font-size:1.1rem;">&#x1F3AE;</span>
+                <span id="profileGTName" style="font-family:'Orbitron',sans-serif;font-weight:700;color:var(--accent);font-size:.9rem;"></span>
+                <span id="profileGTPlatBadge" style="font-size:.6rem;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text-dim);text-transform:uppercase;"></span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="auth-submit" onclick="profileLoadMyStats()" style="flex:1;font-size:.7rem;padding:8px;">CARGAR MIS STATS</button>
+                <button style="flex:0 0 auto;background:none;border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-dim);cursor:pointer;font-size:.65rem;" onclick="profileShowEdit()">Cambiar</button>
+              </div>
+            </div>
+            <div id="profileGamertagEdit" style="display:none;">
+              <input class="auth-input" id="profileGTInput" type="text" placeholder="Tu gamertag de PUBG" maxlength="50" style="margin-bottom:6px;">
+              <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <button id="profilePlatPSN" class="auth-submit" onclick="profileSelectPlat('psn')" style="flex:1;font-size:.65rem;padding:6px;">PSN</button>
+                <button id="profilePlatXbox" class="auth-submit" onclick="profileSelectPlat('xbox')" style="flex:1;font-size:.65rem;padding:6px;opacity:.5;">XBOX</button>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="auth-submit" onclick="profileSaveGamertag()" style="flex:1;font-size:.7rem;padding:8px;">VINCULAR</button>
+                <button style="flex:0 0 auto;background:none;border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-dim);cursor:pointer;font-size:.65rem;" onclick="profileCancelEdit()">Cancelar</button>
+              </div>
+              <div class="auth-error" id="profileError" style="display:none;margin-top:8px;"></div>
+            </div>
+          </div>
+          <button class="auth-submit" onclick="syncFavoritesToServer()" style="margin-bottom:8px;font-size:.7rem;">Sincronizar Favoritos</button>
+          <button class="auth-submit" onclick="doLogout()" style="background:var(--gradient-orange);font-size:.7rem;">Cerrar Sesion</button>
         </div>
       </div>
     </div>
@@ -1459,11 +1487,75 @@ function updateAuthUI(){
     btn.innerHTML=currentUser.display_name;
     btn.style.background='var(--bg-card)';btn.style.border='1px solid var(--border)';btn.style.color='var(--accent)';
     document.getElementById('authUserName').textContent=currentUser.display_name;
-    document.getElementById('authUserInfo').textContent=(currentUser.gamertag?currentUser.gamertag+' — ':'')+(currentUser.email||currentUser.discord_name||'');
+    document.getElementById('authUserInfo').textContent=currentUser.email||currentUser.discord_name||'';
+    // Avatar
+    const avWrap=document.getElementById('authAvatarWrap');
+    if(currentUser.avatar_url){avWrap.style.display='';document.getElementById('authAvatar').src=currentUser.avatar_url;}
+    else{avWrap.style.display='none';}
+    // Gamertag profile section
+    updateProfileGT();
   }else{
     btn.innerHTML='Iniciar Sesion';
     btn.style.background='';btn.style.border='';btn.style.color='';
   }
+}
+let profilePlat='psn';
+function updateProfileGT(){
+  const linked=document.getElementById('profileGamertagLinked');
+  const edit=document.getElementById('profileGamertagEdit');
+  if(currentUser&&currentUser.gamertag){
+    linked.style.display='';edit.style.display='none';
+    document.getElementById('profileGTName').textContent=currentUser.gamertag;
+    document.getElementById('profileGTPlatBadge').textContent=currentUser.platform||'psn';
+    profilePlat=currentUser.platform||'psn';
+  }else{
+    linked.style.display='none';edit.style.display='';
+    profilePlat=currentUser?(currentUser.platform||'psn'):'psn';
+    profileUpdatePlatBtns();
+  }
+}
+function profileSelectPlat(p){profilePlat=p;profileUpdatePlatBtns();}
+function profileUpdatePlatBtns(){
+  document.getElementById('profilePlatPSN').style.opacity=profilePlat==='psn'?'1':'.5';
+  document.getElementById('profilePlatXbox').style.opacity=profilePlat==='xbox'?'1':'.5';
+}
+function profileShowEdit(){
+  document.getElementById('profileGamertagLinked').style.display='none';
+  document.getElementById('profileGamertagEdit').style.display='';
+  document.getElementById('profileGTInput').value=currentUser.gamertag||'';
+  profilePlat=currentUser.platform||'psn';
+  profileUpdatePlatBtns();
+}
+function profileCancelEdit(){updateProfileGT();}
+async function profileSaveGamertag(){
+  const gt=document.getElementById('profileGTInput').value.trim();
+  if(!gt){showAuthError('profileError','Introduce tu gamertag');return;}
+  try{
+    const r=await fetch('/auth/profile',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({gamertag:gt,platform:profilePlat})});
+    const d=await r.json();
+    if(!r.ok){showAuthError('profileError',d.error||'Error al guardar');return;}
+    currentUser=d.user;updateAuthUI();
+  }catch(e){showAuthError('profileError','Error de conexion');}
+}
+function profileLoadMyStats(){
+  if(!currentUser||!currentUser.gamertag)return;
+  closeAuthPopup();
+  setPlatform(currentUser.platform||'psn');
+  document.getElementById('searchInput').value=currentUser.gamertag;
+  searchPlayer();
+}
+function autoLoadMyStats(){
+  if(!currentUser||!currentUser.gamertag)return;
+  // Solo auto-cargar si estamos en la home, no si ya hay una URL de stats/clan
+  const p=location.pathname;
+  if(p.startsWith('/stats/')||p.startsWith('/clan/'))return;
+  // Solo si no hay ya un jugador cargado
+  if(document.getElementById('searchInput').value.trim())return;
+  setTimeout(()=>{
+    setPlatform(currentUser.platform||'psn');
+    document.getElementById('searchInput').value=currentUser.gamertag;
+    searchPlayer();
+  },300);
 }
 
 async function doLogin(){
@@ -1477,6 +1569,7 @@ async function doLogin(){
     authToken=d.token;currentUser=d.user;
     localStorage.setItem('v4nz_token',authToken);
     updateAuthUI();loadFavoritesFromServer();closeAuthPopup();
+    autoLoadMyStats();
   }catch(e){showAuthError('authLoginError','Error de conexion');}
 }
 
@@ -1494,6 +1587,7 @@ async function doRegister(){
     authToken=d.token;currentUser=d.user;
     localStorage.setItem('v4nz_token',authToken);
     updateAuthUI();syncFavoritesToServer();closeAuthPopup();
+    autoLoadMyStats();
   }catch(e){showAuthError('authRegError','Error de conexion');}
 }
 
@@ -1541,13 +1635,13 @@ async function syncFavoritesToServer(){
   if(authToken){
     fetch('/auth/me',{headers:{'Authorization':'Bearer '+authToken},credentials:'include'})
       .then(r=>{if(!r.ok)throw new Error();return r.json();})
-      .then(d=>{currentUser=d.user;updateAuthUI();loadFavoritesFromServer();})
+      .then(d=>{currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
       .catch(()=>{authToken=null;localStorage.removeItem('v4nz_token');updateAuthUI();});
   }else{
     // No localStorage token — maybe there's an HttpOnly cookie from previous session
     fetch('/auth/me',{credentials:'include'})
       .then(r=>{if(!r.ok)throw new Error();return r.json();})
-      .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();})
+      .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
       .catch(()=>{});
   }
 })();

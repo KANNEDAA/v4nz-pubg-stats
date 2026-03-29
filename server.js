@@ -979,6 +979,22 @@ app.get('/auth/me', requireAuth, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
+// PUT /auth/profile — Update gamertag + platform
+app.put('/auth/profile', requireAuth, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
+  const { gamertag, platform } = req.body;
+  const cleanGT = (gamertag || '').trim().slice(0, 50);
+  const cleanPlat = ['psn', 'xbox'].includes(platform) ? platform : 'psn';
+  try {
+    const result = await pool.query(
+      'UPDATE users SET gamertag = $1, platform = $2 WHERE id = $3 RETURNING id, display_name, gamertag, platform, email, discord_name, avatar_url',
+      [cleanGT || null, cleanPlat, req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ user: result.rows[0] });
+  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
+});
+
 // ═══ FAVORITES SYNC ═══
 
 // GET /favorites — Get user's favorites
