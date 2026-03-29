@@ -1292,6 +1292,199 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+// ═══ BOT INDEX — Telemetry-based bot detection ═══
+// MUST be before app.all('/api/*') to avoid being captured by the proxy
+app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
+  const { platform, playerName } = req.params;
+  const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
+  const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
+
+  // Check cache (6 hours)
+  if (pool) {
+    try {
+      const cached = await pool.query(
+        "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '6 hours'",
+        [cacheKey]
+      );
+      if (cached.rows.length) {
+        try { return res.json(JSON.parse(cached.rows[0].response_data)); } catch(e) {}
+      }
+    } catch(e) {}
+  }
+
+  if (!SERVER_API_KEY) return res.status(503).json({ error: 'No API key' });
+  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+
+  try {
+    // 1. Get player + match IDs
+    const pRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(playerName)}`, { headers }, 12000);
+    const pData = await pRes.json();
+    if (!pData.data || !pData.data[0]) return res.json({ error: 'player_not_found' });
+
+    const playerId = pData.data[0].id;
+    const matchIds = (pData.data[0].relationships?.matches?.data || []).slice(0, 5).map(m => m.id);
+    if (!matchIds.length) return res.json({ error: 'no_matches', playerName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
+
+    let totalKills = 0, botKills = 0, analyzed = 0;
+
+    for (const matchId of matchIds) {
+      try {
+        // 2. Get match → telemetry URL
+        let matchData;
+        const mKey = `match_${shard}_${matchId}`;
+        const mCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [mKey]);
+        if (mCached.rows.length) {
+          try { matchData = JSON.parse(mCached.rows[0].response_data); } catch(e) { matchData = null; }
+        }
+        if (!matchData) {
+          const mRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers }, 12000);
+          matchData = await mRes.json();
+          await pool.query(
+            'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+            [mKey, JSON.stringify(matchData)]
+          ).catch(() => {});
+        }
+
+        const asset = (matchData.included || []).find(i => i.type === 'asset');
+        const telUrl = asset?.attributes?.URL;
+        if (!telUrl) continue;
+
+        // 3. Get telemetry (cache 30 days — immutable)
+        let telemetry;
+        const tKey = `telemetry_${matchId}`;
+        const tCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [tKey]);
+        if (tCached.rows.length) {
+          try { telemetry = JSON.parse(tCached.rows[0].response_data); } catch(e) { telemetry = null; }
+        }
+        if (!telemetry) {
+          const tRes = await fetchWithTimeout(fetch, telUrl, {}, 20000);
+          telemetry = await tRes.json();
+          await pool.query(
+            'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+            [tKey, JSON.stringify(telemetry)]
+          ).catch(() => {});
+        }
+
+        // 4. Count kills: bot vs human
+        const killEvents = telemetry.filter(e => e._T === 'LogPlayerKillV2' || e._T === 'LogPlayerKill');
+        for (const ev of killEvents) {
+          const killer = ev.killer || ev.finisher;
+          if (!killer || killer.accountId !== playerId) continue;
+          totalKills++;
+          if (!ev.victim?.accountId || ev.victim.accountId === '') botKills++;
+        }
+        analyzed++;
+      } catch(e) { /* skip this match */ }
+    }
+
+    const result = {
+      playerName, platform: shard, totalKills, botKills,
+      humanKills: totalKills - botKills,
+      botRatio: totalKills > 0 ? Math.round((botKills / totalKills) * 100) : 0,
+      matchesAnalyzed: analyzed,
+      calculatedAt: new Date().toISOString()
+    };
+
+    // Cache result 6 hours
+    if (pool) {
+      await pool.query(
+        'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+        [cacheKey, JSON.stringify(result)]
+      ).catch(() => {});
+    }
+
+    res.json(result);
+  } catch(err) {
+    console.error('[bot-index]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══ PUBG Report Proxy (evita CORS) ═══
+app.get('/api/pubg-report/:accountId', async (req, res) => {
+  const accountId = req.params.accountId;
+  try {
+    const resp = await fetch('https://api.pubg.report/v1/players/' + encodeURIComponent(accountId));
+    if (!resp.ok) return res.status(resp.status).json({ error: 'pubg.report returned ' + resp.status });
+    const data = await resp.json();
+    let encounters = [];
+    if (Array.isArray(data)) encounters = data;
+    else if (data.encounters) encounters = data.encounters;
+    else if (data.data && Array.isArray(data.data)) encounters = data.data;
+    else if (data.matches) encounters = data.matches;
+    const clips = {};
+    encounters.forEach(enc => {
+      const mid = enc.match_id || enc.matchId || enc.MatchId || enc.id || (enc.match && enc.match.id) || '';
+      if (!mid) return;
+      let clipUrl = '', streamer = '';
+      if (enc.clips && enc.clips.length) {
+        clipUrl = enc.clips[0].url || enc.clips[0].clip_url || '';
+        streamer = enc.clips[0].broadcaster_name || enc.clips[0].streamer || enc.clips[0].channel || '';
+      } else if (enc.clip_url) { clipUrl = enc.clip_url; streamer = enc.streamer_name || ''; }
+      else if (enc.url) { clipUrl = enc.url; streamer = enc.streamer || ''; }
+      if (!clipUrl) clipUrl = 'https://pubg.report/players/' + encodeURIComponent(accountId);
+      if (!streamer) streamer = 'Streamer';
+      clips[mid] = { url: clipUrl, streamer };
+    });
+    res.set('Cache-Control', 'public, max-age=600');
+    res.json({ clips, total: Object.keys(clips).length, raw_format: Array.isArray(data) ? 'array' : typeof data });
+  } catch (e) {
+    console.error('PUBG Report proxy error:', e.message);
+    res.status(502).json({ error: 'Failed to reach pubg.report', detail: e.message });
+  }
+});
+
+// ═══ Player Snapshots (Mi Evolución) ═══
+app.post('/api/snapshots', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database' });
+  const { player_name, platform, squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill } = req.body;
+  if (!player_name || !platform) return res.status(400).json({ error: 'player_name and platform required' });
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM player_snapshots
+       WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
+       AND created_at > NOW() - INTERVAL '7 days'
+       ORDER BY created_at DESC LIMIT 1`,
+      [player_name, platform, squad_mode || 'squad', game_mode || 'tpp']
+    );
+    if (existing.rows.length > 0) {
+      const snap = existing.rows[0];
+      await pool.query(
+        `UPDATE player_snapshots SET kd=$1, win_rate=$2, avg_damage=$3, hs_rate=$4, kills=$5, wins=$6, rounds=$7, top10_rate=$8, longest_kill=$9
+         WHERE id=$10`,
+        [kd || 0, win_rate || 0, avg_damage || 0, hs_rate || 0, kills || 0, wins || 0, rounds || 0, top10_rate || 0, longest_kill || 0, snap.id]
+      );
+      return res.json({ ok: true, action: 'updated' });
+    }
+    await pool.query(
+      `INSERT INTO player_snapshots (player_name, platform, squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      [player_name, platform, squad_mode || 'squad', game_mode || 'tpp',
+       kd || 0, win_rate || 0, avg_damage || 0, hs_rate || 0, kills || 0, wins || 0, rounds || 0, top10_rate || 0, longest_kill || 0]
+    );
+    res.json({ ok: true, action: 'created' });
+  } catch (e) { console.error('Snapshot save error:', e.message); res.status(500).json({ error: 'Error saving snapshot' }); }
+});
+
+app.get('/api/snapshots/:platform/:player', async (req, res) => {
+  if (!pool) return res.json({ snapshots: [] });
+  const { platform, player } = req.params;
+  const squad_mode = req.query.squad_mode || 'squad';
+  const game_mode = req.query.game_mode || 'tpp';
+  try {
+    const { rows } = await pool.query(
+      `SELECT kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill, created_at
+       FROM player_snapshots
+       WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
+       ORDER BY created_at ASC
+       LIMIT 12`,
+      [player, platform, squad_mode, game_mode]
+    );
+    res.json({ snapshots: rows });
+  } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
+});
+
+// ═══ PUBG API PROXY (generic catch-all — MUST be after ALL /api/* specific routes) ═══
 app.all('/api/*', rateLimit, async (req, res) => {
 
   const originalQuery = req.originalUrl.split('?')[1] || '';
@@ -1416,96 +1609,6 @@ app.get('/googlef2390246b37ad8b0.html', (req, res) => {
 app.get('/robots.txt', (req, res) => {
   res.set('Content-Type', 'text/plain');
   res.send('User-agent: *\nAllow: /\nSitemap: https://www.v4nz.com/sitemap.xml');
-});
-
-// ═══ PUBG Report Proxy (evita CORS) ═══
-app.get('/api/pubg-report/:accountId', async (req, res) => {
-  const accountId = req.params.accountId;
-  try {
-    const resp = await fetch('https://api.pubg.report/v1/players/' + encodeURIComponent(accountId));
-    if (!resp.ok) return res.status(resp.status).json({ error: 'pubg.report returned ' + resp.status });
-    const data = await resp.json();
-    // Parse encounters and extract clips with matchIds
-    let encounters = [];
-    if (Array.isArray(data)) encounters = data;
-    else if (data.encounters) encounters = data.encounters;
-    else if (data.data && Array.isArray(data.data)) encounters = data.data;
-    else if (data.matches) encounters = data.matches;
-    const clips = {};
-    encounters.forEach(enc => {
-      const mid = enc.match_id || enc.matchId || enc.MatchId || enc.id || (enc.match && enc.match.id) || '';
-      if (!mid) return;
-      let clipUrl = '', streamer = '';
-      if (enc.clips && enc.clips.length) {
-        clipUrl = enc.clips[0].url || enc.clips[0].clip_url || '';
-        streamer = enc.clips[0].broadcaster_name || enc.clips[0].streamer || enc.clips[0].channel || '';
-      } else if (enc.clip_url) { clipUrl = enc.clip_url; streamer = enc.streamer_name || ''; }
-      else if (enc.url) { clipUrl = enc.url; streamer = enc.streamer || ''; }
-      if (!clipUrl) clipUrl = 'https://pubg.report/players/' + encodeURIComponent(accountId);
-      if (!streamer) streamer = 'Streamer';
-      clips[mid] = { url: clipUrl, streamer };
-    });
-    res.set('Cache-Control', 'public, max-age=600');
-    res.json({ clips, total: Object.keys(clips).length, raw_format: Array.isArray(data) ? 'array' : typeof data });
-  } catch (e) {
-    console.error('PUBG Report proxy error:', e.message);
-    res.status(502).json({ error: 'Failed to reach pubg.report', detail: e.message });
-  }
-});
-
-// ═══ Player Snapshots (Mi Evolución) ═══
-
-// POST /api/snapshots — Save a player snapshot (max 1 per player/mode per week)
-app.post('/api/snapshots', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: 'No database' });
-  const { player_name, platform, squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill } = req.body;
-  if (!player_name || !platform) return res.status(400).json({ error: 'player_name and platform required' });
-  try {
-    // Check if snapshot already exists this week for this player+mode
-    const existing = await pool.query(
-      `SELECT id FROM player_snapshots
-       WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
-       AND created_at > NOW() - INTERVAL '7 days'
-       ORDER BY created_at DESC LIMIT 1`,
-      [player_name, platform, squad_mode || 'squad', game_mode || 'tpp']
-    );
-    if (existing.rows.length > 0) {
-      // Update existing snapshot if rounds changed (player played more)
-      const snap = existing.rows[0];
-      await pool.query(
-        `UPDATE player_snapshots SET kd=$1, win_rate=$2, avg_damage=$3, hs_rate=$4, kills=$5, wins=$6, rounds=$7, top10_rate=$8, longest_kill=$9
-         WHERE id=$10`,
-        [kd || 0, win_rate || 0, avg_damage || 0, hs_rate || 0, kills || 0, wins || 0, rounds || 0, top10_rate || 0, longest_kill || 0, snap.id]
-      );
-      return res.json({ ok: true, action: 'updated' });
-    }
-    await pool.query(
-      `INSERT INTO player_snapshots (player_name, platform, squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-      [player_name, platform, squad_mode || 'squad', game_mode || 'tpp',
-       kd || 0, win_rate || 0, avg_damage || 0, hs_rate || 0, kills || 0, wins || 0, rounds || 0, top10_rate || 0, longest_kill || 0]
-    );
-    res.json({ ok: true, action: 'created' });
-  } catch (e) { console.error('Snapshot save error:', e.message); res.status(500).json({ error: 'Error saving snapshot' }); }
-});
-
-// GET /api/snapshots/:platform/:player — Get player evolution (last 12 weeks)
-app.get('/api/snapshots/:platform/:player', async (req, res) => {
-  if (!pool) return res.json({ snapshots: [] });
-  const { platform, player } = req.params;
-  const squad_mode = req.query.squad_mode || 'squad';
-  const game_mode = req.query.game_mode || 'tpp';
-  try {
-    const { rows } = await pool.query(
-      `SELECT kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill, created_at
-       FROM player_snapshots
-       WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
-       ORDER BY created_at ASC
-       LIMIT 12`,
-      [player, platform, squad_mode, game_mode]
-    );
-    res.json({ snapshots: rows });
-  } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
 });
 
 // ═══ Dynamic OG Image (SVG → PNG via sharp) ═══
@@ -1739,115 +1842,6 @@ app.get('/og-image.png', (req, res) => {
     <text x="600" y="430" text-anchor="middle" font-family="sans-serif" font-weight="400" font-size="28" fill="#9e9eb8">PlayStation &amp; Xbox — Estadisticas en Tiempo Real</text>
     <text x="600" y="560" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="24" fill="#ff6b00">v4nz.com</text>
   </svg>`);
-});
-
-// ═══ BOT INDEX — Telemetry-based bot detection ═══
-app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
-  const { platform, playerName } = req.params;
-  const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
-  const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
-
-  // Check cache (6 hours)
-  if (pool) {
-    try {
-      const cached = await pool.query(
-        "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '6 hours'",
-        [cacheKey]
-      );
-      if (cached.rows.length) {
-        try { return res.json(JSON.parse(cached.rows[0].response_data)); } catch(e) {}
-      }
-    } catch(e) {}
-  }
-
-  if (!SERVER_API_KEY) return res.status(503).json({ error: 'No API key' });
-  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
-
-  try {
-    // 1. Get player + match IDs
-    const pRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(playerName)}`, { headers }, 12000);
-    const pData = await pRes.json();
-    if (!pData.data || !pData.data[0]) return res.json({ error: 'player_not_found' });
-
-    const playerId = pData.data[0].id;
-    const matchIds = (pData.data[0].relationships?.matches?.data || []).slice(0, 5).map(m => m.id);
-    if (!matchIds.length) return res.json({ error: 'no_matches', playerName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
-
-    let totalKills = 0, botKills = 0, analyzed = 0;
-
-    for (const matchId of matchIds) {
-      try {
-        // 2. Get match → telemetry URL
-        let matchData;
-        const mKey = `match_${shard}_${matchId}`;
-        const mCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [mKey]);
-        if (mCached.rows.length) {
-          try { matchData = JSON.parse(mCached.rows[0].response_data); } catch(e) { matchData = null; }
-        }
-        if (!matchData) {
-          const mRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers }, 12000);
-          matchData = await mRes.json();
-          await pool.query(
-            'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
-            [mKey, JSON.stringify(matchData)]
-          ).catch(() => {});
-        }
-
-        const asset = (matchData.included || []).find(i => i.type === 'asset');
-        const telUrl = asset?.attributes?.URL;
-        if (!telUrl) continue;
-
-        // 3. Get telemetry (cache 30 days — immutable)
-        let telemetry;
-        const tKey = `telemetry_${matchId}`;
-        const tCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [tKey]);
-        if (tCached.rows.length) {
-          try { telemetry = JSON.parse(tCached.rows[0].response_data); } catch(e) { telemetry = null; }
-        }
-        if (!telemetry) {
-          const tRes = await fetchWithTimeout(fetch, telUrl, {}, 20000);
-          telemetry = await tRes.json();
-          // Telemetry can be large — only store if pool is available
-          await pool.query(
-            'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
-            [tKey, JSON.stringify(telemetry)]
-          ).catch(() => {});
-        }
-
-        // 4. Count kills: bot vs human
-        const killEvents = telemetry.filter(e => e._T === 'LogPlayerKillV2' || e._T === 'LogPlayerKill');
-        for (const ev of killEvents) {
-          const killer = ev.killer || ev.finisher;
-          if (!killer || killer.accountId !== playerId) continue;
-          totalKills++;
-          // Bot = empty or missing accountId on victim
-          if (!ev.victim?.accountId || ev.victim.accountId === '') botKills++;
-        }
-        analyzed++;
-      } catch(e) { /* skip this match */ }
-    }
-
-    const result = {
-      playerName, platform: shard, totalKills, botKills,
-      humanKills: totalKills - botKills,
-      botRatio: totalKills > 0 ? Math.round((botKills / totalKills) * 100) : 0,
-      matchesAnalyzed: analyzed,
-      calculatedAt: new Date().toISOString()
-    };
-
-    // Cache result 6 hours
-    if (pool) {
-      await pool.query(
-        'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
-        [cacheKey, JSON.stringify(result)]
-      ).catch(() => {});
-    }
-
-    res.json(result);
-  } catch(err) {
-    console.error('[bot-index]', err.message);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // HTML attribute escaping for dynamic meta tags
