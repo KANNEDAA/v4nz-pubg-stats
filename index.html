@@ -1328,8 +1328,8 @@ footer a { color: var(--accent); text-decoration: none; }
         <button class="clan-plat-btn" data-ccplat="xbox" onclick="setClanComparePlatform('xbox',this)">Xbox</button>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Nombre del clan o tag..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC1')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC1"></div></div>
-        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Nombre del clan o tag..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC2')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC2"></div></div>
+        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Clan o nombre de jugador..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC1')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC1"></div></div>
+        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Clan o nombre de jugador..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC2')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC2"></div></div>
       </div>
       <div style="text-align:center;margin-bottom:20px;"><button class="search-btn" style="border-radius:8px;padding:12px 30px;" onclick="compareClans()">COMPARAR CLANES</button></div>
       <div id="clanCompareResults"></div>
@@ -5053,7 +5053,7 @@ function setClanMode(mode,btn){
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
 function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
 
-// ═══ CLAN AUTOCOMPLETE (Compare inputs) ═══
+// ═══ CLAN AUTOCOMPLETE (Compare inputs) — busca por clan Y por jugador ═══
 let _acTimer=null;
 function clanAutocomplete(inp,listId){
   clearTimeout(_acTimer);
@@ -5063,20 +5063,50 @@ function clanAutocomplete(inp,listId){
   _acTimer=setTimeout(async()=>{
     try{
       const r=await fetch('/clans/search/'+encodeURIComponent(q));
-      if(!r.ok){list.classList.remove('show');return;}
-      const d=await r.json();
-      if(!d.clans||d.clans.length===0){list.innerHTML='<div style="padding:10px 14px;font-size:.7rem;color:var(--text-dim);">Sin resultados</div>';list.classList.add('show');return;}
+      let clans=[];
+      if(r.ok){const d=await r.json();clans=d.clans||[];}
       let h='';
-      d.clans.forEach(cl=>{
+      // Resultados de clanes de la DB
+      clans.forEach(cl=>{
         h+='<div class="clan-ac-item" onmousedown="selectClanAC(\''+esc(cl.tag)+'\',\''+inp.id+'\',\''+listId+'\')">';
         h+='<span class="clan-ac-tag">['+esc(cl.tag)+']</span>';
         h+='<span class="clan-ac-name">'+(cl.name?esc(cl.name):'')+'</span>';
         h+='<span class="clan-ac-meta">'+((cl.active_members||0))+' miembros</span>';
         h+='</div>';
       });
+      // Siempre ofrecer buscar como jugador
+      h+='<div class="clan-ac-item" style="border-top:1px solid rgba(255,255,255,0.06);color:var(--accent-orange);font-size:.72rem;" onmousedown="searchPlayerClanAC(\''+esc(q)+'\',\''+inp.id+'\',\''+listId+'\')">';
+      h+='<span style="font-size:.85rem;">&#x1F464;</span>';
+      h+='<span style="font-family:Rajdhani,sans-serif;font-weight:600;">Buscar clan del jugador <strong>'+esc(q)+'</strong></span>';
+      h+='</div>';
       list.innerHTML=h;list.classList.add('show');
     }catch(e){list.classList.remove('show');}
   },300);
+}
+async function searchPlayerClanAC(playerName,inputId,listId){
+  const list=document.getElementById(listId);
+  const plat=clanComparePlatform||'psn';
+  list.innerHTML='<div style="padding:12px 14px;text-align:center;"><div class="spinner" style="width:20px;height:20px;margin:0 auto 6px;"></div><div style="font-size:.68rem;color:var(--text-dim);">Buscando clan de '+esc(playerName)+'...</div></div>';
+  list.classList.add('show');
+  try{
+    const clan=await fetchClanByPlayer(playerName,plat);
+    const attr=clan.attributes||{};
+    const tag=attr.clanTag||'???';
+    const name=attr.clanName||'';
+    // Auto-registrar clan en DB si no existe
+    try{
+      const dbCheck=await fetch('/clans/'+encodeURIComponent(tag));
+      if(!dbCheck.ok){
+        // Intentar importar desde pubgclans.net
+        const clanId=clan.id||'';
+        if(clanId){fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,tag:tag,name:name,platform:plat})}).catch(()=>{});}
+      }
+    }catch(e){}
+    document.getElementById(inputId).value=tag;
+    list.classList.remove('show');list.innerHTML='';
+  }catch(e){
+    list.innerHTML='<div style="padding:10px 14px;font-size:.7rem;color:var(--accent-red);">'+esc(e.message||'Jugador no encontrado o sin clan')+'</div>';
+  }
 }
 function selectClanAC(tag,inputId,listId){
   document.getElementById(inputId).value=tag;
