@@ -4929,7 +4929,8 @@ async function renderLeaderboard(){
           const kd=lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0';
           const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
           const platBadge=entry.platforms.length>1?'Ambas':entry.platforms[0];
-          h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\'psn\');document.getElementById(\'searchInput\').value=\''+entry.name+'\';searchPlayer();">'+entry.name+'</td><td class="sc" style="font-size:.65rem;">'+platBadge+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
+          const searchPlat=entry.platforms.includes('PSN')?'psn':'xbox';
+          h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\''+searchPlat+'\');document.getElementById(\'searchInput\').value=\''+escJs(entry.name)+'\';searchPlayer();">'+esc(entry.name)+'</td><td class="sc" style="font-size:.65rem;">'+platBadge+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
           rank++;
         });
         h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 500 via PUBG API &mdash; CONSOLAS (PSN+Xbox) '+lbRegion.toUpperCase()+' '+gm.toUpperCase()+'</p>';
@@ -4945,7 +4946,7 @@ async function renderLeaderboard(){
           const pa=p.attributes;const stats=pa.stats||{};const ik=pa.name==='KANNEDA';
           const lbDeaths=((stats.roundsPlayed||stats.games||0)-(stats.wins||0));const kd=(stats.killDeathRatio>0)?stats.killDeathRatio.toFixed(2):(lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0');
           const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-          h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\''+lbPlatform+'\');document.getElementById(\'searchInput\').value=\''+pa.name+'\';searchPlayer();">'+pa.name+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
+          h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\''+lbPlatform+'\');document.getElementById(\'searchInput\').value=\''+escJs(pa.name)+'\';searchPlayer();">'+esc(pa.name)+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
           rank++;
         });
         h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 500 via PUBG API &mdash; '+lbShard.toUpperCase()+' '+gm.toUpperCase()+'</p>';
