@@ -729,6 +729,46 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .clan-page-share { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-size:.72rem; color:var(--text-secondary); cursor:pointer; transition:all .2s; margin-top:12px; }
 .clan-page-share:hover { border-color:var(--accent); color:var(--accent); }
 
+/* CLAN INTELLIGENCE */
+.ci-section { margin-top:24px; border-top:2px solid var(--border); padding-top:20px; }
+.ci-title { font-family:Rajdhani,sans-serif; font-size:1rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.ci-title span { color:var(--accent-orange); }
+.ci-tabs { display:flex; gap:4px; margin-bottom:16px; flex-wrap:wrap; }
+.ci-tab { background:var(--bg-card); border:1px solid var(--border); color:var(--text-dim); padding:6px 14px; border-radius:6px; font-family:Rajdhani,sans-serif; font-weight:600; font-size:.68rem; text-transform:uppercase; letter-spacing:.5px; cursor:pointer; transition:all .2s; }
+.ci-tab:hover { color:var(--text-primary); border-color:var(--border-hover); }
+.ci-tab.active { background:var(--accent-dim); border-color:var(--accent-orange); color:var(--accent-orange); }
+.ci-panel { display:none; }
+.ci-panel.active { display:block; }
+.ci-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+.ci-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
+.ci-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.ci-card.cyan::before { background:var(--accent); }
+.ci-card.orange::before { background:var(--accent-orange); }
+.ci-card.green::before { background:var(--accent-green); }
+.ci-card.red::before { background:var(--accent-red); }
+.ci-card.purple::before { background:var(--accent-purple); }
+.ci-card.yellow::before { background:var(--accent-yellow); }
+.ci-card-title { font-family:Rajdhani,sans-serif; font-size:.75rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.ci-big-num { font-family:Orbitron,sans-serif; font-size:1.6rem; font-weight:800; line-height:1; }
+.ci-sub { font-size:.6rem; color:var(--text-dim); margin-top:2px; }
+.ci-member-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; padding:5px 8px; background:var(--bg-secondary); border-radius:6px; cursor:pointer; transition:background .2s; }
+.ci-member-row:hover { background:var(--border); }
+.ci-member-name { font-family:Rajdhani,sans-serif; font-weight:700; font-size:.75rem; color:var(--text-primary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ci-member-val { font-family:Orbitron,sans-serif; font-weight:700; font-size:.65rem; }
+.ci-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:4px; font-size:.58rem; font-family:Rajdhani,sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.ci-badge.carry { background:rgba(57,217,138,.15); color:#39d98a; border:1px solid rgba(57,217,138,.3); }
+.ci-badge.normal { background:rgba(0,240,255,.1); color:var(--accent); border:1px solid rgba(0,240,255,.2); }
+.ci-badge.lastre { background:rgba(255,51,85,.15); color:#ff3355; border:1px solid rgba(255,51,85,.3); }
+.ci-badge.active-m { background:rgba(57,217,138,.15); color:#39d98a; border:1px solid rgba(57,217,138,.3); }
+.ci-badge.occasional { background:rgba(255,107,0,.15); color:#ff6b00; border:1px solid rgba(255,107,0,.3); }
+.ci-badge.ghost { background:rgba(90,106,138,.15); color:#5a6a8a; border:1px solid rgba(90,106,138,.3); }
+.ci-bar { height:6px; background:var(--bg-secondary); border-radius:3px; overflow:hidden; margin-top:4px; }
+.ci-bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+.ci-gossip { display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; padding:8px 10px; background:var(--bg-secondary); border-radius:8px; border-left:3px solid var(--accent-orange); }
+.ci-gossip-icon { font-size:1rem; flex-shrink:0; }
+.ci-gossip-text { font-size:.72rem; color:var(--text-secondary); line-height:1.5; }
+.ci-gossip-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:6px; font-size:.62rem; font-family:Rajdhani,sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+
 /* LEADERBOARD */
 .leaderboard-controls { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .lb-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 16px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.25s; box-shadow: var(--shadow-card); }
@@ -1856,7 +1896,7 @@ async function loadClanFromHistory(tag){
         mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+c.tag+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+c.tag+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+c.tag+'\')">SOLICITAR</button></div>';
         mh+='<div id="requestStatus_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
         mh+='</div></div>';
-        if(members.length>=3){mh+=renderClanAnalytics(members,c);}
+        if(members.length>=3){mh+=renderClanIntelligence(members,c);}
         // Clan Feed placeholder
         mh+='<div id="clanFeedSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;display:none;">';
         mh+='<div class="section-title" style="font-size:.9rem;margin-bottom:14px;">&#x1F4E1; Actividad Reciente</div>';
@@ -2075,7 +2115,7 @@ async function loadClanPage(tag){
       h+='</div>';
     }
     // Clan Analytics
-    if(members.length>=3){h+=renderClanAnalytics(members,c);}
+    if(members.length>=3){h+=renderClanIntelligence(members,c);}
     // Clan Feed placeholder
     h+='<div id="clanFeedSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;display:none;">';
     h+='<div class="section-title" style="font-size:.9rem;margin-bottom:14px;">&#x1F4E1; Actividad Reciente</div>';
@@ -2132,35 +2172,108 @@ async function loadClanFeed(tag){
   }
 }
 
-function renderClanAnalytics(members,clan){
+function renderClanIntelligence(members,clan){
   const active=members.filter(m=>m.active!==false&&(m.kills>0||m.rounds>0));
   if(active.length<2)return'';
-  let h='<div style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;">';
-  h+='<div class="section-title" style="font-size:.9rem;margin-bottom:16px;">&#x1F4CA; Radiografia del Clan</div>';
-  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">';
+  const plat=clan.platform||'psn';
 
-  // 1. K/D Distribution
-  const kdBands=[{label:'<1.0',min:0,max:1,color:'var(--accent-red)'},{label:'1.0-2.0',min:1,max:2,color:'var(--accent-orange)'},{label:'2.0-3.0',min:2,max:3,color:'var(--accent-yellow)'},{label:'3.0+',min:3,max:99,color:'var(--accent-green)'}];
-  const kdCounts=kdBands.map(b=>({...b,count:active.filter(m=>{const kd=parseFloat(m.kd)||0;return kd>=b.min&&kd<b.max;}).length}));
-  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
-  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Distribucion K/D</div>';
-  kdCounts.forEach(b=>{
-    const pct=active.length>0?Math.round((b.count/active.length)*100):0;
+  // ── Precalculate everything ──
+  const totalKills=active.reduce((s,m)=>s+(m.kills||0),0);
+  const totalWins=active.reduce((s,m)=>s+(m.wins||0),0);
+  const totalRounds=active.reduce((s,m)=>s+(m.rounds||0),0);
+  const avgKD=active.length>0?(active.reduce((s,m)=>s+(parseFloat(m.kd)||0),0)/active.length):0;
+  const avgDmg=active.length>0?(active.reduce((s,m)=>s+(parseFloat(m.damage)||0),0)/active.length):0;
+  const clanWR=totalRounds>0?(totalWins/totalRounds*100):0;
+  const clanKPR=totalRounds>0?(totalKills/totalRounds):0;
+
+  // Classify each member: carry / normal / lastre
+  const classified=active.map(m=>{
+    const kd=parseFloat(m.kd)||0;
+    const kills=m.kills||0;
+    const rounds=m.rounds||0;
+    const wins=m.wins||0;
+    const dmg=parseFloat(m.damage)||0;
+    const killPct=totalKills>0?Math.round((kills/totalKills)*100):0;
+    const delta=avgKD>0?((kd-avgKD)/avgKD*100):0;
+    const pollos=rounds>0&&wins>0?Math.round(rounds/wins):0;
+    let role='normal';
+    if(kd>=avgKD*1.5&&rounds>=10)role='carry';
+    else if(kd<avgKD*0.5&&rounds>=10)role='lastre';
+    return{...m,kd,kills,rounds,wins,dmg,killPct,delta,pollos,role};
+  }).sort((a,b)=>b.kd-a.kd);
+
+  // Ghost classification for ALL members
+  const ghostData=members.map(m=>{
+    const rounds=m.rounds||0;
+    const kills=m.kills||0;
+    let status='active-m';
+    if(rounds<5&&kills<3)status='ghost';
+    else if(rounds<20)status='occasional';
+    return{...m,rounds,kills,status};
+  });
+  const ghostCount=ghostData.filter(g=>g.status==='ghost').length;
+  const occasionalCount=ghostData.filter(g=>g.status==='occasional').length;
+  const realActive=ghostData.filter(g=>g.status==='active-m').length;
+
+  const carries=classified.filter(m=>m.role==='carry');
+  const lastres=classified.filter(m=>m.role==='lastre');
+  const normals=classified.filter(m=>m.role==='normal');
+
+  // ── Build HTML ──
+  let h='<div class="ci-section">';
+  h+='<div class="ci-title">&#x1F9E0; <span>Inteligencia del Clan</span></div>';
+
+  // Tabs
+  h+='<div class="ci-tabs">';
+  h+='<div class="ci-tab active" onclick="ciTab(\'overview\',this)">&#x1F4CA; Overview</div>';
+  h+='<div class="ci-tab" onclick="ciTab(\'carries\',this)">&#x1F4AA; Carry vs Lastre</div>';
+  h+='<div class="ci-tab" onclick="ciTab(\'ghosts\',this)">&#x1F47B; Fantasmas</div>';
+  h+='<div class="ci-tab" onclick="ciTab(\'cotilleo\',this)">&#x1F575;&#xFE0F; Cotilleo</div>';
+  h+='</div>';
+
+  // ═══════════════════════════════════════════════════════════
+  // TAB 1: OVERVIEW
+  // ═══════════════════════════════════════════════════════════
+  h+='<div class="ci-panel active" id="ciOverview">';
+  h+='<div class="ci-grid">';
+
+  // Overview KPI cards
+  const overKPIs=[
+    {label:'K/D Clan',val:avgKD.toFixed(2),sub:'Media ponderada',color:'var(--accent)',cls:'cyan'},
+    {label:'Win Rate',val:clanWR.toFixed(1)+'%',sub:totalWins>0?'1 de cada '+Math.round(totalRounds/totalWins):'Sin victorias',color:'var(--accent-green)',cls:'green'},
+    {label:'Miembros Reales',val:realActive+'/'+members.length,sub:Math.round(realActive/members.length*100)+'% activos',color:'var(--accent-orange)',cls:'orange'},
+    {label:'Kills/Partida',val:clanKPR.toFixed(2),sub:'Letal' + (clanKPR>=2?' &#x1F525;':clanKPR>=1?' &#x2705;':' &#x26A0;'),color:'var(--accent-yellow)',cls:'yellow'}
+  ];
+  overKPIs.forEach(k=>{
+    h+='<div class="ci-card '+k.cls+'">';
+    h+='<div class="ci-card-title">'+k.label+'</div>';
+    h+='<div class="ci-big-num" style="color:'+k.color+';">'+k.val+'</div>';
+    h+='<div class="ci-sub">'+k.sub+'</div>';
+    h+='</div>';
+  });
+
+  // K/D Distribution card
+  const kdBands=[{label:'< 1.0',min:0,max:1,color:'var(--accent-red)'},{label:'1.0 - 2.0',min:1,max:2,color:'var(--accent-orange)'},{label:'2.0 - 3.0',min:2,max:3,color:'var(--accent-yellow)'},{label:'3.0+',min:3,max:99,color:'var(--accent-green)'}];
+  h+='<div class="ci-card cyan">';
+  h+='<div class="ci-card-title">Distribucion K/D</div>';
+  kdBands.forEach(b=>{
+    const cnt=active.filter(m=>{const kd=parseFloat(m.kd)||0;return kd>=b.min&&kd<b.max;}).length;
+    const pct=active.length>0?Math.round((cnt/active.length)*100):0;
     h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
-    h+='<span style="font-size:.65rem;color:var(--text-dim);min-width:40px;">'+b.label+'</span>';
-    h+='<div style="flex:1;height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+b.color+';border-radius:4px;transition:width .4s;"></div></div>';
-    h+='<span style="font-family:Orbitron;font-size:.6rem;font-weight:700;color:'+b.color+';min-width:30px;text-align:right;">'+b.count+'</span>';
+    h+='<span style="font-size:.65rem;color:var(--text-dim);min-width:50px;">'+b.label+'</span>';
+    h+='<div class="ci-bar" style="flex:1;"><div class="ci-bar-fill" style="width:'+pct+'%;background:'+b.color+';"></div></div>';
+    h+='<span style="font-family:Orbitron;font-size:.6rem;font-weight:700;color:'+b.color+';min-width:30px;text-align:right;">'+cnt+'</span>';
     h+='</div>';
   });
   h+='</div>';
 
-  // 2. Top Performers (MVP cards)
+  // MVPs
   const byKD=[...active].sort((a,b)=>(parseFloat(b.kd)||0)-(parseFloat(a.kd)||0));
   const byKills=[...active].sort((a,b)=>(b.kills||0)-(a.kills||0));
   const byWins=[...active].sort((a,b)=>(b.wins||0)-(a.wins||0));
   const byDmg=[...active].sort((a,b)=>(parseFloat(b.damage)||0)-(parseFloat(a.damage)||0));
-  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
-  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">MVPs del Clan</div>';
+  h+='<div class="ci-card orange">';
+  h+='<div class="ci-card-title">&#x1F3C6; MVPs del Clan</div>';
   const mvps=[
     {icon:'&#x1F3AF;',label:'Mejor K/D',name:byKD[0]?.player_name,val:(parseFloat(byKD[0]?.kd)||0).toFixed(2),color:'var(--accent-green)'},
     {icon:'&#x1F480;',label:'Mas Kills',name:byKills[0]?.player_name,val:(byKills[0]?.kills||0).toLocaleString(),color:'var(--accent-red)'},
@@ -2169,69 +2282,233 @@ function renderClanAnalytics(members,clan){
   ];
   mvps.forEach(m=>{
     if(!m.name)return;
-    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:4px 8px;background:var(--bg-secondary);border-radius:6px;cursor:pointer;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.name)+'\';setPlatform(\''+(clan.platform||'psn')+'\');switchTab(\'overview\');searchPlayer();">';
+    h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();">';
     h+='<span style="font-size:.9rem;">'+m.icon+'</span>';
     h+='<span style="font-size:.65rem;color:var(--text-dim);min-width:60px;">'+m.label+'</span>';
-    h+='<span style="font-family:Rajdhani;font-weight:700;font-size:.75rem;color:var(--text-primary);flex:1;">'+esc(m.name)+'</span>';
-    h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;color:'+m.color+';">'+m.val+'</span>';
+    h+='<span class="ci-member-name">'+esc(m.name)+'</span>';
+    h+='<span class="ci-member-val" style="color:'+m.color+';">'+m.val+'</span>';
     h+='</div>';
   });
   h+='</div>';
 
-  // 3. Clan Health / Activity
+  // Clan Health
   const activeRate=members.length>0?Math.round((active.length/members.length)*100):0;
-  const totalKills=active.reduce((s,m)=>s+(m.kills||0),0);
-  const totalRounds=active.reduce((s,m)=>s+(m.rounds||0),0);
-  const avgKillsPerMember=active.length>0?Math.round(totalKills/active.length):0;
-  const avgRoundsPerMember=active.length>0?Math.round(totalRounds/active.length):0;
-  const clanKPR=totalRounds>0?(totalKills/totalRounds).toFixed(2):'0';
-  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
-  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Salud del Clan</div>';
-  // Activity bar
   const actColor=activeRate>=70?'var(--accent-green)':activeRate>=40?'var(--accent-orange)':'var(--accent-red)';
-  h+='<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-dim);margin-bottom:3px;"><span>Actividad</span><span style="color:'+actColor+';font-weight:700;">'+activeRate+'% activos ('+active.length+'/'+members.length+')</span></div>';
-  h+='<div style="height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+activeRate+'%;background:'+actColor+';border-radius:4px;"></div></div></div>';
-  // Avg stats
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
-  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent);">'+avgKillsPerMember.toLocaleString()+'</div><div style="font-size:.55rem;color:var(--text-dim);">Kills/Miembro</div></div>';
-  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent-orange);">'+avgRoundsPerMember.toLocaleString()+'</div><div style="font-size:.55rem;color:var(--text-dim);">Partidas/Miembro</div></div>';
-  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent-yellow);">'+clanKPR+'</div><div style="font-size:.55rem;color:var(--text-dim);">Kills/Partida</div></div>';
-  const topCarrier=byKills[0];const carrierPct=totalKills>0&&topCarrier?Math.round(((topCarrier.kills||0)/totalKills)*100):0;
-  h+='<div style="text-align:center;padding:6px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.75rem;font-weight:700;color:var(--accent-purple);">'+carrierPct+'%</div><div style="font-size:.55rem;color:var(--text-dim);">Peso del Top1</div></div>';
+  h+='<div class="ci-card green">';
+  h+='<div class="ci-card-title">&#x1F3E5; Salud del Clan</div>';
+  h+='<div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-dim);margin-bottom:3px;"><span>Actividad</span><span style="color:'+actColor+';font-weight:700;">'+activeRate+'% ('+active.length+'/'+members.length+')</span></div>';
+  h+='<div class="ci-bar"><div class="ci-bar-fill" style="width:'+activeRate+'%;background:'+actColor+';"></div></div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;">';
+  h+='<div style="text-align:center;padding:5px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.7rem;font-weight:700;color:var(--accent);">'+Math.round(totalKills/Math.max(active.length,1)).toLocaleString()+'</div><div class="ci-sub">Kills/Miembro</div></div>';
+  h+='<div style="text-align:center;padding:5px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.7rem;font-weight:700;color:var(--accent-orange);">'+Math.round(totalRounds/Math.max(active.length,1)).toLocaleString()+'</div><div class="ci-sub">Partidas/Miembro</div></div>';
+  const topCarrierPct=totalKills>0&&byKills[0]?Math.round(((byKills[0].kills||0)/totalKills)*100):0;
+  h+='<div style="text-align:center;padding:5px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.7rem;font-weight:700;color:var(--accent-purple);">'+topCarrierPct+'%</div><div class="ci-sub">Peso del Top1</div></div>';
+  h+='<div style="text-align:center;padding:5px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.7rem;font-weight:700;color:var(--accent-yellow);">'+Math.round(avgDmg).toLocaleString()+'</div><div class="ci-sub">Dano Medio</div></div>';
   h+='</div></div>';
 
-  // 4. Cotilleo del Clan
-  h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">';
-  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">&#x1F575;&#xFE0F; Cotilleo del Clan</div>';
-  const gossip=[];
-  // Who carries?
-  if(carrierPct>=40&&topCarrier)gossip.push({icon:'&#x1F4AA;',text:esc(topCarrier.player_name)+' carga al clan con el '+carrierPct+'% de las kills totales. Sin el, esto se hunde.'});
-  else if(carrierPct<=15&&active.length>=5)gossip.push({icon:'&#x2696;',text:'Las kills estan bien repartidas. Clan equilibrado, nadie manda mas que otro.'});
-  // Inactive shame
-  const inactiveCount=members.length-active.length;
-  if(inactiveCount>=3)gossip.push({icon:'&#x1F4A4;',text:inactiveCount+' miembros no han jugado. Estan de adorno o se fueron de vacaciones.'});
-  // K/D shame
-  const lowKD=active.filter(m=>(parseFloat(m.kd)||0)<0.5);
-  if(lowKD.length>=2)gossip.push({icon:'&#x1F480;',text:lowKD.length+' miembros tienen K/D menor a 0.5. Alguien deberia darles clase.'});
-  // Monster K/D
-  const monsters=active.filter(m=>(parseFloat(m.kd)||0)>=3.0);
-  if(monsters.length)gossip.push({icon:'&#x1F47E;',text:monsters.map(m=>esc(m.player_name)).join(', ')+(monsters.length===1?' es una bestia':' son bestias')+' con K/D de 3+.'});
-  // Win machine
-  const winRateEstimate=totalRounds>0?(active.reduce((s,m)=>s+(m.wins||0),0)/totalRounds*100):0;
-  if(winRateEstimate>=20)gossip.push({icon:'&#x1F3C6;',text:'Este clan gana '+winRateEstimate.toFixed(1)+'% de las partidas. Lobby de miedo.'});
-  else if(winRateEstimate<5&&totalRounds>100)gossip.push({icon:'&#x1F622;',text:'Win rate del clan: '+winRateEstimate.toFixed(1)+'%. Se necesita refuerzos urgentemente.'});
-  // Fill if empty
-  if(!gossip.length)gossip.push({icon:'&#x1F50D;',text:'Clan discreto. No hay mucho que contar... todavia.'});
-  gossip.forEach(g=>{
-    h+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;">';
-    h+='<span style="font-size:.9rem;flex-shrink:0;">'+g.icon+'</span>';
-    h+='<span style="font-size:.72rem;color:var(--text-secondary);line-height:1.4;">'+g.text+'</span>';
+  h+='</div></div>'; // end grid + panel
+
+  // ═══════════════════════════════════════════════════════════
+  // TAB 2: CARRY VS LASTRE
+  // ═══════════════════════════════════════════════════════════
+  h+='<div class="ci-panel" id="ciCarries">';
+
+  // Summary bar
+  h+='<div style="display:flex;gap:4px;margin-bottom:14px;height:24px;border-radius:6px;overflow:hidden;">';
+  const cPct=classified.length>0?Math.round(carries.length/classified.length*100):0;
+  const lPct=classified.length>0?Math.round(lastres.length/classified.length*100):0;
+  const nPct=100-cPct-lPct;
+  if(cPct>0)h+='<div style="width:'+cPct+'%;background:#39d98a;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#000;">'+carries.length+' CARRY</div>';
+  if(nPct>0)h+='<div style="width:'+nPct+'%;background:rgba(0,240,255,.3);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#fff;">'+normals.length+' NORMAL</div>';
+  if(lPct>0)h+='<div style="width:'+Math.max(lPct,8)+'%;background:#ff3355;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#fff;">'+lastres.length+' LASTRE</div>';
+  h+='</div>';
+
+  h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:12px;">Clasificacion basada en K/D individual vs media del clan ('+avgKD.toFixed(2)+'). Carry = +50% sobre la media. Lastre = -50% bajo la media. Minimo 10 partidas.</div>';
+
+  // Full member list
+  h+='<div style="max-height:400px;overflow-y:auto;">';
+  classified.forEach((m,i)=>{
+    const barW=Math.max(5,Math.round(m.killPct));
+    const badgeCls=m.role;
+    const badgeLabel=m.role==='carry'?'&#x1F4AA; CARRY':m.role==='lastre'?'&#x1F480; LASTRE':'&#x2696; NORMAL';
+    const deltaStr=m.delta>=0?'+'+m.delta.toFixed(0)+'%':m.delta.toFixed(0)+'%';
+    const deltaColor=m.delta>=50?'#39d98a':m.delta>=-20?'var(--accent)':'#ff3355';
+    h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();" style="position:relative;overflow:hidden;">';
+    h+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:6px;"></div>';
+    h+='<span style="font-family:Orbitron;font-weight:700;font-size:.6rem;width:20px;text-align:center;color:var(--text-dim);z-index:1;">'+(i+1)+'</span>';
+    h+='<span class="ci-member-name" style="z-index:1;">'+esc(m.player_name)+'</span>';
+    h+='<span class="ci-badge '+badgeCls+'" style="z-index:1;">'+badgeLabel+'</span>';
+    h+='<span class="ci-member-val" style="color:'+deltaColor+';z-index:1;min-width:45px;text-align:right;">'+deltaStr+'</span>';
+    h+='<span class="ci-member-val" style="color:var(--accent);z-index:1;min-width:35px;text-align:right;">'+m.kd.toFixed(2)+'</span>';
     h+='</div>';
   });
   h+='</div>';
 
-  h+='</div></div>';
+  // Pollos section
+  h+='<div style="margin-top:16px;"><div class="ci-card-title">&#x1F414; Ratio de Pollos</div>';
+  const withWins=classified.filter(m=>m.wins>0).sort((a,b)=>a.pollos-b.pollos);
+  const noWins=classified.filter(m=>m.wins===0&&m.rounds>=10);
+  if(withWins.length){
+    withWins.slice(0,5).forEach(m=>{
+      const polloColor=m.pollos<=10?'#39d98a':m.pollos<=30?'var(--accent-orange)':'#ff3355';
+      h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();">';
+      h+='<span style="font-size:.85rem;">&#x1F414;</span>';
+      h+='<span class="ci-member-name">'+esc(m.player_name)+'</span>';
+      h+='<span class="ci-member-val" style="color:'+polloColor+';">1 cada '+m.pollos+'</span>';
+      h+='<span class="ci-member-val" style="color:var(--accent-yellow);min-width:40px;text-align:right;">'+m.wins+' wins</span>';
+      h+='</div>';
+    });
+  }
+  if(noWins.length){
+    h+='<div style="margin-top:6px;font-size:.62rem;color:var(--accent-red);padding:4px 8px;">&#x1F6AB; Sin pollos (10+ partidas): '+noWins.map(m=>esc(m.player_name)).join(', ')+'</div>';
+  }
+  h+='</div>';
+
+  h+='</div>'; // end panel
+
+  // ═══════════════════════════════════════════════════════════
+  // TAB 3: FANTASMAS
+  // ═══════════════════════════════════════════════════════════
+  h+='<div class="ci-panel" id="ciGhosts">';
+
+  // Donut-like summary
+  h+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">';
+  [{label:'Activos',count:realActive,color:'#39d98a',cls:'active-m'},{label:'Ocasionales',count:occasionalCount,color:'#ff6b00',cls:'occasional'},{label:'Fantasmas',count:ghostCount,color:'#5a6a8a',cls:'ghost'}].forEach(g=>{
+    const pct=members.length>0?Math.round(g.count/members.length*100):0;
+    h+='<div style="flex:1;min-width:100px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">';
+    h+='<div style="font-family:Orbitron;font-size:1.4rem;font-weight:800;color:'+g.color+';">'+g.count+'</div>';
+    h+='<div style="font-size:.6rem;color:var(--text-dim);margin-top:2px;">'+g.label+' ('+pct+'%)</div>';
+    h+='<div class="ci-bar" style="margin-top:6px;"><div class="ci-bar-fill" style="width:'+pct+'%;background:'+g.color+';"></div></div>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:12px;">Activo = 20+ partidas y 3+ kills. Ocasional = 5-19 partidas. Fantasma = menos de 5 partidas y menos de 3 kills.</div>';
+
+  // Ghost list
+  const ghostsSorted=[...ghostData].sort((a,b)=>{
+    const order={'ghost':0,'occasional':1,'active-m':2};
+    return(order[a.status]||2)-(order[b.status]||2)||(b.rounds-a.rounds);
+  });
+  h+='<div style="max-height:400px;overflow-y:auto;">';
+  ghostsSorted.forEach(m=>{
+    const statusLabel=m.status==='ghost'?'&#x1F47B; FANTASMA':m.status==='occasional'?'&#x23F3; OCASIONAL':'&#x2705; ACTIVO';
+    h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();">';
+    h+='<span class="ci-member-name">'+esc(m.player_name)+'</span>';
+    h+='<span class="ci-badge '+m.status+'">'+statusLabel+'</span>';
+    h+='<span class="ci-member-val" style="color:var(--text-dim);min-width:60px;text-align:right;">'+(m.rounds||0)+' partidas</span>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // Real size callout
+  if(ghostCount>=3){
+    h+='<div style="margin-top:12px;padding:10px 14px;background:rgba(255,107,0,.08);border:1px solid rgba(255,107,0,.2);border-radius:8px;font-size:.72rem;color:var(--accent-orange);display:flex;align-items:center;gap:8px;">';
+    h+='<span style="font-size:1.2rem;">&#x26A0;</span>';
+    h+='<span>Este clan dice tener <strong>'+members.length+'</strong> miembros, pero en realidad solo <strong>'+realActive+'</strong> juegan activamente. El clan real es de '+realActive+'.</span>';
+    h+='</div>';
+  }
+
+  h+='</div>'; // end panel
+
+  // ═══════════════════════════════════════════════════════════
+  // TAB 4: COTILLEO
+  // ═══════════════════════════════════════════════════════════
+  h+='<div class="ci-panel" id="ciCotilleo">';
+  h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:12px;">&#x1F575;&#xFE0F; Datos que alguien va a mandar al grupo de WhatsApp...</div>';
+
+  const gossip=[];
+
+  // 1. Carry callout
+  if(carries.length){
+    const topC=carries[0];
+    gossip.push({icon:'&#x1F4AA;',text:'<strong>'+esc(topC.player_name)+'</strong> es el carry del clan con K/D '+topC.kd.toFixed(2)+' (+'+topC.delta.toFixed(0)+'% sobre la media). Aporta el '+topC.killPct+'% de todas las kills.',badge:'&#x1F451; CARRY OFICIAL',badgeColor:'#39d98a'});
+  }
+
+  // 2. Lastre callout
+  if(lastres.length){
+    const worstL=lastres[lastres.length-1];
+    if(lastres.length===1){
+      gossip.push({icon:'&#x1F480;',text:'<strong>'+esc(worstL.player_name)+'</strong> es el lastre oficial con K/D '+worstL.kd.toFixed(2)+' ('+worstL.delta.toFixed(0)+'% bajo la media). '+worstL.rounds+' partidas jugadas, no es por falta de intentarlo.',badge:'&#x1FA7C; LASTRE DEL MES',badgeColor:'#ff3355'});
+    }else{
+      gossip.push({icon:'&#x1F480;',text:lastres.length+' miembros clasificados como lastre. El peor: <strong>'+esc(worstL.player_name)+'</strong> con K/D '+worstL.kd.toFixed(2)+'. Alguien tiene que darles la charla.',badge:'&#x1FA7C; ZONA DE LASTRES',badgeColor:'#ff3355'});
+    }
+  }
+
+  // 3. Ghost shame
+  if(ghostCount>=3){
+    gossip.push({icon:'&#x1F47B;',text:'El clan tiene '+ghostCount+' fantasmas que no juegan. "Clan de '+members.length+'" que en realidad son '+realActive+'. La lista de fantasmas esta en la pestana de arriba.',badge:'&#x1F3DA; CLAN INFLADO',badgeColor:'#5a6a8a'});
+  }
+
+  // 4. One-man-army
+  if(topCarrierPct>=35){
+    gossip.push({icon:'&#x1F3AF;',text:'<strong>'+esc(byKills[0].player_name)+'</strong> tiene el '+topCarrierPct+'% de TODAS las kills del clan. Si se va, se va el '+topCarrierPct+'% de la potencia de fuego.',badge:null,badgeColor:null});
+  }
+
+  // 5. Win desert
+  const noWinActive=classified.filter(m=>m.wins===0&&m.rounds>=20);
+  if(noWinActive.length>=2){
+    gossip.push({icon:'&#x1F3DC;',text:noWinActive.length+' miembros con 20+ partidas y CERO victorias: '+noWinActive.slice(0,3).map(m=>esc(m.player_name)).join(', ')+(noWinActive.length>3?' y '+(noWinActive.length-3)+' mas...':'')+'. Desierto de pollos.',badge:'&#x1F414; 0 POLLOS',badgeColor:'#ff6b00'});
+  }
+
+  // 6. Best pollo ratio
+  if(withWins.length&&withWins[0].pollos<=8){
+    const best=withWins[0];
+    gossip.push({icon:'&#x1F414;',text:'<strong>'+esc(best.player_name)+'</strong> gana 1 pollo cada '+best.pollos+' partidas. Maquina de ganar.',badge:null,badgeColor:null});
+  }
+
+  // 7. Monster K/D
+  const monsters=active.filter(m=>(parseFloat(m.kd)||0)>=3.5);
+  if(monsters.length){
+    gossip.push({icon:'&#x1F47E;',text:monsters.map(m=>'<strong>'+esc(m.player_name)+'</strong> ('+parseFloat(m.kd).toFixed(2)+')').join(', ')+(monsters.length===1?' es una bestia absoluta':' son bestias absolutas')+' con K/D de 3.5+.',badge:null,badgeColor:null});
+  }
+
+  // 8. Balanced clan
+  if(carries.length===0&&lastres.length===0&&active.length>=5){
+    gossip.push({icon:'&#x2696;',text:'Nadie destaca demasiado ni nadie hunde al equipo. Clan equilibrado donde todos aportan por igual. Raro de ver.',badge:'&#x2696; CLAN EQUILIBRADO',badgeColor:'var(--accent)'});
+  }
+
+  // 9. Win rate extremes
+  if(clanWR>=15){
+    gossip.push({icon:'&#x1F3C6;',text:'Win rate del clan: '+clanWR.toFixed(1)+'%. Esto es un lobby de miedo. Que nadie entre en su partida.',badge:null,badgeColor:null});
+  }else if(clanWR<3&&totalRounds>200){
+    gossip.push({icon:'&#x1F622;',text:'Win rate del '+clanWR.toFixed(1)+'% con '+totalRounds+' partidas. Muchas ganas pero pocos resultados. Necesitan refuerzos o clases particulares.',badge:null,badgeColor:null});
+  }
+
+  // 10. Low K/D shame
+  const subOne=active.filter(m=>(parseFloat(m.kd)||0)<0.5&&(m.rounds||0)>=15);
+  if(subOne.length>=2){
+    gossip.push({icon:'&#x1F6A8;',text:subOne.length+' miembros con K/D menor a 0.5 y 15+ partidas. Mueren mas de lo que matan. Consistentemente.',badge:null,badgeColor:null});
+  }
+
+  // Fill if empty
+  if(!gossip.length)gossip.push({icon:'&#x1F50D;',text:'Clan discreto. No hay mucho que contar... todavia. Necesitan mas partidas para generar datos jugosos.',badge:null,badgeColor:null});
+
+  gossip.forEach(g=>{
+    h+='<div class="ci-gossip">';
+    h+='<span class="ci-gossip-icon">'+g.icon+'</span>';
+    h+='<div style="flex:1;">';
+    if(g.badge){
+      h+='<div class="ci-gossip-badge" style="background:'+(g.badgeColor||'var(--accent)')+'22;color:'+g.badgeColor+';border:1px solid '+(g.badgeColor||'var(--accent)')+'44;">'+g.badge+'</div>';
+    }
+    h+='<div class="ci-gossip-text">'+g.text+'</div>';
+    h+='</div></div>';
+  });
+
+  h+='</div>'; // end panel
+
+  h+='</div>'; // end ci-section
   return h;
+}
+
+// Clan Intelligence tab switcher
+function ciTab(tab,btn){
+  const panels={overview:'ciOverview',carries:'ciCarries',ghosts:'ciGhosts',cotilleo:'ciCotilleo'};
+  document.querySelectorAll('.ci-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ci-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  const el=document.getElementById(panels[tab]);
+  if(el)el.classList.add('active');
 }
 
 // INIT
