@@ -846,10 +846,11 @@ function generateToken(user) {
 }
 
 // POST /auth/register — Email + password registration
-app.post('/auth/register', async (req, res) => {
+app.post('/auth/register', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password, displayName, gamertag, platform } = req.body;
   if (!email || !password || !displayName) return res.status(400).json({ error: 'Email, contrasena y nombre son obligatorios' });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email no valido' });
   if (password.length < 8) return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
   try {
     const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
@@ -867,7 +868,7 @@ app.post('/auth/register', async (req, res) => {
 });
 
 // POST /auth/login — Email + password login
-app.post('/auth/login', async (req, res) => {
+app.post('/auth/login', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email y contrasena son obligatorios' });
@@ -1399,6 +1400,9 @@ app.get('/og-image.png', (req, res) => {
   </svg>`);
 });
 
+// HTML attribute escaping for dynamic meta tags
+function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
 // Fallback: serve index.html for SPA routes with dynamic meta tags
 app.get('*', (req, res) => {
   const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
@@ -1436,22 +1440,24 @@ app.get('*', (req, res) => {
     }
 
     if (title) {
+      const safeTitle = escHtml(title);
+      const safeDesc = escHtml(desc);
       html = html
-        .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
-        .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${title}">`)
-        .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${desc}">`)
-        .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${title}">`)
-        .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${desc}">`)
-        .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${desc}">`);
+        .replace(/<title>[^<]*<\/title>/, `<title>${safeTitle}</title>`)
+        .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${safeTitle}">`)
+        .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${safeDesc}">`)
+        .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${safeTitle}">`)
+        .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${safeDesc}">`)
+        .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${safeDesc}">`);
       if (canonicalUrl) {
         html = html
-          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${canonicalUrl}">`)
-          .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${canonicalUrl}">`);
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${escHtml(canonicalUrl)}">`)
+          .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${escHtml(canonicalUrl)}">`);
       }
       if (ogImage) {
         html = html
-          .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${ogImage}">`)
-          .replace(/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${ogImage}">`);
+          .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escHtml(ogImage)}">`)
+          .replace(/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${escHtml(ogImage)}">`);
       }
     }
     res.set('Content-Type', 'text/html');

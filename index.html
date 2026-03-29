@@ -2093,8 +2093,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
   // Back/forward browser navigation
   window.addEventListener('popstate',()=>{
-    const m=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
-    if(m){const plat=m[1].toLowerCase(),pname=decodeURIComponent(m[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
+    const statsM=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
+    const clanM=location.pathname.match(/^\/clan\/(.+)$/i);
+    if(statsM){const plat=statsM[1].toLowerCase(),pname=decodeURIComponent(statsM[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
+    else if(clanM){loadClanPage(decodeURIComponent(clanM[1]));}
+    else if(location.pathname==='/'||location.pathname===''){switchTab('overview');document.getElementById('emptyState').style.display='block';}
     else{location.reload();}
   });
   // Admin panel: check if admin is stored in sessionStorage from /admin route
