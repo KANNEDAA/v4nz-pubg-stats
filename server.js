@@ -1385,8 +1385,43 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
 // ═══ Dynamic OG Image (SVG → PNG via sharp) ═══
 function escXml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
 
-function buildPlayerSvg(player, platform) {
+function buildPlayerSvg(player, platform, stats) {
   const platIcon = platform === 'PSN' ? 'PlayStation' : 'Xbox';
+  const hasStats = stats && stats.roundsPlayed;
+  // Calculate stats if available
+  const kills = hasStats ? (stats.kills || 0) : 0;
+  const wins = hasStats ? (stats.wins || 0) : 0;
+  const rounds = hasStats ? (stats.roundsPlayed || 0) : 0;
+  const deaths = rounds - wins;
+  const kd = hasStats && deaths > 0 ? (kills / deaths).toFixed(2) : '0';
+  const wr = hasStats && rounds > 0 ? ((wins / rounds) * 100).toFixed(1) : '0';
+  const avgDmg = hasStats && rounds > 0 ? Math.round((stats.damageDealt || 0) / rounds) : 0;
+  const hsRate = hasStats && kills > 0 ? (((stats.headshotKills || 0) / kills) * 100).toFixed(0) : '0';
+
+  const statsSection = hasStats ? `
+    <!-- Stats boxes -->
+    <rect x="80" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#00f0ff" stroke-opacity="0.15"/>
+    <text x="195" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#00f0ff" text-anchor="middle">${escXml(kd)}</text>
+    <text x="195" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">K/D RATIO</text>
+
+    <rect x="330" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ffd700" stroke-opacity="0.15"/>
+    <text x="445" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#ffd700" text-anchor="middle">${escXml(String(wins))}</text>
+    <text x="445" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">WINS (${escXml(wr)}%)</text>
+
+    <rect x="580" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ff6b00" stroke-opacity="0.15"/>
+    <text x="695" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#ff6b00" text-anchor="middle">${escXml(String(avgDmg))}</text>
+    <text x="695" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">AVG DAMAGE</text>
+
+    <rect x="830" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#a855f7" stroke-opacity="0.15"/>
+    <text x="945" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#a855f7" text-anchor="middle">${escXml(hsRate)}%</text>
+    <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">HEADSHOT</text>
+
+    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#555" letter-spacing="1">${escXml(String(kills))} kills · ${escXml(String(rounds))} partidas · ${platIcon}</text>
+  ` : `
+    <text x="80" y="380" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">STATS EN TIEMPO REAL · K/D · WIN RATE · ADN PUBG</text>
+    <text x="80" y="420" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#888" letter-spacing="3">${platIcon}</text>
+  `;
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#12081f"/></linearGradient>
@@ -1394,21 +1429,38 @@ function buildPlayerSvg(player, platform) {
     </defs>
     <rect width="1200" height="630" fill="url(#bg)"/>
     <rect y="0" width="1200" height="4" fill="url(#accent)"/>
-    <text x="80" y="100" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
-    <text x="190" y="100" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#666" letter-spacing="3">PUBG CONSOLE STATS</text>
-    <text x="80" y="220" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="2">${escXml(player)}</text>
-    <text x="80" y="280" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#888" letter-spacing="3">${platIcon}</text>
-    <text x="80" y="430" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">STATS EN TIEMPO REAL · K/D · WIN RATE · ADN PUBG</text>
-    <text x="80" y="480" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#00f0ff" letter-spacing="1">Descubre tus estadisticas en v4nz.com</text>
-    <rect x="80" y="520" width="200" height="40" rx="8" fill="#00f0ff" opacity="0.15"/>
-    <text x="180" y="547" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#00f0ff" text-anchor="middle" letter-spacing="2">VER STATS</text>
-    <circle cx="1060" cy="315" r="120" fill="none" stroke="#00f0ff" stroke-width="2" opacity="0.15"/>
-    <circle cx="1060" cy="315" r="80" fill="none" stroke="#00f0ff" stroke-width="1" opacity="0.1"/>
-    <text x="1060" y="330" font-family="Arial,Helvetica,sans-serif" font-size="48" font-weight="900" fill="#00f0ff" text-anchor="middle" opacity="0.3">${escXml(player.charAt(0).toUpperCase())}</text>
+    <text x="80" y="80" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
+    <text x="190" y="80" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555" letter-spacing="3">PUBG CONSOLE STATS</text>
+    <text x="80" y="200" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="2">${escXml(player)}</text>
+    <text x="80" y="260" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#888" letter-spacing="3">${platIcon} · Squad TPP</text>
+    ${statsSection}
+    <text x="80" y="560" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#00f0ff" letter-spacing="1">v4nz.com/stats/${escXml(platform.toLowerCase())}/${escXml(player)}</text>
+    <rect x="80" y="580" width="1040" height="2" fill="url(#accent)" opacity="0.3"/>
+    <text x="1120" y="610" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#444" text-anchor="end">Datos en tiempo real via PUBG API</text>
   </svg>`;
 }
 
-function buildClanSvg(tag) {
+function buildClanSvg(tag, clan) {
+  const hasClan = clan && clan.tag;
+  const name = hasClan ? (clan.name || tag) : tag;
+  const statsSection = hasClan ? `
+    <text x="80" y="280" font-family="Arial,Helvetica,sans-serif" font-size="22" fill="#888" letter-spacing="2">${escXml(name)} · ${escXml((clan.platform || 'PSN').toUpperCase())} · Nivel ${clan.level || '?'}</text>
+    <rect x="80" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#00f0ff" stroke-opacity="0.15"/>
+    <text x="195" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#00f0ff" text-anchor="middle">${clan.total_kills || 0}</text>
+    <text x="195" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">TOTAL KILLS</text>
+    <rect x="330" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#00ff88" stroke-opacity="0.15"/>
+    <text x="445" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#00ff88" text-anchor="middle">${(parseFloat(clan.avg_kd) || 0).toFixed(2)}</text>
+    <text x="445" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">K/D MEDIO</text>
+    <rect x="580" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ffd700" stroke-opacity="0.15"/>
+    <text x="695" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#ffd700" text-anchor="middle">${clan.total_wins || 0}</text>
+    <text x="695" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">VICTORIAS</text>
+    <rect x="830" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ff6b00" stroke-opacity="0.15"/>
+    <text x="945" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#ff6b00" text-anchor="middle">${clan.active_members || 0}</text>
+    <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">ACTIVOS</text>
+    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555">${clan.member_count || 0} miembros · Win Rate ${(parseFloat(clan.win_rate) || 0).toFixed(1)}% · Dano medio ${(parseFloat(clan.avg_damage) || 0).toFixed(0)}</text>
+  ` : `
+    <text x="80" y="400" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">MIEMBROS · KILLS · K/D · RANKING</text>
+  `;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#12081f"/></linearGradient>
@@ -1416,14 +1468,14 @@ function buildClanSvg(tag) {
     </defs>
     <rect width="1200" height="630" fill="url(#bg)"/>
     <rect y="0" width="1200" height="4" fill="url(#accent)"/>
-    <text x="80" y="100" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
-    <text x="190" y="100" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#666" letter-spacing="3">PUBG CONSOLE STATS</text>
-    <text x="80" y="200" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#ff6b00" letter-spacing="3">CLAN</text>
-    <text x="80" y="300" font-family="Arial,Helvetica,sans-serif" font-size="96" font-weight="900" fill="#ffffff" letter-spacing="4">[${escXml(tag)}]</text>
-    <text x="80" y="430" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">MIEMBROS · KILLS · K/D · RANKING</text>
-    <text x="80" y="480" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#00f0ff" letter-spacing="1">Ver estadisticas del clan en v4nz.com</text>
-    <rect x="80" y="520" width="200" height="40" rx="8" fill="#ff6b00" opacity="0.15"/>
-    <text x="180" y="547" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#ff6b00" text-anchor="middle" letter-spacing="2">VER CLAN</text>
+    <text x="80" y="80" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
+    <text x="190" y="80" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555" letter-spacing="3">PUBG CONSOLE STATS</text>
+    <text x="80" y="145" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#ff6b00" letter-spacing="3">CLAN</text>
+    <text x="80" y="220" font-family="Arial,Helvetica,sans-serif" font-size="80" font-weight="900" fill="#ffffff" letter-spacing="4">[${escXml(tag)}]</text>
+    ${statsSection}
+    <text x="80" y="560" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#ff6b00" letter-spacing="1">v4nz.com/clan/${escXml(tag)}</text>
+    <rect x="80" y="580" width="1040" height="2" fill="url(#accent)" opacity="0.3"/>
+    <text x="1120" y="610" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#444" text-anchor="end">Datos en tiempo real via PUBG API</text>
   </svg>`;
 }
 
@@ -1432,19 +1484,59 @@ async function svgToPng(svgStr) {
   return sharp(Buffer.from(svgStr)).png().toBuffer();
 }
 
-// Player OG image — PNG preferred, SVG fallback
+// Player OG image — with real stats from PUBG API
 app.get('/og-image/stats/:platform/:player.png', async (req, res) => {
   try {
     const platform = req.params.platform.toUpperCase();
     const player = decodeURIComponent(req.params.player);
-    const svg = buildPlayerSvg(player, platform);
+    let stats = null;
+
+    // Try to fetch real stats (cached via api_cache)
+    if (SERVER_API_KEY && pool) {
+      try {
+        const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+        const shard = platform.toLowerCase();
+        // Check OG cache first (1 hour)
+        const ogCacheKey = `og_stats_${shard}_${player.toLowerCase()}`;
+        const cached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '60 minutes'", [ogCacheKey]);
+        if (cached.rows.length) {
+          try { stats = JSON.parse(cached.rows[0].response_data); } catch(e) {}
+        }
+        if (!stats) {
+          const pResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(player)}`, { headers }, 8000);
+          if (pResp.ok) {
+            const pData = await pResp.json();
+            const pId = pData.data?.[0]?.id;
+            if (pId) {
+              const seasonsResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/seasons`, { headers }, 8000);
+              if (seasonsResp.ok) {
+                const seasonsData = await seasonsResp.json();
+                const currentSeason = (seasonsData.data || []).find(s => s.attributes?.isCurrentSeason);
+                if (currentSeason) {
+                  const statsResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players/${pId}/seasons/${currentSeason.id}`, { headers }, 8000);
+                  if (statsResp.ok) {
+                    const sData = await statsResp.json();
+                    stats = sData.data?.attributes?.gameModeStats?.['squad-fpp'] || sData.data?.attributes?.gameModeStats?.squad || null;
+                    // Cache for 1 hour
+                    if (stats) {
+                      await pool.query('INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()', [ogCacheKey, JSON.stringify(stats)]).catch(() => {});
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (e) { /* continue without stats */ }
+    }
+
+    const svg = buildPlayerSvg(player, platform, stats);
     const png = await svgToPng(svg);
     if (png) {
       res.set('Content-Type', 'image/png');
       res.set('Cache-Control', 'public, max-age=3600');
       return res.send(png);
     }
-    // Fallback to SVG if sharp not available
     res.set('Content-Type', 'image/svg+xml');
     res.set('Cache-Control', 'public, max-age=3600');
     res.send(svg);
@@ -1454,11 +1546,18 @@ app.get('/og-image/stats/:platform/:player.png', async (req, res) => {
   }
 });
 
-// Clan OG image — PNG preferred, SVG fallback
+// Clan OG image — with real stats from DB
 app.get('/og-image/clan/:tag.png', async (req, res) => {
   try {
-    const tag = decodeURIComponent(req.params.tag).toUpperCase();
-    const svg = buildClanSvg(tag);
+    const tag = decodeURIComponent(req.params.tag).toUpperCase().replace(/[^A-Z0-9_]/g, '');
+    let clan = null;
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM clans WHERE tag = $1', [tag]);
+        if (result.rows.length) clan = result.rows[0];
+      } catch (e) { /* continue without stats */ }
+    }
+    const svg = buildClanSvg(tag, clan);
     const png = await svgToPng(svg);
     if (png) {
       res.set('Content-Type', 'image/png');
