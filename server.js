@@ -786,8 +786,8 @@ app.get('/clans/:tag/feed', async (req, res) => {
 
     // Check feed cache (10 min TTL)
     const feedCacheKey = `clan_feed_${tag}`;
-    const cached = await pool.query("SELECT data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '10 minutes'", [feedCacheKey]);
-    if (cached.rows.length) return res.json(cached.rows[0].data);
+    const cached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '10 minutes'", [feedCacheKey]);
+    if (cached.rows.length) { try { return res.json(JSON.parse(cached.rows[0].response_data)); } catch(e) {} }
 
     const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
     const feed = [];
@@ -813,10 +813,11 @@ app.get('/clans/:tag/feed', async (req, res) => {
             // Check match cache first
             const matchCacheKey = `match_${matchId}`;
             let matchData;
-            const mcached = await pool.query("SELECT data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 minutes'", [matchCacheKey]);
+            const mcached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 minutes'", [matchCacheKey]);
             if (mcached.rows.length) {
-              matchData = mcached.rows[0].data;
-            } else {
+              try { matchData = JSON.parse(mcached.rows[0].response_data); } catch(e) { matchData = null; }
+            }
+            if (!matchData) {
               await new Promise(r => setTimeout(r, 500)); // Rate limit PUBG API
               const matchResp = await fetchWithTimeout(fetch,
                 `https://api.pubg.com/shards/${platform}/matches/${matchId}`,
@@ -825,7 +826,7 @@ app.get('/clans/:tag/feed', async (req, res) => {
               matchData = await matchResp.json();
               // Cache match data (30 min)
               await pool.query(
-                'INSERT INTO api_cache (cache_key, data, created_at, ttl_seconds) VALUES ($1, $2, NOW(), 1800) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW()',
+                'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
                 [matchCacheKey, JSON.stringify(matchData)]
               );
             }
@@ -860,7 +861,7 @@ app.get('/clans/:tag/feed', async (req, res) => {
 
     // Cache the feed result (10 min)
     await pool.query(
-      'INSERT INTO api_cache (cache_key, data, created_at, ttl_seconds) VALUES ($1, $2, NOW(), 600) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW()',
+      'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
       [feedCacheKey, JSON.stringify(result)]
     ).catch(() => {});
 

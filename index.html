@@ -772,6 +772,24 @@ footer a { color: var(--accent); text-decoration: none; }
 .md-loot-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .md-loot-item { background:var(--bg-secondary); padding:4px 10px; border-radius:4px; font-size:.7rem; color:var(--text-secondary); border:1px solid var(--border); }
 .md-loot-item .loot-val { color:var(--accent); font-weight:600; margin-right:4px; }
+.kt-section { margin-top:20px; border-top:1px solid var(--border); padding-top:16px; }
+.kt-title { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.kt-tree { position:relative; padding-left:24px; }
+.kt-node { position:relative; padding:8px 12px; margin-bottom:4px; background:var(--bg-secondary); border-radius:8px; border:1px solid var(--border); font-size:.75rem; transition:all .2s; }
+.kt-node::before { content:''; position:absolute; left:-16px; top:50%; width:12px; height:1px; background:var(--border); }
+.kt-node::after { content:''; position:absolute; left:-16px; top:0; bottom:0; width:1px; background:var(--border); }
+.kt-node:last-child::after { bottom:50%; }
+.kt-node.kt-me { border-color:var(--accent); background:rgba(0,240,255,0.06); }
+.kt-node.kt-kill { border-left:3px solid var(--accent-green); }
+.kt-node.kt-death { border-left:3px solid var(--accent-red); }
+.kt-node.kt-knock { border-left:3px solid var(--accent-orange); }
+.kt-player { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.8rem; color:var(--text-primary); }
+.kt-weapon { font-size:.65rem; color:var(--text-dim); margin-top:2px; }
+.kt-distance { font-family:'Orbitron',sans-serif; font-size:.6rem; color:var(--accent-purple); }
+.kt-time { font-size:.6rem; color:var(--text-dim); float:right; }
+.kt-chain { margin-top:12px; }
+.kt-chain-title { font-size:.7rem; color:var(--text-dim); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.kt-loading { text-align:center; padding:16px; font-size:.7rem; color:var(--text-dim); }
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-primary)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
 
 @media(max-width:900px){
@@ -2707,6 +2725,12 @@ function showMatchDetail(idx){
     h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+escJs(detailTopK)+'\';searchPlayer();">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
     h+='</div></div>';
   }
+  // Kill Tree section
+  if(telemetryUrl){
+    h+='<div class="kt-section" id="killTreeSection"><div class="kt-title">&#x1F332; Kill Tree</div>';
+    h+='<div id="killTreeContent"><button onclick="loadKillTree(\''+telemetryUrl.replace(/'/g,"\\'")+'\',\''+pn.replace(/'/g,"\\'")+'\',this)" style="width:100%;background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.2);color:var(--accent);padding:10px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;">&#x1F52E; Cargar Kill Tree</button></div>';
+    h+='</div>';
+  }
   // PUBG Report clip link
   const matchIdForClip=match.data?match.data.id:null;
   if(matchIdForClip&&window._pubgReportClips&&window._pubgReportClips[matchIdForClip]){
@@ -2718,6 +2742,100 @@ function showMatchDetail(idx){
   document.getElementById('matchDetailContent').innerHTML=h;
   document.getElementById('matchDetailPopup').classList.add('active');
   document.querySelector('.match-detail-card').scrollTop=0;
+}
+// ═══ KILL TREE ═══
+const WEAPON_NAMES={'Item_Weapon_AK47_C':'AKM','Item_Weapon_Apple_C':'Apple','Item_Weapon_AUG_C':'AUG A3','Item_Weapon_AWM_C':'AWM','Item_Weapon_Berreta686_C':'S686','Item_Weapon_BerylM762_C':'Beryl M762','Item_Weapon_BizonPP19_C':'Bizon','Item_Weapon_Crossbow_C':'Crossbow','Item_Weapon_DesertEagle_C':'Deagle','Item_Weapon_DP12_C':'DBS','Item_Weapon_DP28_C':'DP-28','Item_Weapon_FNFal_C':'SLR','Item_Weapon_G18_C':'P18C','Item_Weapon_G36C_C':'G36C','Item_Weapon_Groza_C':'Groza','Item_Weapon_HK416_C':'M416','Item_Weapon_Kar98k_C':'Kar98k','Item_Weapon_L6_C':'Lynx AMR','Item_Weapon_M16A4_C':'M16A4','Item_Weapon_M1911_C':'P1911','Item_Weapon_M249_C':'M249','Item_Weapon_M24_C':'M24','Item_Weapon_M9_C':'P92','Item_Weapon_Machete_C':'Machete','Item_Weapon_MG3_C':'MG3','Item_Weapon_Mini14_C':'Mini 14','Item_Weapon_Mk12_C':'Mk12','Item_Weapon_Mk14_C':'Mk14','Item_Weapon_Mk47Mutant_C':'Mk47 Mutant','Item_Weapon_Mosin_C':'Mosin','Item_Weapon_MP5K_C':'MP5K','Item_Weapon_MP9_C':'MP9','Item_Weapon_NagantM1895_C':'R1895','Item_Weapon_P90_C':'P90','Item_Weapon_Pan_C':'Pan','Item_Weapon_QBU88_C':'QBU','Item_Weapon_QBZ95_C':'QBZ','Item_Weapon_Rhino_C':'R45','Item_Weapon_SCAR-L_C':'SCAR-L','Item_Weapon_Saiga12_C':'S12K','Item_Weapon_Sawnoff_C':'Sawed-Off','Item_Weapon_Skorpion_C':'Skorpion','Item_Weapon_Thompson_C':'Tommy Gun','Item_Weapon_UMP_C':'UMP45','Item_Weapon_UZI_C':'Micro Uzi','Item_Weapon_VSS_C':'VSS','Item_Weapon_Vector_C':'Vector','Item_Weapon_Win94_C':'Win94','Item_Weapon_Winchester_C':'S1897','Item_Weapon_vz61Skorpion_C':'Skorpion'};
+function cleanWeaponName(raw){
+  if(!raw)return'Desconocido';
+  const mapped=WEAPON_NAMES[raw];if(mapped)return mapped;
+  // Fallback cleanup
+  let n=raw.replace(/^Item_Weapon_/,'').replace(/_C$/,'').replace(/_/g,' ');
+  return n||'Desconocido';
+}
+async function loadKillTree(telemUrl,playerName,btn){
+  const container=document.getElementById('killTreeContent');
+  if(!container)return;
+  container.innerHTML='<div class="kt-loading"><div class="spinner" style="margin:0 auto 8px;"></div>Descargando telemetria...</div>';
+  try{
+    const r=await fetch(telemUrl);
+    if(!r.ok)throw new Error('Telemetry fetch failed');
+    const events=await r.json();
+    // Extract kill events (LogPlayerKillV2 or LogPlayerKill)
+    const kills=events.filter(e=>e._T==='LogPlayerKillV2'||e._T==='LogPlayerKill');
+    const knocks=events.filter(e=>e._T==='LogPlayerMakeGroggy');
+    const pnL=playerName.toLowerCase();
+    // My kills: where I'm the killer
+    const myKills=kills.filter(e=>(e.killer?.name||'').toLowerCase()===pnL);
+    // My death: where I'm the victim
+    const myDeath=kills.find(e=>(e.victim?.name||'').toLowerCase()===pnL);
+    // My knocks
+    const myKnocks=knocks.filter(e=>(e.attacker?.name||'').toLowerCase()===pnL);
+    // Kill chain: who killed who killed me (trace backwards)
+    const killChain=[];
+    if(myDeath){
+      killChain.push({type:'death',player:myDeath.killer?.name||'Zona/Caida',weapon:cleanWeaponName(myDeath.damageCauserName||myDeath.killerDamageInfo?.damageCauserName),distance:myDeath.distance?Math.round(myDeath.distance/100):0,time:myDeath._D||myDeath.common?.isGame});
+      // Trace who killed my killer
+      let nextVictim=(myDeath.killer?.name||'').toLowerCase();
+      for(let i=0;i<10&&nextVictim;i++){
+        const nextKill=kills.find(e=>(e.victim?.name||'').toLowerCase()===nextVictim&&(e.killer?.name||'').toLowerCase()!==nextVictim);
+        if(!nextKill||!nextKill.killer?.name)break;
+        killChain.push({type:'chain',player:nextKill.killer?.name,weapon:cleanWeaponName(nextKill.damageCauserName||nextKill.killerDamageInfo?.damageCauserName),distance:nextKill.distance?Math.round(nextKill.distance/100):0});
+        nextVictim=nextKill.killer.name.toLowerCase();
+      }
+    }
+    // Build HTML
+    let h='';
+    // My kills section
+    if(myKills.length||myKnocks.length){
+      h+='<div class="kt-chain"><div class="kt-chain-title">&#x2694;&#xFE0F; Tus Kills ('+myKills.length+')'+(myKnocks.length?' + '+myKnocks.length+' Knocks':'')+'</div><div class="kt-tree">';
+      myKills.forEach(k=>{
+        const victim=k.victim?.name||'?';
+        const weapon=cleanWeaponName(k.damageCauserName||k.killerDamageInfo?.damageCauserName);
+        const dist=k.distance?Math.round(k.distance/100):0;
+        const isHs=k.killerDamageInfo?.additionalInfo==='HeadShot'||k.isHeadShot;
+        h+='<div class="kt-node kt-kill">';
+        h+='<span class="kt-player" style="cursor:pointer;color:var(--accent-green);" onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+escJs(victim)+'\';searchPlayer();">'+esc(victim)+'</span>';
+        h+=' <span class="kt-weapon">'+esc(weapon)+(isHs?' &#x1F3AF;':'')+'</span>';
+        if(dist>0)h+=' <span class="kt-distance">'+dist+'m</span>';
+        h+='</div>';
+      });
+      // Show knocks that didn't result in kills
+      const killVictims=new Set(myKills.map(k=>(k.victim?.name||'').toLowerCase()));
+      const onlyKnocks=myKnocks.filter(k=>!killVictims.has((k.victim?.name||'').toLowerCase()));
+      onlyKnocks.forEach(k=>{
+        const victim=k.victim?.name||'?';
+        const weapon=cleanWeaponName(k.damageCauserName);
+        h+='<div class="kt-node kt-knock">';
+        h+='<span class="kt-player" style="color:var(--accent-orange);">'+esc(victim)+' <span style="font-size:.6rem;opacity:.6;">(knock)</span></span>';
+        h+=' <span class="kt-weapon">'+esc(weapon)+'</span>';
+        h+='</div>';
+      });
+      h+='</div></div>';
+    }
+    // Kill chain (who killed me → who killed them)
+    if(killChain.length){
+      h+='<div class="kt-chain"><div class="kt-chain-title">&#x1F480; Cadena de tu Muerte</div><div class="kt-tree">';
+      h+='<div class="kt-node kt-me"><span class="kt-player" style="color:var(--accent);">'+esc(playerName)+' <span style="font-size:.6rem;opacity:.6;">(tu)</span></span></div>';
+      killChain.forEach((k,i)=>{
+        const nodeClass=i===0?'kt-death':'kt-kill';
+        const label=i===0?'te mato':'mato a '+esc(killChain[i-1].player);
+        h+='<div class="kt-node '+nodeClass+'">';
+        h+='<span class="kt-player" style="cursor:pointer;" onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+escJs(k.player)+'\';searchPlayer();">'+esc(k.player)+'</span>';
+        h+=' <span style="font-size:.6rem;color:var(--text-dim);">'+label+'</span>';
+        h+=' <span class="kt-weapon">'+esc(k.weapon)+'</span>';
+        if(k.distance>0)h+=' <span class="kt-distance">'+k.distance+'m</span>';
+        h+='</div>';
+      });
+      h+='</div></div>';
+    }
+    if(!myKills.length&&!killChain.length){
+      h='<div style="text-align:center;padding:16px;font-size:.75rem;color:var(--text-dim);">No se encontraron datos de kills en la telemetria</div>';
+    }
+    container.innerHTML=h;
+  }catch(e){
+    console.error('Kill tree error:',e);
+    container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message)+'</div>';
+  }
 }
 function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');}
 
