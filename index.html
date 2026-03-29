@@ -324,6 +324,24 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .asc-stat-lbl { font-size:.6rem; color:#666; text-transform:uppercase; letter-spacing:1.5px; margin-top:2px; }
 .asc-footer { display:flex; justify-content:space-between; width:100%; position:relative; z-index:1; }
 .asc-footer span { font-size:.65rem; color:#555; text-transform:uppercase; letter-spacing:2px; }
+/* Match Share Card (offscreen, rendered by html2canvas) */
+.match-share-card { position:fixed; left:-9999px; top:0; width:540px; height:720px; background:linear-gradient(170deg,#0b0b12 0%,#0f1024 50%,#12081f 100%); font-family:'Rajdhani',sans-serif; display:flex; flex-direction:column; padding:0; box-sizing:border-box; overflow:hidden; z-index:99999; }
+.msc-map-banner { width:100%; height:160px; position:relative; display:flex; align-items:flex-end; justify-content:center; }
+.msc-map-name { font-family:'Orbitron',sans-serif; font-size:1.4rem; font-weight:800; color:#fff; text-shadow:0 2px 12px rgba(0,0,0,.9); position:relative; z-index:1; padding-bottom:12px; letter-spacing:2px; }
+.msc-map-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(to top,#0b0b12 0%,transparent 60%); }
+.msc-body { flex:1; padding:24px 32px; display:flex; flex-direction:column; gap:16px; }
+.msc-place-row { display:flex; align-items:center; justify-content:center; gap:12px; }
+.msc-place { font-family:'Orbitron',sans-serif; font-size:3.5rem; font-weight:900; }
+.msc-place-sub { font-size:1rem; color:#666; font-weight:700; }
+.msc-player-name { font-family:'Orbitron',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; text-align:center; letter-spacing:2px; text-transform:uppercase; }
+.msc-mode { font-size:.8rem; color:#888; text-align:center; text-transform:uppercase; letter-spacing:3px; }
+.msc-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.msc-stat { text-align:center; background:rgba(255,255,255,0.03); border-radius:12px; padding:16px 8px; border:1px solid rgba(255,255,255,0.06); }
+.msc-stat-val { font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:800; }
+.msc-stat-lbl { font-size:.65rem; color:#666; text-transform:uppercase; letter-spacing:1.5px; margin-top:4px; }
+.msc-footer { display:flex; justify-content:space-between; align-items:center; padding:0 32px 20px; }
+.msc-footer-logo { font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:900; background:linear-gradient(135deg,#00f0ff,#ff6b00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:4px; }
+.msc-footer-url { font-size:.65rem; color:#555; text-transform:uppercase; letter-spacing:2px; }
 /* EVOLUTION SECTION */
 .evo-section { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-top:16px; }
 .evo-title { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
@@ -1105,7 +1123,7 @@ footer a { color: var(--accent); text-decoration: none; }
     <div id="chartsContainer"></div>
     <div class="stats-grid" id="overviewStats"></div>
   </div>
-  <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div class="match-list" id="matchList"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
+  <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div class="match-list" id="matchList"></div><div id="matchStreaksSection" style="display:none;margin-top:20px;"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
   <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
   <div class="panel" id="panel-compare">
@@ -2674,6 +2692,72 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}i
   h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
   // Render rivals section
   try{renderMatchRivals();}catch(e){console.error('Match rivals error:',e);}
+  // Render streaks & records
+  try{renderMatchStreaks();}catch(e){console.error('Match streaks error:',e);}
+}
+function renderMatchStreaks(){
+  const el=document.getElementById('matchStreaksSection');if(!el||!currentMatchData.length)return;
+  const pn=currentPlayerData.attributes.name.toLowerCase();
+  // Extract per-match stats
+  const games=[];
+  currentMatchData.forEach(match=>{
+    const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn);
+    if(!pp)return;
+    const ps=pp.attributes.stats;const a=match.data.attributes;
+    games.push({kills:ps.kills||0,damage:Math.round(ps.damageDealt||0),place:ps.winPlace||99,hs:ps.headshotKills||0,assists:ps.assists||0,knocks:ps.DBNOs||0,time:ps.timeSurvived||0,map:MAP_NAMES[a.mapName]||a.mapName||'?',mode:(a.gameMode||'').toUpperCase(),date:a.createdAt});
+  });
+  if(games.length<2){el.style.display='none';return;}
+  // Calculate streaks and records
+  const badges=[];
+  // 1. Best match (most kills)
+  const bestKills=games.reduce((a,b)=>b.kills>a.kills?b:a,games[0]);
+  if(bestKills.kills>=3)badges.push({ic:'&#x1F525;',title:'Mejor Partida',val:bestKills.kills+' kills',sub:bestKills.map+' — '+bestKills.mode,col:'#ff3355'});
+  // 2. Highest damage
+  const bestDmg=games.reduce((a,b)=>b.damage>a.damage?b:a,games[0]);
+  if(bestDmg.damage>=500)badges.push({ic:'&#x1F4A5;',title:'Max Dano',val:bestDmg.damage,sub:bestDmg.map,col:'#ff6b00'});
+  // 3. Win streak
+  let maxWinStreak=0,curWin=0;
+  games.forEach(g=>{if(g.place===1){curWin++;maxWinStreak=Math.max(maxWinStreak,curWin);}else{curWin=0;}});
+  if(maxWinStreak>=2)badges.push({ic:'&#x1F451;',title:'Racha de Victorias',val:maxWinStreak+' seguidas',sub:'Chicken dinners!',col:'#ffd700'});
+  // 4. Top10 streak
+  let maxT10=0,curT10=0;
+  games.forEach(g=>{if(g.place<=10){curT10++;maxT10=Math.max(maxT10,curT10);}else{curT10=0;}});
+  if(maxT10>=3)badges.push({ic:'&#x1F3AF;',title:'Racha Top 10',val:maxT10+' seguidas',sub:'Constancia pura',col:'#00ff88'});
+  // 5. Kill streak across matches
+  let maxKillStreak=0,curKS=0;
+  games.forEach(g=>{if(g.kills>=3){curKS++;maxKillStreak=Math.max(maxKillStreak,curKS);}else{curKS=0;}});
+  if(maxKillStreak>=3)badges.push({ic:'&#x2694;&#xFE0F;',title:'Racha Letal',val:maxKillStreak+' partidas',sub:'3+ kills seguidas',col:'#00f0ff'});
+  // 6. Headshot machine
+  const totalHs=games.reduce((s,g)=>s+g.hs,0);const totalKills=games.reduce((s,g)=>s+g.kills,0);
+  const hsRate=totalKills>0?Math.round((totalHs/totalKills)*100):0;
+  if(hsRate>=30&&totalKills>=5)badges.push({ic:'&#x1F3AF;',title:'Maquina de HS',val:hsRate+'%',sub:totalHs+' headshots de '+totalKills+' kills',col:'#a855f7'});
+  // 7. Support hero
+  const totalAssists=games.reduce((s,g)=>s+g.assists,0);
+  if(totalAssists>=10)badges.push({ic:'&#x1F91D;',title:'Heroe de Soporte',val:totalAssists+' assists',sub:'En '+games.length+' partidas',col:'#00ff88'});
+  // 8. Avg kills per match
+  const avgKills=totalKills/games.length;
+  if(avgKills>=4)badges.push({ic:'&#x1F4AA;',title:'Media Letal',val:avgKills.toFixed(1)+' kills/partida',sub:games.length+' partidas analizadas',col:'#ff6b00'});
+  // 9. Chicken dinner rate
+  const wins=games.filter(g=>g.place===1).length;
+  const winPct=Math.round((wins/games.length)*100);
+  if(wins>=2)badges.push({ic:'&#x1F3C6;',title:'Ratio Victoria',val:winPct+'% ('+wins+'/'+games.length+')',sub:'En partidas recientes',col:'#ffd700'});
+  // 10. Zero-kill shame (fun)
+  const zeros=games.filter(g=>g.kills===0).length;
+  if(zeros>=3)badges.push({ic:'&#x1F634;',title:'Turista',val:zeros+' partidas sin kills',sub:'Fuiste de paseo',col:'#888'});
+  if(!badges.length){el.style.display='none';return;}
+  el.style.display='';
+  let h='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow-card);">';
+  h+='<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:12px;">&#x1F3C5; Rachas &amp; Records ('+games.length+' partidas)</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
+  badges.forEach(b=>{
+    h+='<div style="background:var(--bg-secondary);border-radius:10px;padding:10px 14px;border-left:3px solid '+b.col+';transition:all .2s;">';
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:1.1rem;">'+b.ic+'</span><span style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:.5px;">'+b.title+'</span></div>';
+    h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:800;color:'+b.col+';">'+b.val+'</div>';
+    h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:2px;">'+b.sub+'</div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+  el.innerHTML=h;
 }
 function showMatchDetail(idx){
   const match=currentMatchData[idx];if(!match)return;
@@ -2738,11 +2822,64 @@ function showMatchDetail(idx){
     h+='<div style="margin-top:12px;"><a href="'+esc(clip.url)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--accent-purple);padding:10px 12px;border-radius:6px;font-weight:700;font-size:.82rem;font-family:Rajdhani,sans-serif;text-decoration:none;text-transform:uppercase;letter-spacing:1px;transition:all .2s;" onmouseover="this.style.background=\'rgba(168,85,247,0.25)\'" onmouseout="this.style.background=\'rgba(168,85,247,0.12)\'">&#x1F3AC; Ver Video en PUBG Report ('+esc(clip.streamer)+')</a></div>';
   }
   if(telemetryUrl){h+='<div style="margin-top:12px;"><button onclick="openTelemMap(\''+telemetryUrl+'\',\''+pn.replace(/'/g,"\\'")+'\',\''+a.mapName+'\','+idx+')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;font-family:Rajdhani,sans-serif;">&#x1F5FA; Ver Mapa de Telemetria</button></div>';}
+  // Share match card button
+  h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F4F7; Compartir Partida</button></div>';
   h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
   document.getElementById('matchDetailContent').innerHTML=h;
   document.getElementById('matchDetailPopup').classList.add('active');
   document.querySelector('.match-detail-card').scrollTop=0;
 }
+// ═══ SHARE MATCH CARD ═══
+async function shareMatchCard(idx){
+  const match=currentMatchData[idx];if(!match)return;
+  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';
+  const gm=(a.gameMode||'').toUpperCase();
+  const pn=currentPlayerData.attributes.name;
+  const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());
+  if(!pp)return;
+  const ps=pp.attributes.stats;const pl=ps.winPlace;
+  const totalP=(match.included||[]).filter(i=>i.type==='participant').length;
+  const plColor=pl===1?'#ffd700':pl<=3?'#c0c0c0':pl<=10?'#00ff88':'#ffffff';
+  const plIcon=pl===1?'&#x1F3C6;':pl<=3?'&#x1F3C5;':'';
+  const card=document.createElement('div');
+  card.className='match-share-card';
+  card.innerHTML=
+    '<div class="msc-map-banner" style="background:linear-gradient(135deg,'+mc+'44,#0b0b12);"><div class="msc-map-overlay"></div><div class="msc-map-name">'+mn+'</div></div>'+
+    '<div class="msc-body">'+
+      '<div class="msc-player-name">'+esc(pn)+'</div>'+
+      '<div class="msc-mode">'+gm+' &mdash; '+currentPlatform.toUpperCase()+'</div>'+
+      '<div class="msc-place-row"><div class="msc-place" style="color:'+plColor+';">'+plIcon+' #'+pl+'</div><div class="msc-place-sub">/ '+totalP+'</div></div>'+
+      '<div class="msc-stats">'+
+        '<div class="msc-stat"><div class="msc-stat-val" style="color:#00f0ff;">'+ps.kills+'</div><div class="msc-stat-lbl">Kills</div></div>'+
+        '<div class="msc-stat"><div class="msc-stat-val" style="color:#ff6b00;">'+Math.round(ps.damageDealt)+'</div><div class="msc-stat-lbl">Dano</div></div>'+
+        '<div class="msc-stat"><div class="msc-stat-val" style="color:#00ff88;">'+formatTime(ps.timeSurvived)+'</div><div class="msc-stat-lbl">Tiempo</div></div>'+
+      '</div>'+
+      '<div class="msc-stats" style="grid-template-columns:repeat(4,1fr);">'+
+        '<div class="msc-stat"><div class="msc-stat-val" style="color:#a855f7;font-size:1.1rem;">'+(ps.headshotKills||0)+'</div><div class="msc-stat-lbl">HS</div></div>'+
+        '<div class="msc-stat"><div class="msc-stat-val" style="color:#ffd700;font-size:1.1rem;">'+(ps.assists||0)+'</div><div class="msc-stat-lbl">Assists</div></div>'+
+        '<div class="msc-stat"><div class="msc-stat-val" style="color:#ff3355;font-size:1.1rem;">'+(ps.DBNOs||0)+'</div><div class="msc-stat-lbl">Knocks</div></div>'+
+        '<div class="msc-stat"><div class="msc-stat-val" style="font-size:1.1rem;">'+(ps.longestKill?Math.round(ps.longestKill)+'m':'--')+'</div><div class="msc-stat-lbl">Best Kill</div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="msc-footer"><div class="msc-footer-logo">V4NZ</div><div class="msc-footer-url">v4nz.com</div></div>';
+  document.body.appendChild(card);
+  try{
+    const canvas=await html2canvas(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
+    card.remove();
+    canvas.toBlob(async blob=>{
+      if(!blob)return;
+      const fname=pn+'_'+mn+'_'+ps.kills+'kills.png';
+      const file=new File([blob],fname,{type:'image/png'});
+      const shareText=pl===1?pn+' CHICKEN DINNER en '+mn+'! '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano':pn+' #'+pl+' en '+mn+' — '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano';
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:shareText,text:shareText+' | v4nz.com'});
+      }else{
+        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
+      }
+    },'image/png');
+  }catch(e){console.error('Share match card error:',e);card.remove();}
+}
+
 // ═══ KILL TREE ═══
 const WEAPON_NAMES={'Item_Weapon_AK47_C':'AKM','Item_Weapon_Apple_C':'Apple','Item_Weapon_AUG_C':'AUG A3','Item_Weapon_AWM_C':'AWM','Item_Weapon_Berreta686_C':'S686','Item_Weapon_BerylM762_C':'Beryl M762','Item_Weapon_BizonPP19_C':'Bizon','Item_Weapon_Crossbow_C':'Crossbow','Item_Weapon_DesertEagle_C':'Deagle','Item_Weapon_DP12_C':'DBS','Item_Weapon_DP28_C':'DP-28','Item_Weapon_FNFal_C':'SLR','Item_Weapon_G18_C':'P18C','Item_Weapon_G36C_C':'G36C','Item_Weapon_Groza_C':'Groza','Item_Weapon_HK416_C':'M416','Item_Weapon_Kar98k_C':'Kar98k','Item_Weapon_L6_C':'Lynx AMR','Item_Weapon_M16A4_C':'M16A4','Item_Weapon_M1911_C':'P1911','Item_Weapon_M249_C':'M249','Item_Weapon_M24_C':'M24','Item_Weapon_M9_C':'P92','Item_Weapon_Machete_C':'Machete','Item_Weapon_MG3_C':'MG3','Item_Weapon_Mini14_C':'Mini 14','Item_Weapon_Mk12_C':'Mk12','Item_Weapon_Mk14_C':'Mk14','Item_Weapon_Mk47Mutant_C':'Mk47 Mutant','Item_Weapon_Mosin_C':'Mosin','Item_Weapon_MP5K_C':'MP5K','Item_Weapon_MP9_C':'MP9','Item_Weapon_NagantM1895_C':'R1895','Item_Weapon_P90_C':'P90','Item_Weapon_Pan_C':'Pan','Item_Weapon_QBU88_C':'QBU','Item_Weapon_QBZ95_C':'QBZ','Item_Weapon_Rhino_C':'R45','Item_Weapon_SCAR-L_C':'SCAR-L','Item_Weapon_Saiga12_C':'S12K','Item_Weapon_Sawnoff_C':'Sawed-Off','Item_Weapon_Skorpion_C':'Skorpion','Item_Weapon_Thompson_C':'Tommy Gun','Item_Weapon_UMP_C':'UMP45','Item_Weapon_UZI_C':'Micro Uzi','Item_Weapon_VSS_C':'VSS','Item_Weapon_Vector_C':'Vector','Item_Weapon_Win94_C':'Win94','Item_Weapon_Winchester_C':'S1897','Item_Weapon_vz61Skorpion_C':'Skorpion'};
 function cleanWeaponName(raw){
