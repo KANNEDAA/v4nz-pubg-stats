@@ -227,6 +227,10 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .player-avatar { width: 72px; height: 72px; border-radius: 16px; background: var(--accent-dim); border: 2px solid rgba(0,240,255,0.3); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); flex-shrink: 0; }
 .player-info h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
 .platform-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; font-family: 'Rajdhani', sans-serif; }
+.bot-badge { display:inline-flex; align-items:center; gap:7px; border-radius:8px; padding:5px 12px; margin-top:6px; cursor:default; transition:all .2s; }
+.bot-badge:hover { transform:scale(1.03); }
+.bot-badge-ratio { font-family:Orbitron,sans-serif; font-size:.72rem; font-weight:700; letter-spacing:.05em; }
+.bot-badge-label { font-size:.6rem; color:var(--text-dim); letter-spacing:.08em; text-transform:uppercase; font-family:Rajdhani,sans-serif; }
 .player-clan-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.25); color:var(--accent-orange); padding:4px 12px; border-radius:20px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-top:6px; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:all .2s; text-decoration:none; }
 .player-clan-badge:hover { background:rgba(255,107,0,0.2); border-color:rgba(255,107,0,0.4); }
 .player-quick-stats { margin-left: auto; display: flex; gap: 20px; }
@@ -1142,7 +1146,7 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="error-msg" id="errorMsg"></div>
   <div class="player-header" id="playerHeader">
     <div class="player-avatar" id="playerAvatar"></div>
-    <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div><div id="playerClanBadge" style="display:none;"></div></div>
+    <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div><div id="playerClanBadge" style="display:none;"></div><div id="botIndexBadge" style="display:none;"></div></div>
     <div class="player-quick-stats" id="quickStats"></div>
     <div class="rank-badge-area" id="rankBadge"></div>
     <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
@@ -2313,6 +2317,14 @@ function renderClanIntelligence(members,clan){
   h+='<div style="text-align:center;padding:5px;background:var(--bg-secondary);border-radius:6px;"><div style="font-family:Orbitron;font-size:.7rem;font-weight:700;color:var(--accent-yellow);">'+Math.round(avgDmg).toLocaleString()+'</div><div class="ci-sub">Dano Medio</div></div>';
   h+='</div></div>';
 
+  // Bot Index card (lazy loaded)
+  h+='<div class="ci-card purple" id="ciBotCard_'+uid+'">';
+  h+='<div class="ci-card-title">&#x1F916; Indice de Bots</div>';
+  h+='<div id="ciBotContent_'+uid+'">';
+  h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Analiza las ultimas partidas de los top miembros para detectar kills vs bots. Este dato es pesado — se carga bajo demanda.</div>';
+  h+='<button onclick="scanClanBots(\''+escJs(clan.tag)+'\',\''+plat+'\',\''+uid+'\')" style="width:100%;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);color:#a855f7;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.72rem;padding:8px;border-radius:6px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F50D; ESCANEAR BOTS DEL CLAN</button>';
+  h+='</div></div>';
+
   h+='</div></div>'; // end grid + panel
 
   // ═══════════════════════════════════════════════════════════
@@ -2519,6 +2531,59 @@ function ciTab(tab,btn,uid){
   const map={overview:'Overview',carries:'Carries',ghosts:'Ghosts',cotilleo:'Cotilleo'};
   const target=document.getElementById('ci'+(map[tab]||tab)+'_'+uid);
   if(target)target.classList.add('active');
+}
+
+// Scan bots for top members of a clan
+async function scanClanBots(tag,platform,uid){
+  const container=document.getElementById('ciBotContent_'+uid);
+  if(!container)return;
+  container.innerHTML='<div style="text-align:center;padding:10px;"><div class="spinner" style="margin:0 auto;width:24px;height:24px;"></div><div style="font-size:.65rem;color:var(--text-dim);margin-top:6px;">Escaneando top miembros... esto puede tardar 15-30s</div></div>';
+  try{
+    // Fetch clan members from DB
+    const clanRes=await fetch('/clans/'+encodeURIComponent(tag));
+    if(!clanRes.ok)throw new Error('Clan not found');
+    const clanData=await clanRes.json();
+    const members=(clanData.members||[]).filter(m=>m.active!==false&&(m.kills||0)>0).sort((a,b)=>(b.kills||0)-(a.kills||0)).slice(0,5);
+    if(!members.length){container.innerHTML='<div style="font-size:.7rem;color:var(--text-dim);">No hay miembros activos para analizar.</div>';return;}
+    // Scan each member (sequential to avoid rate limits)
+    const results=[];
+    for(const m of members){
+      try{
+        const r=await fetch('/api/bot-index/'+platform+'/'+encodeURIComponent(m.player_name));
+        const d=await r.json();
+        if(!d.error&&d.matchesAnalyzed>0)results.push({name:m.player_name,kd:parseFloat(m.kd)||0,...d});
+      }catch(e){}
+    }
+    if(!results.length){container.innerHTML='<div style="font-size:.7rem;color:var(--text-dim);">No se pudieron obtener datos de telemetry.</div>';return;}
+    // Calculate clan average
+    const avgBot=results.length>0?Math.round(results.reduce((s,r)=>s+r.botRatio,0)/results.length):0;
+    const clanColor=avgBot<20?'#39d98a':avgBot<40?'#facc15':'#ff4444';
+    const clanLabel=avgBot<20?'Stats limpias':avgBot<40?'Mixto':'Alto % bots';
+    let h='<div style="text-align:center;margin-bottom:12px;">';
+    h+='<div style="font-family:Orbitron;font-size:1.8rem;font-weight:800;color:'+clanColor+';">'+avgBot+'%</div>';
+    h+='<div style="font-size:.65rem;color:var(--text-dim);">Media de bots del clan &middot; '+clanLabel+'</div>';
+    h+='</div>';
+    // Per-member results
+    results.sort((a,b)=>b.botRatio-a.botRatio);
+    results.forEach(r=>{
+      const c=r.botRatio<20?'#39d98a':r.botRatio<40?'#facc15':'#ff4444';
+      const lbl=r.botRatio<20?'Limpio':r.botRatio<40?'Algun bot':'Farm bots';
+      h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;padding:4px 8px;background:var(--bg-secondary);border-radius:6px;">';
+      h+='<span style="font-family:Rajdhani;font-weight:700;font-size:.72rem;color:var(--text-primary);flex:1;">'+esc(r.name)+'</span>';
+      h+='<span style="font-size:.6rem;color:var(--text-dim);">K/D '+r.kd.toFixed(2)+'</span>';
+      h+='<span style="font-family:Orbitron;font-size:.65rem;font-weight:700;color:'+c+';">'+r.botRatio+'%</span>';
+      h+='<span style="font-size:.5rem;color:'+c+';padding:1px 5px;background:'+c+'18;border:1px solid '+c+'33;border-radius:3px;">'+lbl+'</span>';
+      h+='</div>';
+    });
+    // Warning callout for high bot farmers
+    const farmers=results.filter(r=>r.botRatio>=40);
+    if(farmers.length){
+      h+='<div style="margin-top:8px;padding:6px 10px;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);border-radius:6px;font-size:.65rem;color:#ff4444;">&#x26A0; '+farmers.map(f=>esc(f.name)+' ('+f.botRatio+'%)').join(', ')+' — K/D inflado por bots. Stats reales mucho menores.</div>';
+    }
+    container.innerHTML=h;
+  }catch(e){
+    container.innerHTML='<div style="font-size:.7rem;color:var(--accent-red);">Error: '+esc(e.message)+'</div>';
+  }
 }
 
 // INIT
@@ -2757,6 +2822,8 @@ async function searchPlayer(){
     checkPubgReport().catch(e=>console.log('PUBG Report check error:',e.message));
     // Detect player's clan and auto-register
     detectPlayerClan().catch(e=>console.log('Clan detection error:',e.message));
+    // Bot Index — async analysis
+    loadBotIndex(currentPlatform,currentPlayerData.attributes.name).catch(e=>console.log('Bot index error:',e.message));
     // Save snapshot + load evolution chart
     savePlayerSnapshot().catch(e=>console.log('Snapshot save error:',e.message));
     loadEvolutionChart().catch(e=>console.log('Evolution chart error:',e.message));
@@ -2903,6 +2970,26 @@ function renderNarrativeInsights(){
 }
 
 function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;let platformHtml=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';if(currentSurvivalData&&currentSurvivalData.data&&currentSurvivalData.data.attributes){platformHtml+=' <span style="margin-left:12px;font-size:.8rem;color:var(--accent-green);">Supervivencia Lv. '+currentSurvivalData.data.attributes.level+'</span>';}document.getElementById('playerPlatform').innerHTML=platformHtml;const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';const wb=document.getElementById('wrappedBtn');if(wb)wb.style.display='inline-flex';const cl=document.getElementById('copyLinkBtn');if(cl)cl.style.display='inline-flex';updateFavHeaderBtn();}
+/* ===== BOT INDEX BADGE ===== */
+async function loadBotIndex(platform,playerName){
+  const container=document.getElementById('botIndexBadge');
+  if(!container)return;
+  container.style.display='inline-flex';
+  container.innerHTML='<div style="display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;margin-top:6px;"><span style="animation:spin .8s linear infinite;display:inline-block;width:10px;height:10px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;"></span> Analizando bots...</div>';
+  try{
+    const res=await fetch('/api/bot-index/'+platform+'/'+encodeURIComponent(playerName));
+    const data=await res.json();
+    if(data.error||!data.matchesAnalyzed){container.style.display='none';container.innerHTML='';return;}
+    const ratio=data.botRatio;
+    const color=ratio<20?'#39d98a':ratio<40?'#facc15':'#ff4444';
+    const label=ratio<20?'Stats limpias':ratio<40?'Algun bot':'Farm de bots';
+    const emoji=ratio<20?'&#x2705;':ratio<40?'&#x1F916;':'&#x1F6A8;';
+    container.innerHTML='<div class="bot-badge" title="'+data.botKills+' kills vs bots de '+data.totalKills+' totales ('+data.matchesAnalyzed+' partidas analizadas)" style="background:'+color+'18;border:1px solid '+color+'44;"><span style="font-size:.9rem;">'+emoji+'</span><div style="line-height:1.3;"><div class="bot-badge-ratio" style="color:'+color+';">'+ratio+'% bots</div><div class="bot-badge-label">'+label+' &middot; '+data.matchesAnalyzed+' partidas</div></div></div>';
+    // Store for use in other features
+    window._lastBotIndex=data;
+  }catch(e){container.style.display='none';container.innerHTML='';}
+}
+
 /* ===== DETECTAR CLAN DEL JUGADOR Y AUTO-REGISTRAR ===== */
 async function detectPlayerClan(){
   const badge=document.getElementById('playerClanBadge');

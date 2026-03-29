@@ -1615,6 +1615,115 @@ app.get('/og-image.png', (req, res) => {
   </svg>`);
 });
 
+// ═══ BOT INDEX — Telemetry-based bot detection ═══
+app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
+  const { platform, playerName } = req.params;
+  const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
+  const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
+
+  // Check cache (6 hours)
+  if (pool) {
+    try {
+      const cached = await pool.query(
+        "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '6 hours'",
+        [cacheKey]
+      );
+      if (cached.rows.length) {
+        try { return res.json(JSON.parse(cached.rows[0].response_data)); } catch(e) {}
+      }
+    } catch(e) {}
+  }
+
+  if (!SERVER_API_KEY) return res.status(503).json({ error: 'No API key' });
+  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+
+  try {
+    // 1. Get player + match IDs
+    const pRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(playerName)}`, { headers }, 12000);
+    const pData = await pRes.json();
+    if (!pData.data || !pData.data[0]) return res.json({ error: 'player_not_found' });
+
+    const playerId = pData.data[0].id;
+    const matchIds = (pData.data[0].relationships?.matches?.data || []).slice(0, 5).map(m => m.id);
+    if (!matchIds.length) return res.json({ error: 'no_matches', playerName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
+
+    let totalKills = 0, botKills = 0, analyzed = 0;
+
+    for (const matchId of matchIds) {
+      try {
+        // 2. Get match → telemetry URL
+        let matchData;
+        const mKey = `match_${shard}_${matchId}`;
+        const mCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [mKey]);
+        if (mCached.rows.length) {
+          try { matchData = JSON.parse(mCached.rows[0].response_data); } catch(e) { matchData = null; }
+        }
+        if (!matchData) {
+          const mRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers }, 12000);
+          matchData = await mRes.json();
+          await pool.query(
+            'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+            [mKey, JSON.stringify(matchData)]
+          ).catch(() => {});
+        }
+
+        const asset = (matchData.included || []).find(i => i.type === 'asset');
+        const telUrl = asset?.attributes?.URL;
+        if (!telUrl) continue;
+
+        // 3. Get telemetry (cache 30 days — immutable)
+        let telemetry;
+        const tKey = `telemetry_${matchId}`;
+        const tCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [tKey]);
+        if (tCached.rows.length) {
+          try { telemetry = JSON.parse(tCached.rows[0].response_data); } catch(e) { telemetry = null; }
+        }
+        if (!telemetry) {
+          const tRes = await fetchWithTimeout(fetch, telUrl, {}, 20000);
+          telemetry = await tRes.json();
+          // Telemetry can be large — only store if pool is available
+          await pool.query(
+            'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+            [tKey, JSON.stringify(telemetry)]
+          ).catch(() => {});
+        }
+
+        // 4. Count kills: bot vs human
+        const killEvents = telemetry.filter(e => e._T === 'LogPlayerKillV2' || e._T === 'LogPlayerKill');
+        for (const ev of killEvents) {
+          const killer = ev.killer || ev.finisher;
+          if (!killer || killer.accountId !== playerId) continue;
+          totalKills++;
+          // Bot = empty or missing accountId on victim
+          if (!ev.victim?.accountId || ev.victim.accountId === '') botKills++;
+        }
+        analyzed++;
+      } catch(e) { /* skip this match */ }
+    }
+
+    const result = {
+      playerName, platform: shard, totalKills, botKills,
+      humanKills: totalKills - botKills,
+      botRatio: totalKills > 0 ? Math.round((botKills / totalKills) * 100) : 0,
+      matchesAnalyzed: analyzed,
+      calculatedAt: new Date().toISOString()
+    };
+
+    // Cache result 6 hours
+    if (pool) {
+      await pool.query(
+        'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+        [cacheKey, JSON.stringify(result)]
+      ).catch(() => {});
+    }
+
+    res.json(result);
+  } catch(err) {
+    console.error('[bot-index]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // HTML attribute escaping for dynamic meta tags
 function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
