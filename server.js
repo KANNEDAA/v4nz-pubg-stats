@@ -1153,7 +1153,7 @@ const CACHE_TTL = {
   players: 10,       // Player search — cache 10 min
   'players/.*seasons': 10,  // Season stats — cache 10 min
   'players/.*matches': 5,   // Match list — cache 5 min
-  leaderboards: 30,  // Leaderboards — cache 30 min
+  leaderboards: 120, // Leaderboards — cache 2 hours (PUBG updates infrequently)
   default: 10        // Everything else — 10 min
 };
 
@@ -1165,6 +1165,132 @@ function getCacheTTL(pubgPath) {
   if (/\/players/.test(pubgPath)) return CACHE_TTL.players;
   return CACHE_TTL.default;
 }
+
+// ═══ LEADERBOARD SERVER-SIDE ENDPOINT ═══
+// Dedicated endpoint that caches leaderboard data and returns cache age
+// This avoids client-side API calls and enables pre-warming
+app.get('/api/leaderboard', async (req, res) => {
+  const { platform = 'console', region = 'eu', mode = 'squad-fpp' } = req.query;
+  if (!SERVER_API_KEY) return res.status(503).json({ error: 'API key not configured' });
+
+  const validPlatforms = ['console', 'psn', 'xbox'];
+  const validRegions = ['eu', 'na', 'as'];
+  const validModes = ['squad', 'squad-fpp', 'solo', 'solo-fpp', 'duo', 'duo-fpp'];
+  if (!validPlatforms.includes(platform)) return res.status(400).json({ error: 'Invalid platform' });
+  if (!validRegions.includes(region)) return res.status(400).json({ error: 'Invalid region' });
+  if (!validModes.includes(mode)) return res.status(400).json({ error: 'Invalid mode' });
+
+  const cacheKey = `lb_${platform}_${region}_${mode}`;
+  const ttlMinutes = CACHE_TTL.leaderboards;
+
+  // Check cache first
+  if (pool) {
+    try {
+      const cached = await pool.query(
+        "SELECT response_data, created_at FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '1 minute' * $2",
+        [cacheKey, ttlMinutes]
+      );
+      if (cached.rows.length > 0) {
+        const data = JSON.parse(cached.rows[0].response_data);
+        const cachedAt = cached.rows[0].created_at;
+        return res.json({ ...data, cachedAt, cacheHit: true });
+      }
+    } catch (e) { /* cache miss */ }
+  }
+
+  try {
+    // Fetch current season
+    const fetchPlat = platform === 'console' ? 'psn' : platform;
+    const seasonResp = await fetch(`https://api.pubg.com/shards/${fetchPlat}/seasons`, {
+      headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
+    });
+    if (!seasonResp.ok) return res.status(502).json({ error: 'Failed to fetch seasons' });
+    const seasonData = await seasonResp.json();
+    const currentSeason = seasonData.data.find(s => s.attributes.isCurrentSeason);
+    if (!currentSeason) return res.status(502).json({ error: 'No current season found' });
+    const sid = currentSeason.id;
+
+    let allPlayers = [];
+
+    if (platform === 'console') {
+      // Fetch PSN + Xbox and merge
+      const [psnResp, xboxResp] = await Promise.all([
+        fetch(`https://api.pubg.com/shards/psn-${region}/leaderboards/${sid}/${mode}`, {
+          headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
+        }),
+        fetch(`https://api.pubg.com/shards/xbox-${region}/leaderboards/${sid}/${mode}`, {
+          headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
+        })
+      ]);
+      const psnData = psnResp.ok ? await psnResp.json() : { data: { relationships: { players: { data: [] } } }, included: [] };
+      const xboxData = xboxResp.ok ? await xboxResp.json() : { data: { relationships: { players: { data: [] } } }, included: [] };
+
+      const playerMap = {};
+      const processPlatform = (resp, plat) => {
+        const players = resp.included || [];
+        const pRelations = resp.data?.relationships?.players?.data || [];
+        pRelations.forEach(pRef => {
+          const p = players.find(pl => pl.id === pRef.id);
+          if (!p || !p.attributes) return;
+          const pa = p.attributes;
+          const stats = pa.stats || {};
+          const name = pa.name;
+          if (!playerMap[name]) {
+            playerMap[name] = { name, stats: { kills: 0, wins: 0, roundsPlayed: 0, averageDamage: 0 }, platforms: [] };
+          }
+          const entry = playerMap[name];
+          entry.stats.kills += (stats.kills || 0);
+          entry.stats.wins += (stats.wins || 0);
+          entry.stats.roundsPlayed += (stats.roundsPlayed || stats.games || 0);
+          entry.stats.averageDamage = Math.max(entry.stats.averageDamage, stats.averageDamage || 0);
+          entry.platforms.push(plat);
+        });
+      };
+      processPlatform(psnData, 'PSN');
+      processPlatform(xboxData, 'Xbox');
+      allPlayers = Object.values(playerMap).sort((a, b) => (b.stats.kills || 0) - (a.stats.kills || 0)).slice(0, 500);
+    } else {
+      // Single platform
+      const lbShard = `${platform}-${region}`;
+      const lbResp = await fetch(`https://api.pubg.com/shards/${lbShard}/leaderboards/${sid}/${mode}`, {
+        headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
+      });
+      if (!lbResp.ok) return res.status(502).json({ error: 'Failed to fetch leaderboard' });
+      const lbData = await lbResp.json();
+      const players = lbData.included || [];
+      const pRelations = lbData.data?.relationships?.players?.data || [];
+      pRelations.slice(0, 500).forEach(pRef => {
+        const p = players.find(pl => pl.id === pRef.id);
+        if (!p || !p.attributes) return;
+        const pa = p.attributes;
+        const stats = pa.stats || {};
+        allPlayers.push({
+          name: pa.name,
+          stats: { kills: stats.kills || 0, wins: stats.wins || 0, roundsPlayed: stats.roundsPlayed || stats.games || 0, averageDamage: stats.averageDamage || 0 },
+          platforms: [platform.toUpperCase()]
+        });
+      });
+    }
+
+    const result = { players: allPlayers, season: sid, platform, region, mode };
+    const now = new Date().toISOString();
+
+    // Save to cache
+    if (pool) {
+      try {
+        await pool.query(
+          "INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, status_code = 200, created_at = NOW()",
+          [cacheKey, JSON.stringify(result)]
+        );
+      } catch (e) { console.error('LB cache write error:', e.message); }
+    }
+
+    res.json({ ...result, cachedAt: now, cacheHit: false });
+  } catch (e) {
+    console.error('Leaderboard endpoint error:', e.message);
+    res.status(500).json({ error: 'Error fetching leaderboard' });
+  }
+});
 
 app.all('/api/*', rateLimit, async (req, res) => {
 
@@ -1791,6 +1917,23 @@ app.get('*', (req, res) => {
   }
 });
 
+// ═══ LEADERBOARD PRE-WARM ═══
+// Pre-warm the most popular leaderboard combos on startup + every 2 hours
+async function prewarmLeaderboards() {
+  if (!SERVER_API_KEY || !pool) return;
+  const combos = [
+    { platform: 'console', region: 'eu', mode: 'squad-fpp' },
+    { platform: 'console', region: 'eu', mode: 'squad' }
+  ];
+  for (const c of combos) {
+    try {
+      const url = `http://localhost:${PORT}/api/leaderboard?platform=${c.platform}&region=${c.region}&mode=${c.mode}`;
+      await fetch(url);
+      console.log(`[Pre-warm] LB ${c.platform}/${c.region}/${c.mode} OK`);
+    } catch (e) { console.error(`[Pre-warm] LB ${c.platform}/${c.region}/${c.mode} FAIL:`, e.message); }
+  }
+}
+
 // ═══ START ═══
 initDB().then(() => {
   app.listen(PORT, () => {
@@ -1804,5 +1947,8 @@ initDB().then(() => {
 ║  Clan API: ${pool ? '/clans/* ACTIVO' : 'DESACTIVADO'}
 ╚═══════════════════════════════════════════════╝
     `);
+    // Pre-warm leaderboards 5s after startup, then every 2 hours
+    setTimeout(prewarmLeaderboards, 5000);
+    setInterval(prewarmLeaderboards, 2 * 60 * 60 * 1000);
   });
 });

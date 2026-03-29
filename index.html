@@ -5887,94 +5887,48 @@ async function compareClans(){
 function setLBPlatform(p,btn){lbPlatform=p;document.querySelectorAll('#lbPlatBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
 function setLBRegion(r,btn){lbRegion=r;document.querySelectorAll('#lbRegionBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
 function setLBMode(m,btn){lbMode=m;document.querySelectorAll('#lbModeBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
+function timeAgo(dateStr){
+  const diff=Date.now()-new Date(dateStr).getTime();
+  const mins=Math.floor(diff/60000);
+  if(mins<1)return 'ahora mismo';
+  if(mins<60)return 'hace '+mins+' min';
+  const hrs=Math.floor(mins/60);
+  if(hrs<24)return 'hace '+hrs+'h '+(mins%60)+'min';
+  return 'hace '+Math.floor(hrs/24)+' dias';
+}
 async function renderLeaderboard(){
   const lbContent=document.getElementById('leaderboardContent');
-  const hasApi=IS_PROXIED||(API_KEY&&API_KEY.length>0);
-  if(!hasApi){renderLeaderboardDemo();return;}
-  // Auto-fetch season if we don't have a real one
-  let sid=currentSeasonId;
-  if(!sid||sid==='demo'){
-    try{
-      lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando ranking...</div></div></div>';
-      const fetchPlat=lbPlatform==='console'?'psn':lbPlatform;
-      const sr=await apiGet(API_BASE+'/'+fetchPlat+'/seasons');
-      const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
-      if(cs){sid=cs.id;currentSeasonId=sid;}else{renderLeaderboardDemo();return;}
-    }catch(e){console.error('Failed to fetch season for LB:',e);renderLeaderboardDemo();return;}
-  }
+  lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500...</div></div></div>';
   try{
-    lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500...</div></div></div>';
-    const gm=lbMode;
-    if(lbPlatform==='console'){
-      // Fetch both PSN and Xbox, merge and sort
-      const psnShard='psn-'+lbRegion;
-      const xboxShard='xbox-'+lbRegion;
-      Promise.all([
-        apiGet(API_BASE+'/'+psnShard+'/leaderboards/'+sid+'/'+gm),
-        apiGet(API_BASE+'/'+xboxShard+'/leaderboards/'+sid+'/'+gm)
-      ]).then(([psnResp,xboxResp])=>{
-        // Merge player data from both platforms
-        const allPlayers=[];
-        const playerMap={};
-
-        const processPlatform=(resp,platform)=>{
-          const players=resp.included||[];const pRelations=resp.data.relationships?.players?.data||[];
-          pRelations.forEach(pRef=>{
-            const p=players.find(pl=>pl.id===pRef.id);
-            if(!p||!p.attributes)return;
-            const pa=p.attributes;const stats=pa.stats||{};
-            const playerName=pa.name;
-            if(!playerMap[playerName]){
-              playerMap[playerName]={name:playerName,stats:{kills:0,wins:0,roundsPlayed:0,averageDamage:0},platforms:[]};
-              allPlayers.push(playerMap[playerName]);
-            }
-            const entry=playerMap[playerName];
-            entry.stats.kills+=(stats.kills||0);
-            entry.stats.wins+=(stats.wins||0);
-            entry.stats.roundsPlayed+=(stats.roundsPlayed||stats.games||0);
-            entry.stats.averageDamage=Math.max(entry.stats.averageDamage,stats.averageDamage||0);
-            entry.platforms.push(platform);
-          });
-        };
-        processPlatform(psnResp,'PSN');
-        processPlatform(xboxResp,'Xbox');
-
-        // Sort by kills (descending)
-        allPlayers.sort((a,b)=>(b.stats.kills||0)-(a.stats.kills||0));
-
-        // Render table
-        let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Plat.</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
-        let rank=1;
-        allPlayers.slice(0,500).forEach(entry=>{
-          const stats=entry.stats;const ik=entry.name==='KANNEDA';
-          const lbDeaths=((stats.roundsPlayed||0)-(stats.wins||0));
-          const kd=lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0';
-          const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-          const platBadge=entry.platforms.length>1?'Ambas':entry.platforms[0];
-          const searchPlat=entry.platforms.includes('PSN')?'psn':'xbox';
-          h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\''+searchPlat+'\');document.getElementById(\'searchInput\').value=\''+escJs(entry.name)+'\';searchPlayer();">'+esc(entry.name)+'</td><td class="sc" style="font-size:.65rem;">'+platBadge+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
-          rank++;
-        });
-        h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 500 via PUBG API &mdash; CONSOLAS (PSN+Xbox) '+lbRegion.toUpperCase()+' '+gm.toUpperCase()+'</p>';
-        lbContent.innerHTML=h;
-      }).catch(e=>{console.error('Leaderboard API error:',e);renderLeaderboardDemo();});
-    }else{
-      const lbShard=lbPlatform+'-'+lbRegion;
-      apiGet(API_BASE+'/'+lbShard+'/leaderboards/'+sid+'/'+gm).then(r=>{
-        const lb=r.data;const players=r.included||[];const pRelations=lb.relationships?.players?.data||[];
-        let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
-        let rank=1;pRelations.slice(0,500).forEach(pRef=>{
-          const p=players.find(pl=>pl.id===pRef.id);if(!p||!p.attributes)return;
-          const pa=p.attributes;const stats=pa.stats||{};const ik=pa.name==='KANNEDA';
-          const lbDeaths=((stats.roundsPlayed||stats.games||0)-(stats.wins||0));const kd=(stats.killDeathRatio>0)?stats.killDeathRatio.toFixed(2):(lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0');
-          const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-          h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="setPlatform(\''+lbPlatform+'\');document.getElementById(\'searchInput\').value=\''+escJs(pa.name)+'\';searchPlayer();">'+esc(pa.name)+'</td><td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
-          rank++;
-        });
-        h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 500 via PUBG API &mdash; '+lbShard.toUpperCase()+' '+gm.toUpperCase()+'</p>';
-        lbContent.innerHTML=h;
-      }).catch(e=>{console.error('Leaderboard API error:',e);renderLeaderboardDemo();});
-    }
+    const resp=await fetch('/api/leaderboard?platform='+lbPlatform+'&region='+lbRegion+'&mode='+lbMode);
+    if(!resp.ok){renderLeaderboardDemo();return;}
+    const data=await resp.json();
+    if(!data.players||data.players.length===0){renderLeaderboardDemo();return;}
+    const isConsole=lbPlatform==='console';
+    const showPlat=isConsole;
+    let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th>'+(showPlat?'<th>Plat.</th>':'')+'<th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
+    let rank=1;
+    data.players.forEach(entry=>{
+      const stats=entry.stats;const ik=entry.name==='KANNEDA';
+      const lbDeaths=((stats.roundsPlayed||0)-(stats.wins||0));
+      const kd=lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0';
+      const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
+      const searchPlat=(entry.platforms&&entry.platforms.includes('PSN'))?'psn':(entry.platforms&&entry.platforms.includes('Xbox')?'xbox':lbPlatform);
+      const platBadge=showPlat?(entry.platforms&&entry.platforms.length>1?'Ambas':(entry.platforms?entry.platforms[0]:'')):'';
+      h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+esc(entry.name)+'</td>';
+      if(showPlat)h+='<td class="sc" style="font-size:.65rem;">'+platBadge+'</td>';
+      h+='<td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
+      rank++;
+    });
+    h+='</tbody></table>';
+    // Footer with update time
+    const updatedText=data.cachedAt?timeAgo(data.cachedAt):'ahora';
+    const platLabel=isConsole?'CONSOLAS (PSN+Xbox)':lbPlatform.toUpperCase();
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;padding:0 4px;">';
+    h+='<span style="color:var(--text-dim);font-size:.7rem;">Top 500 via PUBG API &mdash; '+platLabel+' '+lbRegion.toUpperCase()+' '+lbMode.toUpperCase()+'</span>';
+    h+='<span style="color:var(--accent);font-size:.65rem;font-family:Orbitron,sans-serif;font-weight:600;">Actualizado '+updatedText+'</span>';
+    h+='</div>';
+    lbContent.innerHTML=h;
   }catch(e){console.error('Leaderboard error:',e);renderLeaderboardDemo();}
 }
 function renderLeaderboardDemo(){
