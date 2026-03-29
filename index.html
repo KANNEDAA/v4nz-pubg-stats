@@ -1825,7 +1825,7 @@ async function toggleClanMembers(tag,cardEl){
       mh+='</div></div></div>';
     });
     mh+='</div>';
-    mh+='<div style="text-align:center;margin-top:8px;"><a href="/clan/'+tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.stopPropagation();event.preventDefault();history.pushState(null,\'\',\'clan/'+tag+'\');loadClanPage(\''+tag+'\');">Ver pagina completa del clan &#x2192;</a></div>';
+    mh+='<div style="text-align:center;margin-top:8px;"><a href="/clan/'+tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.stopPropagation();event.preventDefault();history.pushState(null,\'\',\'/clan/'+tag+'\');loadClanPage(\''+tag+'\');">Ver pagina completa del clan &#x2192;</a></div>';
     container.innerHTML=mh;
     container.dataset.loaded='1';
   }catch(e){
@@ -4207,7 +4207,7 @@ async function searchClan(){
           mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">'+members.length+' Miembros del Clan</div>';
           mh+='<div style="display:flex;gap:8px;align-items:center;">';
           mh+='<button onclick="refreshClanStats(\''+c.tag+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar</button>';
-          mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina &#x2192;</a>';
+          mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'/clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina &#x2192;</a>';
           mh+='</div></div>';
           // Stats summary
           mh+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;text-align:center;">';
@@ -4273,7 +4273,7 @@ async function searchClan(){
                 let mh='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:12px;border:1px solid rgba(0,240,255,0.15);">';
                 mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
                 mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent-green);text-transform:uppercase;letter-spacing:1px;">&#x2705; '+members.length+' Miembros importados</div>';
-                mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina completa &#x2192;</a>';
+                mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'/clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina completa &#x2192;</a>';
                 mh+='</div>';
                 mh+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;text-align:center;">';
                 mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);">KILLS</div></div>';
@@ -4527,7 +4527,7 @@ async function importFromPubgclans(){
     if(statusEl){
       statusEl.innerHTML='<div style="color:var(--accent-green);font-size:.75rem;font-weight:600;">&#x2705; Clan ['+esc(data.tag)+'] '+esc(data.name)+' importado!</div>'+
         '<div style="font-size:.7rem;color:var(--text-secondary);margin-top:4px;">'+data.members+' miembros ('+data.activeMembers+' activos) · '+data.totalKills+' kills · K/D '+data.avgKd+' · Win Rate '+data.winRate+'%</div>'+
-        '<div style="margin-top:8px;"><a href="/clan/'+data.tag+'" style="color:var(--accent);font-size:.75rem;font-weight:600;text-decoration:none;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+data.tag+'\');loadClanPage(\''+data.tag+'\');">&#x27A1; VER CLAN EN EL RANKING</a></div>';
+        '<div style="margin-top:8px;"><a href="/clan/'+data.tag+'" style="color:var(--accent);font-size:.75rem;font-weight:600;text-decoration:none;" onclick="event.preventDefault();history.pushState(null,\'\',\'/clan/'+data.tag+'\');loadClanPage(\''+data.tag+'\');">&#x27A1; VER CLAN EN EL RANKING</a></div>';
     }
     // Refresh leaderboard
     loadClanRanking();
@@ -4579,25 +4579,36 @@ async function compareClans(){
   showLoading(true);setLoaderStep('Buscando clanes...');
   try{
     // Helper to get clan by search (name or tag) or by player
+    // Returns normalized: {tag, name, memberCount, level, id, _source:'db'|'api'}
     async function getClanForCompare(query){
       try{
         const searchResp=await fetch('/clans/search/'+encodeURIComponent(query));
         if(searchResp.ok){
           const searchData=await searchResp.json();
           if(searchData.clans&&searchData.clans.length>0){
-            return searchData.clans[0];
+            const c=searchData.clans[0];
+            return {tag:c.tag,name:c.name,memberCount:c.active_members||0,level:0,id:c.tag,_source:'db',platform:c.platform};
           }
         }
       }catch(e){}
-      // Fallback to player lookup
-      return fetchClanByPlayer(query,clanComparePlatform);
+      // Fallback: try exact tag match in DB
+      try{
+        const tagResp=await fetch('/clans/'+encodeURIComponent(query.toUpperCase()));
+        if(tagResp.ok){
+          const tagData=await tagResp.json();
+          if(tagData.clan){const c=tagData.clan;return {tag:c.tag,name:c.name,memberCount:c.member_count||0,level:c.level||0,id:c.tag,_source:'db',platform:c.platform};}
+        }
+      }catch(e){}
+      // Fallback: player lookup via PUBG API
+      const apiClan=await fetchClanByPlayer(query,clanComparePlatform);
+      const a=apiClan.attributes||{};
+      return {tag:a.clanTag||'???',name:a.clanName||query,memberCount:a.clanMemberCount||0,level:a.clanLevel||0,id:apiClan.id||'',_source:'api'};
     }
     const [clan1,clan2]=await Promise.all([getClanForCompare(n1),getClanForCompare(n2)]);
-    const a1=clan1.attributes||{};const a2=clan2.attributes||{};
-    const tag1=a1.clanTag||'???';const tag2=a2.clanTag||'???';
-    const name1=a1.clanName||'Clan 1';const name2=a2.clanName||'Clan 2';
-    const mc1=a1.clanMemberCount||0;const mc2=a2.clanMemberCount||0;
-    const lv1=a1.clanLevel||0;const lv2=a2.clanLevel||0;
+    const tag1=clan1.tag;const tag2=clan2.tag;
+    const name1=clan1.name;const name2=clan2.name;
+    const mc1=clan1.memberCount;const mc2=clan2.memberCount;
+    const lv1=clan1.level;const lv2=clan2.level;
     window._cmpClans={tag1,tag2,name1,name2,mc1,mc2,lv1,lv2};
 
     // Try to get DB data for both clans
