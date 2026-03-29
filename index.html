@@ -1249,6 +1249,7 @@ footer a { color: var(--accent); text-decoration: none; }
       <button class="clan-mode-tab active" onclick="setClanMode('search',this)">Buscar Clan</button>
       <button class="clan-mode-tab" onclick="setClanMode('compare',this)">Comparar Clanes</button>
       <button class="clan-mode-tab" onclick="setClanMode('ranking',this)">Ranking</button>
+      <button class="clan-mode-tab" onclick="setClanMode('analysis',this)">&#x1F9E0; Analisis</button>
     </div>
     <div id="clanSearchMode">
       <div id="myClanBanner"></div>
@@ -1330,6 +1331,11 @@ footer a { color: var(--accent); text-decoration: none; }
         <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
       </div>
       <div id="clanRankingContent"><div class="empty-state"><p>Cargando ranking de clanes...</p></div></div>
+    </div>
+    <div id="clanAnalysisMode" style="display:none;">
+      <div class="section-title">&#x1F9E0; Analisis de Clanes</div>
+      <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Inteligencia completa de tus clanes favoritos. Carries, lastres, fantasmas y cotilleo.</p>
+      <div id="clanAnalysisContent"><div class="empty-state"><p>No tienes clanes guardados. Busca un clan primero para que aparezca aqui.</p></div></div>
     </div>
   </div>
   <div class="panel" id="panel-leaderboard">
@@ -2176,6 +2182,7 @@ function renderClanIntelligence(members,clan){
   const active=members.filter(m=>m.active!==false&&(m.kills>0||m.rounds>0));
   if(active.length<2)return'';
   const plat=clan.platform||'psn';
+  const uid=(clan.tag||Math.random().toString(36).slice(2,8)).replace(/[^A-Za-z0-9]/g,'');
 
   // ── Precalculate everything ──
   const totalKills=active.reduce((s,m)=>s+(m.kills||0),0);
@@ -2225,16 +2232,16 @@ function renderClanIntelligence(members,clan){
 
   // Tabs
   h+='<div class="ci-tabs">';
-  h+='<div class="ci-tab active" onclick="ciTab(\'overview\',this)">&#x1F4CA; Overview</div>';
-  h+='<div class="ci-tab" onclick="ciTab(\'carries\',this)">&#x1F4AA; Carry vs Lastre</div>';
-  h+='<div class="ci-tab" onclick="ciTab(\'ghosts\',this)">&#x1F47B; Fantasmas</div>';
-  h+='<div class="ci-tab" onclick="ciTab(\'cotilleo\',this)">&#x1F575;&#xFE0F; Cotilleo</div>';
+  h+='<div class="ci-tab active" onclick="ciTab(\'overview\',this,\''+uid+'\')">&#x1F4CA; Overview</div>';
+  h+='<div class="ci-tab" onclick="ciTab(\'carries\',this,\''+uid+'\')">&#x1F4AA; Carry vs Lastre</div>';
+  h+='<div class="ci-tab" onclick="ciTab(\'ghosts\',this,\''+uid+'\')">&#x1F47B; Fantasmas</div>';
+  h+='<div class="ci-tab" onclick="ciTab(\'cotilleo\',this,\''+uid+'\')">&#x1F575;&#xFE0F; Cotilleo</div>';
   h+='</div>';
 
   // ═══════════════════════════════════════════════════════════
   // TAB 1: OVERVIEW
   // ═══════════════════════════════════════════════════════════
-  h+='<div class="ci-panel active" id="ciOverview">';
+  h+='<div class="ci-panel active" id="ciOverview_'+uid+'">';
   h+='<div class="ci-grid">';
 
   // Overview KPI cards
@@ -2311,7 +2318,7 @@ function renderClanIntelligence(members,clan){
   // ═══════════════════════════════════════════════════════════
   // TAB 2: CARRY VS LASTRE
   // ═══════════════════════════════════════════════════════════
-  h+='<div class="ci-panel" id="ciCarries">';
+  h+='<div class="ci-panel" id="ciCarries_'+uid+'">';
 
   // Summary bar
   h+='<div style="display:flex;gap:4px;margin-bottom:14px;height:24px;border-radius:6px;overflow:hidden;">';
@@ -2369,7 +2376,7 @@ function renderClanIntelligence(members,clan){
   // ═══════════════════════════════════════════════════════════
   // TAB 3: FANTASMAS
   // ═══════════════════════════════════════════════════════════
-  h+='<div class="ci-panel" id="ciGhosts">';
+  h+='<div class="ci-panel" id="ciGhosts_'+uid+'">';
 
   // Donut-like summary
   h+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">';
@@ -2414,7 +2421,7 @@ function renderClanIntelligence(members,clan){
   // ═══════════════════════════════════════════════════════════
   // TAB 4: COTILLEO
   // ═══════════════════════════════════════════════════════════
-  h+='<div class="ci-panel" id="ciCotilleo">';
+  h+='<div class="ci-panel" id="ciCotilleo_'+uid+'">';
   h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:12px;">&#x1F575;&#xFE0F; Datos que alguien va a mandar al grupo de WhatsApp...</div>';
 
   const gossip=[];
@@ -2502,13 +2509,16 @@ function renderClanIntelligence(members,clan){
 }
 
 // Clan Intelligence tab switcher
-function ciTab(tab,btn){
-  const panels={overview:'ciOverview',carries:'ciCarries',ghosts:'ciGhosts',cotilleo:'ciCotilleo'};
-  document.querySelectorAll('.ci-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.ci-panel').forEach(p=>p.classList.remove('active'));
+function ciTab(tab,btn,uid){
+  const section=btn.closest('.ci-section');
+  if(section){
+    section.querySelectorAll('.ci-tab').forEach(t=>t.classList.remove('active'));
+    section.querySelectorAll('.ci-panel').forEach(p=>p.classList.remove('active'));
+  }
   btn.classList.add('active');
-  const el=document.getElementById(panels[tab]);
-  if(el)el.classList.add('active');
+  const map={overview:'Overview',carries:'Carries',ghosts:'Ghosts',cotilleo:'Cotilleo'};
+  const target=document.getElementById('ci'+(map[tab]||tab)+'_'+uid);
+  if(target)target.classList.add('active');
 }
 
 // INIT
@@ -4857,10 +4867,91 @@ function setClanMode(mode,btn){
   document.getElementById('clanSearchMode').style.display=mode==='search'?'block':'none';
   document.getElementById('clanCompareMode').style.display=mode==='compare'?'block':'none';
   document.getElementById('clanRankingMode').style.display=mode==='ranking'?'block':'none';
+  document.getElementById('clanAnalysisMode').style.display=mode==='analysis'?'block':'none';
   if(mode==='ranking')loadClanRanking();
+  if(mode==='analysis')loadClanAnalysisHub();
 }
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
 function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
+
+// ═══ CLAN ANALYSIS HUB ═══
+async function loadClanAnalysisHub(){
+  const container=document.getElementById('clanAnalysisContent');
+  if(!container)return;
+  // Collect all clans to show: myClan first, then history (deduplicated)
+  const allTags=[];
+  const clansToShow=[];
+  if(myClan){allTags.push(myClan.tag);clansToShow.push({...myClan,isMyClan:true});}
+  clanHistory.forEach(c=>{if(!allTags.includes(c.tag)){allTags.push(c.tag);clansToShow.push({...c,isMyClan:false});}});
+  if(!clansToShow.length){
+    container.innerHTML='<div class="empty-state"><p>No tienes clanes guardados. Busca un clan primero y aparecera aqui automaticamente.</p></div>';
+    return;
+  }
+  // Show loading
+  container.innerHTML='<div style="text-align:center;padding:30px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.75rem;color:var(--text-dim);margin-top:10px;">Cargando inteligencia de '+clansToShow.length+' clan'+(clansToShow.length>1?'es':'')+'...</div></div>';
+  // Fetch all clan data from DB in parallel
+  const results=await Promise.all(clansToShow.map(async c=>{
+    try{
+      const r=await fetch('/clans/'+encodeURIComponent(c.tag));
+      if(!r.ok)return{...c,dbClan:null,dbMembers:[]};
+      const d=await r.json();
+      return{...c,dbClan:d.clan,dbMembers:d.members||[]};
+    }catch(e){return{...c,dbClan:null,dbMembers:[]};}
+  }));
+  let h='';
+  results.forEach((c,idx)=>{
+    const hasDat=c.dbClan&&c.dbMembers.length>=3;
+    const clan=c.dbClan||{};
+    const tagBadge=c.isMyClan?'<span style="font-size:.55rem;background:var(--accent-orange);color:#000;padding:1px 6px;border-radius:3px;font-family:Rajdhani;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">MI CLAN</span>':'';
+    // Clan card header
+    const myBorder=c.isMyClan?'border-color:rgba(255,107,0,.3);':'';
+    h+='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;'+myBorder+'">';
+    h+='<div style="padding:16px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;" onclick="toggleClanIntel('+idx+')">';
+    h+='<div class="clan-icon" style="width:44px;height:44px;font-size:1.1rem;flex-shrink:0;">'+esc((c.tag||'?').charAt(0))+'</div>';
+    h+='<div style="flex:1;min-width:0;">';
+    h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+    h+='<span style="font-family:Rajdhani;font-weight:700;font-size:1rem;color:var(--text-primary);">['+esc(c.tag)+'] '+esc(c.name||c.tag)+'</span>';
+    h+=tagBadge;
+    h+='</div>';
+    if(hasDat){
+      h+='<div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;">';
+      h+='<span style="font-size:.65rem;color:var(--text-dim);">K/D <span style="font-family:Orbitron;font-weight:700;color:var(--accent);font-size:.65rem;">'+(parseFloat(clan.avg_kd)||0).toFixed(2)+'</span></span>';
+      h+='<span style="font-size:.65rem;color:var(--text-dim);">Wins <span style="font-family:Orbitron;font-weight:700;color:var(--accent-yellow);font-size:.65rem;">'+(clan.total_wins||0)+'</span></span>';
+      h+='<span style="font-size:.65rem;color:var(--text-dim);">Activos <span style="font-family:Orbitron;font-weight:700;color:var(--accent-green);font-size:.65rem;">'+(clan.active_members||0)+'/'+(clan.member_count||c.memberCount||'?')+'</span></span>';
+      h+='<span style="font-size:.65rem;color:var(--text-dim);">WR <span style="font-family:Orbitron;font-weight:700;color:var(--accent-orange);font-size:.65rem;">'+(parseFloat(clan.win_rate)||0).toFixed(1)+'%</span></span>';
+      h+='</div>';
+    }else{
+      h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:4px;">'+(c.platform||'psn').toUpperCase()+' &mdash; '+(c.memberCount||'?')+' miembros</div>';
+    }
+    h+='</div>';
+    // Expand arrow
+    h+='<div id="clanIntelArrow_'+idx+'" style="font-size:1rem;color:var(--text-dim);transition:transform .2s;">&#x25BC;</div>';
+    h+='</div>';
+    // Expandable intelligence section
+    h+='<div id="clanIntelBody_'+idx+'" style="display:none;border-top:1px solid var(--border);padding:0 16px 16px;">';
+    if(hasDat){
+      h+=renderClanIntelligence(c.dbMembers,c.dbClan);
+      // Link to full clan page
+      h+='<div style="margin-top:12px;text-align:center;"><button onclick="loadClanPage(\''+escJs(c.tag)+'\');setClanMode(\'search\',document.querySelector(\'.clan-mode-tab\'));" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:Rajdhani;font-weight:700;font-size:.72rem;padding:8px 20px;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">Ver Pagina Completa del Clan</button></div>';
+    }else{
+      h+='<div style="padding:20px;text-align:center;"><div style="font-size:.8rem;color:var(--text-dim);margin-bottom:10px;">Este clan no tiene stats en V4NZ o tiene menos de 3 miembros.</div>';
+      h+='<button onclick="loadClanPage(\''+escJs(c.tag)+'\');setClanMode(\'search\',document.querySelector(\'.clan-mode-tab\'));" style="background:var(--accent);color:var(--bg-primary);font-family:Rajdhani;font-weight:700;font-size:.72rem;padding:8px 20px;border-radius:8px;cursor:pointer;border:none;text-transform:uppercase;letter-spacing:1px;">Ir al Clan</button>';
+      h+='</div>';
+    }
+    h+='</div></div>';
+  });
+  container.innerHTML=h;
+  // Auto-expand first clan (myClan if exists)
+  if(results.length)toggleClanIntel(0);
+}
+function toggleClanIntel(idx){
+  const body=document.getElementById('clanIntelBody_'+idx);
+  const arrow=document.getElementById('clanIntelArrow_'+idx);
+  if(!body)return;
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  if(arrow)arrow.style.transform=isOpen?'rotate(0deg)':'rotate(180deg)';
+}
 
 async function fetchClanByPlayer(playerName, platform){
   const pRes=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(playerName));
