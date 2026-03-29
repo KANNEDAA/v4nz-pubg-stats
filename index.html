@@ -543,6 +543,8 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-badge.badge-suspect { background:rgba(255,51,85,0.15); color:var(--accent-red); border:1px solid rgba(255,51,85,0.3); }
 .match-badge.badge-rival { background:rgba(0,240,255,0.1); color:var(--accent); border:1px solid rgba(0,240,255,0.25); }
 .match-badge.badge-killer { background:rgba(255,107,0,0.12); color:var(--accent-orange); border:1px solid rgba(255,107,0,0.25); }
+.match-badge.badge-stream { background:rgba(168,85,247,0.15); color:var(--accent-purple); border:1px solid rgba(168,85,247,0.3); cursor:pointer; text-decoration:none; }
+.match-badge.badge-stream:hover { background:rgba(168,85,247,0.3); }
 .rival-chip { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; transition:all .2s; white-space:nowrap; }
 .rival-chip:hover { border-color:var(--accent-red); box-shadow:0 0 8px rgba(255,51,85,0.15); }
 .rival-chip .rival-name { font-family:Orbitron,sans-serif; font-weight:700; font-size:.7rem; color:var(--text-primary); }
@@ -2111,6 +2113,8 @@ async function searchPlayer(){
     try{const prBtn=document.getElementById('pubgReportBtn');if(prBtn&&currentPlayerData&&currentPlayerData.id){prBtn.href='https://pubg.report/players/'+currentPlayerData.id;prBtn.style.display='inline-flex';}}catch(e){}
     // Frequent teammates
     try{renderFrequentTeammates();}catch(e){console.error('Frequent teammates error:',e);}
+    // PUBG Report clips — async, no bloquea la carga
+    checkPubgReport().catch(e=>console.log('PUBG Report check error:',e.message));
   }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';document.getElementById('frequentTeammates').style.display='none';const prBtn=document.getElementById('pubgReportBtn');if(prBtn)prBtn.style.display='none';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
@@ -2313,7 +2317,7 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}i
   const _rc={};currentMatchData.forEach(match=>{const seen=new Set();(match.included||[]).filter(i=>i.type==='participant').forEach(p=>{const nmL=p.attributes.stats.name.toLowerCase();if(nmL===pn.toLowerCase()||seen.has(nmL))return;seen.add(nmL);_rc[nmL]=(_rc[nmL]||0)+1;});});Object.entries(_rc).forEach(([k,v])=>{if(v>=3)window._matchRivalsSet.add(k);});
   let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgoMatch(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+'A / '+(ps.DBNOs||0)+'K</span>':'';
   // Match badges
-  const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';});badgeHtml+='</div>';}
+  const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{if(b.url){badgeHtml+='<a href="'+esc(b.url)+'" target="_blank" rel="noopener" class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();">'+b.icon+' '+esc(b.text)+'</a>';}else{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';}});badgeHtml+='</div>';}
   h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
   // Render rivals section
   try{renderMatchRivals();}catch(e){console.error('Match rivals error:',e);}
@@ -2357,7 +2361,24 @@ function showMatchDetail(idx){
   const myRoster=(match.included||[]).find(i=>i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(p=>p.id===pp.id));let teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){const partIds=myRoster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>b.kills-a.kills);}
   if(teammates.length>0){h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:12px;">Tu Equipo</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">';teammates.forEach(tm=>{const isMe=tm.name.toLowerCase()===pn.toLowerCase();h+='<div style="background:var(--bg-secondary);padding:8px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'')+'"><div style="color:'+(isMe?'var(--accent)':'var(--text-primary)')+';font-weight:600;margin-bottom:3px;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+esc(tm.name)+'\';searchPlayer();" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-primary)\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.6rem;opacity:.6;">(tu)</span>':'')+'</div><div style="color:var(--accent);font-size:.7rem;margin-bottom:2px;">'+tm.kills+' kills</div><div style="color:var(--accent-orange);font-size:.7rem;">'+Math.round(tm.damageDealt)+' dano</div></div>';});h+='</div></div>';}
   const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
-  if(telemetryUrl){h+='<div style="margin-top:16px;"><button onclick="openTelemMap(\''+telemetryUrl+'\',\''+pn.replace(/'/g,"\\'")+'\',\''+a.mapName+'\','+idx+')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;font-family:Rajdhani,sans-serif;">&#x1F5FA; Ver Mapa de Telemetria</button></div>';}
+  // Top killer warning in detail view
+  const allParts=(match.included||[]).filter(i=>i.type==='participant');
+  let detailTopK=null,detailTopKills=0;allParts.forEach(p=>{const k=p.attributes.stats.kills||0;if(k>detailTopKills){detailTopKills=k;detailTopK=p.attributes.stats.name;}});
+  if(detailTopKills>=10&&detailTopK&&detailTopK.toLowerCase()!==pn.toLowerCase()){
+    const suspectColor=detailTopKills>=15?'var(--accent-red)':'var(--accent-orange)';
+    h+='<div style="margin-top:16px;background:rgba(255,51,85,0.08);border:1px solid rgba(255,51,85,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;">';
+    h+='<span style="font-size:1.2rem;">'+(detailTopKills>=15?'&#x26A0;&#xFE0F;':'&#x1F525;')+'</span>';
+    h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">Top Killer de la Partida</div>';
+    h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();document.getElementById(\'searchInput\').value=\''+escJs(detailTopK)+'\';searchPlayer();">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
+    h+='</div></div>';
+  }
+  // PUBG Report clip link
+  const matchIdForClip=match.data?match.data.id:null;
+  if(matchIdForClip&&window._pubgReportClips&&window._pubgReportClips[matchIdForClip]){
+    const clip=window._pubgReportClips[matchIdForClip];
+    h+='<div style="margin-top:12px;"><a href="'+esc(clip.url)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--accent-purple);padding:10px 12px;border-radius:6px;font-weight:700;font-size:.82rem;font-family:Rajdhani,sans-serif;text-decoration:none;text-transform:uppercase;letter-spacing:1px;transition:all .2s;" onmouseover="this.style.background=\'rgba(168,85,247,0.25)\'" onmouseout="this.style.background=\'rgba(168,85,247,0.12)\'">&#x1F3AC; Ver Video en PUBG Report ('+esc(clip.streamer)+')</a></div>';
+  }
+  if(telemetryUrl){h+='<div style="margin-top:12px;"><button onclick="openTelemMap(\''+telemetryUrl+'\',\''+pn.replace(/'/g,"\\'")+'\',\''+a.mapName+'\','+idx+')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;font-family:Rajdhani,sans-serif;">&#x1F5FA; Ver Mapa de Telemetria</button></div>';}
   h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
   document.getElementById('matchDetailContent').innerHTML=h;
   document.getElementById('matchDetailPopup').classList.add('active');
@@ -2452,7 +2473,73 @@ function getMatchBadges(match,pn){
       badges.push({type:'rival',text:'Rival: '+rivalInMatch.attributes.stats.name,icon:'👀'});
     }
   }
+  // Flag: pubg.report has a video/clip for this match
+  const matchId=match.data?match.data.id:null;
+  if(matchId&&window._pubgReportClips&&window._pubgReportClips[matchId]){
+    const clipData=window._pubgReportClips[matchId];
+    const streamer=clipData.streamer||'Streamer';
+    badges.push({type:'stream',text:'Video: '+streamer,icon:'🎬',url:clipData.url||'https://pubg.report/players/'+encodeURIComponent(currentPlayerData.id)});
+  }
   return badges;
+}
+
+/* ===== PUBG REPORT — Detectar videos/clips en partidas ===== */
+async function checkPubgReport(){
+  if(!currentPlayerData||!currentPlayerData.id||!currentMatchData||!currentMatchData.length)return;
+  const accountId=currentPlayerData.id;
+  window._pubgReportClips={};
+  // Collect our match IDs for cross-reference
+  const ourMatchIds=new Set();
+  currentMatchData.forEach(m=>{if(m.data&&m.data.id)ourMatchIds.add(m.data.id);});
+  if(!ourMatchIds.size)return;
+  try{
+    // Try pubg.report API — formato más común observado
+    const resp=await fetch('https://api.pubg.report/v1/players/'+encodeURIComponent(accountId));
+    if(!resp.ok){console.log('PUBG Report API status:',resp.status);return;}
+    const data=await resp.json();
+    console.log('PUBG Report raw response:',data);// Debug — para verificar formato real
+    // Intentar parsear varios formatos posibles de respuesta
+    let encounters=[];
+    if(Array.isArray(data))encounters=data;
+    else if(data.encounters)encounters=data.encounters;
+    else if(data.data&&Array.isArray(data.data))encounters=data.data;
+    else if(data.matches)encounters=data.matches;
+    encounters.forEach(enc=>{
+      // Buscar matchId en varios campos posibles
+      const mid=enc.match_id||enc.matchId||enc.MatchId||enc.id||(enc.match&&enc.match.id)||'';
+      if(!mid||!ourMatchIds.has(mid))return;
+      // Buscar URL del clip/video
+      let clipUrl='';let streamerName='';
+      if(enc.clips&&enc.clips.length){
+        clipUrl=enc.clips[0].url||enc.clips[0].clip_url||enc.clips[0].URL||'';
+        streamerName=enc.clips[0].broadcaster_name||enc.clips[0].streamer||enc.clips[0].channel||'';
+      }else if(enc.clip_url){clipUrl=enc.clip_url;streamerName=enc.streamer_name||enc.broadcaster||'';}
+      else if(enc.url){clipUrl=enc.url;streamerName=enc.streamer||enc.broadcaster_name||'';}
+      else if(enc.video){clipUrl=enc.video.url||enc.video;streamerName=enc.video.channel||'';}
+      if(!clipUrl)clipUrl='https://pubg.report/players/'+encodeURIComponent(accountId);
+      if(!streamerName)streamerName='Streamer';
+      window._pubgReportClips[mid]={url:clipUrl,streamer:streamerName};
+    });
+    // Si encontramos clips en nuestras partidas, re-renderizar
+    if(Object.keys(window._pubgReportClips).length>0){
+      console.log('PUBG Report: encontrados '+Object.keys(window._pubgReportClips).length+' clips en tus partidas');
+      renderMatchHistory();
+    }
+  }catch(e){
+    // CORS bloqueado o API no disponible — intentar proxy por nuestro servidor
+    try{
+      const resp2=await fetch('/api/pubg-report/'+encodeURIComponent(accountId));
+      if(!resp2.ok)return;
+      const data2=await resp2.json();
+      console.log('PUBG Report (proxy) response:',data2);
+      if(data2.clips){
+        Object.entries(data2.clips).forEach(([mid,info])=>{
+          if(ourMatchIds.has(mid))window._pubgReportClips[mid]=info;
+        });
+        if(Object.keys(window._pubgReportClips).length>0)renderMatchHistory();
+      }
+    }catch(e2){console.log('PUBG Report not available:',e2.message);}
+  }
 }
 
 /* ===== HEATMAP DE KILLS ===== */
