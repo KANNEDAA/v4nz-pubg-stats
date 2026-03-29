@@ -184,6 +184,25 @@ async function initDB() {
         UNIQUE(user_id, fav_type, name)
       );
       CREATE INDEX IF NOT EXISTS idx_user_favorites_user ON user_favorites(user_id);
+      CREATE TABLE IF NOT EXISTS player_snapshots (
+        id SERIAL PRIMARY KEY,
+        player_name VARCHAR(50) NOT NULL,
+        platform VARCHAR(10) DEFAULT 'psn',
+        squad_mode VARCHAR(20) DEFAULT 'squad',
+        game_mode VARCHAR(10) DEFAULT 'tpp',
+        kd NUMERIC(6,2) DEFAULT 0,
+        win_rate NUMERIC(6,2) DEFAULT 0,
+        avg_damage NUMERIC(10,1) DEFAULT 0,
+        hs_rate NUMERIC(6,2) DEFAULT 0,
+        kills INT DEFAULT 0,
+        wins INT DEFAULT 0,
+        rounds INT DEFAULT 0,
+        top10_rate NUMERIC(6,2) DEFAULT 0,
+        longest_kill NUMERIC(8,1) DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_snapshots_player ON player_snapshots(player_name, platform, squad_mode, game_mode);
+      CREATE INDEX IF NOT EXISTS idx_snapshots_created ON player_snapshots(created_at);
     `);
     // Cleanup old cache entries on startup (older than 1 hour)
     await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour'").catch(() => {});
@@ -1189,6 +1208,61 @@ app.get('/api/pubg-report/:accountId', async (req, res) => {
     console.error('PUBG Report proxy error:', e.message);
     res.status(502).json({ error: 'Failed to reach pubg.report', detail: e.message });
   }
+});
+
+// ═══ Player Snapshots (Mi Evolución) ═══
+
+// POST /api/snapshots — Save a player snapshot (max 1 per player/mode per week)
+app.post('/api/snapshots', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database' });
+  const { player_name, platform, squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill } = req.body;
+  if (!player_name || !platform) return res.status(400).json({ error: 'player_name and platform required' });
+  try {
+    // Check if snapshot already exists this week for this player+mode
+    const existing = await pool.query(
+      `SELECT id FROM player_snapshots
+       WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
+       AND created_at > NOW() - INTERVAL '7 days'
+       ORDER BY created_at DESC LIMIT 1`,
+      [player_name, platform, squad_mode || 'squad', game_mode || 'tpp']
+    );
+    if (existing.rows.length > 0) {
+      // Update existing snapshot if rounds changed (player played more)
+      const snap = existing.rows[0];
+      await pool.query(
+        `UPDATE player_snapshots SET kd=$1, win_rate=$2, avg_damage=$3, hs_rate=$4, kills=$5, wins=$6, rounds=$7, top10_rate=$8, longest_kill=$9
+         WHERE id=$10`,
+        [kd || 0, win_rate || 0, avg_damage || 0, hs_rate || 0, kills || 0, wins || 0, rounds || 0, top10_rate || 0, longest_kill || 0, snap.id]
+      );
+      return res.json({ ok: true, action: 'updated' });
+    }
+    await pool.query(
+      `INSERT INTO player_snapshots (player_name, platform, squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      [player_name, platform, squad_mode || 'squad', game_mode || 'tpp',
+       kd || 0, win_rate || 0, avg_damage || 0, hs_rate || 0, kills || 0, wins || 0, rounds || 0, top10_rate || 0, longest_kill || 0]
+    );
+    res.json({ ok: true, action: 'created' });
+  } catch (e) { console.error('Snapshot save error:', e.message); res.status(500).json({ error: 'Error saving snapshot' }); }
+});
+
+// GET /api/snapshots/:platform/:player — Get player evolution (last 12 weeks)
+app.get('/api/snapshots/:platform/:player', async (req, res) => {
+  if (!pool) return res.json({ snapshots: [] });
+  const { platform, player } = req.params;
+  const squad_mode = req.query.squad_mode || 'squad';
+  const game_mode = req.query.game_mode || 'tpp';
+  try {
+    const { rows } = await pool.query(
+      `SELECT kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill, created_at
+       FROM player_snapshots
+       WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
+       ORDER BY created_at ASC
+       LIMIT 12`,
+      [player, platform, squad_mode, game_mode]
+    );
+    res.json({ snapshots: rows });
+  } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
 });
 
 // ═══ Dynamic OG Image (SVG → PNG via sharp) ═══

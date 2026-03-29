@@ -324,6 +324,20 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .asc-stat-lbl { font-size:.6rem; color:#666; text-transform:uppercase; letter-spacing:1.5px; margin-top:2px; }
 .asc-footer { display:flex; justify-content:space-between; width:100%; position:relative; z-index:1; }
 .asc-footer span { font-size:.65rem; color:#555; text-transform:uppercase; letter-spacing:2px; }
+/* EVOLUTION SECTION */
+.evo-section { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-top:16px; }
+.evo-title { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.evo-chart { width:100%; height:180px; position:relative; }
+.evo-chart canvas { width:100% !important; height:100% !important; }
+.evo-metrics { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-top:16px; }
+.evo-metric { text-align:center; padding:10px 8px; background:var(--bg-secondary); border-radius:10px; }
+.evo-metric-val { font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:800; }
+.evo-metric-lbl { font-size:.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+.evo-metric-delta { font-size:.65rem; font-weight:700; margin-top:2px; }
+.evo-delta-up { color:var(--accent-green); }
+.evo-delta-down { color:var(--accent-red); }
+.evo-delta-same { color:var(--text-dim); }
+.evo-empty { text-align:center; padding:20px; color:var(--text-dim); font-size:.8rem; }
 /* HOMEPAGE CONTENT */
 .home-counters { display:flex; justify-content:center; gap:40px; margin:30px 0 28px; flex-wrap:wrap; }
 .home-counter { text-align:center; }
@@ -1044,6 +1058,7 @@ footer a { color: var(--accent); text-decoration: none; }
   </div>
   <div id="narrativeInsights"></div>
   <div class="personality-section" id="personalitySection"></div>
+  <div id="evolutionSection" style="display:none;"></div>
   <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><select id="seasonSelect" onchange="switchSeason(this.value)" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;margin-left:8px;display:none;"></select><span id="seasonDates" style="color:var(--text-dim);margin-left:8px;">Temporada actual</span></div>
   <div class="season-type-selector" id="seasonTypeSelector" style="display:none;margin-bottom:16px;"><button class="season-type-btn active" onclick="setSeasonType('season')">Temporada</button><button class="season-type-btn" onclick="setSeasonType('ranked')">Ranked</button><button class="season-type-btn" onclick="setSeasonType('lifetime')">Lifetime</button></div>
   <div class="tabs-container" id="tabsContainer">
@@ -2244,6 +2259,9 @@ async function searchPlayer(){
     checkPubgReport().catch(e=>console.log('PUBG Report check error:',e.message));
     // Detect player's clan and auto-register
     detectPlayerClan().catch(e=>console.log('Clan detection error:',e.message));
+    // Save snapshot + load evolution chart
+    savePlayerSnapshot().catch(e=>console.log('Snapshot save error:',e.message));
+    loadEvolutionChart().catch(e=>console.log('Evolution chart error:',e.message));
   }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';document.getElementById('frequentTeammates').style.display='none';const prBtn=document.getElementById('pubgReportBtn');if(prBtn)prBtn.style.display='none';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
@@ -3320,6 +3338,97 @@ async function shareAdnImage(){
       }
     },'image/png');
   }catch(e){console.error('Share ADN image error:',e);card.remove();sharePersonality(role);}
+}
+
+/* === MI EVOLUCION === */
+async function savePlayerSnapshot(){
+  const s=getActiveStats();if(!s||!s.roundsPlayed)return;
+  const name=currentPlayerData?.attributes?.name;if(!name)return;
+  const data={
+    player_name:name,platform:currentPlatform,squad_mode:currentSquadMode,game_mode:currentGameMode,
+    kd:parseFloat(calcKD(s))||0,win_rate:parseFloat(calcWinRate(s))||0,avg_damage:parseFloat(calcAvgDmg(s))||0,
+    hs_rate:parseFloat(calcHSRate(s))||0,kills:s.kills||0,wins:s.wins||0,rounds:s.roundsPlayed||0,
+    top10_rate:parseFloat(calcTop10Rate(s))||0,longest_kill:s.longestKill||0
+  };
+  try{await fetch('/api/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
+  catch(e){console.log('Snapshot save failed:',e.message);}
+}
+async function loadEvolutionChart(){
+  const sec=document.getElementById('evolutionSection');if(!sec)return;
+  const name=currentPlayerData?.attributes?.name;if(!name){sec.style.display='none';return;}
+  try{
+    const r=await fetch('/api/snapshots/'+encodeURIComponent(currentPlatform)+'/'+encodeURIComponent(name)+'?squad_mode='+currentSquadMode+'&game_mode='+currentGameMode);
+    if(!r.ok){sec.style.display='none';return;}
+    const d=await r.json();
+    const snaps=d.snapshots||[];
+    if(snaps.length<2){
+      sec.style.display='block';
+      sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div><div class="evo-empty">Vuelve la proxima semana para ver tu evolucion. V4NZ guarda tus stats cada vez que buscas tu perfil.</div></div>';
+      return;
+    }
+    const latest=snaps[snaps.length-1];const prev=snaps[snaps.length-2];
+    function delta(curr,old){const d=curr-old;return d>0?'+'+d.toFixed(2):d<0?d.toFixed(2):'='}
+    function deltaClass(curr,old){return curr>old?'evo-delta-up':curr<old?'evo-delta-down':'evo-delta-same';}
+    // Build mini chart with canvas
+    const kdArr=snaps.map(s=>parseFloat(s.kd)||0);
+    const wrArr=snaps.map(s=>parseFloat(s.win_rate)||0);
+    const dmgArr=snaps.map(s=>parseFloat(s.avg_damage)||0);
+    const dates=snaps.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
+    let h='<div class="evo-section">';
+    h+='<div class="evo-title">&#x1F4C8; Mi Evolucion <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+snaps.length+' registros</span></div>';
+    h+='<div class="evo-chart"><canvas id="evoCanvas"></canvas></div>';
+    // Delta metrics
+    const kdNow=parseFloat(latest.kd)||0,kdPrev=parseFloat(prev.kd)||0;
+    const wrNow=parseFloat(latest.win_rate)||0,wrPrev=parseFloat(prev.win_rate)||0;
+    const dmgNow=parseFloat(latest.avg_damage)||0,dmgPrev=parseFloat(prev.avg_damage)||0;
+    const hsNow=parseFloat(latest.hs_rate)||0,hsPrev=parseFloat(prev.hs_rate)||0;
+    h+='<div class="evo-metrics">';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+kdNow.toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta '+deltaClass(kdNow,kdPrev)+'">'+delta(kdNow,kdPrev)+'</div></div>';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta '+deltaClass(wrNow,wrPrev)+'">'+delta(wrNow,wrPrev)+'%</div></div>';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(dmgNow)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta '+deltaClass(dmgNow,dmgPrev)+'">'+delta(dmgNow,dmgPrev)+'</div></div>';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-purple);">'+hsNow.toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta '+deltaClass(hsNow,hsPrev)+'">'+delta(hsNow,hsPrev)+'%</div></div>';
+    h+='</div></div>';
+    sec.innerHTML=h;sec.style.display='block';
+    // Draw evolution chart on canvas
+    const cvs=document.getElementById('evoCanvas');
+    if(cvs&&kdArr.length>=2){
+      const dpr=window.devicePixelRatio||1;
+      const W=cvs.parentElement.clientWidth;const H=180;
+      cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
+      const ctx=cvs.getContext('2d');ctx.scale(dpr,dpr);
+      const pad={t:20,r:10,b:30,l:40};const cW=W-pad.l-pad.r;const cH=H-pad.t-pad.b;
+      function drawLine(arr,color,label){
+        const min=Math.min(...arr)*0.9;const max=Math.max(...arr)*1.1||1;
+        const range=max-min||1;
+        ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';
+        arr.forEach((v,i)=>{
+          const x=pad.l+(i/(arr.length-1))*cW;
+          const y=pad.t+cH-(((v-min)/range)*cH);
+          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+        // Dots
+        arr.forEach((v,i)=>{
+          const x=pad.l+(i/(arr.length-1))*cW;
+          const y=pad.t+cH-(((v-min)/range)*cH);
+          ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+        });
+        // Label
+        const lastY=pad.t+cH-(((arr[arr.length-1]-min)/range)*cH);
+        ctx.font='bold 10px Rajdhani,sans-serif';ctx.fillStyle=color;ctx.textAlign='left';
+        ctx.fillText(label+' '+arr[arr.length-1].toFixed(1),pad.l+cW+4,lastY+3);
+      }
+      // Grid lines
+      ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;
+      for(let i=0;i<=4;i++){const y=pad.t+(cH/4)*i;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();}
+      // X-axis labels (dates)
+      ctx.font='10px Rajdhani,sans-serif';ctx.fillStyle='#555';ctx.textAlign='center';
+      const step=Math.max(1,Math.floor(dates.length/6));
+      dates.forEach((d,i)=>{if(i%step===0||i===dates.length-1){const x=pad.l+(i/(dates.length-1))*cW;ctx.fillText(d,x,H-8);}});
+      // Draw K/D line (main metric)
+      drawLine(kdArr,'#00f0ff','K/D');
+    }
+  }catch(e){console.error('Evolution chart error:',e);sec.style.display='none';}
 }
 
 /* === STATS CARD POLYFILL === */
