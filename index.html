@@ -1688,6 +1688,7 @@ async function loadClanFromHistory(tag){
         mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+c.tag+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+c.tag+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+c.tag+'\')">SOLICITAR</button></div>';
         mh+='<div id="requestStatus_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
         mh+='</div></div>';
+        if(members.length>=3){mh+=renderClanAnalytics(members,c);}
         cr.innerHTML+=mh;
         return;
       }
@@ -4526,7 +4527,7 @@ async function importFromPubgclans(){
     if(statusEl){
       statusEl.innerHTML='<div style="color:var(--accent-green);font-size:.75rem;font-weight:600;">&#x2705; Clan ['+esc(data.tag)+'] '+esc(data.name)+' importado!</div>'+
         '<div style="font-size:.7rem;color:var(--text-secondary);margin-top:4px;">'+data.members+' miembros ('+data.activeMembers+' activos) · '+data.totalKills+' kills · K/D '+data.avgKd+' · Win Rate '+data.winRate+'%</div>'+
-        '<div style="margin-top:8px;"><a href="/clan/'+data.tag+'" style="color:var(--accent);font-size:.75rem;font-weight:600;text-decoration:none;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+data.tag+'\');showClanDetail(\''+data.tag+'\');">&#x27A1; VER CLAN EN EL RANKING</a></div>';
+        '<div style="margin-top:8px;"><a href="/clan/'+data.tag+'" style="color:var(--accent);font-size:.75rem;font-weight:600;text-decoration:none;" onclick="event.preventDefault();history.pushState(null,\'\',\'clan/'+data.tag+'\');loadClanPage(\''+data.tag+'\');">&#x27A1; VER CLAN EN EL RANKING</a></div>';
     }
     // Refresh leaderboard
     loadClanRanking();
