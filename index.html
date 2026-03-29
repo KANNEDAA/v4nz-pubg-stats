@@ -790,6 +790,17 @@ footer a { color: var(--accent); text-decoration: none; }
 .md-loot-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .md-loot-item { background:var(--bg-secondary); padding:4px 10px; border-radius:4px; font-size:.7rem; color:var(--text-secondary); border:1px solid var(--border); }
 .md-loot-item .loot-val { color:var(--accent); font-weight:600; margin-right:4px; }
+.badge-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; }
+.badge-card { text-align:center; padding:12px 6px; border-radius:12px; background:var(--bg-secondary); border:1px solid var(--border); transition:all .3s; position:relative; overflow:hidden; }
+.badge-card.unlocked { border-color:var(--accent); }
+.badge-card.unlocked::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--gradient-main); }
+.badge-card.locked { opacity:.35; filter:grayscale(1); }
+.badge-icon { font-size:1.6rem; margin-bottom:4px; }
+.badge-name { font-family:'Rajdhani',sans-serif; font-size:.65rem; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:.5px; line-height:1.2; }
+.badge-req { font-size:.55rem; color:var(--text-dim); margin-top:2px; }
+.badge-progress { width:80%; height:3px; margin:4px auto 0; background:var(--bg-card); border-radius:2px; overflow:hidden; }
+.badge-progress-fill { height:100%; border-radius:2px; transition:width .5s; }
+.badge-count { font-family:'Orbitron',sans-serif; font-size:.6rem; color:var(--accent); margin-top:6px; font-weight:700; }
 .kt-section { margin-top:20px; border-top:1px solid var(--border); padding-top:16px; }
 .kt-title { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
 .kt-tree { position:relative; padding-left:24px; }
@@ -1095,6 +1106,7 @@ footer a { color: var(--accent); text-decoration: none; }
   <div id="narrativeInsights"></div>
   <div class="personality-section" id="personalitySection"></div>
   <div id="evolutionSection" style="display:none;"></div>
+  <div id="badgesSection" style="display:none;"></div>
   <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><select id="seasonSelect" onchange="switchSeason(this.value)" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;margin-left:8px;display:none;"></select><span id="seasonDates" style="color:var(--text-dim);margin-left:8px;">Temporada actual</span></div>
   <div class="season-type-selector" id="seasonTypeSelector" style="display:none;margin-bottom:16px;"><button class="season-type-btn active" onclick="setSeasonType('season')">Temporada</button><button class="season-type-btn" onclick="setSeasonType('ranked')">Ranked</button><button class="season-type-btn" onclick="setSeasonType('lifetime')">Lifetime</button></div>
   <div class="tabs-container" id="tabsContainer">
@@ -2450,6 +2462,7 @@ async function searchPlayer(){
     // Save snapshot + load evolution chart
     savePlayerSnapshot().catch(e=>console.log('Snapshot save error:',e.message));
     loadEvolutionChart().catch(e=>console.log('Evolution chart error:',e.message));
+    try{renderBadges();}catch(e){console.log('Badges error:',e.message);}
   }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';document.getElementById('frequentTeammates').style.display='none';const prBtn=document.getElementById('pubgReportBtn');if(prBtn)prBtn.style.display='none';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
@@ -2502,17 +2515,17 @@ function switchTab(t){
   if(t==='overview'&&!currentPlayerData){showHomepageContent();const hero=document.getElementById('searchHero');if(hero)hero.scrollIntoView({behavior:'smooth'});}
   else{hideHomepageContent();}
 }
-function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
-function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();}
+function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
+function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
 async function setSeasonType(type){
   seasonTypeMode=type;document.querySelectorAll('.season-type-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(type.substring(0,3))));
-  if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();return;}
+  if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}return;}
   try{
     showLoading(true);setLoaderStep('Cargando datos de '+type+'...');
     if(type==='ranked'&&!currentRankedData){const rd=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+currentSeasonId+'/ranked');currentRankedData=rd;console.log('Ranked data loaded:',currentRankedData);}else if(type==='lifetime'&&!currentLifetimeData){const ld=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/lifetime');currentLifetimeData=ld;console.log('Lifetime data loaded:',currentLifetimeData);}
     const s=getActiveStats();
     if(!s.roundsPlayed){document.getElementById('overviewStats').innerHTML='<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px;"><p style="color:var(--text-secondary);font-size:.9rem;">No hay datos de '+(type==='ranked'?'Ranked':'Lifetime')+' para este modo. Prueba otro modo (Solo/Duo/Squad) o perspectiva (TPP/FPP).</p></div>';document.getElementById('funStatsGrid').innerHTML='';return;}
-    renderOverviewStats();renderFunStats();renderPersonality();
+    renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}
   }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
 }
 function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,12);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
@@ -3745,6 +3758,69 @@ async function shareAdnImage(){
       }
     },'image/png');
   }catch(e){console.error('Share ADN image error:',e);card.remove();sharePersonality(role);}
+}
+
+/* === BADGES / LOGROS === */
+const BADGE_CATALOG=[
+  // Kill milestones
+  {id:'k100',ic:'&#x1F52B;',name:'Primer Centenar',req:'100 kills',check:s=>s.kills>=100,progress:s=>Math.min(s.kills||0,100),max:100,col:'#00f0ff'},
+  {id:'k500',ic:'&#x1F525;',name:'Medio Millar',req:'500 kills',check:s=>s.kills>=500,progress:s=>Math.min(s.kills||0,500),max:500,col:'#ff6b00'},
+  {id:'k1000',ic:'&#x2694;&#xFE0F;',name:'Leyenda',req:'1000 kills',check:s=>s.kills>=1000,progress:s=>Math.min(s.kills||0,1000),max:1000,col:'#ff3355'},
+  {id:'k2500',ic:'&#x1F480;',name:'Imparable',req:'2500 kills',check:s=>s.kills>=2500,progress:s=>Math.min(s.kills||0,2500),max:2500,col:'#a855f7'},
+  // Win milestones
+  {id:'w1',ic:'&#x1F357;',name:'Primer Pollo',req:'1 victoria',check:s=>s.wins>=1,progress:s=>Math.min(s.wins||0,1),max:1,col:'#ffd700'},
+  {id:'w10',ic:'&#x1F3C6;',name:'Coleccionista',req:'10 victorias',check:s=>s.wins>=10,progress:s=>Math.min(s.wins||0,10),max:10,col:'#ffd700'},
+  {id:'w50',ic:'&#x1F451;',name:'Campeon',req:'50 victorias',check:s=>s.wins>=50,progress:s=>Math.min(s.wins||0,50),max:50,col:'#ffd700'},
+  // K/D milestones
+  {id:'kd1',ic:'&#x2696;&#xFE0F;',name:'Equilibrado',req:'K/D > 1.0',check:(s,kd)=>kd>=1,progress:(s,kd)=>Math.min(kd*100,100),max:100,col:'#00ff88'},
+  {id:'kd2',ic:'&#x1F4AA;',name:'Depredador',req:'K/D > 2.0',check:(s,kd)=>kd>=2,progress:(s,kd)=>Math.min(kd*50,100),max:100,col:'#ff6b00'},
+  {id:'kd3',ic:'&#x1F432;',name:'Monstruo',req:'K/D > 3.0',check:(s,kd)=>kd>=3,progress:(s,kd)=>Math.min(kd*33.3,100),max:100,col:'#ff3355'},
+  // Damage
+  {id:'ad200',ic:'&#x1F4A5;',name:'Danino',req:'Dano medio > 200',check:(s,kd,ad)=>ad>=200,progress:(s,kd,ad)=>Math.min(ad/2,100),max:100,col:'#ff6b00'},
+  {id:'ad400',ic:'&#x1F4A3;',name:'Devastador',req:'Dano medio > 400',check:(s,kd,ad)=>ad>=400,progress:(s,kd,ad)=>Math.min(ad/4,100),max:100,col:'#ff3355'},
+  // Headshots
+  {id:'hs20',ic:'&#x1F3AF;',name:'Buen Ojo',req:'HS% > 20%',check:(s,kd,ad,hs)=>hs>=20,progress:(s,kd,ad,hs)=>Math.min(hs*5,100),max:100,col:'#a855f7'},
+  {id:'hs35',ic:'&#x1FA78;',name:'Francotirador',req:'HS% > 35%',check:(s,kd,ad,hs)=>hs>=35,progress:(s,kd,ad,hs)=>Math.min(hs*2.85,100),max:100,col:'#a855f7'},
+  // Survival
+  {id:'t10',ic:'&#x1F6E1;&#xFE0F;',name:'Superviviente',req:'Top10 > 50%',check:s=>{const r=s.roundsPlayed?(s.top10s/s.roundsPlayed)*100:0;return r>=50;},progress:s=>{const r=s.roundsPlayed?(s.top10s/s.roundsPlayed)*100:0;return Math.min(r*2,100);},max:100,col:'#00ff88'},
+  {id:'wr15',ic:'&#x1F3C5;',name:'Winner',req:'Win Rate > 15%',check:s=>{const r=s.roundsPlayed?(s.wins/s.roundsPlayed)*100:0;return r>=15;},progress:s=>{const r=s.roundsPlayed?(s.wins/s.roundsPlayed)*100:0;return Math.min(r*6.66,100);},max:100,col:'#ffd700'},
+  // Distance
+  {id:'walk',ic:'&#x1F3C3;',name:'Maraton',req:'100km a pie',check:s=>(s.walkDistance||0)>=100000,progress:s=>Math.min((s.walkDistance||0)/1000,100),max:100,col:'#00f0ff'},
+  {id:'drive',ic:'&#x1F697;',name:'Piloto',req:'200km en vehiculo',check:s=>(s.rideDistance||0)>=200000,progress:s=>Math.min((s.rideDistance||0)/2000,100),max:100,col:'#ff6b00'},
+  // Fun
+  {id:'snipe',ic:'&#x1F52D;',name:'Sniper Elite',req:'Kill a +300m',check:s=>(s.longestKill||0)>=300,progress:s=>Math.min((s.longestKill||0)/3,100),max:100,col:'#a855f7'},
+  {id:'road',ic:'&#x1F3CE;&#xFE0F;',name:'Atropellador',req:'5 road kills',check:s=>(s.roadKills||0)>=5,progress:s=>Math.min((s.roadKills||0)*20,100),max:100,col:'#ff6b00'},
+  {id:'rev',ic:'&#x1FA7A;',name:'Medico',req:'20 revives',check:s=>(s.revives||0)>=20,progress:s=>Math.min((s.revives||0)*5,100),max:100,col:'#00ff88'},
+  {id:'rounds',ic:'&#x1F3AE;',name:'Veterano',req:'500 partidas',check:s=>(s.roundsPlayed||0)>=500,progress:s=>Math.min((s.roundsPlayed||0)/5,100),max:100,col:'#00f0ff'},
+  {id:'streak',ic:'&#x1F329;&#xFE0F;',name:'Racha Max',req:'Racha de 5+ kills',check:s=>(s.maxKillStreaks||0)>=5,progress:s=>Math.min((s.maxKillStreaks||0)*20,100),max:100,col:'#ff3355'},
+];
+function renderBadges(){
+  const sec=document.getElementById('badgesSection');if(!sec)return;
+  const s=getActiveStats();if(!s||!s.roundsPlayed){sec.style.display='none';return;}
+  const kd=parseFloat(calcKD(s))||0;
+  const ad=parseFloat(calcAvgDmg(s))||0;
+  const hs=parseFloat(calcHSRate(s))||0;
+  let unlocked=0;
+  const cards=BADGE_CATALOG.map(b=>{
+    const ok=b.check(s,kd,ad,hs);
+    if(ok)unlocked++;
+    const pct=Math.round(b.progress(s,kd,ad,hs));
+    return '<div class="badge-card '+(ok?'unlocked':'locked')+'" title="'+(ok?'Desbloqueado!':Math.round(pct)+'%')+'">'
+      +'<div class="badge-icon">'+b.ic+'</div>'
+      +'<div class="badge-name">'+b.name+'</div>'
+      +'<div class="badge-req">'+b.req+'</div>'
+      +(ok?'<div class="badge-count" style="color:'+b.col+';">&#x2713;</div>'
+        :'<div class="badge-progress"><div class="badge-progress-fill" style="width:'+pct+'%;background:'+b.col+';"></div></div>')
+      +'</div>';
+  });
+  sec.style.display='';
+  sec.innerHTML='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:16px;box-shadow:var(--shadow-card);">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+    +'<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);">&#x1F3C5; Logros</div>'
+    +'<div style="font-family:Orbitron,sans-serif;font-size:.75rem;font-weight:700;color:'+(unlocked>=BADGE_CATALOG.length?'var(--accent-yellow)':'var(--text-dim)')+';">'+unlocked+' / '+BADGE_CATALOG.length+'</div>'
+    +'</div>'
+    +'<div class="badge-grid">'+cards.join('')+'</div>'
+    +'</div>';
 }
 
 /* === MI EVOLUCION === */
