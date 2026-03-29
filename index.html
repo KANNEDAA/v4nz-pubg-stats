@@ -2672,7 +2672,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('searchInput').value='';
       document.getElementById('playerHeader').classList.remove('visible');
       document.getElementById('seasonBar').classList.remove('visible');
-      document.getElementById('tabsContainer').classList.remove('visible');
+      var tc=document.getElementById('tabsContainer');tc.classList.remove('visible');tc.style.display='none';
       document.getElementById('narrativeInsights').classList.remove('visible');
       document.getElementById('personalitySection').classList.remove('visible');
       document.getElementById('emptyState').style.display='block';
@@ -3038,31 +3038,79 @@ async function detectPlayerClan(){
   if(!currentPlayerData||!currentPlayerData.attributes)return;
   const clanId=currentPlayerData.attributes.clanId;
   if(!clanId){return;}
-  try{
-    // Fetch clan info from PUBG API
-    const cData=await apiGet(API_BASE+'/'+currentPlatform+'/clans/'+clanId);
-    if(!cData||!cData.data)return;
-    const attr=cData.data.attributes||{};
-    const tag=attr.clanTag||'???';
-    const name=attr.clanName||tag;
-    const level=attr.clanLevel||0;
-    const members=attr.clanMemberCount||0;
-    // Show clan badge in player header
-    badge.innerHTML='<a class="player-clan-badge" href="javascript:void(0)" onclick="switchTab(\'clans\');setTimeout(()=>{document.getElementById(\'clanSearchInput\')&&(document.getElementById(\'clanSearchInput\').value=\''+escJs(tag)+'\');searchClan();},200);">&#x1F6E1; ['+esc(tag)+'] '+esc(name)+'</a>';
+  const playerName=currentPlayerData.attributes.name;
+
+  // Helper to show badge
+  function showClanBadge(tag,name){
+    badge.innerHTML='<a class="player-clan-badge" href="javascript:void(0)" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+escJs(tag)+'\';searchClanByName();">&#x1F6E1; ['+esc(tag)+'] '+esc(name)+'</a>';
     badge.style.display='block';
-    // Auto-register clan in V4NZ if not already there
+  }
+
+  try{
+    // Strategy 1: Check if player is in any clan in our DB (NO API call needed)
+    var foundInDB=false;
     try{
-      const checkResp=await fetch('/clans/'+encodeURIComponent(tag));
-      if(checkResp.ok){
-        const existing=await checkResp.json();
-        if(existing&&existing.clan){console.log('Clan ['+tag+'] ya registrado en V4NZ');return;}
+      const searchResp=await fetch('/clans/search/'+encodeURIComponent(playerName));
+      if(searchResp.ok){
+        const sd=await searchResp.json();
+        // search endpoint looks for clans by tag/name, not player — try member lookup via clan_members
       }
-      // Not in DB — auto-import from pubgclans.net
-      console.log('Auto-registrando clan ['+tag+'] en V4NZ...');
-      const importResp=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,gameMode:'squad'})});
-      if(importResp.ok){console.log('Clan ['+tag+'] registrado exitosamente en V4NZ');}
-      else{console.log('No se pudo importar clan ['+tag+'] desde pubgclans.net');}
-    }catch(e){console.log('Auto-register clan error:',e.message);}
+    }catch(e){}
+
+    // Strategy 2: Check localStorage — myClan and clanHistory might have this player's clan
+    if(myClan&&myClan.tag){
+      // Check if this clan matches the clanId by trying our DB
+      try{
+        const dbResp=await fetch('/clans/'+encodeURIComponent(myClan.tag));
+        if(dbResp.ok){
+          const dbData=await dbResp.json();
+          if(dbData.members&&dbData.members.some(function(m){return m.player_name.toLowerCase()===playerName.toLowerCase();})){
+            showClanBadge(myClan.tag,myClan.name||myClan.tag);
+            foundInDB=true;
+          }
+        }
+      }catch(e){}
+    }
+    if(!foundInDB){
+      for(var i=0;i<clanHistory.length&&!foundInDB;i++){
+        var ch=clanHistory[i];
+        try{
+          const dbResp=await fetch('/clans/'+encodeURIComponent(ch.tag));
+          if(dbResp.ok){
+            const dbData=await dbResp.json();
+            if(dbData.members&&dbData.members.some(function(m){return m.player_name.toLowerCase()===playerName.toLowerCase();})){
+              showClanBadge(ch.tag,ch.name||ch.tag);
+              foundInDB=true;
+            }
+          }
+        }catch(e){}
+      }
+    }
+
+    // Strategy 3: Fallback — call PUBG API for clan info (may hit rate limit)
+    if(!foundInDB){
+      try{
+        const cData=await apiGet(API_BASE+'/'+currentPlatform+'/clans/'+clanId);
+        if(cData&&cData.data){
+          const attr=cData.data.attributes||{};
+          const tag=attr.clanTag||'???';
+          const name=attr.clanName||tag;
+          showClanBadge(tag,name);
+          // Auto-register clan in V4NZ if not already there
+          try{
+            const checkResp=await fetch('/clans/'+encodeURIComponent(tag));
+            if(checkResp.ok){
+              const existing=await checkResp.json();
+              if(existing&&existing.clan){console.log('Clan ['+tag+'] ya registrado en V4NZ');return;}
+            }
+            console.log('Auto-registrando clan ['+tag+'] en V4NZ...');
+            const importResp=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,gameMode:'squad'})});
+            if(importResp.ok){console.log('Clan ['+tag+'] registrado exitosamente en V4NZ');}
+            else{console.log('No se pudo importar clan ['+tag+'] desde pubgclans.net');}
+          }catch(e){console.log('Auto-register clan error:',e.message);}
+        }
+      }catch(e){console.log('Clan API fallback error:',e.message);}
+    }
   }catch(e){console.log('Clan detection error:',e.message);}
 }
 
