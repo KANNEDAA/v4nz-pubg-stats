@@ -1,22 +1,52 @@
 {
   "name": "V4NZ — PUBG Console Stats",
   "short_name": "V4NZ",
-  "description": "Estadísticas de PUBG en tiempo real para PlayStation y Xbox.",
+  "description": "Tracker de estadísticas PUBG para PlayStation y Xbox en español",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0b12",
   "theme_color": "#00f0ff",
   "orientation": "portrait-primary",
-  "categories": ["games", "utilities"],
   "lang": "es",
+  "categories": ["games", "entertainment"],
   "icons": [
-    {"src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any"},
-    {"src": "/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any"},
-    {"src": "/icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable"}
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "V4NZ PUBG Stats Tracker"
+    }
   ],
   "shortcuts": [
-    {"name": "Buscar Jugador", "url": "/"},
-    {"name": "Top 500", "url": "/#top500"},
-    {"name": "Clanes", "url": "/#clanes"}
+    {
+      "name": "Buscar Jugador",
+      "url": "/",
+      "description": "Buscar stats de un jugador PUBG"
+    },
+    {
+      "name": "Ranking Clanes",
+      "url": "/ranking",
+      "description": "Ver ranking de clanes PUBG"
+    },
+    {
+      "name": "Top 500",
+      "url": "/top500",
+      "description": "Top 500 leaderboard oficial"
+    }
   ]
 }

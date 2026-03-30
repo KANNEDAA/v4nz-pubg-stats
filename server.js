@@ -1576,11 +1576,12 @@ app.post('/auth/admin', rateLimit, (req, res) => {
   }
 });
 
-// Sitemap for SEO — dynamic with clan URLs
+// Sitemap for SEO — dynamic with clan URLs + popular players
 app.get('/sitemap.xml', async (req, res) => {
   res.set('Content-Type', 'application/xml');
   const today = new Date().toISOString().split('T')[0];
   let clanUrls = '';
+  let playerUrls = '';
   if (pool) {
     try {
       const { rows } = await pool.query('SELECT tag FROM clans WHERE active_members > 0 ORDER BY total_kills DESC LIMIT 500');
@@ -1588,15 +1589,27 @@ app.get('/sitemap.xml', async (req, res) => {
         clanUrls += `  <url><loc>https://www.v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
       });
     } catch(e) { console.error('Sitemap clan error:', e.message); }
+    try {
+      const { rows } = await pool.query(`
+        SELECT DISTINCT player_name, platform
+        FROM player_snapshots
+        WHERE created_at > NOW() - INTERVAL '90 days'
+        ORDER BY player_name
+        LIMIT 1000
+      `);
+      rows.forEach(r => {
+        playerUrls += `  <url><loc>https://www.v4nz.com/stats/${r.platform}/${encodeURIComponent(r.player_name)}</loc><changefreq>weekly</changefreq><priority>0.5</priority><lastmod>${today}</lastmod></url>\n`;
+      });
+    } catch(e) { console.error('Sitemap player error:', e.message); }
   }
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/comparar</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>
-${clanUrls}</urlset>`);
+  <url><loc>https://www.v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com/comparar</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>
+${clanUrls}${playerUrls}</urlset>`);
 });
 
 // Google Search Console verification

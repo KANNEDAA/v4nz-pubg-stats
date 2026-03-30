@@ -371,7 +371,7 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 /* EVOLUTION SECTION */
 .evo-section { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-top:16px; }
 .evo-title { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-.evo-chart { width:100%; height:180px; position:relative; }
+.evo-chart { width:100%; height:200px; position:relative; }
 .evo-chart canvas { width:100% !important; height:100% !important; }
 .evo-metrics { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-top:16px; }
 .evo-metric { text-align:center; padding:10px 8px; background:var(--bg-secondary); border-radius:10px; }
@@ -382,6 +382,10 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .evo-delta-down { color:var(--accent-red); }
 .evo-delta-same { color:var(--text-dim); }
 .evo-empty { text-align:center; padding:20px; color:var(--text-dim); font-size:.8rem; }
+.evo-toggles { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.evo-toggle { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); cursor:pointer; transition:all .2s; }
+.evo-toggle:hover { border-color:var(--tc,var(--accent)); color:var(--tc,var(--accent)); }
+.evo-toggle.active { background:var(--tc,var(--accent)); color:#000; border-color:var(--tc,var(--accent)); }
 /* HOMEPAGE CONTENT */
 .home-counters { display:flex; justify-content:center; gap:40px; margin:30px 0 28px; flex-wrap:wrap; }
 .home-counter { text-align:center; }
@@ -4313,6 +4317,8 @@ async function savePlayerSnapshot(){
   try{await fetch('/api/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
   catch(e){console.log('Snapshot save failed:',e.message);}
 }
+let _evoData=null; // stored for toggle redraws
+let _evoMetric='kd'; // current selected metric
 async function loadEvolutionChart(){
   const sec=document.getElementById('evolutionSection');if(!sec)return;
   const name=currentPlayerData?.attributes?.name;if(!name){sec.style.display='none';return;}
@@ -4326,69 +4332,89 @@ async function loadEvolutionChart(){
       sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div><div class="evo-empty">Vuelve la proxima semana para ver tu evolucion. V4NZ guarda tus stats cada vez que buscas tu perfil.</div></div>';
       return;
     }
+    _evoData={snaps};_evoMetric='kd';
     const latest=snaps[snaps.length-1];const prev=snaps[snaps.length-2];
     function delta(curr,old){const d=curr-old;return d>0?'+'+d.toFixed(2):d<0?d.toFixed(2):'='}
     function deltaClass(curr,old){return curr>old?'evo-delta-up':curr<old?'evo-delta-down':'evo-delta-same';}
-    // Build mini chart with canvas
-    const kdArr=snaps.map(s=>parseFloat(s.kd)||0);
-    const wrArr=snaps.map(s=>parseFloat(s.win_rate)||0);
-    const dmgArr=snaps.map(s=>parseFloat(s.avg_damage)||0);
-    const dates=snaps.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
-    let h='<div class="evo-section">';
-    h+='<div class="evo-title">&#x1F4C8; Mi Evolucion <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+snaps.length+' registros</span></div>';
-    h+='<div class="evo-chart"><canvas id="evoCanvas"></canvas></div>';
-    // Delta metrics
     const kdNow=parseFloat(latest.kd)||0,kdPrev=parseFloat(prev.kd)||0;
     const wrNow=parseFloat(latest.win_rate)||0,wrPrev=parseFloat(prev.win_rate)||0;
     const dmgNow=parseFloat(latest.avg_damage)||0,dmgPrev=parseFloat(prev.avg_damage)||0;
     const hsNow=parseFloat(latest.hs_rate)||0,hsPrev=parseFloat(prev.hs_rate)||0;
+    let h='<div class="evo-section">';
+    h+='<div class="evo-title">&#x1F4C8; Mi Evolucion <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+snaps.length+' registros</span></div>';
+    // Metric toggle buttons
+    h+='<div class="evo-toggles">';
+    h+='<button class="evo-toggle active" data-metric="kd" onclick="switchEvoMetric(\'kd\',this)" style="--tc:var(--accent);">K/D</button>';
+    h+='<button class="evo-toggle" data-metric="win_rate" onclick="switchEvoMetric(\'win_rate\',this)" style="--tc:var(--accent-yellow);">Win Rate</button>';
+    h+='<button class="evo-toggle" data-metric="avg_damage" onclick="switchEvoMetric(\'avg_damage\',this)" style="--tc:var(--accent-orange);">Avg DMG</button>';
+    h+='<button class="evo-toggle" data-metric="hs_rate" onclick="switchEvoMetric(\'hs_rate\',this)" style="--tc:var(--accent-purple);">HS%</button>';
+    h+='</div>';
+    h+='<div class="evo-chart"><canvas id="evoCanvas"></canvas></div>';
+    // Delta metrics
     h+='<div class="evo-metrics">';
-    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+kdNow.toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta '+deltaClass(kdNow,kdPrev)+'">'+delta(kdNow,kdPrev)+'</div></div>';
-    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta '+deltaClass(wrNow,wrPrev)+'">'+delta(wrNow,wrPrev)+'%</div></div>';
-    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(dmgNow)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta '+deltaClass(dmgNow,dmgPrev)+'">'+delta(dmgNow,dmgPrev)+'</div></div>';
-    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-purple);">'+hsNow.toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta '+deltaClass(hsNow,hsPrev)+'">'+delta(hsNow,hsPrev)+'%</div></div>';
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\'kd\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent);">'+kdNow.toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta '+deltaClass(kdNow,kdPrev)+'">'+delta(kdNow,kdPrev)+'</div></div>';
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\'win_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta '+deltaClass(wrNow,wrPrev)+'">'+delta(wrNow,wrPrev)+'%</div></div>';
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\'avg_damage\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(dmgNow)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta '+deltaClass(dmgNow,dmgPrev)+'">'+delta(dmgNow,dmgPrev)+'</div></div>';
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\'hs_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-purple);">'+hsNow.toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta '+deltaClass(hsNow,hsPrev)+'">'+delta(hsNow,hsPrev)+'%</div></div>';
     h+='</div></div>';
     sec.innerHTML=h;sec.style.display='block';
-    // Draw evolution chart on canvas
-    const cvs=document.getElementById('evoCanvas');
-    if(cvs&&kdArr.length>=2){
-      const dpr=window.devicePixelRatio||1;
-      const W=cvs.parentElement.clientWidth;const H=180;
-      cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
-      const ctx=cvs.getContext('2d');ctx.scale(dpr,dpr);
-      const pad={t:20,r:10,b:30,l:40};const cW=W-pad.l-pad.r;const cH=H-pad.t-pad.b;
-      function drawLine(arr,color,label){
-        const min=Math.min(...arr)*0.9;const max=Math.max(...arr)*1.1||1;
-        const range=max-min||1;
-        ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';
-        arr.forEach((v,i)=>{
-          const x=pad.l+(i/(arr.length-1))*cW;
-          const y=pad.t+cH-(((v-min)/range)*cH);
-          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-        });
-        ctx.stroke();
-        // Dots
-        arr.forEach((v,i)=>{
-          const x=pad.l+(i/(arr.length-1))*cW;
-          const y=pad.t+cH-(((v-min)/range)*cH);
-          ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
-        });
-        // Label
-        const lastY=pad.t+cH-(((arr[arr.length-1]-min)/range)*cH);
-        ctx.font='bold 10px Rajdhani,sans-serif';ctx.fillStyle=color;ctx.textAlign='left';
-        ctx.fillText(label+' '+arr[arr.length-1].toFixed(1),pad.l+cW+4,lastY+3);
-      }
-      // Grid lines
-      ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;
-      for(let i=0;i<=4;i++){const y=pad.t+(cH/4)*i;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();}
-      // X-axis labels (dates)
-      ctx.font='10px Rajdhani,sans-serif';ctx.fillStyle='#555';ctx.textAlign='center';
-      const step=Math.max(1,Math.floor(dates.length/6));
-      dates.forEach((d,i)=>{if(i%step===0||i===dates.length-1){const x=pad.l+(i/(dates.length-1))*cW;ctx.fillText(d,x,H-8);}});
-      // Draw K/D line (main metric)
-      drawLine(kdArr,'#00f0ff','K/D');
-    }
+    drawEvoChart();
   }catch(e){console.error('Evolution chart error:',e);sec.style.display='none';}
+}
+function switchEvoMetric(metric,btn){
+  _evoMetric=metric;
+  document.querySelectorAll('.evo-toggle').forEach(b=>{b.classList.remove('active');if(b.dataset.metric===metric)b.classList.add('active');});
+  drawEvoChart();
+}
+function drawEvoChart(){
+  if(!_evoData)return;
+  const snaps=_evoData.snaps;
+  const metricMap={kd:{color:'#00f0ff',label:'K/D',dec:2},win_rate:{color:'#ffd700',label:'Win%',dec:1},avg_damage:{color:'#ff6b00',label:'DMG',dec:0},hs_rate:{color:'#a855f7',label:'HS%',dec:1}};
+  const m=metricMap[_evoMetric]||metricMap.kd;
+  const arr=snaps.map(s=>parseFloat(s[_evoMetric])||0);
+  const dates=snaps.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
+  const cvs=document.getElementById('evoCanvas');
+  if(!cvs||arr.length<2)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=cvs.parentElement.clientWidth;const H=200;
+  cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
+  const ctx=cvs.getContext('2d');ctx.scale(dpr,dpr);
+  const pad={t:24,r:50,b:30,l:44};const cW=W-pad.l-pad.r;const cH=H-pad.t-pad.b;
+  // Clear
+  ctx.clearRect(0,0,W,H);
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;
+  const min=Math.min(...arr)*0.9;const max=Math.max(...arr)*1.1||1;const range=max-min||1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+(cH/4)*i;const val=max-((i/4)*range);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
+    ctx.fillStyle='#555';ctx.font='10px Rajdhani,sans-serif';ctx.textAlign='right';
+    ctx.fillText(val.toFixed(m.dec),pad.l-6,y+4);
+  }
+  // Fill gradient under line
+  ctx.beginPath();
+  arr.forEach((v,i)=>{const x=pad.l+(i/(arr.length-1))*cW;const y=pad.t+cH-(((v-min)/range)*cH);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+  ctx.lineTo(pad.l+cW,pad.t+cH);ctx.lineTo(pad.l,pad.t+cH);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);grad.addColorStop(0,m.color+'30');grad.addColorStop(1,m.color+'05');
+  ctx.fillStyle=grad;ctx.fill();
+  // Line
+  ctx.beginPath();ctx.strokeStyle=m.color;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';
+  arr.forEach((v,i)=>{const x=pad.l+(i/(arr.length-1))*cW;const y=pad.t+cH-(((v-min)/range)*cH);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+  ctx.stroke();
+  // Dots + value tooltips on last point
+  arr.forEach((v,i)=>{
+    const x=pad.l+(i/(arr.length-1))*cW;const y=pad.t+cH-(((v-min)/range)*cH);
+    ctx.beginPath();ctx.arc(x,y,i===arr.length-1?5:3,0,Math.PI*2);ctx.fillStyle=m.color;ctx.fill();
+    if(i===arr.length-1){ctx.fillStyle='#08080e';ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();}
+  });
+  // Last value label
+  const lastY=pad.t+cH-(((arr[arr.length-1]-min)/range)*cH);
+  ctx.font='bold 12px Orbitron,sans-serif';ctx.fillStyle=m.color;ctx.textAlign='left';
+  ctx.fillText(arr[arr.length-1].toFixed(m.dec),pad.l+cW+8,lastY+4);
+  // X-axis dates
+  ctx.font='10px Rajdhani,sans-serif';ctx.fillStyle='#555';ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(dates.length/7));
+  dates.forEach((d,i)=>{if(i%step===0||i===dates.length-1){const x=pad.l+(i/(dates.length-1))*cW;ctx.fillText(d,x,H-8);}});
 }
 
 /* === STATS CARD POLYFILL === */
