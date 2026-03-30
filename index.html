@@ -464,8 +464,8 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 /* STATS CARD MODAL */
 .card-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,.92); backdrop-filter:blur(8px); z-index:1001; justify-content:center; align-items:center; flex-direction:column; gap:16px; }
 .card-modal.active { display:flex; }
-.card-modal canvas { border-radius:12px; max-width:90vw; max-height:60vh; box-shadow:0 0 40px rgba(0,240,255,.2); }
-.card-modal-actions { display:flex; gap:12px; }
+.card-modal canvas { border-radius:12px; max-width:90vw; max-height:70vh; box-shadow:0 0 40px rgba(0,240,255,.2); }
+.card-modal-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; padding:0 16px; }
 .card-modal-btn { padding:12px 28px; border-radius:10px; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
 .card-modal-btn.primary { background:var(--gradient-main); color:#000; }
 .card-modal-btn.secondary { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
@@ -1385,10 +1385,11 @@ footer a { color: var(--accent); text-decoration: none; }
 <!-- STATS CARD MODAL -->
 <div class="card-modal" id="cardModal">
   <button class="card-modal-close" onclick="document.getElementById('cardModal').classList.remove('active');">&times;</button>
-  <canvas id="statsCardCanvas" width="600" height="400"></canvas>
+  <canvas id="statsCardCanvas" width="1080" height="1350"></canvas>
   <div class="card-modal-actions">
-    <button class="card-modal-btn primary" onclick="downloadStatsCard()">Descargar Imagen</button>
-    <button class="card-modal-btn secondary" onclick="shareStatsCard()">Compartir</button>
+    <button class="card-modal-btn primary" onclick="downloadStatsCard()">&#x1F4E5; Descargar PNG</button>
+    <button class="card-modal-btn primary" style="background:linear-gradient(135deg,#5865F2,#7289DA);" onclick="copyStatsCard()">&#x1F4CB; Copiar Imagen</button>
+    <button class="card-modal-btn secondary" onclick="shareStatsCard()">&#x1F517; Compartir</button>
     <button class="card-modal-btn secondary" onclick="document.getElementById('cardModal').classList.remove('active');">Cerrar</button>
   </div>
 </div>
@@ -4403,102 +4404,207 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
 
 function generateStatsCard(){
   const c=document.getElementById('statsCardCanvas');const ctx=c.getContext('2d');
-  c.width=800;c.height=480;const W=800,H=480;
+  const W=1080,H=1350;c.width=W;c.height=H;
   const s=getActiveStats();const n=currentPlayerData?.attributes?.name||'???';
+  const role=getPersonalityType?getPersonalityType():'';
+  const roleMap={'Francotirador':{ic:'\u{1F3AF}',col:'#a855f7'},'Depredador':{ic:'\u{1F525}',col:'#ff3355'},'Campeon':{ic:'\u{1F3C6}',col:'#ffd700'},'Medico de Combate':{ic:'\u{1FA7A}',col:'#00ff88'},'Piloto Loco':{ic:'\u{1F697}',col:'#ff6b00'},'Guerrero':{ic:'\u2694\uFE0F',col:'#00f0ff'},'Superviviente':{ic:'\u{1F9BE}',col:'#00ff88'},'Novato Prometedor':{ic:'\u{1F476}',col:'#00f0ff'}};
+  const rm=roleMap[role]||{ic:'\u2694\uFE0F',col:'#00f0ff'};
+  const dn=calcDnaScores(s);
 
-  /* Background */
-  const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#08080e');bg.addColorStop(.4,'#10101c');bg.addColorStop(1,'#08080e');
-  ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(0,0,W,H,16);ctx.fill();
+  /* ── Background ── */
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#06060c');bg.addColorStop(.3,'#0d0d18');bg.addColorStop(.7,'#0a0a14');bg.addColorStop(1,'#06060c');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
 
-  /* Top gradient line */
+  /* Ambient glows */
+  const g1=ctx.createRadialGradient(0,0,0,0,0,500);g1.addColorStop(0,rm.col+'18');g1.addColorStop(1,'transparent');ctx.fillStyle=g1;ctx.fillRect(0,0,500,500);
+  const g2=ctx.createRadialGradient(W,H,0,W,H,500);g2.addColorStop(0,'#ff6b0012');g2.addColorStop(1,'transparent');ctx.fillStyle=g2;ctx.fillRect(W-500,H-500,500,500);
+
+  /* Top gradient bar */
   const tg=ctx.createLinearGradient(0,0,W,0);tg.addColorStop(0,'#00f0ff');tg.addColorStop(.5,'#ff6b00');tg.addColorStop(1,'#a855f7');
-  ctx.fillStyle=tg;ctx.fillRect(0,0,W,3);
+  ctx.fillStyle=tg;ctx.fillRect(0,0,W,4);
 
-  /* Subtle corner glow */
-  const cg=ctx.createRadialGradient(0,0,0,0,0,300);cg.addColorStop(0,'rgba(0,240,255,0.06)');cg.addColorStop(1,'rgba(0,240,255,0)');
-  ctx.fillStyle=cg;ctx.fillRect(0,0,300,300);
+  /* Subtle grid pattern */
+  ctx.strokeStyle='rgba(255,255,255,0.015)';ctx.lineWidth=1;
+  for(let i=0;i<W;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+  for(let i=0;i<H;i+=40){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
 
-  /* Border */
-  ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(0,0,W,H,16);ctx.stroke();
+  /* ══════ HEADER SECTION ══════ */
+  const hY=36;
 
-  /* Avatar */
-  ctx.shadowColor='rgba(0,240,255,0.35)';ctx.shadowBlur=16;ctx.fillStyle='#00f0ff';ctx.beginPath();ctx.arc(50,50,26,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle='#08080e';ctx.font='bold 22px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(n.charAt(0).toUpperCase(),50,58);
+  /* V4NZ logo top-left */
+  ctx.fillStyle='#00f0ff';ctx.font='bold 28px Orbitron,sans-serif';ctx.textAlign='left';ctx.fillText('V4NZ',40,hY+28);
+  ctx.fillStyle='#4a4a6a';ctx.font='600 13px Rajdhani,sans-serif';ctx.fillText('PUBG CONSOLE STATS',40,hY+48);
 
-  /* Name */
-  ctx.fillStyle='#eaeaf2';ctx.font='bold 24px Orbitron,sans-serif';ctx.textAlign='left';ctx.fillText(n,88,48);
-
-  /* Platform + mode */
-  const plat=(currentPlatform==='psn'?'PlayStation':'Xbox')+' \u2022 '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase();
-  ctx.fillStyle='#6e6e8a';ctx.font='600 12px Rajdhani,sans-serif';ctx.fillText(plat,88,68);
-
-  /* Personality tag */
-  const pType=getPersonalityType?getPersonalityType():'';
-  if(pType){ctx.fillStyle='rgba(0,240,255,0.15)';ctx.beginPath();ctx.roundRect(88,74,ctx.measureText(pType.toUpperCase()).width+16,20,4);ctx.fill();ctx.fillStyle='#00f0ff';ctx.font='bold 10px Rajdhani,sans-serif';ctx.fillText(pType.toUpperCase(),96,88);}
+  /* Platform badge top-right */
+  const platText=(currentPlatform==='psn'?'PLAYSTATION':'XBOX')+' \u2022 '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase();
+  ctx.fillStyle='#13131e';ctx.beginPath();ctx.roundRect(W-320,hY+8,280,32,6);ctx.fill();ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.roundRect(W-320,hY+8,280,32,6);ctx.stroke();
+  ctx.fillStyle='#8888a0';ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';ctx.fillText(platText,W-180,hY+30);
 
   /* Divider */
-  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.moveTo(24,105);ctx.lineTo(W-24,105);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.moveTo(40,hY+66);ctx.lineTo(W-40,hY+66);ctx.stroke();
 
-  /* ---- Stats grid: LEFT side (4 cols x 2 rows) ---- */
+  /* ══════ PLAYER IDENTITY ══════ */
+  const pY=hY+90;
+
+  /* Avatar circle with glow */
+  ctx.save();ctx.shadowColor=rm.col+'88';ctx.shadowBlur=24;ctx.fillStyle=rm.col;ctx.beginPath();ctx.arc(90,pY+40,44,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.fillStyle='#08080e';ctx.font='bold 36px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(n.charAt(0).toUpperCase(),90,pY+52);
+
+  /* Player name */
+  ctx.fillStyle='#eaeaf2';ctx.font='bold 38px Orbitron,sans-serif';ctx.textAlign='left';ctx.fillText(n,155,pY+32);
+
+  /* Role badge */
+  if(role){
+    const roleText=rm.ic+' '+role.toUpperCase();
+    ctx.font='bold 16px Rajdhani,sans-serif';
+    const tw=ctx.measureText(roleText).width+24;
+    ctx.fillStyle=rm.col+'22';ctx.beginPath();ctx.roundRect(155,pY+44,tw,28,6);ctx.fill();
+    ctx.strokeStyle=rm.col+'66';ctx.beginPath();ctx.roundRect(155,pY+44,tw,28,6);ctx.stroke();
+    ctx.fillStyle=rm.col;ctx.font='bold 16px Rajdhani,sans-serif';ctx.textAlign='left';ctx.fillText(roleText,167,pY+63);
+  }
+
+  /* ══════ MAIN STATS GRID (2 rows x 4 cols) ══════ */
+  const gY=pY+110;
   const gridStats=[
     {l:'K/D RATIO',v:calcKD(s),c:'#00f0ff'},{l:'VICTORIAS',v:''+(s.wins||0),c:'#ffd700'},
     {l:'KILLS',v:''+(s.kills||0),c:'#ff3355'},{l:'DANO MEDIO',v:calcAvgDmg(s),c:'#ff6b00'},
     {l:'WIN RATE',v:calcWinRate(s)+'%',c:'#00ff88'},{l:'HEADSHOT %',v:calcHSRate(s)+'%',c:'#a855f7'},
-    {l:'TOP 10 %',v:calcTop10Rate(s)+'%',c:'#00ff88'},{l:'PARTIDAS',v:''+(s.roundsPlayed||0),c:'#8888a0'}
+    {l:'TOP 10 %',v:calcTop10Rate(s)+'%',c:'#00e5ff'},{l:'PARTIDAS',v:''+(s.roundsPlayed||0),c:'#8888a0'}
   ];
-  const cols=4,cw=125,ch=72,sx=24,sy=118;
+  const cols=4,cw=240,ch=100,pad=20;
   gridStats.forEach((st,i)=>{
     const col=i%cols,row=Math.floor(i/cols);
-    const x=sx+col*cw,y=sy+row*(ch+10);
-    ctx.fillStyle='#13131e';ctx.beginPath();ctx.roundRect(x,y,cw-8,ch,8);ctx.fill();
-    ctx.fillStyle=st.c;ctx.fillRect(x,y+4,2.5,ch-8);
-    ctx.strokeStyle='#1e1e2e';ctx.beginPath();ctx.roundRect(x,y,cw-8,ch,8);ctx.stroke();
-    ctx.fillStyle=st.c;ctx.font='bold 24px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(st.v,x+(cw-8)/2,y+35);
-    ctx.fillStyle='#6e6e8a';ctx.font='bold 10px Rajdhani,sans-serif';ctx.fillText(st.l,x+(cw-8)/2,y+55);
+    const x=40+col*(cw+pad),y=gY+row*(ch+pad);
+    /* Card bg */
+    ctx.fillStyle='#0f0f1a';ctx.beginPath();ctx.roundRect(x,y,cw,ch,10);ctx.fill();
+    ctx.strokeStyle='#1a1a2e';ctx.beginPath();ctx.roundRect(x,y,cw,ch,10);ctx.stroke();
+    /* Accent left bar */
+    ctx.fillStyle=st.c;ctx.beginPath();ctx.roundRect(x,y+8,3,ch-16,2);ctx.fill();
+    /* Value */
+    ctx.fillStyle=st.c;ctx.font='bold 34px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(st.v,x+cw/2,y+48);
+    /* Label */
+    ctx.fillStyle='#5a5a78';ctx.font='bold 13px Rajdhani,sans-serif';ctx.fillText(st.l,x+cw/2,y+75);
   });
 
-  /* ---- Mini Radar: RIGHT side ---- */
-  const radarCx=640,radarCy=180,radarR=65,rn=6;
-  const radarLabels=['K/D','Win%','Dano','HS%','Top10%','Surv'];
-  const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),ad=parseFloat(calcAvgDmg(s)),hs=parseFloat(calcHSRate(s)),t10=parseFloat(calcTop10Rate(s));
-  const surv=s.roundsPlayed?(s.timeSurvived/s.roundsPlayed/60):0;
-  const radarVals=[Math.min(kd/3,1),Math.min(wr/25,1),Math.min(ad/400,1),Math.min(hs/30,1),Math.min(t10/50,1),Math.min(surv/20,1)];
-  const rStep=Math.PI*2/rn,rStart=-Math.PI/2;
-  /* Rings */
-  for(let r=1;r<=3;r++){const rr=radarR*(r/3);ctx.beginPath();for(let i=0;i<=rn;i++){const a=rStart+rStep*i;ctx.lineTo(radarCx+Math.cos(a)*rr,radarCy+Math.sin(a)*rr);}ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();}
+  /* ══════ DNA RADAR (left side) ══════ */
+  const radarY=gY+2*(ch+pad)+40;
+  const radarCx=260,radarCy=radarY+140,radarR=120;
+
+  /* Section title */
+  ctx.fillStyle='#eaeaf2';ctx.font='bold 20px Rajdhani,sans-serif';ctx.textAlign='left';ctx.fillText('ADN DEL JUGADOR',40,radarY-10);
+  ctx.fillStyle=rm.col;ctx.font='bold 16px Rajdhani,sans-serif';ctx.fillText(role.toUpperCase(),270,radarY-10);
+
+  /* Radar bg circle subtle */
+  ctx.fillStyle='rgba(255,255,255,0.015)';ctx.beginPath();ctx.arc(radarCx,radarCy,radarR+20,0,Math.PI*2);ctx.fill();
+
+  const rn=5,rStart=-Math.PI/2,rStep=Math.PI*2/rn;
+  const radarLabels=['AGR','PRE','SUP','MOV','SOP'];
+  const radarVals=[dn.agresividad/100,dn.precision/100,dn.supervivencia/100,dn.movilidad/100,dn.soporte/100];
+
+  /* Grid rings */
+  for(let r=1;r<=4;r++){const rr=radarR*(r/4);ctx.beginPath();for(let i=0;i<=rn;i++){const a=rStart+rStep*(i%rn);ctx.lineTo(radarCx+Math.cos(a)*rr,radarCy+Math.sin(a)*rr);}ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke();}
+  /* Spokes */
+  for(let i=0;i<rn;i++){const a=rStart+rStep*i;ctx.beginPath();ctx.moveTo(radarCx,radarCy);ctx.lineTo(radarCx+Math.cos(a)*radarR,radarCy+Math.sin(a)*radarR);ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.stroke();}
   /* Data polygon */
-  ctx.beginPath();for(let i=0;i<=rn;i++){const idx=i%rn;const a=rStart+rStep*idx;const r=radarR*Math.max(radarVals[idx],0.08);ctx.lineTo(radarCx+Math.cos(a)*r,radarCy+Math.sin(a)*r);}
-  ctx.closePath();ctx.fillStyle='rgba(0,240,255,0.15)';ctx.fill();ctx.strokeStyle='rgba(0,240,255,0.6)';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();for(let i=0;i<=rn;i++){const idx=i%rn;const a=rStart+rStep*idx;const rv=radarR*Math.max(radarVals[idx],0.08);ctx.lineTo(radarCx+Math.cos(a)*rv,radarCy+Math.sin(a)*rv);}
+  ctx.closePath();ctx.fillStyle=rm.col+'25';ctx.fill();ctx.strokeStyle=rm.col;ctx.lineWidth=2.5;ctx.stroke();
   /* Dots + labels */
-  ctx.font='600 9px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  for(let i=0;i<rn;i++){const a=rStart+rStep*i;const r=radarR*Math.max(radarVals[i],0.08);ctx.beginPath();ctx.arc(radarCx+Math.cos(a)*r,radarCy+Math.sin(a)*r,3,0,Math.PI*2);ctx.fillStyle='#00f0ff';ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.fillText(radarLabels[i],radarCx+Math.cos(a)*(radarR+14),radarCy+Math.sin(a)*(radarR+14));}
+  ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<rn;i++){const a=rStart+rStep*i;const rv=radarR*Math.max(radarVals[i],0.08);
+    ctx.beginPath();ctx.arc(radarCx+Math.cos(a)*rv,radarCy+Math.sin(a)*rv,4,0,Math.PI*2);ctx.fillStyle=rm.col;ctx.fill();
+    ctx.fillStyle='#aaaacc';ctx.fillText(radarLabels[i],radarCx+Math.cos(a)*(radarR+22),radarCy+Math.sin(a)*(radarR+22));}
+  ctx.textBaseline='alphabetic';
 
-  /* ---- Extra stats below radar ---- */
-  const extraY=270;
-  const extras=[{l:'KNOCKS',v:''+(s.DBNOs||0)},{l:'ASSISTS',v:''+(s.assists||0)},{l:'REVIVES',v:''+(s.revives||0)},{l:'KILL LEJANO',v:Math.round(s.longestKill||0)+'m'}];
-  extras.forEach((e,i)=>{const x=520+i%2*130,y=extraY+Math.floor(i/2)*50;
-    ctx.fillStyle='#6e6e8a';ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';ctx.fillText(e.l,x+50,y);
-    ctx.fillStyle='#eaeaf2';ctx.font='bold 18px Orbitron,sans-serif';ctx.fillText(e.v,x+50,y+20);});
+  /* ══════ DNA BARS (right side) ══════ */
+  const barX=520,barY=radarY+10,barW=480,barH=22,barGap=50;
+  const bars=[
+    {l:'Agresividad',v:dn.agresividad,c:'#ff3355'},
+    {l:'Precision',v:dn.precision,c:'#a855f7'},
+    {l:'Supervivencia',v:dn.supervivencia,c:'#00ff88'},
+    {l:'Movilidad',v:dn.movilidad,c:'#ff6b00'},
+    {l:'Soporte',v:dn.soporte,c:'#00f0ff'}
+  ];
+  bars.forEach((b,i)=>{
+    const y=barY+i*barGap;
+    ctx.fillStyle='#aaaacc';ctx.font='bold 14px Rajdhani,sans-serif';ctx.textAlign='left';ctx.fillText(b.l.toUpperCase(),barX,y);
+    /* Track */
+    ctx.fillStyle='#13131e';ctx.beginPath();ctx.roundRect(barX,y+6,barW,barH,4);ctx.fill();
+    /* Fill */
+    const fillW=Math.max(barW*(b.v/100),4);
+    const bGrad=ctx.createLinearGradient(barX,0,barX+fillW,0);bGrad.addColorStop(0,b.c+'44');bGrad.addColorStop(1,b.c);
+    ctx.fillStyle=bGrad;ctx.beginPath();ctx.roundRect(barX,y+6,fillW,barH,4);ctx.fill();
+    /* Value */
+    ctx.fillStyle=b.c;ctx.font='bold 16px Orbitron,sans-serif';ctx.textAlign='right';ctx.fillText(b.v,barX+barW+45,y+24);
+  });
 
-  /* ---- Rank badge (if ranked data available) ---- */
+  /* ══════ EXTRA STATS ROW ══════ */
+  const exY=radarY+310;
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.moveTo(40,exY);ctx.lineTo(W-40,exY);ctx.stroke();
+  const extras=[
+    {l:'KNOCKS',v:''+(s.DBNOs||0)},{l:'ASSISTS',v:''+(s.assists||0)},
+    {l:'REVIVES',v:''+(s.revives||0)},{l:'KILL LEJANO',v:Math.round(s.longestKill||0)+'m'},
+    {l:'TIEMPO/PARTIDA',v:s.roundsPlayed?Math.round(s.timeSurvived/s.roundsPlayed/60)+'m':'0m'},
+    {l:'BOOSTS',v:''+(s.boosts||0)}
+  ];
+  const exCols=6,exCw=W/exCols;
+  extras.forEach((e,i)=>{
+    const x=i*exCw+exCw/2;
+    ctx.fillStyle='#eaeaf2';ctx.font='bold 26px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(e.v,x,exY+42);
+    ctx.fillStyle='#5a5a78';ctx.font='bold 11px Rajdhani,sans-serif';ctx.fillText(e.l,x,exY+62);
+  });
+
+  /* ══════ W/L LAST MATCHES GRID ══════ */
+  const wlY=exY+90;
+  ctx.fillStyle='#eaeaf2';ctx.font='bold 18px Rajdhani,sans-serif';ctx.textAlign='left';ctx.fillText('ULTIMAS PARTIDAS',40,wlY);
+  if(currentMatchData&&currentMatchData.length){
+    const pn=n.toLowerCase();const cellSize=36,cellGap=6,maxCells=Math.min(currentMatchData.length,20);
+    const gridX=40;
+    for(let i=0;i<maxCells;i++){
+      const match=currentMatchData[i];if(!match)continue;
+      const pp=(match.included||[]).find(it=>it.type==='participant'&&it.attributes.stats.name.toLowerCase()===pn);
+      if(!pp)continue;
+      const pl=pp.attributes.stats.winPlace;
+      let color='#ff335580',border='#ff335544',text='#'+pl;
+      if(pl===1){color='#00ff8866';border='#00ff8844';text='W';}
+      else if(pl<=10){color='#ffd70044';border='#ffd70033';text='#'+pl;}
+      const cx=gridX+i*(cellSize+cellGap),cy=wlY+14;
+      ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(cx,cy,cellSize,cellSize,6);ctx.fill();
+      ctx.strokeStyle=border;ctx.beginPath();ctx.roundRect(cx,cy,cellSize,cellSize,6);ctx.stroke();
+      ctx.fillStyle='#eaeaf2';ctx.font='bold 13px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText(text,cx+cellSize/2,cy+cellSize/2+5);
+    }
+    /* Legend */
+    const legY=wlY+60;
+    [{c:'#00ff8866',t:'Victoria'},{c:'#ffd70044',t:'Top 10'},{c:'#ff335580',t:'Derrota'}].forEach((l,i)=>{
+      const lx=40+i*140;
+      ctx.fillStyle=l.c;ctx.beginPath();ctx.roundRect(lx,legY,12,12,3);ctx.fill();
+      ctx.fillStyle='#6e6e8a';ctx.font='600 12px Rajdhani,sans-serif';ctx.textAlign='left';ctx.fillText(l.t,lx+18,legY+11);
+    });
+  }
+
+  /* ══════ RANK BADGE (if available) ══════ */
   if(currentRankedData&&currentRankedData.data&&currentRankedData.data.attributes){
     const rAttr=currentRankedData.data.attributes;const rMode=rAttr.rankedGameModeStats&&(rAttr.rankedGameModeStats['squad']||rAttr.rankedGameModeStats['squad-fpp']);
     if(rMode&&rMode.currentTier&&rMode.currentTier.tier!=='Unranked'){
       const tier=rMode.currentTier.tier;const sub=rMode.currentTier.subTier;const rp=rMode.currentRankPoint||0;
-      ctx.fillStyle='#13131e';ctx.beginPath();ctx.roundRect(520,380,260,50,8);ctx.fill();ctx.strokeStyle='#2a2a3a';ctx.beginPath();ctx.roundRect(520,380,260,50,8);ctx.stroke();
-      ctx.fillStyle='#ffd700';ctx.font='bold 14px Orbitron,sans-serif';ctx.textAlign='left';ctx.fillText(tier+' '+sub,536,402);
-      ctx.fillStyle='#6e6e8a';ctx.font='600 11px Rajdhani,sans-serif';ctx.fillText(rp+' RP',536,420);
+      const rbX=W-320,rbY=wlY-10;
+      ctx.fillStyle='#0f0f1a';ctx.beginPath();ctx.roundRect(rbX,rbY,280,60,10);ctx.fill();
+      ctx.strokeStyle='#ffd70033';ctx.beginPath();ctx.roundRect(rbX,rbY,280,60,10);ctx.stroke();
+      ctx.fillStyle='#ffd700';ctx.font='bold 20px Orbitron,sans-serif';ctx.textAlign='left';ctx.fillText(tier+' '+sub,rbX+20,rbY+28);
+      ctx.fillStyle='#8888a0';ctx.font='bold 14px Rajdhani,sans-serif';ctx.fillText(rp+' RP',rbX+20,rbY+48);
+      ctx.fillStyle='#ffd70044';ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='right';ctx.fillText('RANKED',rbX+260,rbY+28);
     }
   }
 
-  /* ---- Footer ---- */
-  ctx.fillStyle='#3a3a50';ctx.font='600 11px Rajdhani,sans-serif';ctx.textAlign='center';
-  ctx.fillText('V4NZ.COM \u2014 PUBG Console Stats Tracker \u2014 Datos de PUBG Official API',W/2,H-20);
-  ctx.fillStyle='#00f0ff';ctx.font='bold 14px Orbitron,sans-serif';ctx.fillText('V4NZ',W/2,H-38);
+  /* ══════ FOOTER ══════ */
+  const fY=H-80;
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.moveTo(40,fY);ctx.lineTo(W-40,fY);ctx.stroke();
+  /* V4NZ branding */
+  ctx.fillStyle='#00f0ff';ctx.font='bold 22px Orbitron,sans-serif';ctx.textAlign='center';ctx.fillText('V4NZ.COM',W/2,fY+35);
+  ctx.fillStyle='#4a4a6a';ctx.font='600 13px Rajdhani,sans-serif';
+  ctx.fillText('PUBG Console Stats Tracker \u2014 Datos en tiempo real de PUBG Official API',W/2,fY+55);
 
-  /* Bottom gradient line */
-  ctx.fillStyle=tg;ctx.fillRect(0,H-3,W,3);
+  /* Bottom gradient bar */
+  ctx.fillStyle=tg;ctx.fillRect(0,H-4,W,4);
 
   document.getElementById('cardModal').classList.add('active');
 }
@@ -4506,6 +4612,17 @@ function downloadStatsCard(){
   const c=document.getElementById('statsCardCanvas');
   const a=document.createElement('a');a.download=(currentPlayerData?.attributes?.name||'stats')+'_v4nz.png';
   a.href=c.toDataURL('image/png');a.click();
+}
+async function copyStatsCard(){
+  const c=document.getElementById('statsCardCanvas');
+  try{
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+    if(blob&&navigator.clipboard&&navigator.clipboard.write){
+      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+      const btn=document.querySelector('.card-modal-btn[onclick*="copyStatsCard"]');
+      if(btn){const orig=btn.innerHTML;btn.innerHTML='\u2705 Copiada!';btn.style.opacity='.85';setTimeout(()=>{btn.innerHTML=orig;btn.style.opacity='1';},2000);}
+    }else{downloadStatsCard();}
+  }catch(e){downloadStatsCard();}
 }
 async function shareStatsCard(){
   const c=document.getElementById('statsCardCanvas');
