@@ -21,7 +21,7 @@ const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
-const JWT_SECRET = process.env.JWT_SECRET || 'v4nz_secret_' + Math.random().toString(36).slice(2);
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://v4nz.com/auth/discord/callback';
@@ -307,7 +307,7 @@ app.get('/clans/evolution/:tag', async (req, res) => {
        FROM clan_snapshots WHERE clan_tag = $1 ORDER BY created_at ASC LIMIT 100`, [tag]
     );
     res.json({ snapshots: rows });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('[clan-evolution]', e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // GET /clans/transfers/:tag — Player transfers in/out of clan
@@ -321,7 +321,7 @@ app.get('/clans/transfers/:tag', async (req, res) => {
        ORDER BY detected_at DESC LIMIT 50`, [tag]
     );
     res.json({ transfers: rows });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('[clan-transfers]', e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // GET /clans/:tag — Get clan detail with members
@@ -402,7 +402,7 @@ app.post('/clans/register', rateLimit, async (req, res) => {
 
 // ═══ MEMBER REQUEST SYSTEM ═══
 // POST /clans/request-member — Auto-add if player exists in PUBG API, otherwise queue for admin
-app.post('/clans/request-member', async (req, res) => {
+app.post('/clans/request-member', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
 
   try {
@@ -869,7 +869,7 @@ app.post('/clans/discover-members', requireAdmin, async (req, res) => {
 });
 
 // ═══ CLAN FEED — Recent activity of clan members ═══
-app.get('/clans/:tag/feed', async (req, res) => {
+app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
   if (!pool || !SERVER_API_KEY) return res.status(503).json({ error: 'Servicio no disponible' });
   const tag = req.params.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '');
   try {
@@ -1038,7 +1038,7 @@ function requireAdmin(req, res, next) {
 }
 
 function generateToken(user) {
-  return jwt.sign({ id: user.id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id: user.id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 // POST /auth/register — Email + password registration
@@ -1500,7 +1500,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
     res.json(result);
   } catch(err) {
     console.error('[bot-index]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error al analizar bots' });
   }
 });
 
@@ -1534,7 +1534,7 @@ app.get('/api/pubg-report/:accountId', async (req, res) => {
     res.json({ clips, total: Object.keys(clips).length, raw_format: Array.isArray(data) ? 'array' : typeof data });
   } catch (e) {
     console.error('PUBG Report proxy error:', e.message);
-    res.status(502).json({ error: 'Failed to reach pubg.report', detail: e.message });
+    console.error('[pubg-report]', e.message); res.status(502).json({ error: 'Servicio no disponible' });
   }
 });
 
@@ -1672,10 +1672,16 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 app.post('/auth/admin', rateLimit, (req, res) => {
   if (!ADMIN_PASSWORD) return res.status(503).json({ error: 'Admin no configurado' });
   const { password } = req.body;
-  if (password && password === ADMIN_PASSWORD) {
-    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+  if (!password || typeof password !== 'string') return res.status(401).json({ error: 'Contraseña incorrecta' });
+  // Timing-safe comparison to prevent timing attacks
+  const a = Buffer.from(password.padEnd(64, '\0'));
+  const b = Buffer.from(ADMIN_PASSWORD.padEnd(64, '\0'));
+  if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
+    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '4h' });
+    console.log('[admin] Login exitoso desde', req.ip);
     res.json({ ok: true, token });
   } else {
+    console.warn('[admin] Intento fallido desde', req.ip);
     res.status(401).json({ error: 'Contraseña incorrecta' });
   }
 });

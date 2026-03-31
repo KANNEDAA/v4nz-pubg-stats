@@ -1662,7 +1662,7 @@ footer a { color: var(--accent); text-decoration: none; }
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb" crossorigin="anonymous"></script>
 <script>
 // THEME TOGGLE
 function toggleTheme(){
@@ -1984,7 +1984,7 @@ async function loadClanFromHistory(tag){
         let mh='<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:12px;border:1px solid rgba(0,240,255,0.15);">';
         mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
         mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">'+members.length+' Miembros del Clan</div>';
-        mh+='<button onclick="refreshClanStats(\''+c.tag+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar Stats</button>';
+        mh+='<button onclick="refreshClanStats(\''+escJs(c.tag)+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar Stats</button>';
         mh+='</div>';
         mh+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;text-align:center;">';
         mh+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.8rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);">KILLS</div></div>';
@@ -2014,7 +2014,7 @@ async function loadClanFromHistory(tag){
         mh+='</div>';
         mh+='<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">';
         mh+='<div style="font-size:.72rem;color:var(--text-dim);margin-bottom:8px;">&#x2753; Falta alguien? Solicita anadir un jugador al clan:</div>';
-        mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+c.tag+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+c.tag+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+c.tag+'\')">SOLICITAR</button></div>';
+        mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+esc(c.tag)+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+escJs(c.tag)+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+escJs(c.tag)+'\')">SOLICITAR</button></div>';
         mh+='<div id="requestStatus_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
         mh+='</div></div>';
         if(members.length>=3){mh+=renderClanIntelligence(members,c);}
@@ -2838,10 +2838,10 @@ async function loadHomepageContent(){
     if(topEl&&topRes.length){
       const posClass=i=>i===0?'gold':i===1?'silver':i===2?'bronze':'';
       topEl.innerHTML=topRes.map((c,i)=>
-        '<div class="home-clan-row" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+c.tag+'\';searchClanByName();">'+
+        '<div class="home-clan-row" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+escJs(c.tag)+'\';searchClanByName();">'+
         '<span class="home-clan-pos '+posClass(i)+'">'+(i+1)+'</span>'+
-        '<span class="home-clan-tag">'+c.tag+'</span>'+
-        '<span class="home-clan-name">'+(c.name||'')+'</span>'+
+        '<span class="home-clan-tag">'+esc(c.tag)+'</span>'+
+        '<span class="home-clan-name">'+esc(c.name||'')+'</span>'+
         '<span class="home-clan-stat">'+fmtNum(c.total_kills||0)+' kills</span>'+
         '</div>'
       ).join('');
@@ -2851,9 +2851,9 @@ async function loadHomepageContent(){
     if(recEl&&recentRes.length){
       recEl.innerHTML=recentRes.map(c=>{
         const ago=c.created_at?getTimeAgoMatch(new Date(c.created_at)):'';
-        return '<div class="home-clan-row" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+c.tag+'\';searchClanByName();">'+
-        '<span class="home-clan-tag">'+c.tag+'</span>'+
-        '<span class="home-clan-name">'+(c.name||'')+'</span>'+
+        return '<div class="home-clan-row" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+escJs(c.tag)+'\';searchClanByName();">'+
+        '<span class="home-clan-tag">'+esc(c.tag)+'</span>'+
+        '<span class="home-clan-name">'+esc(c.name||'')+'</span>'+
         '<span class="home-clan-new">'+(ago?ago:'nuevo')+'</span>'+
         '</div>';
       }).join('');
@@ -5823,7 +5823,7 @@ async function searchClan(){
           mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
           mh+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">'+members.length+' Miembros del Clan</div>';
           mh+='<div style="display:flex;gap:8px;align-items:center;">';
-          mh+='<button onclick="refreshClanStats(\''+c.tag+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar</button>';
+          mh+='<button onclick="refreshClanStats(\''+escJs(c.tag)+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar</button>';
           mh+='<a href="/clan/'+c.tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.preventDefault();history.pushState(null,\'\',\'/clan/'+c.tag+'\');loadClanPage(\''+c.tag+'\');">Ver pagina &#x2192;</a>';
           mh+='</div></div>';
           // Stats summary
@@ -5857,7 +5857,7 @@ async function searchClan(){
           // Request to add player section
           mh+='<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">';
           mh+='<div style="font-size:.72rem;color:var(--text-dim);margin-bottom:8px;">&#x2753; Falta alguien? Solicita anadir un jugador al clan:</div>';
-          mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+c.tag+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+c.tag+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+c.tag+'\')">SOLICITAR</button></div>';
+          mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+esc(c.tag)+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+escJs(c.tag)+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+escJs(c.tag)+'\')">SOLICITAR</button></div>';
           mh+='<div id="requestStatus_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
           mh+='</div>';
           mh+='</div>';
@@ -5921,7 +5921,7 @@ async function searchClan(){
                 // Add player manually section
                 mh+='<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">';
                 mh+='<div style="font-size:.72rem;color:var(--text-dim);margin-bottom:8px;">&#x2753; Falta alguien? Escribe su gamertag para añadirlo:</div>';
-                mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+c.tag+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+c.tag+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+c.tag+'\')">AÑADIR</button></div>';
+                mh+='<div style="display:flex;gap:8px;"><input id="requestPlayerInput_'+esc(c.tag)+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayer(\''+escJs(c.tag)+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayer(\''+escJs(c.tag)+'\')">AÑADIR</button></div>';
                 mh+='<div id="requestStatus_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
                 mh+='</div>';
                 mh+='</div>';
