@@ -220,10 +220,12 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 
 /* MAIN */
 .main-content { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px 2rem 4rem; }
-.player-header { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 34px; margin-bottom: 28px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); }
-.player-header.visible { display: flex; align-items: center; gap: 24px; }
+.player-header { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 22px 28px; margin-bottom: 20px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); }
+.player-header.visible { display: flex; flex-direction: column; gap: 14px; }
 .player-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gradient-main); }
 .player-header::after { content: ''; position: absolute; top: 0; right: 0; width: 300px; height: 100%; background: radial-gradient(ellipse at 100% 0%, rgba(0,240,255,0.04) 0%, transparent 70%); pointer-events: none; }
+.player-header-row1 { display: flex; align-items: center; gap: 16px; }
+.player-header-row2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
 .player-avatar { width: 72px; height: 72px; border-radius: 16px; background: var(--accent-dim); border: 2px solid rgba(0,240,255,0.3); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); flex-shrink: 0; }
 .player-info h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
 .platform-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; font-family: 'Rajdhani', sans-serif; }
@@ -233,15 +235,15 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .bot-badge-label { font-size:.6rem; color:var(--text-dim); letter-spacing:.08em; text-transform:uppercase; font-family:Rajdhani,sans-serif; }
 .player-clan-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.25); color:var(--accent-orange); padding:4px 12px; border-radius:20px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-top:6px; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:all .2s; text-decoration:none; }
 .player-clan-badge:hover { background:rgba(255,107,0,0.2); border-color:rgba(255,107,0,0.4); }
-.player-quick-stats { margin-left: auto; display: flex; gap: 20px; }
-.quick-stat { text-align: center; padding: 8px 16px; background: var(--bg-secondary); border-radius: 12px; min-width: 80px; }
-.quick-stat .value { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--accent); line-height: 1.1; }
-.quick-stat .label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-.quick-stat:first-child .value { font-size: 2.2rem; color: var(--accent); }
+.player-quick-stats { display: flex; gap: 10px; }
+.quick-stat { text-align: center; padding: 6px 14px; background: var(--bg-secondary); border-radius: 10px; min-width: 65px; }
+.quick-stat .value { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent); line-height: 1.1; }
+.quick-stat .label { font-size: 0.55rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+.quick-stat:first-child .value { font-size: 1.5rem; color: var(--accent); }
 .quick-stat:first-child { background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.15); }
 
 /* RANK BADGE */
-.rank-badge-area { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-left: 16px; padding-left: 20px; border-left: 1px solid var(--border); min-width: 90px; }
+.rank-badge-area { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-left: auto; padding-left: 16px; border-left: 1px solid var(--border); min-width: 80px; }
 .rank-icon { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; position: relative; }
 .rank-icon .rank-glow { position: absolute; inset: -4px; border-radius: 14px; opacity: 0.4; filter: blur(8px); z-index: 0; }
 .rank-icon span { position: relative; z-index: 1; }
@@ -287,7 +289,11 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 
 @media(max-width:768px){
   .charts-section { grid-template-columns: 1fr; }
-  .rank-badge-area { border-left: none; border-top: 1px solid var(--border); margin-left: 0; padding-left: 0; padding-top: 12px; margin-top: 8px; flex-direction: row; gap: 12px; justify-content: center; }
+  .player-header-row1 { flex-wrap: wrap; }
+  .player-header-row2 { flex-direction: column; align-items: flex-start; }
+  .player-header-row2 > div:last-child { margin-left: 0; width: 100%; justify-content: center; }
+  .rank-badge-area { border-left: none; border-top: 1px solid var(--border); margin-left: 0; padding-left: 0; padding-top: 12px; margin-top: 8px; flex-direction: row; gap: 12px; justify-content: center; width: 100%; }
+  .player-quick-stats { justify-content: center; width: 100%; }
   .wl-cell { width: 22px; height: 22px; font-size: 0.45rem; }
   .skeleton-charts { grid-template-columns: 1fr; }
   .main-content { padding: 0 1rem 3rem; }
@@ -1258,14 +1264,21 @@ footer a { color: var(--accent); text-decoration: none; }
 <div class="main-content">
   <div class="error-msg" id="errorMsg"></div>
   <div class="player-header" id="playerHeader">
-    <div class="player-avatar" id="playerAvatar"></div>
-    <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div><div id="playerClanBadge" style="display:none;"></div><div id="botIndexBadge" style="display:none;"></div><div id="playerAliases" style="display:none;"></div></div>
-    <div class="player-quick-stats" id="quickStats"></div>
-    <div class="rank-badge-area" id="rankBadge"></div>
-    <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
-    <button class="share-stats-btn" id="wrappedBtn" style="display:none;background:linear-gradient(135deg,#ff6b00,#a855f7);" onclick="generateSeasonWrapped()">&#x1F3C6; Mi Temporada</button>
-    <button class="copy-link-btn" id="copyLinkBtn" style="display:none;" onclick="copyPlayerLink(this)">&#x1F517; Copiar Enlace</button>
-    <a id="pubgReportBtn" href="#" target="_blank" style="display:none;align-items:center;gap:6px;background:rgba(255,51,85,0.1);border:1px solid rgba(255,51,85,0.25);color:var(--accent-red);padding:6px 14px;border-radius:6px;font-size:.75rem;font-family:'Rajdhani',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;text-decoration:none;transition:all .2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,51,85,0.2)'" onmouseout="this.style.background='rgba(255,51,85,0.1)'">&#x1F3AC; PUBG Report</a>
+    <div class="player-header-row1">
+      <div class="player-avatar" id="playerAvatar"></div>
+      <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div><div id="playerClanBadge" style="display:none;"></div><div id="playerAliases" style="display:none;"></div></div>
+      <div class="rank-badge-area" id="rankBadge"></div>
+    </div>
+    <div class="player-header-row2">
+      <div class="player-quick-stats" id="quickStats"></div>
+      <div id="botIndexBadge" style="display:none;"></div>
+      <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
+        <button class="share-stats-btn" id="wrappedBtn" style="display:none;background:linear-gradient(135deg,#ff6b00,#a855f7);" onclick="generateSeasonWrapped()">&#x1F3C6; Mi Temporada</button>
+        <button class="copy-link-btn" id="copyLinkBtn" style="display:none;" onclick="copyPlayerLink(this)">&#x1F517; Copiar Enlace</button>
+        <a id="pubgReportBtn" href="#" target="_blank" style="display:none;align-items:center;gap:6px;background:rgba(255,51,85,0.1);border:1px solid rgba(255,51,85,0.25);color:var(--accent-red);padding:6px 14px;border-radius:6px;font-size:.75rem;font-family:'Rajdhani',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;text-decoration:none;transition:all .2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,51,85,0.2)'" onmouseout="this.style.background='rgba(255,51,85,0.1)'">&#x1F3AC; PUBG Report</a>
+      </div>
+    </div>
   </div>
   <div id="frequentTeammates" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;">
     <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent-purple));"></div>
@@ -1372,6 +1385,7 @@ footer a { color: var(--accent); text-decoration: none; }
     </div>
     <div id="clanSearchMode">
       <div id="myClanBanner"></div>
+      <div id="clanFavoritesSection"></div>
       <!-- Search area with two modes: by clan name and by player -->
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card);">
         <!-- Search mode tabs -->
@@ -1862,9 +1876,18 @@ async function loadFavoritesFromServer(){
     if(!r.ok)return;
     const d=await r.json();
     if(d.favorites&&d.favorites.length){
-      favorites=d.favorites.map(f=>({name:f.name,platform:f.platform,group:f.fav_group||''}));
-      localStorage.setItem('pubg_favorites',JSON.stringify(favorites));
+      const playerFavs=d.favorites.filter(f=>f.fav_type!=='clan');
+      const clanFavs=d.favorites.filter(f=>f.fav_type==='clan');
+      if(playerFavs.length){
+        favorites=playerFavs.map(f=>({name:f.name,platform:f.platform,group:f.fav_group||''}));
+        localStorage.setItem('pubg_favorites',JSON.stringify(favorites));
+      }
+      if(clanFavs.length){
+        clanFavorites=clanFavs.map(f=>({tag:f.name,name:f.name,platform:f.platform,group:f.fav_group||''}));
+        localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));
+      }
       renderRecentSearches();
+      renderClanHistoryUI();
     }
   }catch(e){console.error('Load favs error:',e);}
 }
@@ -1872,8 +1895,10 @@ async function loadFavoritesFromServer(){
 async function syncFavoritesToServer(){
   if(!authToken){openAuthPopup();return;}
   try{
-    const favs=favorites.map(f=>({name:f.name,platform:f.platform,type:'player',group:f.group||''}));
-    const r=await fetch('/favorites/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({favorites:favs})});
+    const playerFavs=favorites.map(f=>({name:f.name,platform:f.platform,type:'player',group:f.group||''}));
+    const clanFavs=clanFavorites.map(f=>({name:f.tag,platform:f.platform,type:'clan',group:f.group||''}));
+    const allFavs=playerFavs.concat(clanFavs);
+    const r=await fetch('/favorites/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({favorites:allFavs})});
     const d=await r.json();
     if(d.ok)alert('Favoritos sincronizados! ('+d.count+' guardados en servidor)');
   }catch(e){console.error('Sync error:',e);}
@@ -1911,7 +1936,7 @@ let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWea
 function safeParse(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function escJs(s){if(!s)return'';return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');}
-let isUsingDemo=false,recentSearches=safeParse('recent_searches',[]),favorites=safeParse('pubg_favorites',[]);
+let isUsingDemo=false,recentSearches=safeParse('recent_searches',[]),favorites=safeParse('pubg_favorites',[]),clanFavorites=safeParse('pubg_clan_favorites',[]);
 let lbPlatform='console',lbRegion='eu',lbMode='squad';
 let cmpPlatform='psn',cmpMode='squad';
 function setCmpMode(m){cmpMode=m;['squad','squad-fpp','solo','duo'].forEach(k=>{const el=document.getElementById('cmpMode-'+k);if(el)el.classList.toggle('active',k===m);});}
@@ -2006,7 +2031,12 @@ function clearMyClan(evt){
 }
 async function loadClanFromHistory(tag){
   const clan=clanHistory.find(c=>c.tag===tag)||(myClan&&myClan.tag===tag?myClan:null);
-  if(!clan)return;
+  if(!clan){
+    // Try loading from clan favorites — go directly to clan page
+    const cfav=clanFavorites.find(f=>f.tag===tag);
+    if(cfav){history.pushState(null,'','/clan/'+tag);loadClanPage(tag);return;}
+    return;
+  }
   setClanPlatform(clan.platform,document.querySelector('.clan-plat-btn[data-cplat="'+clan.platform+'"]'));
   document.getElementById('clanPlayerInput').value='';
   const cr=document.getElementById('clanResults');
@@ -2078,6 +2108,26 @@ function renderClanHistoryUI(){
     const memberHintMC=myClan.members&&myClan.members.length?myClan.members.length+' miembros':'Nivel '+myClan.level+' &mdash; '+myClan.memberCount+' miembros';
     banner.innerHTML='<div class="my-clan-banner" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+myClan.platform.toUpperCase()+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\');document.getElementById(\'clanResults\').scrollIntoView({behavior:\'smooth\',block:\'start\'});event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
   }else{banner.innerHTML='';}
+  // Clanes Favoritos
+  const favSec=document.getElementById('clanFavoritesSection');
+  if(favSec){
+    if(clanFavorites.length){
+      let fh='<div class="clan-history-section" style="border:1px solid rgba(255,215,0,0.15);background:rgba(255,215,0,0.03);"><div class="clan-history-title" style="color:var(--accent-yellow);">&#9733; Clanes Favoritos</div>';
+      clanFavorites.forEach(cf=>{
+        const tagEsc=cf.tag.replace(/'/g,"\\'");
+        fh+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+tagEsc+'\')">';
+        fh+='<div class="chi-icon" style="border-color:rgba(255,215,0,0.3);color:var(--accent-yellow);">'+cf.tag.charAt(0)+'</div>';
+        fh+='<div class="chi-info"><div class="chi-name">['+esc(cf.tag)+'] '+esc(cf.name)+'</div>';
+        fh+='<div class="chi-meta">'+cf.platform.toUpperCase()+(cf.group?' &mdash; <span style="color:var(--accent-yellow);">'+esc(cf.group)+'</span>':'')+'</div></div>';
+        fh+='<div class="chi-actions">';
+        fh+='<button class="chi-action-btn" onclick="cycleClanFavGroup(\''+tagEsc+'\',event)" title="Cambiar grupo" style="font-size:.7rem;">&#x1F3F7;&#xFE0F;</button>';
+        fh+='<button class="chi-action-btn remove-clan" onclick="toggleClanFavorite(\''+tagEsc+'\',\''+escJs(cf.name)+'\',\''+cf.platform+'\',event)" title="Quitar de favoritos">&times;</button>';
+        fh+='</div></div>';
+      });
+      fh+='</div>';
+      favSec.innerHTML=fh;
+    }else{favSec.innerHTML='';}
+  }
   // Historial
   const nonMyClan=clanHistory.filter(c=>!(myClan&&c.tag===myClan.tag));
   if(nonMyClan.length){
@@ -2254,6 +2304,8 @@ async function loadClanPage(tag){
     h+='<span style="font-size:.65rem;color:'+ageColor+';">&#x1F4C5; Actualizado '+ageText+'</span>';
     const shareUrl='https://www.v4nz.com/clan/'+c.tag;
     h+='<div class="clan-page-share" onclick="navigator.clipboard.writeText(\''+shareUrl+'\').then(()=>{this.innerHTML=\'&#x2705; Copiado!\';setTimeout(()=>{this.innerHTML=\'&#x1F517; Compartir Clan\';},2000);})">&#x1F517; Compartir Clan</div>';
+    const isCFav=isClanFavorite(c.tag);
+    h+='<button id="clanFavBtn" data-tag="'+escJs(c.tag)+'" onclick="toggleClanFavorite(\''+escJs(c.tag)+'\',\''+escJs(c.name)+'\',\''+c.platform+'\',event)" style="background:transparent;border:1px solid '+(isCFav?'var(--accent-yellow)':'rgba(0,240,255,0.3)')+';color:'+(isCFav?'var(--accent-yellow)':'var(--accent)')+';font-family:Rajdhani,sans-serif;font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;">'+(isCFav?'&#x2605; Favorito':'&#x2606; Favorito')+'</button>';
     h+='</div>';
     h+='</div>';
     // Member ranking
@@ -3216,14 +3268,104 @@ async function setSeasonType(type){
     renderOverviewStats();renderFunStats();renderPersonality();  }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
 }
 function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,12);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
-const FAV_GROUPS=['Mi Squad','Rivales','Amigos','Seguimiento','Tramposos'];
+const DEFAULT_FAV_GROUPS=['Mi Squad','Rivales','Amigos','Seguimiento','Tramposos'];
+let FAV_GROUPS=safeParse('pubg_fav_groups',DEFAULT_FAV_GROUPS);
 let favFilterGroup='all',favFilterText='',favShowAll=false;
+function saveFavGroups(){localStorage.setItem('pubg_fav_groups',JSON.stringify(FAV_GROUPS));}
+function addFavGroup(name){
+  name=(name||'').trim();
+  if(!name||FAV_GROUPS.includes(name))return;
+  FAV_GROUPS.push(name);saveFavGroups();renderRecentSearches();
+}
+function renameFavGroup(oldName,newName){
+  newName=(newName||'').trim();if(!newName||newName===oldName)return;
+  const idx=FAV_GROUPS.indexOf(oldName);if(idx<0)return;
+  FAV_GROUPS[idx]=newName;
+  favorites.forEach(f=>{if(f.group===oldName)f.group=newName;});
+  clanFavorites.forEach(f=>{if(f.group===oldName)f.group=newName;});
+  saveFavGroups();localStorage.setItem('pubg_favorites',JSON.stringify(favorites));localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));
+  renderRecentSearches();renderClanHistoryUI();
+}
+function deleteFavGroup(name){
+  FAV_GROUPS=FAV_GROUPS.filter(g=>g!==name);
+  favorites.forEach(f=>{if(f.group===name)f.group='';});
+  clanFavorites.forEach(f=>{if(f.group===name)f.group='';});
+  saveFavGroups();localStorage.setItem('pubg_favorites',JSON.stringify(favorites));localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));
+  if(favFilterGroup===name)favFilterGroup='all';
+  renderRecentSearches();renderClanHistoryUI();
+}
+function showEditGroupsPopup(){
+  let overlay=document.getElementById('editGroupsOverlay');
+  if(overlay){overlay.remove();}
+  overlay=document.createElement('div');overlay.id='editGroupsOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+  let html='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:380px;width:90%;max-height:80vh;overflow-y:auto;">';
+  html+='<div style="font-family:Orbitron,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:16px;">Editar Etiquetas</div>';
+  FAV_GROUPS.forEach((g,i)=>{
+    const gEsc=g.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const cnt=favorites.filter(f=>f.group===g).length+clanFavorites.filter(f=>f.group===g).length;
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;" id="grpRow'+i+'">';
+    html+='<input type="text" value="'+gEsc+'" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);font-family:Rajdhani,sans-serif;font-size:.78rem;padding:6px 10px;border-radius:6px;" id="grpInput'+i+'">';
+    html+='<span style="font-size:.6rem;color:var(--text-dim);min-width:20px;">'+cnt+'</span>';
+    html+='<button onclick="const inp=document.getElementById(\'grpInput'+i+'\');renameFavGroup(\''+gEsc+'\',inp.value);document.getElementById(\'editGroupsOverlay\').remove();showEditGroupsPopup();" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani;font-size:.65rem;font-weight:600;padding:4px 8px;border-radius:4px;cursor:pointer;">&#x2714;</button>';
+    html+='<button onclick="if(confirm(\'Eliminar etiqueta \\\''+gEsc+'\\\'?\')){{deleteFavGroup(\''+gEsc+'\');document.getElementById(\'editGroupsOverlay\').remove();showEditGroupsPopup();}}" style="background:transparent;border:1px solid rgba(255,68,68,0.3);color:#ff4444;font-family:Rajdhani;font-size:.65rem;font-weight:600;padding:4px 8px;border-radius:4px;cursor:pointer;">&#x2716;</button>';
+    html+='</div>';
+  });
+  html+='<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">';
+  html+='<input type="text" id="newGroupInput" placeholder="Nueva etiqueta..." style="flex:1;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);font-family:Rajdhani,sans-serif;font-size:.78rem;padding:6px 10px;border-radius:6px;">';
+  html+='<button onclick="const inp=document.getElementById(\'newGroupInput\');addFavGroup(inp.value);document.getElementById(\'editGroupsOverlay\').remove();showEditGroupsPopup();" style="background:var(--accent);color:var(--bg-primary);font-family:Rajdhani;font-size:.7rem;font-weight:700;padding:6px 14px;border-radius:6px;cursor:pointer;border:none;">+ Anadir</button>';
+  html+='</div>';
+  html+='<div style="margin-top:16px;text-align:center;"><button onclick="document.getElementById(\'editGroupsOverlay\').remove();" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:Rajdhani;font-size:.7rem;padding:6px 20px;border-radius:6px;cursor:pointer;">Cerrar</button></div>';
+  html+='</div>';
+  overlay.innerHTML=html;
+  document.body.appendChild(overlay);
+}
 function toggleFavoriteFromHeader(){const n=currentPlayerData?.attributes?.name;if(!n)return;toggleFavorite(n,currentPlatform);updateFavHeaderBtn();}
 function updateFavHeaderBtn(){const btn=document.getElementById('favHeaderBtn');if(!btn||!currentPlayerData)return;const n=currentPlayerData.attributes.name;const fav=isFavorite(n);btn.innerHTML=fav?'&#x2605;':'&#x2606;';btn.classList.toggle('active',fav);btn.title=fav?'Quitar de favoritos':'Guardar en favoritos';}
 function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const idx=favorites.findIndex(f=>f.name===name);if(idx>=0)favorites.splice(idx,1);else favorites.push({name,platform,group:''});localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
 function setFavGroup(name,group,evt){if(evt)evt.stopPropagation();const f=favorites.find(f=>f.name===name);if(f){f.group=f.group===group?'':group;localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}}
 function cycleFavGroup(name,evt){if(evt)evt.stopPropagation();const f=favorites.find(fv=>fv.name===name);if(!f)return;const groups=[''].concat(FAV_GROUPS);const cur=groups.indexOf(f.group||'');f.group=groups[(cur+1)%groups.length];localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
 function isFavorite(name){return favorites.some(f=>f.name===name);}
+/* ═══ CLAN FAVORITES ═══ */
+function isClanFavorite(tag){return clanFavorites.some(f=>f.tag===tag);}
+function toggleClanFavorite(tag,name,platform,evt){
+  if(evt)evt.stopPropagation();
+  const idx=clanFavorites.findIndex(f=>f.tag===tag);
+  if(idx>=0){
+    clanFavorites.splice(idx,1);
+    if(authToken){fetch('/favorites/'+encodeURIComponent(tag)+'?type=clan',{method:'DELETE',headers:{'Authorization':'Bearer '+authToken},credentials:'include'}).catch(()=>{});}
+  }else{
+    clanFavorites.push({tag,name:name||tag,platform:platform||'psn',group:''});
+    if(authToken){fetch('/favorites',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({name:tag,platform:platform||'psn',type:'clan',group:''})}).catch(()=>{});}
+  }
+  localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));
+  renderClanHistoryUI();
+  updateClanFavBtn();
+}
+function setClanFavGroup(tag,group,evt){
+  if(evt)evt.stopPropagation();
+  const f=clanFavorites.find(f=>f.tag===tag);
+  if(f){f.group=f.group===group?'':group;localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));renderClanHistoryUI();
+    if(authToken){fetch('/favorites',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({name:tag,platform:f.platform||'psn',type:'clan',group:f.group||''})}).catch(()=>{});}
+  }
+}
+function cycleClanFavGroup(tag,evt){
+  if(evt)evt.stopPropagation();
+  const f=clanFavorites.find(fv=>fv.tag===tag);if(!f)return;
+  const groups=[''].concat(FAV_GROUPS);const cur=groups.indexOf(f.group||'');
+  f.group=groups[(cur+1)%groups.length];
+  localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));renderClanHistoryUI();
+  if(authToken){fetch('/favorites',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({name:tag,platform:f.platform||'psn',type:'clan',group:f.group||''})}).catch(()=>{});}
+}
+function updateClanFavBtn(){
+  const btn=document.getElementById('clanFavBtn');if(!btn)return;
+  const tag=btn.dataset.tag;if(!tag)return;
+  const fav=isClanFavorite(tag);
+  btn.innerHTML=fav?'&#x2605; Favorito':'&#x2606; Favorito';
+  btn.style.borderColor=fav?'var(--accent-yellow)':'rgba(0,240,255,0.3)';
+  btn.style.color=fav?'var(--accent-yellow)':'var(--accent)';
+}
 function renderRecentSearches(){
   const c=document.getElementById('recentSearches');let h='';
   if(favorites.length){
@@ -3238,6 +3380,7 @@ function renderRecentSearches(){
     });
     const noGroup=favorites.filter(f=>!f.group).length;
     if(noGroup&&noGroup<favorites.length)h+='<button class="fav-group-btn'+(favFilterGroup==='sin-grupo'?' active':'')+'" onclick="favFilterGroup=\'sin-grupo\';renderRecentSearches();">Sin grupo ('+noGroup+')</button>';
+    h+='<button class="fav-group-btn" onclick="showEditGroupsPopup()" title="Editar etiquetas" style="margin-left:auto;border-color:rgba(255,255,255,0.1);">&#x270F;&#xFE0F; Editar</button>';
     h+='</div>';
     /* Filter */
     let filtered=favorites;
@@ -3292,7 +3435,7 @@ function renderNarrativeInsights(){
   if(ni){ni.innerHTML='';ni.classList.remove('visible');}
 }
 
-function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;let platformHtml=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';if(currentSurvivalData&&currentSurvivalData.data&&currentSurvivalData.data.attributes){platformHtml+=' <span style="margin-left:12px;font-size:.8rem;color:var(--accent-green);">Supervivencia Lv. '+currentSurvivalData.data.attributes.level+'</span>';}document.getElementById('playerPlatform').innerHTML=platformHtml;const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';const wb=document.getElementById('wrappedBtn');if(wb)wb.style.display='inline-flex';const cl=document.getElementById('copyLinkBtn');if(cl)cl.style.display='inline-flex';updateFavHeaderBtn();}
+function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;document.getElementById('playerAvatar').textContent=n.charAt(0).toUpperCase();document.getElementById('playerName').textContent=n;let platformHtml=currentPlatform==='psn'?'&#x1F3AE; PlayStation':'&#x1F3AE; Xbox';if(currentSurvivalData&&currentSurvivalData.data&&currentSurvivalData.data.attributes){platformHtml+=' <span style="margin-left:12px;font-size:.8rem;color:var(--accent-green);">Supervivencia Lv. '+currentSurvivalData.data.attributes.level+'</span>';}document.getElementById('playerPlatform').innerHTML=platformHtml;const s=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(s.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(s.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(s)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(s.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';document.getElementById('playerHeader').classList.add('visible');const sb=document.getElementById('shareCardBtn');if(sb)sb.style.display='inline-flex';const wb=document.getElementById('wrappedBtn');if(wb)wb.style.display=currentUser?'inline-flex':'none';const cl=document.getElementById('copyLinkBtn');if(cl)cl.style.display='inline-flex';updateFavHeaderBtn();}
 /* ===== BOT INDEX BADGE ===== */
 async function loadBotIndex(platform,playerName){
   const container=document.getElementById('botIndexBadge');

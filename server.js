@@ -1274,7 +1274,8 @@ app.post('/favorites', requireAuth, async (req, res) => {
 app.delete('/favorites/:name', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
-    await pool.query('DELETE FROM user_favorites WHERE user_id = $1 AND name = $2', [req.user.id, req.params.name]);
+    const favType = req.query.type || 'player';
+    await pool.query('DELETE FROM user_favorites WHERE user_id = $1 AND name = $2 AND fav_type = $3', [req.user.id, req.params.name, favType]);
     res.json({ ok: true });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
