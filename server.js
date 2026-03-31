@@ -706,19 +706,30 @@ app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
       platform = clan.rows[0].platform || 'psn';
     }
     if (!pubgClanId) {
-      // Fallback: try to find clanId via PUBG API using first member
+      // Fallback: try to find clanId via PUBG API using first member — try ALL shards
       const firstMember = await pool.query('SELECT player_name FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC LIMIT 1', [tag]);
       if (!firstMember.rows.length) return res.status(400).json({ error: 'No se puede actualizar: sin miembros ni ID del clan' });
       const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
-      const playerResp = await fetchWithTimeout(fetch,
-        `https://api.pubg.com/shards/${platform}/players?filter[playerNames]=${encodeURIComponent(firstMember.rows[0].player_name)}`,
-        { headers }, 8000);
-      if (!playerResp.ok) return res.status(503).json({ error: 'No se pudo contactar PUBG API' });
-      const playerData = await playerResp.json();
-      const foundClanId = playerData.data?.[0]?.attributes?.clanId;
-      if (!foundClanId) return res.status(400).json({ error: 'El jugador ya no pertenece a un clan' });
-      // Save the clanId for future refreshes (safe — column may not exist)
-      try { await pool.query('UPDATE clans SET pubg_clan_id = $1 WHERE tag = $2', [foundClanId, tag]); } catch(e) {}
+      const shardsToTry = [platform, 'xbox', 'psn', 'steam'].filter((v, i, a) => a.indexOf(v) === i);
+      let foundClanId = null;
+      let foundShard = null;
+      for (const shard of shardsToTry) {
+        try {
+          const playerResp = await fetchWithTimeout(fetch,
+            `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(firstMember.rows[0].player_name)}`,
+            { headers }, 8000);
+          if (playerResp.ok) {
+            const playerData = await playerResp.json();
+            const cId = playerData.data?.[0]?.attributes?.clanId;
+            if (cId) { foundClanId = cId; foundShard = shard; break; }
+          }
+        } catch (shardErr) {
+          console.log(`[refresh] Shard ${shard} failed for ${firstMember.rows[0].player_name}: ${shardErr.message}`);
+        }
+      }
+      if (!foundClanId) return res.status(400).json({ error: 'No se encontró clan del jugador en ninguna plataforma' });
+      // Save clanId + correct platform for future refreshes
+      try { await pool.query('UPDATE clans SET pubg_clan_id = $1, platform = $2 WHERE tag = $3', [foundClanId, foundShard, tag]); } catch(e) {}
       const result = await importClanByPubgId(foundClanId);
       return res.json(result);
     }
