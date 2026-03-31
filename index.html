@@ -527,12 +527,15 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-detail-stat .lbl { font-size:.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
 
 /* TABS */
-.tabs-container { margin-bottom: 24px; display: none; }
+.tabs-container { margin-bottom: 24px; display: none; position: sticky; top: 0; z-index: 90; padding-top: 10px; padding-bottom: 10px; background: var(--bg-primary); transition: box-shadow 0.3s; }
 .tabs-container.visible { display: block; }
+.tabs-container.stuck { box-shadow: 0 4px 20px rgba(0,0,0,0.4); border-bottom: 1px solid var(--border); }
+.tabs-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .tabs { display: flex; gap: 3px; background: var(--bg-secondary); border-radius: 12px; padding: 4px; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
-.tab-btn { background: transparent; border: none; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; padding: 9px 16px; border-radius: 8px; cursor: pointer; transition: all 0.25s; white-space: nowrap; }
-.tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
-.tab-btn.active { background: var(--accent); color: #000; font-weight: 700; }
+.tab-btn { background: rgba(255,255,255,0.03); border: 1px solid transparent; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; padding: 9px 18px; border-radius: 8px; cursor: pointer; transition: all 0.25s; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
+.tab-btn.active { background: var(--accent); color: #000; font-weight: 700; border-color: var(--accent); box-shadow: 0 0 12px rgba(0,240,255,0.25); }
+.tab-btn .tab-icon { font-size: 0.85rem; line-height: 1; }
 .mode-selector { display: flex; gap: 3px; margin-top: 10px; background: var(--bg-secondary); border-radius: 8px; padding: 3px; border: 1px solid var(--border); width: fit-content; }
 .mode-btn { background: transparent; border: none; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.25s; }
 .mode-btn:hover { color: var(--text-secondary); }
@@ -1275,14 +1278,16 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><select id="seasonSelect" onchange="switchSeason(this.value)" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;margin-left:8px;display:none;"></select><span id="seasonDates" style="color:var(--text-dim);margin-left:8px;">Temporada actual</span></div>
   <div class="season-type-selector" id="seasonTypeSelector" style="display:none;margin-bottom:16px;"><button class="season-type-btn active" onclick="setSeasonType('season')">Temporada</button><button class="season-type-btn" onclick="setSeasonType('ranked')">Ranked</button><button class="season-type-btn" onclick="setSeasonType('lifetime')">Lifetime</button></div>
   <div class="tabs-container" id="tabsContainer">
-    <div class="tabs" id="mainTabs">
-      <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Resumen</button>
-      <button class="tab-btn" data-tab="matches" onclick="switchTab('matches')">Partidas</button>
-      <button class="tab-btn" data-tab="weapons" onclick="switchTab('weapons')">Armas</button>
-      <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')">Curiosidades</button>
-      <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')">Comparar</button>
+    <div class="tabs-row">
+      <div class="tabs" id="mainTabs">
+        <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')"><span class="tab-icon">&#x1F4CA;</span>Resumen</button>
+        <button class="tab-btn" data-tab="matches" onclick="switchTab('matches')"><span class="tab-icon">&#x1F3AE;</span>Partidas</button>
+        <button class="tab-btn" data-tab="weapons" onclick="switchTab('weapons')"><span class="tab-icon">&#x1F52B;</span>Armas</button>
+        <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')"><span class="tab-icon">&#x1F50D;</span>Curiosidades</button>
+        <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')"><span class="tab-icon">&#x2694;&#xFE0F;</span>Comparar</button>
+      </div>
+      <div class="mode-selector"><button class="mode-btn active" onclick="setGameMode('tpp')">TPP</button><button class="mode-btn" onclick="setGameMode('fpp')">FPP</button></div>
     </div>
-    <div class="mode-selector"><button class="mode-btn active" onclick="setGameMode('tpp')">TPP</button><button class="mode-btn" onclick="setGameMode('fpp')">FPP</button></div>
   </div>
 
   <!-- Loading Skeletons -->
@@ -2918,6 +2923,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
   else if(clanMatch){setTimeout(()=>loadClanPage(decodeURIComponent(clanMatch[1])),100);}
   else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
+  // Sticky tabs shadow effect
+  const _tc=document.getElementById('tabsContainer');
+  if(_tc){
+    const _sentinel=document.createElement('div');
+    _sentinel.style.cssText='height:1px;margin:0;padding:0;visibility:hidden;pointer-events:none;';
+    _tc.parentNode.insertBefore(_sentinel,_tc);
+    const _obs=new IntersectionObserver(([e])=>{_tc.classList.toggle('stuck',!e.isIntersecting);},{threshold:1});
+    _obs.observe(_sentinel);
+  }
   // Back/forward browser navigation
   window.addEventListener('popstate',()=>{
     const statsM=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
