@@ -1256,7 +1256,7 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="error-msg" id="errorMsg"></div>
   <div class="player-header" id="playerHeader">
     <div class="player-avatar" id="playerAvatar"></div>
-    <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div><div id="playerClanBadge" style="display:none;"></div><div id="botIndexBadge" style="display:none;"></div></div>
+    <div class="player-info"><h2 id="playerName"></h2><button class="fav-header-btn" id="favHeaderBtn" onclick="toggleFavoriteFromHeader()" title="Guardar en favoritos">&#x2606;</button><div class="platform-badge" id="playerPlatform"></div><div id="playerClanBadge" style="display:none;"></div><div id="botIndexBadge" style="display:none;"></div><div id="playerAliases" style="display:none;"></div></div>
     <div class="player-quick-stats" id="quickStats"></div>
     <div class="rank-badge-area" id="rankBadge"></div>
     <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
@@ -2264,6 +2264,7 @@ async function loadClanPage(tag){
         h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;width:24px;text-align:center;color:var(--text-dim);">'+(i+1)+'</span>';
         h+=medal?'<span>'+medal+'</span>':'';
         h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">'+m.player_name+'</span>';
+        h+='<span id="alias-'+escJs(m.player_name.toLowerCase())+'" style="font-size:.55rem;color:var(--accent-orange);opacity:.7;margin-left:6px;"></span>';
         h+='</div>';
         h+='<div class="clan-member-stats" style="z-index:1;position:relative;">';
         h+='<div>Kills: <span>'+(m.kills||0)+'</span></div>';
@@ -2285,6 +2286,8 @@ async function loadClanPage(tag){
     h+='<div id="clanFeedContent"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Cargando actividad...</div></div></div>';
     h+='</div>';
     cr.innerHTML=h;
+    // Load aliases for clan members (async — shows "Antes conocido como" badges)
+    loadClanMemberAliases(c.tag);
     // Load async sections
     loadClanFeed(c.tag);
     loadClanEvolution(c.tag);
@@ -3115,6 +3118,19 @@ async function searchPlayer(){
     try{renderFrequentTeammates();}catch(e){console.error('Frequent teammates error:',e);}
     // PUBG Report clips — async, no bloquea la carga
     checkPubgReport().catch(e=>console.log('PUBG Report check error:',e.message));
+    // Track accountId ↔ gamertag for name change detection + show aliases
+    trackPlayerName(currentPlayerData.id,currentPlayerData.attributes.name,currentPlatform).then(()=>{
+      loadPlayerAliases(currentPlayerData.attributes.name).then(aliases=>{
+        const el=document.getElementById('playerAliases');
+        if(el){
+          if(aliases.length){
+            const txt=aliases.slice(0,3).map(a=>'<strong>'+esc(a)+'</strong>').join(', ');
+            el.innerHTML='<div style="display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;margin-top:4px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:6px;padding:3px 10px;"><span style="opacity:.7;">&#x1F504;</span> Antes conocido como: '+txt+'</div>';
+            el.style.display='block';
+          }else{el.style.display='none';el.innerHTML='';}
+        }
+      });
+    }).catch(()=>{});
     // Detect player's clan and auto-register
     detectPlayerClan().catch(e=>console.log('Clan detection error:',e.message));
     // Bot Index — async analysis
@@ -6036,6 +6052,44 @@ async function requestAddPlayer(clanTag){
     statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
   }
 }
+// ═══ PLAYER NAME HISTORY ═══
+async function trackPlayerName(accountId,playerName,platform){
+  try{await fetch('/players/track-name',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accountId,playerName,platform})});}catch(e){}
+}
+async function loadPlayerAliases(playerName){
+  try{
+    const r=await fetch('/players/'+encodeURIComponent(playerName)+'/aliases');
+    if(!r.ok)return[];
+    const d=await r.json();
+    return d.aliases||[];
+  }catch(e){return[];}
+}
+function renderAliasesBadge(aliases,container){
+  if(!aliases||!aliases.length)return;
+  const el=document.getElementById(container);
+  if(!el)return;
+  const txt=aliases.length===1?aliases[0]:aliases.slice(0,3).join(', ');
+  const badge=document.createElement('div');
+  badge.className='aliases-badge';
+  badge.innerHTML='<span style="opacity:.6;">&#x1F504;</span> Antes conocido como: <strong>'+esc(txt)+'</strong>';
+  badge.style.cssText='font-size:.65rem;color:var(--text-dim);margin-top:2px;font-family:Rajdhani,sans-serif;';
+  el.appendChild(badge);
+}
+
+async function loadClanMemberAliases(clanTag){
+  try{
+    const r=await fetch('/clans/'+encodeURIComponent(clanTag)+'/member-aliases');
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!d.aliases)return;
+    for(const[name,prevNames]of Object.entries(d.aliases)){
+      if(!prevNames.length)continue;
+      const el=document.getElementById('alias-'+name.toLowerCase());
+      if(el)el.innerHTML='(antes: '+prevNames.slice(0,2).map(n=>esc(n)).join(', ')+')';
+    }
+  }catch(e){}
+}
+
 async function refreshClanStats(clanTag,btn){
   if(!clanTag)return;
   const origText=btn.innerHTML;

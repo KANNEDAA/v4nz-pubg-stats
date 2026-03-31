@@ -228,6 +228,26 @@ async function initDB() {
       );
       CREATE INDEX IF NOT EXISTS idx_clan_transfers_clan ON clan_transfers(to_clan, detected_at);
       CREATE INDEX IF NOT EXISTS idx_clan_transfers_player ON clan_transfers(player_name);
+
+      CREATE TABLE IF NOT EXISTS player_name_history (
+        id SERIAL PRIMARY KEY,
+        account_id VARCHAR(100) NOT NULL,
+        old_name VARCHAR(50) NOT NULL,
+        new_name VARCHAR(50) NOT NULL,
+        platform VARCHAR(10) DEFAULT 'psn',
+        detected_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_name_history_account ON player_name_history(account_id);
+      CREATE INDEX IF NOT EXISTS idx_name_history_new ON player_name_history(new_name);
+      CREATE INDEX IF NOT EXISTS idx_name_history_old ON player_name_history(old_name);
+
+      CREATE TABLE IF NOT EXISTS player_accounts (
+        account_id VARCHAR(100) PRIMARY KEY,
+        player_name VARCHAR(50) NOT NULL,
+        platform VARCHAR(10) DEFAULT 'psn',
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_player_accounts_name ON player_accounts(player_name);
     `);
     // Cleanup old cache entries on startup (older than 1 hour)
     await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour'").catch(() => {});
@@ -1999,6 +2019,109 @@ app.get('/og-image.png', (req, res) => {
     <text x="600" y="430" text-anchor="middle" font-family="sans-serif" font-weight="400" font-size="28" fill="#9e9eb8">PlayStation &amp; Xbox — Estadisticas en Tiempo Real</text>
     <text x="600" y="560" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="24" fill="#ff6b00">v4nz.com</text>
   </svg>`);
+});
+
+// ═══ PLAYER NAME HISTORY ═══
+
+// POST /players/track-name — Track accountId ↔ gamertag, detect name changes
+app.post('/players/track-name', async (req, res) => {
+  if (!pool) return res.json({ ok: true });
+  try {
+    const { accountId, playerName, platform } = req.body;
+    if (!accountId || !playerName) return res.status(400).json({ error: 'accountId and playerName required' });
+    // Check if we already know this account
+    const existing = await pool.query('SELECT player_name, platform FROM player_accounts WHERE account_id = $1', [accountId]);
+    if (existing.rows.length) {
+      const oldName = existing.rows[0].player_name;
+      if (oldName.toLowerCase() !== playerName.toLowerCase()) {
+        // Name changed! Record it
+        await pool.query(
+          'INSERT INTO player_name_history (account_id, old_name, new_name, platform) VALUES ($1, $2, $3, $4)',
+          [accountId, oldName, playerName, platform || 'psn']
+        );
+        console.log(`[name-change] Detected: "${oldName}" → "${playerName}" (${accountId})`);
+        // Update clan_members if this player is in any clan
+        await pool.query('UPDATE clan_members SET player_name = $1 WHERE player_name = $2', [playerName, oldName]).catch(() => {});
+      }
+      // Update the stored name
+      await pool.query('UPDATE player_accounts SET player_name = $1, platform = $2, updated_at = NOW() WHERE account_id = $3',
+        [playerName, platform || existing.rows[0].platform, accountId]);
+    } else {
+      // First time seeing this account
+      await pool.query('INSERT INTO player_accounts (account_id, player_name, platform) VALUES ($1, $2, $3) ON CONFLICT (account_id) DO UPDATE SET player_name = EXCLUDED.player_name, updated_at = NOW()',
+        [accountId, playerName, platform || 'psn']);
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[track-name] Error:', e.message);
+    res.json({ ok: true }); // Don't fail the main flow
+  }
+});
+
+// GET /players/:name/aliases — Get all known names for a player
+app.get('/players/:name/aliases', async (req, res) => {
+  if (!pool) return res.json({ aliases: [] });
+  try {
+    const name = req.params.name;
+    // Find account ID for this player
+    const account = await pool.query('SELECT account_id FROM player_accounts WHERE LOWER(player_name) = LOWER($1)', [name]);
+    if (!account.rows.length) return res.json({ aliases: [] });
+    const accountId = account.rows[0].account_id;
+    // Get all name changes for this account
+    const history = await pool.query(
+      'SELECT old_name, new_name, detected_at FROM player_name_history WHERE account_id = $1 ORDER BY detected_at DESC',
+      [accountId]
+    );
+    // Collect all unique previous names (not the current one)
+    const currentName = name.toLowerCase();
+    const aliasSet = new Set();
+    history.rows.forEach(r => {
+      if (r.old_name.toLowerCase() !== currentName) aliasSet.add(r.old_name);
+      if (r.new_name.toLowerCase() !== currentName) aliasSet.add(r.new_name);
+    });
+    res.json({ aliases: [...aliasSet], history: history.rows });
+  } catch (e) {
+    console.error('[aliases] Error:', e.message);
+    res.json({ aliases: [] });
+  }
+});
+
+// GET /clans/:tag/aliases — Get name changes for all members of a clan
+app.get('/clans/:tag/member-aliases', async (req, res) => {
+  if (!pool) return res.json({ aliases: {} });
+  try {
+    const tag = req.params.tag.toUpperCase();
+    const members = await pool.query('SELECT player_name FROM clan_members WHERE clan_tag = $1', [tag]);
+    if (!members.rows.length) return res.json({ aliases: {} });
+    const memberNames = members.rows.map(r => r.player_name.toLowerCase());
+    // Find accounts for these members
+    const accounts = await pool.query(
+      'SELECT account_id, player_name FROM player_accounts WHERE LOWER(player_name) = ANY($1)',
+      [memberNames]
+    );
+    if (!accounts.rows.length) return res.json({ aliases: {} });
+    const accountIds = accounts.rows.map(r => r.account_id);
+    // Get all name history for these accounts
+    const history = await pool.query(
+      'SELECT account_id, old_name, new_name, detected_at FROM player_name_history WHERE account_id = ANY($1) ORDER BY detected_at DESC',
+      [accountIds]
+    );
+    // Build map: currentName -> [previous names]
+    const accountToCurrentName = {};
+    accounts.rows.forEach(r => { accountToCurrentName[r.account_id] = r.player_name; });
+    const result = {};
+    history.rows.forEach(r => {
+      const current = accountToCurrentName[r.account_id];
+      if (!current) return;
+      if (!result[current]) result[current] = [];
+      const prev = r.old_name.toLowerCase() !== current.toLowerCase() ? r.old_name : null;
+      if (prev && !result[current].includes(prev)) result[current].push(prev);
+    });
+    res.json({ aliases: result });
+  } catch (e) {
+    console.error('[member-aliases] Error:', e.message);
+    res.json({ aliases: {} });
+  }
 });
 
 // HTML attribute escaping for dynamic meta tags
