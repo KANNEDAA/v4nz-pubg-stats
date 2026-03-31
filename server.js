@@ -1539,7 +1539,7 @@ app.post('/api/snapshots', async (req, res) => {
     const existing = await pool.query(
       `SELECT id FROM player_snapshots
        WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
-       AND created_at > NOW() - INTERVAL '7 days'
+       AND created_at > NOW() - INTERVAL '20 hours'
        ORDER BY created_at DESC LIMIT 1`,
       [player_name, platform, squad_mode || 'squad', game_mode || 'tpp']
     );

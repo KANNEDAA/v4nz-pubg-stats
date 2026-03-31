@@ -970,6 +970,102 @@ footer a { color: var(--accent); text-decoration: none; }
 .telem-stat-pill { background:var(--bg-secondary); border:1px solid var(--border); border-radius:20px; padding:6px 14px; font-family:'Rajdhani',sans-serif; font-size:.75rem; font-weight:600; color:var(--text-secondary); }
 .telem-stat-pill b { color:var(--accent); font-family:'Orbitron',sans-serif; font-size:.8rem; margin-right:4px; }
 @media(max-width:500px){ .telem-container { padding:12px; } .telem-legend { font-size:.6rem; gap:8px; } }
+
+/* === RESPONSIVE 600px — fills gap between 480px and 700px === */
+@media(max-width:600px){
+  /* Weapon grid: single column */
+  .weapon-grid{grid-template-columns:1fr}
+  .weapon-card{padding:12px 14px;gap:10px}
+  .weapon-name{font-size:.85rem}
+  .weapon-mini-stat .wm-val{font-size:.75rem}
+  .weapon-stats-mini{gap:10px}
+
+  /* Match items: simplified columns */
+  .match-item{grid-template-columns:44px 1fr 70px;padding:10px 12px;gap:8px;font-size:.78rem}
+  .match-kills,.match-dmg{display:none}
+  .match-time{display:none}
+
+  /* Fun stats: 2 columns tighter */
+  .fun-stats-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+
+  /* Clan mode tabs: wrap + smaller */
+  .clan-mode-tabs{flex-wrap:wrap;gap:6px}
+  .clan-mode-tab{padding:8px 14px;font-size:.75rem}
+
+  /* Clan card: tighter */
+  .clan-card{padding:16px}
+  .clan-header{gap:10px;margin-bottom:14px}
+  .clan-icon{width:46px;height:46px;font-size:.9rem;border-radius:10px}
+
+  /* Compare: already 1col at 900px, tighter padding */
+  .compare-player-card{padding:14px}
+  .compare-stat-name{font-size:.65rem}
+  .compare-vs{font-size:1.4rem;padding-top:10px}
+
+  /* Insight chips: smaller */
+  .insight-chips{gap:6px}
+  .insight-chip{padding:5px 10px;font-size:.65rem;gap:5px}
+
+  /* Evolution toggles: compact */
+  .evo-toggles{gap:4px}
+  .evo-toggle{padding:5px 10px;font-size:.62rem;letter-spacing:.5px}
+
+  /* Quick stats: smaller values */
+  .quick-stat .value{font-size:1.2rem}
+  .quick-stat:first-child .value{font-size:1.5rem}
+  .quick-stat{min-width:60px;padding:6px 10px}
+
+  /* Player header tighter */
+  .player-header.visible{padding:14px}
+  .player-info h2{font-size:1rem}
+
+  /* Tabs: even more compact */
+  .tab-btn{padding:7px 8px;font-size:.63rem;letter-spacing:.3px}
+
+  /* Card modal: full width canvas */
+  .card-modal canvas{max-width:95vw;max-height:65vh}
+  .card-modal-btn{padding:10px 20px;font-size:.78rem}
+
+  /* Kill timeline tighter */
+  .kt-node{padding:8px 10px}
+  .kt-player{font-size:.72rem}
+
+  /* Cotilleo grid: single column */
+  .cotilleo-grid{grid-template-columns:1fr}
+  .cotilleo-card{padding:10px 12px;gap:8px}
+  .cotilleo-icon{font-size:1.2rem}
+  .cotilleo-name{font-size:.65rem}
+  .cotilleo-text{font-size:.7rem}
+
+  /* Home features: single column on narrow */
+  .home-features{grid-template-columns:1fr 1fr}
+  .home-feature{padding:12px 10px}
+}
+
+/* === RESPONSIVE 360px — extra small screens === */
+@media(max-width:360px){
+  .search-hero h1{font-size:1rem;letter-spacing:1px}
+  .search-hero{padding:36px .8rem 24px}
+  .hero-platform-toggle .platform-btn{padding:8px 12px;font-size:.7rem}
+  .search-input{font-size:.9rem;padding:14px 14px}
+  .search-btn{padding:14px 18px;font-size:.8rem}
+  .stats-grid{gap:8px}
+  .stat-card{padding:14px 10px}
+  .stat-value{font-size:1.1rem}
+  .stat-label{font-size:.52rem}
+  .weapon-card{padding:10px 12px;gap:8px}
+  .weapon-rank{font-size:.9rem;min-width:24px}
+  .match-item{grid-template-columns:38px 1fr 60px;padding:8px 10px}
+  .fun-stats-grid{grid-template-columns:1fr}
+  .clan-mode-tab{padding:6px 10px;font-size:.68rem}
+  .tab-btn{padding:6px 6px;font-size:.58rem}
+  .quick-stat .value{font-size:1rem}
+  .quick-stat:first-child .value{font-size:1.3rem}
+  .player-info h2{font-size:.9rem}
+  .card-modal canvas{max-width:98vw;max-height:60vh}
+  .card-modal-btn{padding:8px 16px;font-size:.72rem}
+  .home-features{grid-template-columns:1fr}
+}
 </style>
 <script type="application/ld+json">
 [{
