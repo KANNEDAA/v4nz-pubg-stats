@@ -239,6 +239,8 @@ async function initDB() {
       ALTER TABLE clan_members ALTER COLUMN kd TYPE NUMERIC(6,2);
       ALTER TABLE clan_members ALTER COLUMN damage TYPE NUMERIC(12,1);
     `).catch(() => {}); // Ignore if already correct type
+    // Add pubg_clan_id column for auto-refresh (safe to run multiple times)
+    await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS pubg_clan_id VARCHAR(100)`).catch(() => {});
     console.log('✓ Database tables ready');
   } catch (e) { console.error('DB init error:', e.message); }
 }
@@ -335,7 +337,18 @@ app.get('/clans/:tag', async (req, res) => {
       'SELECT player_name, kills, wins, kd, damage, rounds, active FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC',
       [tag]
     );
-    res.json({ clan: clan.rows[0], members: members.rows });
+    // Auto-refresh in background if stats are older than 24h and we have the pubg_clan_id
+    const c = clan.rows[0];
+    const statsAge = c.stats_updated_at ? (Date.now() - new Date(c.stats_updated_at).getTime()) : Infinity;
+    if (statsAge > 24 * 60 * 60 * 1000 && c.pubg_clan_id) {
+      // Fire and forget — don't block the response
+      importClanByPubgId(c.pubg_clan_id).then(r => {
+        console.log(`[auto-refresh] Updated [${tag}] in background (was ${Math.round(statsAge/3600000)}h old)`);
+      }).catch(e => {
+        console.error(`[auto-refresh] Failed for [${tag}]:`, e.message);
+      });
+    }
+    res.json({ clan: c, members: members.rows });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
@@ -499,211 +512,212 @@ app.post('/clans/requests/:id/reject', requireAdmin, async (req, res) => {
 });
 
 // ═══ IMPORT CLAN FROM PUBGCLANS.NET ═══
+
+// Reusable import function — used by endpoint, refresh, auto-refresh, and cron
+async function importClanByPubgId(clanId) {
+  if (!pool) throw new Error('No database configured');
+  if (!clanId) throw new Error('clanId required');
+
+  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+
+  // Step 1: Fetch clan metadata from PUBG API (try xbox first, then psn)
+  let clanMeta = null;
+  let detectedPlatform = 'xbox';
+  for (const shard of ['xbox', 'psn', 'steam']) {
+    try {
+      const clanResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers }, 8000);
+      if (clanResp.ok) {
+        const clanData = await clanResp.json();
+        clanMeta = clanData.data?.attributes;
+        detectedPlatform = shard;
+        break;
+      }
+    } catch (e) { /* try next shard */ }
+  }
+  if (!clanMeta) throw new Error('Clan not found on any platform');
+  console.log(`[import] Found clan: [${clanMeta.clanTag}] ${clanMeta.clanName} (${detectedPlatform}, level ${clanMeta.clanLevel}, ${clanMeta.clanMemberCount} members)`);
+
+  // Step 2: Fetch member stats from pubgclans.net — try ALL game modes and merge
+  const gameModes = ['squad', 'squad-fpp', 'solo', 'solo-fpp', 'duo', 'duo-fpp'];
+  const mergedPlayers = {};
+  for (const gm of gameModes) {
+    try {
+      const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${gm}`;
+      const pcnResp = await fetchWithTimeout(fetch, pcnUrl, {}, 10000);
+      if (!pcnResp.ok) { console.log(`[import] pubgclans.net ${gm}: HTTP ${pcnResp.status}`); continue; }
+      const pcnData = await pcnResp.json();
+      if (!Array.isArray(pcnData)) continue;
+      console.log(`[import] pubgclans.net ${gm}: ${pcnData.length} members`);
+      pcnData.forEach(p => {
+        const name = p.player_name;
+        if (!name) return;
+        const kills = parseInt(p.kills) || 0;
+        const rounds = parseInt(p.roundsplayed) || 0;
+        const wins = parseInt(p.wins) || 0;
+        const damage = parseFloat(p.damagedealt) || 0;
+        if (mergedPlayers[name]) {
+          mergedPlayers[name].kills += kills;
+          mergedPlayers[name].wins += wins;
+          mergedPlayers[name].rounds += rounds;
+          mergedPlayers[name].damage += damage;
+        } else {
+          mergedPlayers[name] = { kills, wins, rounds, damage };
+        }
+      });
+    } catch (e) { console.log(`[import] pubgclans.net ${gm}: error — ${e.message}`); }
+  }
+
+  // Deduplicate by lowercase name
+  const deduped = {};
+  for (const [name, stats] of Object.entries(mergedPlayers)) {
+    const key = name.toLowerCase();
+    if (deduped[key]) {
+      if (stats.kills > deduped[key].stats.kills) deduped[key].displayName = name;
+      deduped[key].stats.kills += stats.kills;
+      deduped[key].stats.wins += stats.wins;
+      deduped[key].stats.rounds += stats.rounds;
+      deduped[key].stats.damage += stats.damage;
+    } else {
+      deduped[key] = { displayName: name, stats: { ...stats } };
+    }
+  }
+  const playerNames = Object.keys(deduped);
+  if (playerNames.length === 0) throw new Error('No member data found on pubgclans.net for this clan');
+  console.log(`[import] Merged ${playerNames.length} unique members across all modes`);
+
+  // Step 3: Transform merged data
+  const members = playerNames.map(key => {
+    const p = deduped[key];
+    const s = p.stats;
+    const kd = s.rounds > 0 ? parseFloat((s.kills / s.rounds).toFixed(2)) : 0;
+    return { name: p.displayName, active: s.rounds > 0, stats: { kills: s.kills, wins: s.wins, kd, damage: s.damage, rounds: s.rounds } };
+  }).sort((a, b) => b.stats.kills - a.stats.kills);
+
+  // Step 4: Register the clan (upsert)
+  const cleanTag = clanMeta.clanTag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
+  let totalKills = 0, totalWins = 0, totalRounds = 0, totalDmg = 0, kdSum = 0, activeCount = 0;
+  members.forEach(m => {
+    const s = m.stats;
+    totalKills += s.kills; totalWins += s.wins; totalRounds += s.rounds;
+    totalDmg += s.damage; kdSum += s.kd;
+    if (m.active) activeCount++;
+  });
+  const avgKd = members.length > 0 ? (kdSum / members.length).toFixed(2) : 0;
+  const avgDmg = members.length > 0 ? (totalDmg / members.length).toFixed(1) : 0;
+  const winRate = totalRounds > 0 ? ((totalWins / totalRounds) * 100).toFixed(2) : 0;
+
+  await pool.query(`
+    INSERT INTO clans (tag, name, member_count, level, platform, registered_by,
+                       total_kills, total_wins, avg_kd, avg_damage, total_rounds,
+                       win_rate, active_members, pubg_clan_id, stats_updated_at, updated_at)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())
+    ON CONFLICT (tag) DO UPDATE SET
+      name=EXCLUDED.name, member_count=EXCLUDED.member_count, level=EXCLUDED.level,
+      platform=EXCLUDED.platform, total_kills=EXCLUDED.total_kills, total_wins=EXCLUDED.total_wins,
+      avg_kd=EXCLUDED.avg_kd, avg_damage=EXCLUDED.avg_damage, total_rounds=EXCLUDED.total_rounds,
+      win_rate=EXCLUDED.win_rate, active_members=EXCLUDED.active_members,
+      pubg_clan_id=COALESCE(EXCLUDED.pubg_clan_id, clans.pubg_clan_id),
+      stats_updated_at=NOW(), updated_at=NOW()
+  `, [cleanTag, clanMeta.clanName, clanMeta.clanMemberCount, clanMeta.clanLevel, detectedPlatform,
+      'pubgclans_import', totalKills, totalWins, avgKd, avgDmg, totalRounds, winRate, activeCount, clanId]);
+
+  // Delete old members before re-importing
+  await pool.query('DELETE FROM clan_members WHERE clan_tag = $1', [cleanTag]);
+  for (const m of members) {
+    const s = m.stats;
+    await pool.query(`
+      INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    `, [cleanTag, m.name, s.kills, s.wins, s.kd, s.damage, s.rounds, m.active, 'pubgclans_import']);
+  }
+
+  // Snapshot + Transfer Detection
+  try {
+    const existingSnap = await pool.query(
+      "SELECT id FROM clan_snapshots WHERE clan_tag = $1 AND created_at > NOW() - INTERVAL '20 hours'", [cleanTag]
+    );
+    if (!existingSnap.rows.length) {
+      await pool.query(
+        `INSERT INTO clan_snapshots (clan_tag, total_kills, total_wins, avg_kd, avg_damage, win_rate, active_members, total_rounds)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [cleanTag, totalKills, totalWins, avgKd, avgDmg, winRate, activeCount, totalRounds]
+      );
+      console.log(`[snapshot] Saved evolution snapshot for [${cleanTag}]`);
+    }
+  } catch (snapErr) { console.error('[snapshot] Error:', snapErr.message); }
+
+  try {
+    const memberNames = members.map(m => m.name);
+    for (const name of memberNames) {
+      const prev = await pool.query(
+        `SELECT clan_tag FROM clan_members WHERE player_name = $1 AND clan_tag != $2 AND active = true LIMIT 1`, [name, cleanTag]
+      );
+      if (prev.rows.length) {
+        const fromClan = prev.rows[0].clan_tag;
+        const alreadyDetected = await pool.query(
+          `SELECT id FROM clan_transfers WHERE player_name = $1 AND from_clan = $2 AND to_clan = $3 AND detected_at > NOW() - INTERVAL '30 days'`, [name, fromClan, cleanTag]
+        );
+        if (!alreadyDetected.rows.length) {
+          await pool.query(`INSERT INTO clan_transfers (player_name, from_clan, to_clan, platform) VALUES ($1,$2,$3,$4)`, [name, fromClan, cleanTag, detectedPlatform]);
+          console.log(`[transfer] Detected: ${name} moved [${fromClan}] -> [${cleanTag}]`);
+        }
+      }
+    }
+  } catch (trErr) { console.error('[transfer] Error:', trErr.message); }
+
+  console.log(`[import] Registered [${cleanTag}] ${clanMeta.clanName}: ${members.length} members, ${totalKills} kills`);
+  return {
+    ok: true, tag: cleanTag, name: clanMeta.clanName, platform: detectedPlatform,
+    level: clanMeta.clanLevel, members: members.length, activeMembers: activeCount,
+    totalKills, totalWins, avgKd, winRate, url: `/clan/${cleanTag}`
+  };
+}
+
 // POST /clans/import-pubgclans — Import a clan using pubgclans.net data + PUBG API metadata
 app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
-
-  const { clanId, gameMode } = req.body;
+  const { clanId } = req.body;
   if (!clanId) return res.status(400).json({ error: 'clanId required (e.g. clan.bc03cc7f04a347ef81e48070f004283c)' });
-
-  const mode = gameMode || 'squad';
-  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
-
   try {
-    // Step 1: Fetch clan metadata from PUBG API (try xbox first, then psn)
-    let clanMeta = null;
-    let detectedPlatform = 'xbox';
-    for (const shard of ['xbox', 'psn', 'steam']) {
-      try {
-        const clanResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers }, 8000);
-        if (clanResp.ok) {
-          const clanData = await clanResp.json();
-          clanMeta = clanData.data?.attributes;
-          detectedPlatform = shard;
-          break;
-        }
-      } catch (e) { /* try next shard */ }
-    }
-
-    if (!clanMeta) return res.status(404).json({ error: 'Clan not found on any platform' });
-    console.log(`[import] Found clan: [${clanMeta.clanTag}] ${clanMeta.clanName} (${detectedPlatform}, level ${clanMeta.clanLevel}, ${clanMeta.clanMemberCount} members)`);
-
-    // Step 2: Fetch member stats from pubgclans.net — try ALL game modes and merge best stats
-    const gameModes = ['squad', 'squad-fpp', 'solo', 'solo-fpp', 'duo', 'duo-fpp'];
-    const mergedPlayers = {}; // player_name -> best stats
-
-    for (const gm of gameModes) {
-      try {
-        const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${gm}`;
-        const pcnResp = await fetchWithTimeout(fetch, pcnUrl, {}, 10000);
-        if (!pcnResp.ok) { console.log(`[import] pubgclans.net ${gm}: HTTP ${pcnResp.status}`); continue; }
-        const pcnData = await pcnResp.json();
-        if (!Array.isArray(pcnData)) continue;
-        console.log(`[import] pubgclans.net ${gm}: ${pcnData.length} members`);
-        pcnData.forEach(p => {
-          const name = p.player_name;
-          if (!name) return;
-          const kills = parseInt(p.kills) || 0;
-          const rounds = parseInt(p.roundsplayed) || 0;
-          const wins = parseInt(p.wins) || 0;
-          const damage = parseFloat(p.damagedealt) || 0;
-          if (mergedPlayers[name]) {
-            // Accumulate stats across game modes
-            mergedPlayers[name].kills += kills;
-            mergedPlayers[name].wins += wins;
-            mergedPlayers[name].rounds += rounds;
-            mergedPlayers[name].damage += damage;
-          } else {
-            mergedPlayers[name] = { kills, wins, rounds, damage };
-          }
-        });
-      } catch (e) { console.log(`[import] pubgclans.net ${gm}: error — ${e.message}`); }
-    }
-
-    // Deduplicate by lowercase name (pubgclans.net can return same player with different casing)
-    const deduped = {};
-    for (const [name, stats] of Object.entries(mergedPlayers)) {
-      const key = name.toLowerCase();
-      if (deduped[key]) {
-        // Keep the name with most kills, accumulate stats
-        if (stats.kills > deduped[key].stats.kills) deduped[key].displayName = name;
-        deduped[key].stats.kills += stats.kills;
-        deduped[key].stats.wins += stats.wins;
-        deduped[key].stats.rounds += stats.rounds;
-        deduped[key].stats.damage += stats.damage;
-      } else {
-        deduped[key] = { displayName: name, stats: { ...stats } };
-      }
-    }
-
-    const playerNames = Object.keys(deduped);
-    if (playerNames.length === 0) {
-      return res.status(404).json({ error: 'No member data found on pubgclans.net for this clan (tried all game modes)' });
-    }
-    console.log(`[import] Merged ${playerNames.length} unique members across all modes`);
-
-    // Step 3: Transform merged data to our format
-    const members = playerNames.map(key => {
-      const p = deduped[key];
-      const s = p.stats;
-      const kd = s.rounds > 0 ? parseFloat((s.kills / s.rounds).toFixed(2)) : 0;
-      return {
-        name: p.displayName,
-        active: s.rounds > 0,
-        stats: { kills: s.kills, wins: s.wins, kd, damage: s.damage, rounds: s.rounds }
-      };
-    }).sort((a, b) => b.stats.kills - a.stats.kills);
-
-    // Step 4: Register the clan (upsert)
-    const payload = {
-      tag: clanMeta.clanTag,
-      name: clanMeta.clanName,
-      memberCount: clanMeta.clanMemberCount,
-      level: clanMeta.clanLevel,
-      platform: detectedPlatform,
-      registeredBy: 'pubgclans_import',
-      members: members
-    };
-
-    // Use our own register endpoint logic inline
-    const cleanTag = payload.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
-    let totalKills = 0, totalWins = 0, totalRounds = 0, totalDmg = 0, kdSum = 0, activeCount = 0;
-    members.forEach(m => {
-      const s = m.stats;
-      totalKills += s.kills; totalWins += s.wins; totalRounds += s.rounds;
-      totalDmg += s.damage; kdSum += s.kd;
-      if (m.active) activeCount++;
-    });
-    const avgKd = members.length > 0 ? (kdSum / members.length).toFixed(2) : 0;
-    const avgDmg = members.length > 0 ? (totalDmg / members.length).toFixed(1) : 0;
-    const winRate = totalRounds > 0 ? ((totalWins / totalRounds) * 100).toFixed(2) : 0;
-
-    await pool.query(`
-      INSERT INTO clans (tag, name, member_count, level, platform, registered_by,
-                         total_kills, total_wins, avg_kd, avg_damage, total_rounds,
-                         win_rate, active_members, stats_updated_at, updated_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW(),NOW())
-      ON CONFLICT (tag) DO UPDATE SET
-        name=EXCLUDED.name, member_count=EXCLUDED.member_count, level=EXCLUDED.level,
-        platform=EXCLUDED.platform, total_kills=EXCLUDED.total_kills, total_wins=EXCLUDED.total_wins,
-        avg_kd=EXCLUDED.avg_kd, avg_damage=EXCLUDED.avg_damage, total_rounds=EXCLUDED.total_rounds,
-        win_rate=EXCLUDED.win_rate, active_members=EXCLUDED.active_members,
-        stats_updated_at=NOW(), updated_at=NOW()
-    `, [cleanTag, payload.name, payload.memberCount, payload.level, detectedPlatform,
-        'pubgclans_import', totalKills, totalWins, avgKd, avgDmg, totalRounds, winRate, activeCount]);
-
-    // Delete old members before re-importing (prevents duplicates from casing differences)
-    await pool.query('DELETE FROM clan_members WHERE clan_tag = $1', [cleanTag]);
-
-    for (const m of members) {
-      const s = m.stats;
-      await pool.query(`
-        INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-      `, [cleanTag, m.name, s.kills, s.wins, s.kd, s.damage, s.rounds, m.active, 'pubgclans_import']);
-    }
-
-    // ═══ CLAN INTELLIGENCE: Snapshot + Transfer Detection ═══
-    // Save clan snapshot for evolution tracking (max 1 per day per clan)
-    try {
-      const existingSnap = await pool.query(
-        "SELECT id FROM clan_snapshots WHERE clan_tag = $1 AND created_at > NOW() - INTERVAL '20 hours'", [cleanTag]
-      );
-      if (!existingSnap.rows.length) {
-        await pool.query(
-          `INSERT INTO clan_snapshots (clan_tag, total_kills, total_wins, avg_kd, avg_damage, win_rate, active_members, total_rounds)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [cleanTag, totalKills, totalWins, avgKd, avgDmg, winRate, activeCount, totalRounds]
-        );
-        console.log(`[snapshot] Saved evolution snapshot for [${cleanTag}]`);
-      }
-    } catch (snapErr) { console.error('[snapshot] Error:', snapErr.message); }
-
-    // Detect player transfers (players who were in a different clan before)
-    try {
-      const memberNames = members.map(m => m.name);
-      for (const name of memberNames) {
-        const prev = await pool.query(
-          `SELECT clan_tag FROM clan_members
-           WHERE player_name = $1 AND clan_tag != $2 AND active = true
-           LIMIT 1`, [name, cleanTag]
-        );
-        if (prev.rows.length) {
-          const fromClan = prev.rows[0].clan_tag;
-          // Check if this transfer was already detected
-          const alreadyDetected = await pool.query(
-            `SELECT id FROM clan_transfers
-             WHERE player_name = $1 AND from_clan = $2 AND to_clan = $3
-             AND detected_at > NOW() - INTERVAL '30 days'`, [name, fromClan, cleanTag]
-          );
-          if (!alreadyDetected.rows.length) {
-            await pool.query(
-              `INSERT INTO clan_transfers (player_name, from_clan, to_clan, platform)
-               VALUES ($1,$2,$3,$4)`, [name, fromClan, cleanTag, detectedPlatform]
-            );
-            console.log(`[transfer] Detected: ${name} moved [${fromClan}] -> [${cleanTag}]`);
-          }
-        }
-      }
-    } catch (trErr) { console.error('[transfer] Error:', trErr.message); }
-
-    console.log(`[import] Registered [${cleanTag}] ${payload.name}: ${members.length} members, ${totalKills} kills`);
-
-    res.json({
-      ok: true,
-      tag: cleanTag,
-      name: payload.name,
-      platform: detectedPlatform,
-      level: payload.level,
-      members: members.length,
-      activeMembers: activeCount,
-      totalKills, totalWins, avgKd, winRate,
-      url: `/clan/${cleanTag}`
-    });
-
+    const result = await importClanByPubgId(clanId);
+    res.json(result);
   } catch (e) {
     console.error('[import] Error:', e.message);
-    console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(e.message.includes('not found') ? 404 : 500).json({ error: e.message || 'Error interno del servidor' });
+  }
+});
+
+// POST /clans/refresh-stats/:tag — Manual refresh of clan stats (rate limited, any user)
+app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database configured' });
+  try {
+    const tag = req.params.tag.toUpperCase();
+    const clan = await pool.query('SELECT pubg_clan_id, platform FROM clans WHERE tag = $1', [tag]);
+    if (!clan.rows.length) return res.status(404).json({ error: 'Clan not found' });
+    const pubgClanId = clan.rows[0].pubg_clan_id;
+    if (!pubgClanId) {
+      // Fallback: try to find clanId via PUBG API using first member
+      const firstMember = await pool.query('SELECT player_name FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC LIMIT 1', [tag]);
+      if (!firstMember.rows.length) return res.status(400).json({ error: 'No se puede actualizar: sin miembros ni ID del clan' });
+      const platform = clan.rows[0].platform || 'psn';
+      const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+      const playerResp = await fetchWithTimeout(fetch,
+        `https://api.pubg.com/shards/${platform}/players?filter[playerNames]=${encodeURIComponent(firstMember.rows[0].player_name)}`,
+        { headers }, 8000);
+      if (!playerResp.ok) return res.status(502).json({ error: 'No se pudo contactar PUBG API' });
+      const playerData = await playerResp.json();
+      const foundClanId = playerData.data?.[0]?.attributes?.clanId;
+      if (!foundClanId) return res.status(400).json({ error: 'El jugador ya no pertenece a un clan' });
+      // Save the clanId for future refreshes
+      await pool.query('UPDATE clans SET pubg_clan_id = $1 WHERE tag = $2', [foundClanId, tag]);
+      const result = await importClanByPubgId(foundClanId);
+      return res.json(result);
+    }
+    const result = await importClanByPubgId(pubgClanId);
+    res.json(result);
+  } catch (e) {
+    console.error('[refresh] Error:', e.message);
+    res.status(500).json({ error: e.message || 'Error al actualizar stats' });
   }
 });
 
@@ -2067,5 +2081,31 @@ initDB().then(() => {
     // Pre-warm leaderboards 5s after startup, then every 2 hours
     setTimeout(prewarmLeaderboards, 5000);
     setInterval(prewarmLeaderboards, 2 * 60 * 60 * 1000);
+
+    // ═══ CRON: Auto-refresh all clans every 24h ═══
+    async function cronRefreshAllClans() {
+      if (!pool) return;
+      try {
+        const staleClans = await pool.query(
+          "SELECT tag, pubg_clan_id FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 20"
+        );
+        if (!staleClans.rows.length) { console.log('[cron] All clans up to date'); return; }
+        console.log(`[cron] Refreshing ${staleClans.rows.length} stale clans...`);
+        for (const clan of staleClans.rows) {
+          try {
+            await importClanByPubgId(clan.pubg_clan_id);
+            console.log(`[cron] ✓ Updated [${clan.tag}]`);
+            // Small delay between imports to respect PUBG API rate limits
+            await new Promise(r => setTimeout(r, 3000));
+          } catch (e) {
+            console.error(`[cron] ✗ Failed [${clan.tag}]:`, e.message);
+          }
+        }
+        console.log('[cron] Clan refresh cycle complete');
+      } catch (e) { console.error('[cron] Error:', e.message); }
+    }
+    // Run 30s after startup, then every 24 hours
+    setTimeout(cronRefreshAllClans, 30000);
+    setInterval(cronRefreshAllClans, 24 * 60 * 60 * 1000);
   });
 });

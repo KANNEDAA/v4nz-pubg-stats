@@ -2208,9 +2208,16 @@ async function loadClanPage(tag){
     h+='<div class="clan-stat"><div class="cs-val">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</div><div class="cs-label">Win Rate</div></div>';
     h+='<div class="clan-stat"><div class="cs-val">'+(c.active_members||0)+'</div><div class="cs-label">Activos</div></div>';
     h+='</div>';
-    // Share button
+    // Last update + refresh button + share
+    const statsAge=c.stats_updated_at?Math.round((Date.now()-new Date(c.stats_updated_at).getTime())/3600000):null;
+    const ageText=statsAge!==null?(statsAge<1?'hace menos de 1h':statsAge<24?'hace '+statsAge+'h':'hace '+Math.round(statsAge/24)+' dias'):'nunca';
+    const ageColor=statsAge!==null&&statsAge<24?'var(--accent-green)':statsAge!==null&&statsAge<72?'var(--accent-yellow)':'var(--accent-orange)';
+    h+='<div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">';
+    h+='<button id="clanRefreshBtn" onclick="refreshClanStats(\''+escJs(c.tag)+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar Stats</button>';
+    h+='<span style="font-size:.65rem;color:'+ageColor+';">&#x1F4C5; Actualizado '+ageText+'</span>';
     const shareUrl='https://www.v4nz.com/clan/'+c.tag;
     h+='<div class="clan-page-share" onclick="navigator.clipboard.writeText(\''+shareUrl+'\').then(()=>{this.innerHTML=\'&#x2705; Copiado!\';setTimeout(()=>{this.innerHTML=\'&#x1F517; Compartir Clan\';},2000);})">&#x1F517; Compartir Clan</div>';
+    h+='</div>';
     h+='</div>';
     // Member ranking
     if(members.length){
@@ -5974,27 +5981,16 @@ async function refreshClanStats(clanTag,btn){
   const origText=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='&#x23F3; Actualizando...';btn.style.opacity='0.5';
   try{
-    // First get the PUBG clanId by looking up a member of this clan
-    const dbResp=await fetch('/clans/'+encodeURIComponent(clanTag));
-    if(!dbResp.ok)throw new Error('Clan no encontrado');
-    const dbData=await dbResp.json();
-    const firstMember=dbData.members&&dbData.members[0]?dbData.members[0].player_name:null;
-    if(!firstMember)throw new Error('Sin miembros para buscar');
-    // Get clanId from PUBG API via player lookup
-    const platform=dbData.clan.platform||'psn';
-    const playerResp=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(firstMember));
-    const clanId=playerResp.data[0]?.attributes?.clanId;
-    if(!clanId)throw new Error('No se pudo obtener el ID del clan');
-    // Re-import from pubgclans.net
-    const impResp=await fetch('/clans/import-pubgclans',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({clanId:clanId,gameMode:'squad'})
-    });
-    if(!impResp.ok){const d=await impResp.json();throw new Error(d.error||'Error al importar');}
+    // Server-side refresh — handles PUBG API lookup + pubgclans.net import
+    const resp=await fetch('/clans/refresh-stats/'+encodeURIComponent(clanTag),{method:'POST'});
+    if(!resp.ok){const d=await resp.json().catch(()=>({}));throw new Error(d.error||'Error al actualizar');}
     btn.innerHTML='&#x2705; Actualizado!';btn.style.color='var(--accent-green)';
-    // Reload the clan view after 1 second
-    setTimeout(()=>{loadClanFromHistory(clanTag);},1200);
+    // Reload: use loadClanPage if we're on /clan/ URL, otherwise loadClanFromHistory
+    const isOnClanPage=location.pathname.startsWith('/clan/');
+    setTimeout(()=>{
+      if(isOnClanPage)loadClanPage(clanTag);
+      else loadClanFromHistory(clanTag);
+    },1200);
   }catch(e){
     console.error('Refresh clan error:',e);
     btn.innerHTML='&#x274C; '+esc(e.message);btn.style.color='var(--accent-orange)';
