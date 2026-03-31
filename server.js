@@ -692,14 +692,23 @@ app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
   try {
     const tag = req.params.tag.toUpperCase();
-    const clan = await pool.query('SELECT pubg_clan_id, platform FROM clans WHERE tag = $1', [tag]);
-    if (!clan.rows.length) return res.status(404).json({ error: 'Clan not found' });
-    const pubgClanId = clan.rows[0].pubg_clan_id;
+    // Try to get pubg_clan_id (column may not exist yet in older DBs)
+    let pubgClanId = null, platform = 'psn';
+    try {
+      const clan = await pool.query('SELECT pubg_clan_id, platform FROM clans WHERE tag = $1', [tag]);
+      if (!clan.rows.length) return res.status(404).json({ error: 'Clan not found' });
+      pubgClanId = clan.rows[0].pubg_clan_id;
+      platform = clan.rows[0].platform || 'psn';
+    } catch (colErr) {
+      // pubg_clan_id column may not exist yet — fallback to platform only
+      const clan = await pool.query('SELECT platform FROM clans WHERE tag = $1', [tag]);
+      if (!clan.rows.length) return res.status(404).json({ error: 'Clan not found' });
+      platform = clan.rows[0].platform || 'psn';
+    }
     if (!pubgClanId) {
       // Fallback: try to find clanId via PUBG API using first member
       const firstMember = await pool.query('SELECT player_name FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC LIMIT 1', [tag]);
       if (!firstMember.rows.length) return res.status(400).json({ error: 'No se puede actualizar: sin miembros ni ID del clan' });
-      const platform = clan.rows[0].platform || 'psn';
       const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
       const playerResp = await fetchWithTimeout(fetch,
         `https://api.pubg.com/shards/${platform}/players?filter[playerNames]=${encodeURIComponent(firstMember.rows[0].player_name)}`,
@@ -708,8 +717,8 @@ app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
       const playerData = await playerResp.json();
       const foundClanId = playerData.data?.[0]?.attributes?.clanId;
       if (!foundClanId) return res.status(400).json({ error: 'El jugador ya no pertenece a un clan' });
-      // Save the clanId for future refreshes
-      await pool.query('UPDATE clans SET pubg_clan_id = $1 WHERE tag = $2', [foundClanId, tag]);
+      // Save the clanId for future refreshes (safe — column may not exist)
+      try { await pool.query('UPDATE clans SET pubg_clan_id = $1 WHERE tag = $2', [foundClanId, tag]); } catch(e) {}
       const result = await importClanByPubgId(foundClanId);
       return res.json(result);
     }

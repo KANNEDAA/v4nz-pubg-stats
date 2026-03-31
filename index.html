@@ -3162,8 +3162,8 @@ function switchTab(t){
   // Show player sub-tabs for all player-related views
   if(playerTabs.includes(t)&&currentPlayerData)document.getElementById('tabsContainer').style.display='block';
   else document.getElementById('tabsContainer').style.display='none';
-  // Reset URL when navigating away from stats
-  if(!playerTabs.includes(t)){
+  // Reset URL when navigating away from stats (but preserve /clan/ URLs)
+  if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
