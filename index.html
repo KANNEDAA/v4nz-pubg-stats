@@ -6043,7 +6043,7 @@ async function refreshClanStats(clanTag,btn){
   try{
     // Server-side refresh — handles PUBG API lookup + pubgclans.net import
     const resp=await fetch('/clans/refresh-stats/'+encodeURIComponent(clanTag),{method:'POST'});
-    if(!resp.ok){const d=await resp.json().catch(()=>({}));throw new Error(d.error||'Error al actualizar');}
+    if(!resp.ok){const txt=await resp.text();let msg='Error al actualizar';try{const d=JSON.parse(txt);msg=d.error||msg;}catch(e){}throw new Error(msg);}
     btn.innerHTML='&#x2705; Actualizado!';btn.style.color='var(--accent-green)';
     // Reload: use loadClanPage if we're on /clan/ URL, otherwise loadClanFromHistory
     const isOnClanPage=location.pathname.startsWith('/clan/');

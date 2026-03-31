@@ -713,7 +713,7 @@ app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
       const playerResp = await fetchWithTimeout(fetch,
         `https://api.pubg.com/shards/${platform}/players?filter[playerNames]=${encodeURIComponent(firstMember.rows[0].player_name)}`,
         { headers }, 8000);
-      if (!playerResp.ok) return res.status(502).json({ error: 'No se pudo contactar PUBG API' });
+      if (!playerResp.ok) return res.status(503).json({ error: 'No se pudo contactar PUBG API' });
       const playerData = await playerResp.json();
       const foundClanId = playerData.data?.[0]?.attributes?.clanId;
       if (!foundClanId) return res.status(400).json({ error: 'El jugador ya no pertenece a un clan' });
@@ -1323,10 +1323,10 @@ app.get('/api/leaderboard', async (req, res) => {
     const seasonResp = await fetch(`https://api.pubg.com/shards/${fetchPlat}/seasons`, {
       headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
     });
-    if (!seasonResp.ok) return res.status(502).json({ error: 'Failed to fetch seasons' });
+    if (!seasonResp.ok) return res.status(503).json({ error: 'Failed to fetch seasons' });
     const seasonData = await seasonResp.json();
     const currentSeason = seasonData.data.find(s => s.attributes.isCurrentSeason);
-    if (!currentSeason) return res.status(502).json({ error: 'No current season found' });
+    if (!currentSeason) return res.status(503).json({ error: 'No current season found' });
     const sid = currentSeason.id;
 
     let allPlayers = [];
@@ -1374,7 +1374,7 @@ app.get('/api/leaderboard', async (req, res) => {
       const lbResp = await fetch(`https://api.pubg.com/shards/${lbShard}/leaderboards/${sid}/${mode}`, {
         headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
       });
-      if (!lbResp.ok) return res.status(502).json({ error: 'Failed to fetch leaderboard' });
+      if (!lbResp.ok) return res.status(503).json({ error: 'Failed to fetch leaderboard' });
       const lbData = await lbResp.json();
       const players = lbData.included || [];
       const pRelations = lbData.data?.relationships?.players?.data || [];
@@ -1557,7 +1557,7 @@ app.get('/api/pubg-report/:accountId', async (req, res) => {
     res.json({ clips, total: Object.keys(clips).length, raw_format: Array.isArray(data) ? 'array' : typeof data });
   } catch (e) {
     console.error('PUBG Report proxy error:', e.message);
-    console.error('[pubg-report]', e.message); res.status(502).json({ error: 'Servicio no disponible' });
+    console.error('[pubg-report]', e.message); res.status(503).json({ error: 'Servicio no disponible' });
   }
 });
 
