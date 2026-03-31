@@ -1395,7 +1395,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
   const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
   const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
 
-  // Check cache (6 hours)
+  // Check cache (6 hours) — skip stale entries with botKills=0 (old buggy data)
   if (pool) {
     try {
       const cached = await pool.query(
@@ -1403,7 +1403,12 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
         [cacheKey]
       );
       if (cached.rows.length) {
-        try { return res.json(JSON.parse(cached.rows[0].response_data)); } catch(e) {}
+        try {
+          const cData = JSON.parse(cached.rows[0].response_data);
+          // Skip cache if it has the old bug (0 botKills but had kills — clearly wrong)
+          if (cData.totalKills > 0 && cData.botKills === 0) { /* recalculate */ }
+          else return res.json(cData);
+        } catch(e) {}
       }
     } catch(e) {}
   }
@@ -1462,12 +1467,15 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
         }
 
         // 4. Count kills: bot vs human
+        // Bots in PUBG have accountId starting with "ai." (e.g. "ai.abcdef123456")
+        // Also catch empty/missing accountId as bot just in case
         const killEvents = telemetry.filter(e => e._T === 'LogPlayerKillV2' || e._T === 'LogPlayerKill');
         for (const ev of killEvents) {
           const killer = ev.killer || ev.finisher;
           if (!killer || killer.accountId !== playerId) continue;
           totalKills++;
-          if (!ev.victim?.accountId || ev.victim.accountId === '') botKills++;
+          const victimId = ev.victim?.accountId || '';
+          if (!victimId || victimId === '' || victimId.startsWith('ai.')) botKills++;
         }
         analyzed++;
       } catch(e) { /* skip this match */ }

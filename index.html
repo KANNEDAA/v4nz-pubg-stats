@@ -3040,7 +3040,7 @@ function showClanByTag(tag){
 }
 async function searchPlayer(){
   if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name){showError('Escribe el nombre de un jugador para buscar sus estadísticas');return;}
-  showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;document.getElementById('emptyState').style.display='none';hideHomepageContent();
+  showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;window._lastBotIndex=null;document.getElementById('emptyState').style.display='none';hideHomepageContent();
   try{
     setLoaderStep('Buscando jugador '+name+'...');
     const pr=await findPlayer(name,currentPlatform);
@@ -3242,6 +3242,8 @@ async function loadBotIndex(platform,playerName){
     container.innerHTML='<div class="bot-badge" title="'+data.botKills+' kills vs bots de '+data.totalKills+' totales ('+data.matchesAnalyzed+' partidas analizadas)" style="background:'+color+'18;border:1px solid '+color+'44;"><span style="font-size:.9rem;">'+emoji+'</span><div style="line-height:1.3;"><div class="bot-badge-ratio" style="color:'+color+';">'+ratio+'% bots</div><div class="bot-badge-label">'+label+' &middot; '+data.matchesAnalyzed+' partidas</div></div></div>';
     // Store for use in other features
     window._lastBotIndex=data;
+    // Re-render personality if bot data changes the detected role
+    if(data.botRatio>=50&&data.matchesAnalyzed>=3){try{renderPersonality();}catch(e){}}
   }catch(e){container.style.display='none';container.innerHTML='';}
 }
 
@@ -4381,9 +4383,15 @@ function getPersonalityType(){
   const s=getActiveStats();if(!s||!s.roundsPlayed)return'';
   const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
   const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;const rd=s.roundsPlayed?(s.rideDistance||0)/s.roundsPlayed:0;
+  // Mata Bots: botRatio >= 50% (plays mostly bot lobbies)
+  const bi=window._lastBotIndex;
+  if(bi&&bi.matchesAnalyzed>=3&&bi.botRatio>=50)return'Mata Bots';
   if(hs>25&&(s.longestKill||0)>150)return'Francotirador';
   if(kd>2.5&&ad>250)return'Depredador';
   if(wr>25)return'Campeon';
+  // Rematador: high kill efficiency — kills close to or exceeding DBNOs (finishes fast)
+  const dbnos=s.DBNOs||0;const kills=s.kills||0;
+  if(kills>50&&dbnos>0&&(kills/dbnos)>=0.85&&ad>120&&kd>1.2)return'Rematador';
   if(rr>0.5)return'Medico de Combate';
   if(rd>2000)return'Piloto Loco';
   if(kd>1.5&&ad>150)return'Guerrero';
@@ -4427,9 +4435,13 @@ function renderPersonality(){
   const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
   const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;const rd=s.roundsPlayed?(s.rideDistance||0)/s.roundsPlayed:0;
   let ic,ti,de,co,tg=[];
-  if(hs>25&&(s.longestKill||0)>150){ic='&#x1F3AF;';ti='FRANCOTIRADOR';de='Preciso y letal a distancia. Tus headshots hablan por ti.';co='var(--accent-purple)';tg=['Precision','Largo alcance','Paciencia'];}
+  const bi=window._lastBotIndex;
+  const dbnos=s.DBNOs||0;const kills=s.kills||0;
+  if(bi&&bi.matchesAnalyzed>=3&&bi.botRatio>=50){ic='&#x1F916;';ti='MATA BOTS';de='Especialista en lobbies de bots. '+bi.botRatio+'% de tus kills son contra IA.';co='var(--accent-orange)';tg=['Bot lobbies','Farm','IA'];}
+  else if(hs>25&&(s.longestKill||0)>150){ic='&#x1F3AF;';ti='FRANCOTIRADOR';de='Preciso y letal a distancia. Tus headshots hablan por ti.';co='var(--accent-purple)';tg=['Precision','Largo alcance','Paciencia'];}
   else if(kd>2.5&&ad>250){ic='&#x1F525;';ti='DEPREDADOR';de='Maquina de matar. Tu agresividad domina el campo de batalla.';co='var(--accent-red)';tg=['Agresivo','Alto dano','Dominante'];}
   else if(wr>25){ic='&#x1F3C6;';ti='CAMPEON';de='Nacido para ganar. Tu winrate es de otro nivel.';co='var(--accent-yellow)';tg=['Victorioso','Estratega','Constante'];}
+  else if(kills>50&&dbnos>0&&(kills/dbnos)>=0.85&&ad>120&&kd>1.2){ic='&#x1F4A5;';ti='REMATADOR';de='No dejas a nadie en el suelo. Ejecutas rapido y sin piedad.';co='var(--accent-red)';tg=['Ejecucion','Eficiencia','Sin piedad'];}
   else if(rr>0.5){ic='&#x1FA7A;';ti='MEDICO DE COMBATE';de='El alma del equipo. Sin ti, tu squad no sobreviviria.';co='var(--accent-green)';tg=['Soporte','Equipo','Revives'];}
   else if(rd>2000){ic='&#x1F697;';ti='PILOTO LOCO';de='Siempre sobre ruedas. El vehiculo es tu arma favorita.';co='var(--accent-orange)';tg=['Vehiculos','Movilidad','Atropellos'];}
   else if(kd>1.5&&ad>150){ic='&#x2694;&#xFE0F;';ti='GUERRERO';de='Equilibrio entre agresion y supervivencia. Un jugador completo.';co='var(--accent)';tg=['Equilibrado','Versatil','Fiable'];}
@@ -4458,7 +4470,7 @@ async function shareAdnImage(){
   const dn=calcDnaScores(s);
   const kd=calcKD(s),wr=calcWinRate(s),ad=calcAvgDmg(s),hs=calcHSRate(s);
   const role=getPersonalityType();
-  const roleMap={'Francotirador':{ic:'&#x1F3AF;',col:'#a855f7'},'Depredador':{ic:'&#x1F525;',col:'#ff3355'},'Campeon':{ic:'&#x1F3C6;',col:'#ffd700'},'Medico de Combate':{ic:'&#x1FA7A;',col:'#00ff88'},'Piloto Loco':{ic:'&#x1F697;',col:'#ff6b00'},'Guerrero':{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'},'Superviviente':{ic:'&#x1F9BE;',col:'#00ff88'},'Novato Prometedor':{ic:'&#x1F476;',col:'#00f0ff'}};
+  const roleMap={'Mata Bots':{ic:'&#x1F916;',col:'#ff6b00'},'Francotirador':{ic:'&#x1F3AF;',col:'#a855f7'},'Depredador':{ic:'&#x1F525;',col:'#ff3355'},'Campeon':{ic:'&#x1F3C6;',col:'#ffd700'},'Rematador':{ic:'&#x1F4A5;',col:'#ff3355'},'Medico de Combate':{ic:'&#x1FA7A;',col:'#00ff88'},'Piloto Loco':{ic:'&#x1F697;',col:'#ff6b00'},'Guerrero':{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'},'Superviviente':{ic:'&#x1F9BE;',col:'#00ff88'},'Novato Prometedor':{ic:'&#x1F476;',col:'#00f0ff'}};
   const rm=roleMap[role]||{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'};
   const bars=[{l:'Agresividad',v:dn.agresividad,c:'#ff3355'},{l:'Precision',v:dn.precision,c:'#a855f7'},{l:'Supervivencia',v:dn.supervivencia,c:'#00ff88'},{l:'Movilidad',v:dn.movilidad,c:'#ff6b00'},{l:'Soporte',v:dn.soporte,c:'#00f0ff'}];
   // Create offscreen card
@@ -4656,7 +4668,7 @@ function generateStatsCard(){
   const W=1080,H=1350;c.width=W;c.height=H;
   const s=getActiveStats();const n=currentPlayerData?.attributes?.name||'???';
   const role=getPersonalityType?getPersonalityType():'';
-  const roleMap={'Francotirador':{ic:'\u{1F3AF}',col:'#a855f7'},'Depredador':{ic:'\u{1F525}',col:'#ff3355'},'Campeon':{ic:'\u{1F3C6}',col:'#ffd700'},'Medico de Combate':{ic:'\u{1FA7A}',col:'#00ff88'},'Piloto Loco':{ic:'\u{1F697}',col:'#ff6b00'},'Guerrero':{ic:'\u2694\uFE0F',col:'#00f0ff'},'Superviviente':{ic:'\u{1F9BE}',col:'#00ff88'},'Novato Prometedor':{ic:'\u{1F476}',col:'#00f0ff'}};
+  const roleMap={'Mata Bots':{ic:'\u{1F916}',col:'#ff6b00'},'Francotirador':{ic:'\u{1F3AF}',col:'#a855f7'},'Depredador':{ic:'\u{1F525}',col:'#ff3355'},'Campeon':{ic:'\u{1F3C6}',col:'#ffd700'},'Rematador':{ic:'\u{1F4A5}',col:'#ff3355'},'Medico de Combate':{ic:'\u{1FA7A}',col:'#00ff88'},'Piloto Loco':{ic:'\u{1F697}',col:'#ff6b00'},'Guerrero':{ic:'\u2694\uFE0F',col:'#00f0ff'},'Superviviente':{ic:'\u{1F9BE}',col:'#00ff88'},'Novato Prometedor':{ic:'\u{1F476}',col:'#00f0ff'}};
   const rm=roleMap[role]||{ic:'\u2694\uFE0F',col:'#00f0ff'};
   const dn=calcDnaScores(s);
 
