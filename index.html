@@ -4389,6 +4389,8 @@ function getPersonalityType(){
   if(hs>25&&(s.longestKill||0)>150)return'Francotirador';
   if(kd>2.5&&ad>250)return'Depredador';
   if(wr>25)return'Campeon';
+  // Maquina de Racha: insane kill streaks and best-game performance
+  if((s.maxKillStreaks||0)>=5&&(s.roundMostKills||0)>=8&&kd>1.5)return'Maquina de Racha';
   // Pusheador: high kills/round + high dmg but low survival — always rushing first
   const kpr=s.roundsPlayed?(s.kills||0)/s.roundsPlayed:0;
   const t10=parseFloat(calcTop10Rate(s));
@@ -4398,6 +4400,9 @@ function getPersonalityType(){
   if(kills>50&&dbnos>0&&(kills/dbnos)>=0.85&&ad>120&&kd>1.2)return'Rematador';
   // Roba Kills: many more kills than own knocks — steals teammates' finishes
   if(kills>30&&dbnos>0&&(kills/dbnos)>=1.4)return'Roba Kills';
+  // Kamikaze: dies a lot but always takes someone down — high suicides + trades
+  const spr=s.roundsPlayed?(s.suicides||0)/s.roundsPlayed:0;
+  if(spr>0.08&&(s.suicides||0)>=3&&kpr>=1)return'Kamikaze';
   if(rr>0.5)return'Medico de Combate';
   if(rd>2000)return'Piloto Loco';
   if(kd>1.5&&ad>150)return'Guerrero';
@@ -4405,6 +4410,8 @@ function getPersonalityType(){
   const wpg=s.roundsPlayed?(s.weaponsAcquired||0)/s.roundsPlayed:0;
   const hbpg=s.roundsPlayed?((s.heals||0)+(s.boosts||0))/s.roundsPlayed:0;
   if(wpg>=5&&hbpg>=3&&kd<1)return'Looteador';
+  // Rata: high survival but almost no kills/damage — hides all game
+  if(t10>50&&kd<0.8&&ad<100)return'Rata';
   if(t10>60)return'Superviviente';
   return'Novato Prometedor';
 }
@@ -4455,13 +4462,16 @@ function renderPersonality(){
   else if(hs>25&&(s.longestKill||0)>150){ic='&#x1F3AF;';ti='FRANCOTIRADOR';de='Preciso y letal a distancia. Tus headshots hablan por ti.';co='var(--accent-purple)';tg=['Precision','Largo alcance','Paciencia'];}
   else if(kd>2.5&&ad>250){ic='&#x1F525;';ti='DEPREDADOR';de='Maquina de matar. Tu agresividad domina el campo de batalla.';co='var(--accent-red)';tg=['Agresivo','Alto dano','Dominante'];}
   else if(wr>25){ic='&#x1F3C6;';ti='CAMPEON';de='Nacido para ganar. Tu winrate es de otro nivel.';co='var(--accent-yellow)';tg=['Victorioso','Estratega','Constante'];}
+  else if((s.maxKillStreaks||0)>=5&&(s.roundMostKills||0)>=8&&kd>1.5){ic='&#x26A1;';ti='MAQUINA DE RACHA';de='Cuando arrancas no hay quien te pare. Rachas de kills que dan miedo.';co='var(--accent-yellow)';tg=['Rachas','Imparable','Clutch'];}
   else if(kpr>=2&&ad>200&&t10<40&&kd>1){ic='&#x1F4AA;';ti='PUSHEADOR';de='Siempre el primero en entrar. No conoces la palabra campear.';co='var(--accent-red)';tg=['Agresivo','Primera sangre','Sin miedo'];}
   else if(kills>50&&dbnos>0&&(kills/dbnos)>=0.85&&ad>120&&kd>1.2){ic='&#x1F4A5;';ti='REMATADOR';de='No dejas a nadie en el suelo. Ejecutas rapido y sin piedad.';co='var(--accent-red)';tg=['Ejecucion','Eficiencia','Sin piedad'];}
   else if(kills>30&&dbnos>0&&(kills/dbnos)>=1.4){ic='&#x1F977;';ti='ROBA KILLS';de='Siempre apareces para dar el tiro final. Tus compas te odian... pero funciona.';co='var(--accent-yellow)';tg=['Oportunista','Ultimo tiro','Buitre'];}
+  else if((s.suicides||0)>=3&&s.roundsPlayed&&(s.suicides/s.roundsPlayed)>0.08&&kpr>=1){ic='&#x1F4A3;';ti='KAMIKAZE';de='Te llevas a alguien por delante aunque sea lo ultimo que hagas. Literal.';co='var(--accent-orange)';tg=['Explosivo','Suicida','Caos'];}
   else if(rr>0.5){ic='&#x1FA7A;';ti='MEDICO DE COMBATE';de='El alma del equipo. Sin ti, tu squad no sobreviviria.';co='var(--accent-green)';tg=['Soporte','Equipo','Revives'];}
   else if(rd>2000){ic='&#x1F697;';ti='PILOTO LOCO';de='Siempre sobre ruedas. El vehiculo es tu arma favorita.';co='var(--accent-orange)';tg=['Vehiculos','Movilidad','Atropellos'];}
   else if(kd>1.5&&ad>150){ic='&#x2694;&#xFE0F;';ti='GUERRERO';de='Equilibrio entre agresion y supervivencia. Un jugador completo.';co='var(--accent)';tg=['Equilibrado','Versatil','Fiable'];}
   else if(wpg>=5&&hbpg>=3&&kd<1){ic='&#x1F9F3;';ti='LOOTEADOR';de='Recogedor profesional. Tu mochila siempre esta llena, tus kills no tanto.';co='var(--accent-purple)';tg=['Loot','Mochilero','Recolector'];}
+  else if(t10>50&&kd<0.8&&ad<100){ic='&#x1F400;';ti='RATA';de='Maestro del escondite. Llegas al final sin que nadie sepa que estabas ahi.';co='var(--accent-green)';tg=['Campero','Invisible','Zona'];}
   else if(t10>60){ic='&#x1F9BE;';ti='SUPERVIVIENTE';de='Maestro de la zona. Siempre llegas al final.';co='var(--accent-green)';tg=['Cauteloso','Top 10','Paciencia'];}
   else{ic='&#x1F476;';ti='NOVATO PROMETEDOR';de='En camino a la grandeza. Cada partida es una leccion.';co='var(--accent)';tg=['Aprendiendo','Potencial','Progreso'];}
   const dn=calcDnaScores(s);
@@ -4487,7 +4497,7 @@ async function shareAdnImage(){
   const dn=calcDnaScores(s);
   const kd=calcKD(s),wr=calcWinRate(s),ad=calcAvgDmg(s),hs=calcHSRate(s);
   const role=getPersonalityType();
-  const roleMap={'Mata Bots':{ic:'&#x1F916;',col:'#ff6b00'},'Francotirador':{ic:'&#x1F3AF;',col:'#a855f7'},'Depredador':{ic:'&#x1F525;',col:'#ff3355'},'Campeon':{ic:'&#x1F3C6;',col:'#ffd700'},'Pusheador':{ic:'&#x1F4AA;',col:'#ff3355'},'Rematador':{ic:'&#x1F4A5;',col:'#ff3355'},'Roba Kills':{ic:'&#x1F977;',col:'#ffd700'},'Medico de Combate':{ic:'&#x1FA7A;',col:'#00ff88'},'Piloto Loco':{ic:'&#x1F697;',col:'#ff6b00'},'Guerrero':{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'},'Looteador':{ic:'&#x1F9F3;',col:'#a855f7'},'Superviviente':{ic:'&#x1F9BE;',col:'#00ff88'},'Novato Prometedor':{ic:'&#x1F476;',col:'#00f0ff'}};
+  const roleMap={'Mata Bots':{ic:'&#x1F916;',col:'#ff6b00'},'Francotirador':{ic:'&#x1F3AF;',col:'#a855f7'},'Depredador':{ic:'&#x1F525;',col:'#ff3355'},'Campeon':{ic:'&#x1F3C6;',col:'#ffd700'},'Maquina de Racha':{ic:'&#x26A1;',col:'#ffd700'},'Pusheador':{ic:'&#x1F4AA;',col:'#ff3355'},'Rematador':{ic:'&#x1F4A5;',col:'#ff3355'},'Roba Kills':{ic:'&#x1F977;',col:'#ffd700'},'Kamikaze':{ic:'&#x1F4A3;',col:'#ff6b00'},'Medico de Combate':{ic:'&#x1FA7A;',col:'#00ff88'},'Piloto Loco':{ic:'&#x1F697;',col:'#ff6b00'},'Guerrero':{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'},'Looteador':{ic:'&#x1F9F3;',col:'#a855f7'},'Rata':{ic:'&#x1F400;',col:'#00ff88'},'Superviviente':{ic:'&#x1F9BE;',col:'#00ff88'},'Novato Prometedor':{ic:'&#x1F476;',col:'#00f0ff'}};
   const rm=roleMap[role]||{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'};
   const bars=[{l:'Agresividad',v:dn.agresividad,c:'#ff3355'},{l:'Precision',v:dn.precision,c:'#a855f7'},{l:'Supervivencia',v:dn.supervivencia,c:'#00ff88'},{l:'Movilidad',v:dn.movilidad,c:'#ff6b00'},{l:'Soporte',v:dn.soporte,c:'#00f0ff'}];
   // Create offscreen card
@@ -4685,7 +4695,7 @@ function generateStatsCard(){
   const W=1080,H=1350;c.width=W;c.height=H;
   const s=getActiveStats();const n=currentPlayerData?.attributes?.name||'???';
   const role=getPersonalityType?getPersonalityType():'';
-  const roleMap={'Mata Bots':{ic:'\u{1F916}',col:'#ff6b00'},'Francotirador':{ic:'\u{1F3AF}',col:'#a855f7'},'Depredador':{ic:'\u{1F525}',col:'#ff3355'},'Campeon':{ic:'\u{1F3C6}',col:'#ffd700'},'Pusheador':{ic:'\u{1F4AA}',col:'#ff3355'},'Rematador':{ic:'\u{1F4A5}',col:'#ff3355'},'Roba Kills':{ic:'\u{1F977}',col:'#ffd700'},'Medico de Combate':{ic:'\u{1FA7A}',col:'#00ff88'},'Piloto Loco':{ic:'\u{1F697}',col:'#ff6b00'},'Guerrero':{ic:'\u2694\uFE0F',col:'#00f0ff'},'Looteador':{ic:'\u{1F9F3}',col:'#a855f7'},'Superviviente':{ic:'\u{1F9BE}',col:'#00ff88'},'Novato Prometedor':{ic:'\u{1F476}',col:'#00f0ff'}};
+  const roleMap={'Mata Bots':{ic:'\u{1F916}',col:'#ff6b00'},'Francotirador':{ic:'\u{1F3AF}',col:'#a855f7'},'Depredador':{ic:'\u{1F525}',col:'#ff3355'},'Campeon':{ic:'\u{1F3C6}',col:'#ffd700'},'Maquina de Racha':{ic:'\u26A1',col:'#ffd700'},'Pusheador':{ic:'\u{1F4AA}',col:'#ff3355'},'Rematador':{ic:'\u{1F4A5}',col:'#ff3355'},'Roba Kills':{ic:'\u{1F977}',col:'#ffd700'},'Kamikaze':{ic:'\u{1F4A3}',col:'#ff6b00'},'Medico de Combate':{ic:'\u{1FA7A}',col:'#00ff88'},'Piloto Loco':{ic:'\u{1F697}',col:'#ff6b00'},'Guerrero':{ic:'\u2694\uFE0F',col:'#00f0ff'},'Looteador':{ic:'\u{1F9F3}',col:'#a855f7'},'Rata':{ic:'\u{1F400}',col:'#00ff88'},'Superviviente':{ic:'\u{1F9BE}',col:'#00ff88'},'Novato Prometedor':{ic:'\u{1F476}',col:'#00f0ff'}};
   const rm=roleMap[role]||{ic:'\u2694\uFE0F',col:'#00f0ff'};
   const dn=calcDnaScores(s);
 
