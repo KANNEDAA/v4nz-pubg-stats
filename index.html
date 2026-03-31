@@ -686,7 +686,7 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .clan-compare-bar-fill { flex: 1; height: 8px; border-radius: 4px; background: var(--bg-secondary); overflow: hidden; }
 .clan-compare-bar-fill .bar-inner { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
 .clan-compare-bar-val { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 600; width: 50px; }
-@media(max-width:768px){ .clan-compare-container { grid-template-columns: 1fr; } .clan-compare-vs { padding-top: 0; font-size: 1.1rem; } }
+@media(max-width:768px){ .clan-compare-container { grid-template-columns: 1fr; } .clan-compare-vs { padding-top: 0; font-size: 1.1rem; } #clanCompareMode > div:first-child { grid-template-columns: 1fr !important; } #clanCompareMode > div:first-child > div:nth-child(2) { padding-top: 0 !important; } }
 
 /* CLAN AUTOCOMPLETE */
 .clan-ac-wrap { position: relative; }
@@ -1423,13 +1423,45 @@ footer a { color: var(--accent); text-decoration: none; }
       </div>
     </div>
     <div id="clanCompareMode" style="display:none;">
-      <div class="clan-platform-sel">
-        <button class="clan-plat-btn active" data-ccplat="psn" onclick="setClanComparePlatform('psn',this)">PlayStation</button>
-        <button class="clan-plat-btn" data-ccplat="xbox" onclick="setClanComparePlatform('xbox',this)">Xbox</button>
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Clan o nombre de jugador..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC1')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC1"></div></div>
-        <div class="clan-search-box clan-ac-wrap" style="flex:1;min-width:200px;margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Clan o nombre de jugador..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC2')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC2"></div></div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;margin-bottom:16px;">
+        <!-- Clan 1 -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow-card);">
+          <div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px;">Clan 1</div>
+          <div style="display:flex;gap:0;margin-bottom:10px;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+            <button class="cc-tab active" data-cc="1" data-mode="name" onclick="setCCSearchTab(1,'name',this)" style="flex:1;padding:7px 10px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;border:none;cursor:pointer;transition:all .2s;background:var(--accent);color:var(--bg-primary);">&#x1F50D; Por Nombre</button>
+            <button class="cc-tab" data-cc="1" data-mode="player" onclick="setCCSearchTab(1,'player',this)" style="flex:1;padding:7px 10px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;border:none;cursor:pointer;transition:all .2s;background:var(--bg-secondary);color:var(--text-dim);">&#x1F464; Por Jugador</button>
+          </div>
+          <div id="ccNamePanel1">
+            <div class="clan-search-box clan-ac-wrap" style="margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Nombre o tag del clan..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC1')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC1"></div></div>
+          </div>
+          <div id="ccPlayerPanel1" style="display:none;">
+            <div class="clan-platform-sel" style="margin-bottom:8px;">
+              <button class="clan-plat-btn active" data-ccplat1="psn" onclick="setCCPlat(1,'psn',this)">PS</button>
+              <button class="clan-plat-btn" data-ccplat1="xbox" onclick="setCCPlat(1,'xbox',this)">Xbox</button>
+            </div>
+            <div class="clan-search-box" style="margin-bottom:0;"><input class="clan-input" id="clanComparePlayer1" placeholder="Gamertag del jugador..." onkeydown="if(event.key==='Enter')compareClans()"/></div>
+          </div>
+        </div>
+        <!-- VS -->
+        <div style="display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-weight:800;font-size:1.2rem;color:var(--accent-orange);padding-top:60px;">VS</div>
+        <!-- Clan 2 -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow-card);">
+          <div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px;">Clan 2</div>
+          <div style="display:flex;gap:0;margin-bottom:10px;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+            <button class="cc-tab active" data-cc="2" data-mode="name" onclick="setCCSearchTab(2,'name',this)" style="flex:1;padding:7px 10px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;border:none;cursor:pointer;transition:all .2s;background:var(--accent);color:var(--bg-primary);">&#x1F50D; Por Nombre</button>
+            <button class="cc-tab" data-cc="2" data-mode="player" onclick="setCCSearchTab(2,'player',this)" style="flex:1;padding:7px 10px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;border:none;cursor:pointer;transition:all .2s;background:var(--bg-secondary);color:var(--text-dim);">&#x1F464; Por Jugador</button>
+          </div>
+          <div id="ccNamePanel2">
+            <div class="clan-search-box clan-ac-wrap" style="margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Nombre o tag del clan..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC2')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC2"></div></div>
+          </div>
+          <div id="ccPlayerPanel2" style="display:none;">
+            <div class="clan-platform-sel" style="margin-bottom:8px;">
+              <button class="clan-plat-btn active" data-ccplat2="psn" onclick="setCCPlat(2,'psn',this)">PS</button>
+              <button class="clan-plat-btn" data-ccplat2="xbox" onclick="setCCPlat(2,'xbox',this)">Xbox</button>
+            </div>
+            <div class="clan-search-box" style="margin-bottom:0;"><input class="clan-input" id="clanComparePlayer2" placeholder="Gamertag del jugador..." onkeydown="if(event.key==='Enter')compareClans()"/></div>
+          </div>
+        </div>
       </div>
       <div style="text-align:center;margin-bottom:20px;"><button class="search-btn" style="border-radius:8px;padding:12px 30px;" onclick="compareClans()">COMPARAR CLANES</button></div>
       <div id="clanCompareResults"></div>
@@ -5464,6 +5496,34 @@ function setClanMode(mode,btn){
 }
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
 function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
+// Compare Clans — tab switching (name vs player per side)
+const _ccMode={1:'name',2:'name'};
+const _ccPlat={1:'psn',2:'psn'};
+function setCCSearchTab(side,mode,btn){
+  _ccMode[side]=mode;
+  document.querySelectorAll('.cc-tab[data-cc="'+side+'"]').forEach(b=>{
+    const isActive=b.dataset.mode===mode;
+    b.style.background=isActive?'var(--accent)':'var(--bg-secondary)';
+    b.style.color=isActive?'var(--bg-primary)':'var(--text-dim)';
+    b.classList.toggle('active',isActive);
+  });
+  const namePanel=document.getElementById('ccNamePanel'+side);
+  const playerPanel=document.getElementById('ccPlayerPanel'+side);
+  if(namePanel)namePanel.style.display=mode==='name'?'':'none';
+  if(playerPanel)playerPanel.style.display=mode==='player'?'':'none';
+}
+function setCCPlat(side,p,btn){
+  _ccPlat[side]=p;
+  document.querySelectorAll('.clan-plat-btn[data-ccplat'+side+']').forEach(b=>b.classList.toggle('active',b.dataset['ccplat'+side]===p));
+}
+function getCCValue(side){
+  if(_ccMode[side]==='player'){
+    const inp=document.getElementById('clanComparePlayer'+side);
+    return {value:(inp?inp.value.trim():''),mode:'player',platform:_ccPlat[side]};
+  }
+  const inp=document.getElementById('clanCompare'+side);
+  return {value:(inp?inp.value.trim():''),mode:'name',platform:_ccPlat[side]};
+}
 
 // ═══ CLAN AUTOCOMPLETE (Compare inputs) — busca por clan Y por jugador ═══
 let _acTimer=null;
@@ -6183,9 +6243,12 @@ function renderClanDemo(targetId){
 }
 
 async function compareClans(){
-  const n1=document.getElementById('clanCompare1').value.trim();
-  const n2=document.getElementById('clanCompare2').value.trim();
-  if(!n1||!n2){alert('Escribe el nombre del clan o tag en cada campo');return;}
+  const cc1=getCCValue(1);const cc2=getCCValue(2);
+  const n1=cc1.value;const n2=cc2.value;
+  if(!n1||!n2){alert('Escribe el nombre del clan o gamertag en cada campo');return;}
+  // If player mode, set the compare platform so fetchClanByPlayer uses it
+  if(cc1.mode==='player')clanComparePlatform=cc1.platform;
+  if(cc2.mode==='player'&&cc1.mode!=='player')clanComparePlatform=cc2.platform;
   if(!API_KEY){document.getElementById('clanCompareResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">Para comparar clanes reales necesitas configurar la conexión.</p>';return;}
   const cr=document.getElementById('clanCompareResults');
   cr.innerHTML='';
