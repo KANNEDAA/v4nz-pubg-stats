@@ -1713,7 +1713,7 @@ footer a { color: var(--accent); text-decoration: none; }
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 <script>
 // THEME TOGGLE
 function toggleTheme(){
@@ -6662,7 +6662,10 @@ async function renderLeaderboard(){
   const lbContent=document.getElementById('leaderboardContent');
   lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500...</div></div></div>';
   try{
-    const resp=await fetch('/api/leaderboard?platform='+lbPlatform+'&region='+lbRegion+'&mode='+lbMode);
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
+    const resp=await fetch('/api/leaderboard?platform='+lbPlatform+'&region='+lbRegion+'&mode='+lbMode,{signal:controller.signal});
+    clearTimeout(timeout);
     if(!resp.ok){renderLeaderboardDemo();return;}
     const data=await resp.json();
     if(!data.players||data.players.length===0){renderLeaderboardDemo();return;}

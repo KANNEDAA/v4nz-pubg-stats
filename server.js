@@ -1352,9 +1352,8 @@ app.get('/api/leaderboard', async (req, res) => {
   try {
     // Fetch current season
     const fetchPlat = platform === 'console' ? 'psn' : platform;
-    const seasonResp = await fetch(`https://api.pubg.com/shards/${fetchPlat}/seasons`, {
-      headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
-    });
+    const lbHeaders = { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' };
+    const seasonResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${fetchPlat}/seasons`, { headers: lbHeaders }, 10000);
     if (!seasonResp.ok) return res.status(503).json({ error: 'Failed to fetch seasons' });
     const seasonData = await seasonResp.json();
     const currentSeason = seasonData.data.find(s => s.attributes.isCurrentSeason);
@@ -1366,12 +1365,8 @@ app.get('/api/leaderboard', async (req, res) => {
     if (platform === 'console') {
       // Fetch PSN + Xbox and merge
       const [psnResp, xboxResp] = await Promise.all([
-        fetch(`https://api.pubg.com/shards/psn-${region}/leaderboards/${sid}/${mode}`, {
-          headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
-        }),
-        fetch(`https://api.pubg.com/shards/xbox-${region}/leaderboards/${sid}/${mode}`, {
-          headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
-        })
+        fetchWithTimeout(fetch, `https://api.pubg.com/shards/psn-${region}/leaderboards/${sid}/${mode}`, { headers: lbHeaders }, 12000),
+        fetchWithTimeout(fetch, `https://api.pubg.com/shards/xbox-${region}/leaderboards/${sid}/${mode}`, { headers: lbHeaders }, 12000)
       ]);
       const psnData = psnResp.ok ? await psnResp.json() : { data: { relationships: { players: { data: [] } } }, included: [] };
       const xboxData = xboxResp.ok ? await xboxResp.json() : { data: { relationships: { players: { data: [] } } }, included: [] };
@@ -1403,9 +1398,7 @@ app.get('/api/leaderboard', async (req, res) => {
     } else {
       // Single platform
       const lbShard = `${platform}-${region}`;
-      const lbResp = await fetch(`https://api.pubg.com/shards/${lbShard}/leaderboards/${sid}/${mode}`, {
-        headers: { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' }
-      });
+      const lbResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${lbShard}/leaderboards/${sid}/${mode}`, { headers: lbHeaders }, 12000);
       if (!lbResp.ok) return res.status(503).json({ error: 'Failed to fetch leaderboard' });
       const lbData = await lbResp.json();
       const players = lbData.included || [];
