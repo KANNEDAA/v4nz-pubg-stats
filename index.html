@@ -2984,9 +2984,8 @@ async function searchPlayer(){
     detectPlayerClan().catch(e=>console.log('Clan detection error:',e.message));
     // Bot Index — async analysis
     loadBotIndex(currentPlatform,currentPlayerData.attributes.name).catch(e=>console.log('Bot index error:',e.message));
-    // Save snapshot + load evolution chart
-    savePlayerSnapshot().catch(e=>console.log('Snapshot save error:',e.message));
-    loadEvolutionChart().catch(e=>console.log('Evolution chart error:',e.message));
+    // Save snapshot THEN load evolution chart (must wait for save to complete)
+    savePlayerSnapshot().then(()=>loadEvolutionChart()).catch(e=>console.log('Snapshot/evolution error:',e.message));
       }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';document.getElementById('frequentTeammates').style.display='none';const prBtn=document.getElementById('pubgReportBtn');if(prBtn)prBtn.style.display='none';currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
@@ -4443,7 +4442,21 @@ async function loadEvolutionChart(){
     const snaps=d.snapshots||[];
     if(snaps.length<2){
       sec.style.display='block';
-      sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div><div class="evo-empty">Vuelve la proxima semana para ver tu evolucion. V4NZ guarda tus stats cada vez que buscas tu perfil.</div></div>';
+      if(snaps.length===1){
+        const s1=snaps[0];
+        let h='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div>';
+        h+='<div class="evo-metrics">';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+(parseFloat(s1.kd)||0).toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+(parseFloat(s1.win_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(parseFloat(s1.avg_damage)||0)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-purple);">'+(parseFloat(s1.hs_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
+        h+='</div>';
+        h+='<div style="text-align:center;padding:16px 12px;margin-top:8px;background:var(--bg-secondary);border-radius:10px;font-size:.78rem;color:var(--text-secondary);">&#x2705; Stats guardadas hoy. Vuelve manana para ver tu evolucion en la grafica.</div>';
+        h+='</div>';
+        sec.innerHTML=h;
+      }else{
+        sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div><div class="evo-empty">Busca tu perfil para empezar a registrar tu evolucion.</div></div>';
+      }
       return;
     }
     _evoData={snaps};_evoMetric='kd';
