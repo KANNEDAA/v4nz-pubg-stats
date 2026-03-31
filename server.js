@@ -203,6 +203,31 @@ async function initDB() {
       );
       CREATE INDEX IF NOT EXISTS idx_snapshots_player ON player_snapshots(player_name, platform, squad_mode, game_mode);
       CREATE INDEX IF NOT EXISTS idx_snapshots_created ON player_snapshots(created_at);
+
+      CREATE TABLE IF NOT EXISTS clan_snapshots (
+        id SERIAL PRIMARY KEY,
+        clan_tag VARCHAR(20) NOT NULL,
+        total_kills INT DEFAULT 0,
+        total_wins INT DEFAULT 0,
+        avg_kd NUMERIC(6,2) DEFAULT 0,
+        avg_damage NUMERIC(12,1) DEFAULT 0,
+        win_rate NUMERIC(6,2) DEFAULT 0,
+        active_members INT DEFAULT 0,
+        total_rounds INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_clan_snapshots_tag ON clan_snapshots(clan_tag, created_at);
+
+      CREATE TABLE IF NOT EXISTS clan_transfers (
+        id SERIAL PRIMARY KEY,
+        player_name VARCHAR(50) NOT NULL,
+        from_clan VARCHAR(20),
+        to_clan VARCHAR(20),
+        platform VARCHAR(10) DEFAULT 'psn',
+        detected_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_clan_transfers_clan ON clan_transfers(to_clan, detected_at);
+      CREATE INDEX IF NOT EXISTS idx_clan_transfers_player ON clan_transfers(player_name);
     `);
     // Cleanup old cache entries on startup (older than 1 hour)
     await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour'").catch(() => {});
@@ -270,6 +295,33 @@ app.get('/clans/search/:query', async (req, res) => {
     );
     res.json({ clans: rows });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
+});
+
+// GET /clans/evolution/:tag — Clan stats evolution over time
+app.get('/clans/evolution/:tag', async (req, res) => {
+  if (!pool) return res.json({ snapshots: [] });
+  const tag = req.params.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+  try {
+    const { rows } = await pool.query(
+      `SELECT total_kills, total_wins, avg_kd, avg_damage, win_rate, active_members, total_rounds, created_at
+       FROM clan_snapshots WHERE clan_tag = $1 ORDER BY created_at ASC LIMIT 100`, [tag]
+    );
+    res.json({ snapshots: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /clans/transfers/:tag — Player transfers in/out of clan
+app.get('/clans/transfers/:tag', async (req, res) => {
+  if (!pool) return res.json({ transfers: [] });
+  const tag = req.params.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+  try {
+    const { rows } = await pool.query(
+      `SELECT player_name, from_clan, to_clan, platform, detected_at
+       FROM clan_transfers WHERE from_clan = $1 OR to_clan = $1
+       ORDER BY detected_at DESC LIMIT 50`, [tag]
+    );
+    res.json({ transfers: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // GET /clans/:tag — Get clan detail with members
@@ -590,6 +642,50 @@ app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       `, [cleanTag, m.name, s.kills, s.wins, s.kd, s.damage, s.rounds, m.active, 'pubgclans_import']);
     }
+
+    // ═══ CLAN INTELLIGENCE: Snapshot + Transfer Detection ═══
+    // Save clan snapshot for evolution tracking (max 1 per day per clan)
+    try {
+      const existingSnap = await pool.query(
+        "SELECT id FROM clan_snapshots WHERE clan_tag = $1 AND created_at > NOW() - INTERVAL '20 hours'", [cleanTag]
+      );
+      if (!existingSnap.rows.length) {
+        await pool.query(
+          `INSERT INTO clan_snapshots (clan_tag, total_kills, total_wins, avg_kd, avg_damage, win_rate, active_members, total_rounds)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [cleanTag, totalKills, totalWins, avgKd, avgDmg, winRate, activeCount, totalRounds]
+        );
+        console.log(`[snapshot] Saved evolution snapshot for [${cleanTag}]`);
+      }
+    } catch (snapErr) { console.error('[snapshot] Error:', snapErr.message); }
+
+    // Detect player transfers (players who were in a different clan before)
+    try {
+      const memberNames = members.map(m => m.name);
+      for (const name of memberNames) {
+        const prev = await pool.query(
+          `SELECT clan_tag FROM clan_members
+           WHERE player_name = $1 AND clan_tag != $2 AND active = true
+           LIMIT 1`, [name, cleanTag]
+        );
+        if (prev.rows.length) {
+          const fromClan = prev.rows[0].clan_tag;
+          // Check if this transfer was already detected
+          const alreadyDetected = await pool.query(
+            `SELECT id FROM clan_transfers
+             WHERE player_name = $1 AND from_clan = $2 AND to_clan = $3
+             AND detected_at > NOW() - INTERVAL '30 days'`, [name, fromClan, cleanTag]
+          );
+          if (!alreadyDetected.rows.length) {
+            await pool.query(
+              `INSERT INTO clan_transfers (player_name, from_clan, to_clan, platform)
+               VALUES ($1,$2,$3,$4)`, [name, fromClan, cleanTag, detectedPlatform]
+            );
+            console.log(`[transfer] Detected: ${name} moved [${fromClan}] -> [${cleanTag}]`);
+          }
+        }
+      }
+    } catch (trErr) { console.error('[transfer] Error:', trErr.message); }
 
     console.log(`[import] Registered [${cleanTag}] ${payload.name}: ${members.length} members, ${totalKills} kills`);
 

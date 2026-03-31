@@ -2141,14 +2141,19 @@ async function loadClanPage(tag){
     }
     // Clan Analytics
     if(members.length>=3){h+=renderClanIntelligence(members,c);}
+    // Clan Evolution + Transfers
+    h+='<div id="clanEvoSection" style="margin-top:24px;"></div>';
+    h+='<div id="clanTransfersSection" style="margin-top:16px;"></div>';
     // Clan Feed placeholder
     h+='<div id="clanFeedSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;display:none;">';
     h+='<div class="section-title" style="font-size:.9rem;margin-bottom:14px;">&#x1F4E1; Actividad Reciente</div>';
     h+='<div id="clanFeedContent"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Cargando actividad...</div></div></div>';
     h+='</div>';
     cr.innerHTML=h;
-    // Load feed async
+    // Load async sections
     loadClanFeed(c.tag);
+    loadClanEvolution(c.tag);
+    loadClanTransfers(c.tag);
   }catch(e){
     // Not in DB — try searching via PUBG API
     cr.innerHTML='<div class="empty-state"><p style="color:var(--text-secondary);">Este clan aun no esta publicado en V4NZ.</p><p style="font-size:.8rem;color:var(--text-dim);">Busca un jugador del clan arriba para encontrarlo y publicarlo.</p></div>';
@@ -2195,6 +2200,115 @@ async function loadClanFeed(tag){
   }catch(e){
     section.style.display='none';
   }
+}
+
+// ═══ CLAN EVOLUTION CHART ═══
+async function loadClanEvolution(tag){
+  const sec=document.getElementById('clanEvoSection');if(!sec)return;
+  try{
+    const r=await fetch('/clans/evolution/'+encodeURIComponent(tag));
+    if(!r.ok){sec.innerHTML='';return;}
+    const d=await r.json();
+    const snaps=d.snapshots||[];
+    if(snaps.length<2){sec.innerHTML='';return;}
+    let h='<div class="evo-section">';
+    h+='<div class="evo-title">&#x1F4C8; Evolucion del Clan <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+snaps.length+' registros</span></div>';
+    h+='<div class="evo-toggles">';
+    h+='<button class="evo-toggle active" data-cmetric="avg_kd" onclick="switchClanEvoMetric(\'avg_kd\',this)" style="--tc:var(--accent);">K/D</button>';
+    h+='<button class="evo-toggle" data-cmetric="total_kills" onclick="switchClanEvoMetric(\'total_kills\',this)" style="--tc:var(--accent-red);">Kills</button>';
+    h+='<button class="evo-toggle" data-cmetric="win_rate" onclick="switchClanEvoMetric(\'win_rate\',this)" style="--tc:var(--accent-green);">Win Rate</button>';
+    h+='<button class="evo-toggle" data-cmetric="active_members" onclick="switchClanEvoMetric(\'active_members\',this)" style="--tc:var(--accent-orange);">Miembros</button>';
+    h+='</div>';
+    h+='<div class="evo-chart"><canvas id="clanEvoCanvas"></canvas></div>';
+    // Delta summary
+    const latest=snaps[snaps.length-1];const first=snaps[0];
+    const kdNow=parseFloat(latest.avg_kd)||0,kdFirst=parseFloat(first.avg_kd)||0;
+    const killsNow=latest.total_kills||0,killsFirst=first.total_kills||0;
+    const wrNow=parseFloat(latest.win_rate)||0,wrFirst=parseFloat(first.win_rate)||0;
+    const memNow=latest.active_members||0,memFirst=first.active_members||0;
+    function cDelta(a,b){const d=a-b;return d>0?'<span class="evo-delta-up">+'+d.toFixed(2)+'</span>':d<0?'<span class="evo-delta-down">'+d.toFixed(2)+'</span>':'<span class="evo-delta-same">=</span>';}
+    function cDeltaInt(a,b){const d=a-b;return d>0?'<span class="evo-delta-up">+'+d+'</span>':d<0?'<span class="evo-delta-down">'+d+'</span>':'<span class="evo-delta-same">=</span>';}
+    h+='<div class="evo-metrics">';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+kdNow.toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta">'+cDelta(kdNow,kdFirst)+'</div></div>';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-red);">'+killsNow+'</div><div class="evo-metric-lbl">Kills</div><div class="evo-metric-delta">'+cDeltaInt(killsNow,killsFirst)+'</div></div>';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-green);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta">'+cDelta(wrNow,wrFirst)+'</div></div>';
+    h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+memNow+'</div><div class="evo-metric-lbl">Activos</div><div class="evo-metric-delta">'+cDeltaInt(memNow,memFirst)+'</div></div>';
+    h+='</div></div>';
+    sec.innerHTML=h;
+    window._clanEvoData={snaps};window._clanEvoMetric='avg_kd';
+    drawClanEvoChart();
+  }catch(e){sec.innerHTML='';}
+}
+function switchClanEvoMetric(metric,btn){
+  window._clanEvoMetric=metric;
+  document.querySelectorAll('[data-cmetric]').forEach(b=>{b.classList.remove('active');if(b.dataset.cmetric===metric)b.classList.add('active');});
+  drawClanEvoChart();
+}
+function drawClanEvoChart(){
+  if(!window._clanEvoData)return;
+  const snaps=window._clanEvoData.snaps;
+  const metric=window._clanEvoMetric||'avg_kd';
+  const metricMap={avg_kd:{color:'#00f0ff',label:'K/D',dec:2},total_kills:{color:'#ff3355',label:'Kills',dec:0},win_rate:{color:'#00ff88',label:'WR%',dec:1},active_members:{color:'#ff6b00',label:'Miembros',dec:0}};
+  const m=metricMap[metric]||metricMap.avg_kd;
+  const arr=snaps.map(s=>parseFloat(s[metric])||0);
+  const dates=snaps.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
+  const cvs=document.getElementById('clanEvoCanvas');
+  if(!cvs||arr.length<2)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=cvs.parentElement.clientWidth;const H=200;
+  cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
+  const ctx=cvs.getContext('2d');ctx.scale(dpr,dpr);
+  const pad={t:24,r:50,b:30,l:50};const cW=W-pad.l-pad.r;const cH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  const min=Math.min(...arr)*0.9;const max=Math.max(...arr)*1.1||1;const range=max-min||1;
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+(cH/4)*i;const val=max-((i/4)*range);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();ctx.fillStyle='#555';ctx.font='10px Rajdhani,sans-serif';ctx.textAlign='right';ctx.fillText(m.dec>0?val.toFixed(m.dec):Math.round(val),pad.l-6,y+4);}
+  // Fill gradient
+  ctx.beginPath();arr.forEach((v,i)=>{const x=pad.l+(i/(arr.length-1))*cW;const y=pad.t+cH-(((v-min)/range)*cH);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+  ctx.lineTo(pad.l+cW,pad.t+cH);ctx.lineTo(pad.l,pad.t+cH);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);grad.addColorStop(0,m.color+'30');grad.addColorStop(1,m.color+'05');ctx.fillStyle=grad;ctx.fill();
+  // Line
+  ctx.beginPath();ctx.strokeStyle=m.color;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';
+  arr.forEach((v,i)=>{const x=pad.l+(i/(arr.length-1))*cW;const y=pad.t+cH-(((v-min)/range)*cH);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.stroke();
+  // Dots
+  arr.forEach((v,i)=>{const x=pad.l+(i/(arr.length-1))*cW;const y=pad.t+cH-(((v-min)/range)*cH);ctx.beginPath();ctx.arc(x,y,i===arr.length-1?5:3,0,Math.PI*2);ctx.fillStyle=m.color;ctx.fill();if(i===arr.length-1){ctx.fillStyle='#08080e';ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();}});
+  // Last value
+  const lastY=pad.t+cH-(((arr[arr.length-1]-min)/range)*cH);
+  ctx.font='bold 12px Orbitron,sans-serif';ctx.fillStyle=m.color;ctx.textAlign='left';
+  ctx.fillText(m.dec>0?arr[arr.length-1].toFixed(m.dec):Math.round(arr[arr.length-1]),pad.l+cW+8,lastY+4);
+  // X dates
+  ctx.font='10px Rajdhani,sans-serif';ctx.fillStyle='#555';ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(dates.length/7));
+  dates.forEach((d,i)=>{if(i%step===0||i===dates.length-1){const x=pad.l+(i/(dates.length-1))*cW;ctx.fillText(d,x,H-8);}});
+}
+
+// ═══ CLAN TRANSFERS ═══
+async function loadClanTransfers(tag){
+  const sec=document.getElementById('clanTransfersSection');if(!sec)return;
+  try{
+    const r=await fetch('/clans/transfers/'+encodeURIComponent(tag));
+    if(!r.ok){sec.innerHTML='';return;}
+    const d=await r.json();
+    const transfers=d.transfers||[];
+    if(!transfers.length){sec.innerHTML='';return;}
+    let h='<div class="evo-section">';
+    h+='<div class="evo-title">&#x1F504; Movimientos de Jugadores</div>';
+    transfers.forEach(t=>{
+      const ago=timeAgo(t.detected_at);
+      const isIncoming=t.to_clan.toUpperCase()===tag.toUpperCase();
+      const icon=isIncoming?'<span style="color:var(--accent-green);">&#x2B06;&#xFE0F;</span>':'<span style="color:var(--accent-red);">&#x2B07;&#xFE0F;</span>';
+      const dir=isIncoming?('de ['+t.from_clan+']'):('a ['+t.to_clan+']');
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;margin-bottom:6px;border:1px solid var(--border);">';
+      h+='<div>'+icon+'</div>';
+      h+='<div style="flex:1;"><span class="clan-member-name" style="font-size:.8rem;" onclick="goToPlayer(\''+escJs(t.player_name)+'\');">'+t.player_name+'</span>';
+      h+=' <span style="font-size:.7rem;color:var(--text-dim);">'+dir+'</span></div>';
+      h+='<div style="font-size:.6rem;color:var(--text-dim);">'+ago+'</div>';
+      h+='</div>';
+    });
+    h+='</div>';
+    sec.innerHTML=h;
+  }catch(e){sec.innerHTML='';}
 }
 
 function renderClanIntelligence(members,clan){
