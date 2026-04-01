@@ -2227,25 +2227,28 @@ async function loadClanRanking(){
     d.clans.forEach((c,i)=>{
       const rank=i+1;
       const medal=rank===1?'&#x1F947;':rank===2?'&#x1F948;':rank===3?'&#x1F949;':'#'+rank;
-      const borderColor=rank===1?'var(--accent-yellow)':rank===2?'#aaa':rank===3?'#cd7f32':'var(--border)';
-      h+='<div class="cr-card" style="background:var(--bg-card);border:1px solid '+borderColor+';border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s;" onclick="toggleClanMembers(\''+c.tag+'\',this)">';
+      const borderColor=rank===1?'rgba(255,215,0,0.5)':rank===2?'rgba(192,192,192,0.4)':rank===3?'rgba(205,127,50,0.4)':'var(--border)';
+      const cardGlow=rank===1?'box-shadow:0 0 25px rgba(255,215,0,0.12),0 4px 20px rgba(0,0,0,0.3);':rank===2?'box-shadow:0 0 20px rgba(192,192,192,0.08),0 4px 20px rgba(0,0,0,0.3);':rank===3?'box-shadow:0 0 20px rgba(205,127,50,0.08),0 4px 20px rgba(0,0,0,0.3);':'box-shadow:var(--shadow-card);';
+      const cardBg=rank<=3?'background-image:linear-gradient(135deg,rgba(255,107,0,0.04) 0%,transparent 100%);':'background-image:linear-gradient(135deg,rgba(0,240,255,0.01) 0%,transparent 100%);';
+      h+='<div class="cr-card" style="background:var(--bg-card);border:1px solid '+borderColor+';border-radius:14px;padding:18px;margin-bottom:12px;cursor:pointer;transition:all .3s ease;position:relative;overflow:hidden;'+cardGlow+cardBg+'" onmouseenter="this.style.transform=\'translateY(-2px)\';this.style.borderColor=\'rgba(255,107,0,0.4)\';" onmouseleave="this.style.transform=\'none\';this.style.borderColor=\''+borderColor+'\';" onclick="toggleClanMembers(\''+c.tag+'\',this)">';
+      if(rank<=3)h+='<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,'+(rank===1?'rgba(255,215,0,0.6)':rank===2?'rgba(192,192,192,0.5)':'rgba(205,127,50,0.5)')+',transparent);"></div>';
       // Header row
       h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">';
       h+='<div style="display:flex;align-items:center;gap:12px;">';
-      h+='<div style="font-size:1.2rem;min-width:36px;text-align:center;">'+medal+'</div>';
-      h+='<div class="cr-clan-icon" style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(0,240,255,0.05));display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:700;font-size:1rem;color:var(--accent);">'+c.tag.charAt(0)+'</div>';
-      h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">'+c.name+'</div>';
-      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(c.platform||'psn').toUpperCase()+' &middot; Nivel '+(c.level||'?')+'</div></div>';
+      h+='<div style="font-size:1.3rem;min-width:36px;text-align:center;'+(rank<=3?'filter:drop-shadow(0 0 6px rgba(255,215,0,0.3));':'')+'">'+medal+'</div>';
+      h+='<div class="cr-clan-icon" style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(255,107,0,0.2),rgba(255,107,0,0.06));display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:700;font-size:1rem;color:var(--accent-orange);box-shadow:0 0 12px rgba(255,107,0,0.12);text-shadow:0 0 8px rgba(255,107,0,0.3);border:1px solid rgba(255,107,0,0.2);">'+c.tag.charAt(0)+'</div>';
+      h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1.05rem;color:var(--text-primary);letter-spacing:.3px;">'+c.name+'</div>';
+      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent-orange);letter-spacing:1px;text-shadow:0 0 8px rgba(255,107,0,0.2);">['+c.tag+'] &middot; '+(c.platform||'psn').toUpperCase()+' &middot; Nivel '+(c.level||'?')+'</div></div>';
       h+='</div>';
-      h+='<div style="font-size:.7rem;color:var(--text-dim);">&#x25BC;</div>';
+      h+='<div style="font-size:.7rem;color:var(--text-dim);transition:transform .2s;">&#x25BC;</div>';
       h+='</div>';
       // Stats row
-      h+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px;text-align:center;">';
-      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Kills</div></div>';
-      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent-green);">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">K/D</div></div>';
-      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent-yellow);">'+(c.total_wins||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Wins</div></div>';
-      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Win Rate</div></div>';
-      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;">'+(c.active_members||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Activos</div></div>';
+      h+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px;text-align:center;padding:10px 0 4px;border-top:1px solid rgba(255,255,255,0.03);">';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent);text-shadow:0 0 12px rgba(0,240,255,0.3);">'+(c.total_kills||0).toLocaleString()+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Kills</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent-green);text-shadow:0 0 12px rgba(0,255,136,0.3);">'+(parseFloat(c.avg_kd)||0).toFixed(2)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">K/D</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;color:var(--accent-yellow);text-shadow:0 0 12px rgba(255,215,0,0.3);">'+(c.total_wins||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Wins</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;text-shadow:0 0 10px rgba(255,255,255,0.1);">'+(parseFloat(c.win_rate)||0).toFixed(1)+'%</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Win Rate</div></div>';
+      h+='<div><div style="font-family:Orbitron;font-weight:700;font-size:.85rem;text-shadow:0 0 10px rgba(255,255,255,0.1);">'+(c.active_members||0)+'</div><div style="font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;">Activos</div></div>';
       h+='</div>';
       // Members container (hidden initially)
       h+='<div id="clanMembers_'+c.tag+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;"></div>';
@@ -6824,7 +6827,8 @@ async function renderLeaderboard(){
       const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
       const searchPlat=(entry.platforms&&entry.platforms.includes('PSN'))?'psn':(entry.platforms&&entry.platforms.includes('Xbox')?'xbox':lbPlatform);
       const platBadge=showPlat?(entry.platforms&&entry.platforms.length>1?'Ambas':(entry.platforms?entry.platforms[0]:'')):'';
-      h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+esc(entry.name)+'</td>';
+      const rowBg=ik?'background:linear-gradient(90deg,rgba(0,240,255,0.08),rgba(0,240,255,0.02));':rank<=3?'background:rgba(255,107,0,0.02);':'';
+      h+='<tr style="'+rowBg+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;text-shadow:0 0 10px rgba(0,240,255,0.4);':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+esc(entry.name)+'</td>';
       if(showPlat)h+='<td class="sc" style="font-size:.65rem;">'+platBadge+'</td>';
       h+='<td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
       rank++;
@@ -6833,9 +6837,9 @@ async function renderLeaderboard(){
     // Footer with update time
     const updatedText=data.cachedAt?timeAgo(data.cachedAt):'ahora';
     const platLabel=isConsole?'CONSOLAS (PSN+Xbox)':lbPlatform.toUpperCase();
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;padding:0 4px;">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:20px;padding:12px 16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">';
     h+='<span style="color:var(--text-dim);font-size:.7rem;">Top 500 via PUBG API &mdash; '+platLabel+' '+lbRegion.toUpperCase()+' '+lbMode.toUpperCase()+'</span>';
-    h+='<span style="color:var(--accent);font-size:.65rem;font-family:Orbitron,sans-serif;font-weight:600;">Actualizado '+updatedText+'</span>';
+    h+='<span style="color:var(--accent);font-size:.65rem;font-family:Orbitron,sans-serif;font-weight:600;text-shadow:0 0 8px rgba(0,240,255,0.2);">Actualizado '+updatedText+'</span>';
     h+='</div>';
     lbContent.innerHTML=h;
   }catch(e){console.error('Leaderboard error:',e);renderLeaderboardDemo();}
@@ -6843,7 +6847,8 @@ async function renderLeaderboard(){
 function renderLeaderboardDemo(){
   let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
   DEMO_LB.forEach(p=>{const rc=p.r===1?'r1':p.r===2?'r2':p.r===3?'r3':'';const ik=p.n==='KANNEDA';
-    h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+p.r+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(p.n)+'\');">'+p.n+'</td><td class="sc">'+p.k+'</td><td class="sc">'+p.w+'</td><td class="sc">'+p.kd+'</td><td class="sc">'+p.d+'</td></tr>';
+    const rowBg=ik?'background:linear-gradient(90deg,rgba(0,240,255,0.08),rgba(0,240,255,0.02));':p.r<=3?'background:rgba(255,107,0,0.02);':'';
+    h+='<tr style="'+rowBg+'"><td class="rc '+rc+'">'+p.r+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;text-shadow:0 0 10px rgba(0,240,255,0.4);':'')+'" onclick="goToPlayer(\''+escJs(p.n)+'\');">'+p.n+'</td><td class="sc">'+p.k+'</td><td class="sc">'+p.w+'</td><td class="sc">'+p.kd+'</td><td class="sc">'+p.d+'</td></tr>';
   });h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 20 demo &mdash; Con servidor activo se cargan Top 500 reales via PUBG API</p>';
   document.getElementById('leaderboardContent').innerHTML=h;
 }
