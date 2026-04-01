@@ -976,6 +976,7 @@ footer a:hover { color: var(--accent); text-shadow: 0 0 8px rgba(0,240,255,0.3);
 @media(max-width:900px){
   .header-inner{flex-direction:column;height:auto;padding:10px 0;gap:6px}
   nav{justify-content:center}
+  nav a{padding:7px 10px;font-size:.72rem;letter-spacing:1px}
   .search-hero h1{font-size:1.6rem;letter-spacing:2px}
   .search-hero{padding:44px 1rem 30px}
   .search-box{flex-direction:column;border-radius:14px}
@@ -3370,6 +3371,7 @@ function switchTab(t){
     document.getElementById('frequentTeammates').style.display='none';
     hideHomepageContent();
     const _hero=document.getElementById('searchHero');if(_hero)_hero.style.display='none';
+    const _empty=document.getElementById('emptyState');if(_empty)_empty.style.display='none';
     // Hide clan header chrome when accessed from main nav
     const _clanTitle=document.querySelector('#panel-clans > .section-title');if(_clanTitle)_clanTitle.style.display='none';
     const _clanDesc=document.querySelector('#panel-clans > p');if(_clanDesc)_clanDesc.style.display='none';
@@ -3420,19 +3422,23 @@ function switchTab(t){
   if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
   // Search hero & homepage content visibility
   const _hero=document.getElementById('searchHero');
+  const _empty=document.getElementById('emptyState');
   const standaloneTabs=['compare','leaderboard'];
   if(standaloneTabs.includes(t)){
-    // Full-screen sections: hide search hero and homepage content
+    // Full-screen sections: hide search hero, homepage content, and empty state
     if(_hero)_hero.style.display='none';
+    if(_empty)_empty.style.display='none';
     hideHomepageContent();
   } else if(t==='overview'&&!currentPlayerData){
     // Home: show everything
     if(_hero)_hero.style.display='';
+    if(_empty)_empty.style.display='block';
     showHomepageContent();
     _hero?.scrollIntoView({behavior:'smooth'});
   } else {
-    // Player views & clans: show search hero, hide homepage content
+    // Player views & clans: show search hero, hide homepage content and empty state
     if(_hero)_hero.style.display='';
+    if(_empty)_empty.style.display='none';
     hideHomepageContent();
   }
 }
