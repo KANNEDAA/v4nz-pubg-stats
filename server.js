@@ -67,7 +67,7 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://cdn.discordapp.com https://www.v4nz.com",
+    "img-src 'self' data: blob: https://cdn.discordapp.com https://v4nz.com https://www.v4nz.com",
     "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://www.pubgclans.net https://api.pubg.report https://discord.com",
     "frame-src https://open.spotify.com https://discord.com",
     "media-src 'none'",
@@ -1852,7 +1852,7 @@ app.get('/sitemap.xml', async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT tag FROM clans WHERE active_members > 0 ORDER BY total_kills DESC LIMIT 500');
       rows.forEach(r => {
-        clanUrls += `  <url><loc>https://www.v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
+        clanUrls += `  <url><loc>https://v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
       });
     } catch(e) { console.error('Sitemap clan error:', e.message); }
     try {
@@ -1864,17 +1864,17 @@ app.get('/sitemap.xml', async (req, res) => {
         LIMIT 1000
       `);
       rows.forEach(r => {
-        playerUrls += `  <url><loc>https://www.v4nz.com/stats/${r.platform}/${encodeURIComponent(r.player_name)}</loc><changefreq>weekly</changefreq><priority>0.5</priority><lastmod>${today}</lastmod></url>\n`;
+        playerUrls += `  <url><loc>https://v4nz.com/stats/${r.platform}/${encodeURIComponent(r.player_name)}</loc><changefreq>weekly</changefreq><priority>0.5</priority><lastmod>${today}</lastmod></url>\n`;
       });
     } catch(e) { console.error('Sitemap player error:', e.message); }
   }
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://www.v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://www.v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://www.v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://www.v4nz.com/comparar</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://v4nz.com/comparar</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>
 ${clanUrls}${playerUrls}</urlset>`);
 });
 
@@ -1887,7 +1887,7 @@ app.get('/googlef2390246b37ad8b0.html', (req, res) => {
 // Robots.txt
 app.get('/robots.txt', (req, res) => {
   res.set('Content-Type', 'text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://www.v4nz.com/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://v4nz.com/sitemap.xml');
 });
 
 // ═══ Dynamic OG Image (SVG → PNG via sharp) ═══
@@ -2251,18 +2251,18 @@ app.get('*', (req, res) => {
       const playerName = decodeURIComponent(statsMatch[2]);
       title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
       desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
-      canonicalUrl = `https://www.v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
-      ogImage = `https://www.v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
+      canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
+      ogImage = `https://v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
     } else if (clanMatch) {
       const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
       title = `Clan [${clanTag}] — PUBG Stats Consola | V4NZ`;
       desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
-      canonicalUrl = `https://www.v4nz.com/clan/${encodeURIComponent(clanTag)}`;
-      ogImage = `https://www.v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
+      canonicalUrl = `https://v4nz.com/clan/${encodeURIComponent(clanTag)}`;
+      ogImage = `https://v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
     } else if (spaPages[req.path]) {
       title = spaPages[req.path].title;
       desc = spaPages[req.path].desc;
-      canonicalUrl = `https://www.v4nz.com${req.path}`;
+      canonicalUrl = `https://v4nz.com${req.path}`;
     }
 
     if (title) {
