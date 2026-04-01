@@ -2251,7 +2251,7 @@ app.get('*', (req, res) => {
       const playerName = decodeURIComponent(statsMatch[2]);
       title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
       desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
-      canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
+      canonicalUrl = `https://www.v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
       ogImage = `https://www.v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
     } else if (clanMatch) {
       const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
@@ -2262,7 +2262,7 @@ app.get('*', (req, res) => {
     } else if (spaPages[req.path]) {
       title = spaPages[req.path].title;
       desc = spaPages[req.path].desc;
-      canonicalUrl = `https://v4nz.com${req.path}`;
+      canonicalUrl = `https://www.v4nz.com${req.path}`;
     }
 
     if (title) {
@@ -2276,9 +2276,12 @@ app.get('*', (req, res) => {
         .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${safeDesc}">`)
         .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${safeDesc}">`);
       if (canonicalUrl) {
+        const safeCan = escHtml(canonicalUrl);
         html = html
-          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${escHtml(canonicalUrl)}">`)
-          .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${escHtml(canonicalUrl)}">`);
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${safeCan}">`)
+          .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${safeCan}">`)
+          .replace(/<link rel="alternate" hreflang="es"[^>]*>/, `<link rel="alternate" hreflang="es" href="${safeCan}">`)
+          .replace(/<link rel="alternate" hreflang="x-default"[^>]*>/, `<link rel="alternate" hreflang="x-default" href="${safeCan}">`);
       }
       if (ogImage) {
         html = html
