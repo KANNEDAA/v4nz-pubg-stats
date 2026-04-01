@@ -5331,17 +5331,36 @@ async function comparePlayers(){
   if(!n1||!n2){alert('Introduce dos gamertags');return;}showLoading(true);
   try{
     let s1,s2,rn1=n1,rn2=n2;
-    // Fetch season first
+    // Use cached season if available, otherwise fetch
     setLoaderStep('Cargando datos...');
-    const sr=await apiGet(API_BASE+'/'+cmpPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);
+    let csId=currentSeasonId;
+    if(!csId){const sr=await apiGet(API_BASE+'/'+cmpPlatform+'/seasons');const cs=sr.data.find(s=>s.attributes.isCurrentSeason);csId=cs.id;}
+    // Helper: get stats for a player, reusing current player data if possible
+    async function getPlayerStats(name,platform,mode){
+      // If this is the currently loaded player and same platform, reuse cached data
+      if(currentPlayerData&&currentPlayerData.attributes&&currentPlayerData.attributes.name.toUpperCase()===name.toUpperCase()&&currentPlatform===platform&&currentSeasonData){
+        const gms=currentSeasonData.data.attributes.gameModeStats||{};
+        return {stats:gms[mode]||gms.squad||{},resolvedName:currentPlayerData.attributes.name};
+      }
+      setLoaderStep('Buscando '+name+'...');
+      const p=await findPlayer(name,platform);
+      const rn=p.data[0].attributes.name;
+      setLoaderStep('Stats de '+rn+'...');
+      const ss=await apiGet(API_BASE+'/'+platform+'/players/'+p.data[0].id+'/seasons/'+csId);
+      return {stats:ss.data.attributes.gameModeStats[mode]||ss.data.attributes.gameModeStats.squad||{},resolvedName:rn};
+    }
     // Player 1
-    if(n1.toUpperCase()==='KANNEDA'){s1=DEMO_DATA.seasonStats.data.attributes.gameModeStats[cmpMode]||{};}
-    else{setLoaderStep('Buscando '+n1+'...');const p1=await findPlayer(n1,cmpPlatform);rn1=p1.data[0].attributes.name;setLoaderStep('Stats de '+rn1+'...');const ss1=await apiGet(API_BASE+'/'+cmpPlatform+'/players/'+p1.data[0].id+'/seasons/'+cs.id);s1=ss1.data.attributes.gameModeStats[cmpMode]||ss1.data.attributes.gameModeStats.squad||{};}
+    const r1=await getPlayerStats(n1,cmpPlatform,cmpMode);s1=r1.stats;rn1=r1.resolvedName;
     // Player 2
-    if(n2.toUpperCase()==='KANNEDA'){s2=DEMO_DATA.seasonStats.data.attributes.gameModeStats[cmpMode]||{};}
-    else{setLoaderStep('Buscando '+n2+'...');const p2=await findPlayer(n2,cmpPlatform);rn2=p2.data[0].attributes.name;setLoaderStep('Stats de '+rn2+'...');const ss2=await apiGet(API_BASE+'/'+cmpPlatform+'/players/'+p2.data[0].id+'/seasons/'+cs.id);s2=ss2.data.attributes.gameModeStats[cmpMode]||ss2.data.attributes.gameModeStats.squad||{};}
+    const r2=await getPlayerStats(n2,cmpPlatform,cmpMode);s2=r2.stats;rn2=r2.resolvedName;
     renderCompareCards(rn1,s1,rn2,s2);
-  }catch(e){console.error('Compare error:',e);document.getElementById('compareCard1').innerHTML='<div class="empty-state"><p style="color:var(--accent-orange);">'+esc(''+e.message||'Error desconocido')+'</p></div>';document.getElementById('compareCard2').innerHTML='<div class="empty-state"><p>Revisa los nombres e intentalo de nuevo</p></div>';document.getElementById('compareBarChart').innerHTML='';}
+  }catch(e){
+    console.error('Compare error:',e);
+    const errMsg=(e.message==='__RATELIMIT__')?'Demasiadas consultas. Espera unos segundos e intentalo de nuevo.':(e.message||'Error desconocido');
+    document.getElementById('compareCard1').innerHTML='<div class="empty-state"><p style="color:var(--accent-orange);">'+esc(errMsg)+'</p></div>';
+    document.getElementById('compareCard2').innerHTML='<div class="empty-state"><p>Revisa los nombres e intentalo de nuevo</p></div>';
+    document.getElementById('compareBarChart').innerHTML='';
+  }
   finally{showLoading(false);}
 }
 function renderCompareCards(n1,s1,n2,s2){
