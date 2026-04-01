@@ -1562,10 +1562,11 @@ footer a { color: var(--accent); text-decoration: none; }
 <div id="wrappedPreview" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:100000;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:20px;" onclick="if(event.target===this)this.style.display='none';">
   <img src="" style="max-width:90vw;max-height:70vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5);" alt="Mi Temporada">
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-    <button onclick="const img=this.parentElement.previousElementSibling;const a=document.createElement('a');a.href=img.src;a.download='Mi_Temporada_V4NZ.png';a.click();" style="padding:12px 24px;background:linear-gradient(135deg,#ff6b00,#a855f7);border:none;border-radius:10px;color:#fff;font-family:Rajdhani;font-weight:700;font-size:.85rem;cursor:pointer;">Descargar PNG</button>
+    <button onclick="downloadWrappedImage()" style="padding:12px 24px;background:linear-gradient(135deg,#ff6b00,#a855f7);border:none;border-radius:10px;color:#fff;font-family:Rajdhani;font-weight:700;font-size:.85rem;cursor:pointer;">&#x1F4E5; Descargar PNG</button>
+    <button onclick="copyWrappedImage()" style="padding:12px 24px;background:linear-gradient(135deg,#5865F2,#7289DA);border:none;border-radius:10px;color:#fff;font-family:Rajdhani;font-weight:700;font-size:.85rem;cursor:pointer;">&#x1F4CB; Copiar Imagen</button>
     <button onclick="document.getElementById('wrappedPreview').style.display='none';" style="padding:12px 24px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;font-family:Rajdhani;font-weight:700;font-size:.85rem;cursor:pointer;">Cerrar</button>
   </div>
-  <div style="font-size:.7rem;color:rgba(255,255,255,.5);text-align:center;">Puedes guardar la imagen manteniendo pulsado o clic derecho &gt; Guardar imagen</div>
+  <div style="font-size:.7rem;color:rgba(255,255,255,.5);text-align:center;">Tambien puedes guardar la imagen con clic derecho &gt; Guardar imagen</div>
 </div>
 <!-- STATS CARD MODAL -->
 <div class="card-modal" id="cardModal">
@@ -3849,17 +3850,29 @@ async function generateSeasonWrapped(){
     const canvas=await html2canvas(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
     card.remove();
     const fname=name+'_Season_Wrapped.png';
-    // Convert canvas to blob URL (works on Safari + Chrome + Firefox)
-    const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
-    if(!blob){showError('Error generando la imagen');return;}
-    const blobUrl=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=blobUrl;a.download=fname;a.style.display='none';
-    document.body.appendChild(a);a.click();
-    setTimeout(()=>{a.remove();URL.revokeObjectURL(blobUrl);},1000);
-    // Also show in a modal so user can long-press/save on mobile
+    // Show image in preview modal (most reliable across all browsers)
+    const dataUrl=canvas.toDataURL('image/png');
     const prev=document.getElementById('wrappedPreview');
-    if(prev){prev.querySelector('img').src=blobUrl;prev.style.display='flex';}
+    if(prev){
+      const img=prev.querySelector('img');img.src=dataUrl;
+      prev.dataset.fname=fname;
+      prev.style.display='flex';
+    }
   }catch(e){console.error('Season wrapped error:',e);card.remove();showError('Error generando la imagen. Intenta de nuevo.');}
+}
+function downloadWrappedImage(){
+  const prev=document.getElementById('wrappedPreview');if(!prev)return;
+  const img=prev.querySelector('img');const fname=prev.dataset.fname||'Mi_Temporada_V4NZ.png';
+  const a=document.createElement('a');a.href=img.src;a.download=fname;document.body.appendChild(a);a.click();a.remove();
+}
+async function copyWrappedImage(){
+  const prev=document.getElementById('wrappedPreview');if(!prev)return;
+  const img=prev.querySelector('img');
+  try{
+    const r=await fetch(img.src);const blob=await r.blob();
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+    showError('Imagen copiada al portapapeles');
+  }catch(e){downloadWrappedImage();}
 }
 
 // ═══ SHARE MATCH CARD ═══
