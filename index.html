@@ -1377,6 +1377,8 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
     <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Busca el clan de cualquier jugador. Si el clan ya esta registrado, veras a todos sus miembros con stats.</p>
+    <div id="myClanBanner"></div>
+    <div id="clanFavoritesSection"></div>
     <div class="clan-mode-tabs">
       <button class="clan-mode-tab active" onclick="setClanMode('search',this)">Buscar Clan</button>
       <button class="clan-mode-tab" onclick="setClanMode('compare',this)">Comparar Clanes</button>
@@ -1384,8 +1386,6 @@ footer a { color: var(--accent); text-decoration: none; }
       <button class="clan-mode-tab" onclick="setClanMode('analysis',this)">&#x1F9E0; Analisis</button>
     </div>
     <div id="clanSearchMode">
-      <div id="myClanBanner"></div>
-      <div id="clanFavoritesSection"></div>
       <!-- Search area with two modes: by clan name and by player -->
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card);">
         <!-- Search mode tabs -->
