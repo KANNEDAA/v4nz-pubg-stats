@@ -607,6 +607,7 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-item.mi-normal::before { background:var(--text-dim); opacity:.3; }
 .match-item:hover { border-color: var(--accent); background: var(--bg-card-hover); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,240,255,0.12), 0 0 0 1px rgba(0,240,255,0.08); cursor:pointer; }
 [data-theme="light"] .match-item:hover { border-color: #0088cc; box-shadow: 0 4px 20px rgba(0,119,187,0.1), 0 0 0 1px rgba(0,119,187,0.08); }
+[data-theme="light"] .match-badges { border-top-color: rgba(0,0,0,0.06); }
 .match-place { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.3rem; }
 .match-place.win { color: var(--accent-yellow); } .match-place.top10 { color: var(--accent-green); } .match-place.normal { color: var(--text-secondary); }
 .match-mode { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; }
@@ -619,8 +620,9 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-time { font-size: 0.7rem; color: var(--text-dim); text-align: right; }
 .match-surv-bar { position:absolute; bottom:0; left:0; right:0; height:2px; background:rgba(255,255,255,.03); }
 .match-surv-fill { height:100%; border-radius:0 2px 2px 0; transition:width .6s ease; }
-.match-badges { position:absolute; top:6px; right:8px; display:flex; gap:4px; z-index:2; }
-.match-badge { font-size:.55rem; font-family:Rajdhani,sans-serif; font-weight:700; padding:2px 7px; border-radius:10px; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+.match-badges { grid-column:1/-1; display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.04); }
+.match-badge { font-size:.65rem; font-family:Rajdhani,sans-serif; font-weight:700; padding:5px 10px; border-radius:10px; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; cursor:pointer; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.match-badge:hover { filter:brightness(1.3); transform:scale(1.05); }
 .match-badge.badge-suspect { background:rgba(255,51,85,0.15); color:var(--accent-red); border:1px solid rgba(255,51,85,0.3); }
 .match-badge.badge-rival { background:rgba(0,240,255,0.1); color:var(--accent); border:1px solid rgba(0,240,255,0.25); }
 .match-badge.badge-killer { background:rgba(255,107,0,0.12); color:var(--accent-orange); border:1px solid rgba(255,107,0,0.25); }
@@ -3633,8 +3635,8 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}i
   const _rc={};currentMatchData.forEach(match=>{const seen=new Set();(match.included||[]).filter(i=>i.type==='participant').forEach(p=>{const nmL=p.attributes.stats.name.toLowerCase();if(nmL===pn.toLowerCase()||seen.has(nmL))return;seen.add(nmL);_rc[nmL]=(_rc[nmL]||0)+1;});});Object.entries(_rc).forEach(([k,v])=>{if(v>=3)window._matchRivalsSet.add(k);});
   let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgoMatch(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+' Ast / '+(ps.DBNOs||0)+' Knk</span>':'';
   // Match badges
-  const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{if(b.url){badgeHtml+='<a href="'+esc(b.url)+'" target="_blank" rel="noopener" class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();">'+b.icon+' '+esc(b.text)+'</a>';}else{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';}});badgeHtml+='</div>';}
-  h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
+  const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{if(b.url){badgeHtml+='<a href="'+esc(b.url)+'" target="_blank" rel="noopener" class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();">'+b.icon+' '+esc(b.text)+'</a>';}else if(b.playerName){badgeHtml+='<span class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+escJs(b.playerName)+'\';searchPlayer();">'+b.icon+' '+esc(b.text)+'</span>';}else{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';}});badgeHtml+='</div>';}
+  h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')"><div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div>'+badgeHtml+'</div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
   // Render rivals section
   try{renderMatchRivals();}catch(e){console.error('Match rivals error:',e);}
   // Render streaks & records
@@ -4071,7 +4073,7 @@ function getMatchBadges(match,pn){
   if(topKills>=15){
     const isMe=topKiller&&topKiller.toLowerCase()===pn.toLowerCase();
     if(!isMe){
-      badges.push({type:'suspect',text:topKiller+': '+topKills+' kills',icon:'⚠️'});
+      badges.push({type:'suspect',text:topKiller+': '+topKills+' kills',icon:'⚠️',playerName:topKiller});
     } else {
       badges.push({type:'killer',text:'Tu: '+topKills+' kills!',icon:'🔥'});
     }
@@ -4080,7 +4082,7 @@ function getMatchBadges(match,pn){
   if(window._matchRivalsSet){
     const rivalInMatch=participants.find(p=>p.attributes.stats.name.toLowerCase()!==pn.toLowerCase()&&window._matchRivalsSet.has(p.attributes.stats.name.toLowerCase()));
     if(rivalInMatch){
-      badges.push({type:'rival',text:'Rival: '+rivalInMatch.attributes.stats.name,icon:'👀'});
+      badges.push({type:'rival',text:'Rival: '+rivalInMatch.attributes.stats.name,icon:'👀',playerName:rivalInMatch.attributes.stats.name});
     }
   }
   // Flag: pubg.report has a video/clip for this match
