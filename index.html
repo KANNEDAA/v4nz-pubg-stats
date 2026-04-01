@@ -2314,6 +2314,9 @@ async function publishClanToServer(clanTag,clanName,memberCount,level,platform,m
 // Clan page rendering for /clan/:tag URLs
 async function loadClanPage(tag){
   switchTab('clans');
+  // Switch to search mode so clanResults is visible
+  const searchTab=document.querySelector('.clan-mode-tab');
+  if(searchTab)setClanMode('search',searchTab);
   const cr=document.getElementById('clanResults');
   cr.innerHTML='<div style="text-align:center;padding:40px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando clan '+tag+'...</div></div></div>';
   try{
