@@ -130,8 +130,15 @@
   --shadow-card-hover: 0 8px 30px rgba(0,0,0,0.12), 0 0 20px rgba(0,136,204,0.05);
 }
 [data-theme="light"] body { background: var(--bg-primary); }
-[data-theme="light"] header { background: rgba(240,242,245,0.95); border-bottom-color: rgba(0,0,0,0.06); }
+[data-theme="light"] header { background: rgba(240,242,245,0.97); border-bottom-color: rgba(0,0,0,0.08); box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
+[data-theme="light"] header nav a { color: #556; }
+[data-theme="light"] header nav a.active { color: #111; }
+[data-theme="light"] .logo-text { background: linear-gradient(135deg, #0077bb, #0055aa); -webkit-background-clip: text; }
+[data-theme="light"] .logo-sub { color: #667; }
 [data-theme="light"] .bg-radial { background: radial-gradient(ellipse, rgba(0,136,204,0.06) 0%, transparent 70%); }
+[data-theme="light"] .lb-row:hover { background: rgba(0,136,204,0.06); }
+[data-theme="light"] .lb-val { color: #0077bb; }
+[data-theme="light"] .lb-val-orange { color: #cc5500; }
 [data-theme="light"] .loading-overlay { background: rgba(240,242,245,0.97); }
 [data-theme="light"] .telem-popup { background: rgba(240,242,245,0.97); }
 [data-theme="light"] .telem-canvas-wrap { background: #e8eaef; }
@@ -598,7 +605,8 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-item.mi-win::before { background:var(--accent-yellow); }
 .match-item.mi-top10::before { background:var(--accent-green); }
 .match-item.mi-normal::before { background:var(--text-dim); opacity:.3; }
-.match-item:hover { border-color: var(--border-hover); background: var(--bg-card-hover); transform: translateY(-1px); box-shadow: var(--shadow-card-hover); }
+.match-item:hover { border-color: var(--accent); background: var(--bg-card-hover); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,240,255,0.12), 0 0 0 1px rgba(0,240,255,0.08); cursor:pointer; }
+[data-theme="light"] .match-item:hover { border-color: #0088cc; box-shadow: 0 4px 20px rgba(0,119,187,0.1), 0 0 0 1px rgba(0,119,187,0.08); }
 .match-place { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.3rem; }
 .match-place.win { color: var(--accent-yellow); } .match-place.top10 { color: var(--accent-green); } .match-place.normal { color: var(--text-secondary); }
 .match-mode { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; }
@@ -724,7 +732,7 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .clan-history-item .chi-name { font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.88rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .clan-history-item .chi-meta { font-size:.65rem; color:var(--text-dim); }
 .clan-history-item .chi-actions { display:flex; gap:4px; flex-shrink:0; }
-.chi-action-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:.65rem; cursor:pointer; transition:all .2s; color:var(--text-dim); }
+.chi-action-btn { background:none; border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:.8rem; cursor:pointer; transition:all .2s; color:var(--text-dim); min-width:36px; min-height:36px; display:inline-flex; align-items:center; justify-content:center; }
 .chi-action-btn:hover { border-color:var(--accent); color:var(--accent); }
 .chi-action-btn.set-my-clan { color:var(--accent-orange); border-color:rgba(255,107,0,0.3); }
 .chi-action-btn.set-my-clan:hover { background:rgba(255,107,0,0.1); border-color:var(--accent-orange); }
@@ -3249,9 +3257,16 @@ function switchTab(t){
     else a.classList.toggle('active',navTab===t);
   });
   const p=document.getElementById('panel-'+t);if(p)p.classList.add('active');
-  // Show player sub-tabs for all player-related views
-  if(playerTabs.includes(t)&&currentPlayerData)document.getElementById('tabsContainer').style.display='block';
-  else document.getElementById('tabsContainer').style.display='none';
+  // Show player sub-tabs and season bar for all player-related views
+  const isPlayerView=playerTabs.includes(t)&&currentPlayerData;
+  document.getElementById('tabsContainer').style.display=isPlayerView?'block':'none';
+  document.getElementById('seasonBar').style.display=isPlayerView?'':'none';
+  document.getElementById('seasonTypeSelector').style.display=isPlayerView?'':'none';
+  document.getElementById('playerHeader').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('narrativeInsights').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('personalitySection').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('evolutionSection').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('frequentTeammates').style.display=playerTabs.includes(t)?'':'none';
   // Reset URL when navigating away from stats (but preserve /clan/ URLs)
   if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
     history.pushState(null,'','/');
@@ -3606,7 +3621,7 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}i
   // Build rivals set for badge detection
   window._matchRivalsSet=new Set();
   const _rc={};currentMatchData.forEach(match=>{const seen=new Set();(match.included||[]).filter(i=>i.type==='participant').forEach(p=>{const nmL=p.attributes.stats.name.toLowerCase();if(nmL===pn.toLowerCase()||seen.has(nmL))return;seen.add(nmL);_rc[nmL]=(_rc[nmL]||0)+1;});});Object.entries(_rc).forEach(([k,v])=>{if(v>=3)window._matchRivalsSet.add(k);});
-  let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgoMatch(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+'A / '+(ps.DBNOs||0)+'K</span>':'';
+  let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgoMatch(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+' Ast / '+(ps.DBNOs||0)+' Knk</span>':'';
   // Match badges
   const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{if(b.url){badgeHtml+='<a href="'+esc(b.url)+'" target="_blank" rel="noopener" class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();">'+b.icon+' '+esc(b.text)+'</a>';}else{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';}});badgeHtml+='</div>';}
   h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
@@ -4810,10 +4825,10 @@ async function loadEvolutionChart(){
         const s1=snaps[0];
         let h='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div>';
         h+='<div class="evo-metrics">';
-        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+(parseFloat(s1.kd)||0).toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
-        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+(parseFloat(s1.win_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
-        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(parseFloat(s1.avg_damage)||0)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
-        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-purple);">'+(parseFloat(s1.hs_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+(parseFloat(s1.kd)||0).toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta evo-delta-same">1er registro</div></div>';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+(parseFloat(s1.win_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta evo-delta-same">1er registro</div></div>';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(parseFloat(s1.avg_damage)||0)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta evo-delta-same">1er registro</div></div>';
+        h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-purple);">'+(parseFloat(s1.hs_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta evo-delta-same">1er registro</div></div>';
         h+='</div>';
         h+='<div style="text-align:center;padding:16px 12px;margin-top:8px;background:var(--bg-secondary);border-radius:10px;font-size:.78rem;color:var(--text-secondary);">&#x2705; Stats guardadas hoy. Vuelve manana para ver tu evolucion en la grafica.</div>';
         h+='</div>';
@@ -4825,7 +4840,7 @@ async function loadEvolutionChart(){
     }
     _evoData={snaps};_evoMetric='kd';
     const latest=snaps[snaps.length-1];const prev=snaps[snaps.length-2];
-    function delta(curr,old){const d=curr-old;return d>0?'+'+d.toFixed(2):d<0?d.toFixed(2):'='}
+    function delta(curr,old){const d=curr-old;return d>0?'+'+d.toFixed(2):d<0?d.toFixed(2):'sin cambio'}
     function deltaClass(curr,old){return curr>old?'evo-delta-up':curr<old?'evo-delta-down':'evo-delta-same';}
     const kdNow=parseFloat(latest.kd)||0,kdPrev=parseFloat(prev.kd)||0;
     const wrNow=parseFloat(latest.win_rate)||0,wrPrev=parseFloat(prev.win_rate)||0;
