@@ -3410,6 +3410,8 @@ function switchTab(t){
     const _clanBanner=document.getElementById('myClanBanner');if(_clanBanner)_clanBanner.style.display='';
     const _clanFavs=document.getElementById('clanFavoritesSection');if(_clanFavs)_clanFavs.style.display='';
     const _clanModeTabs=document.querySelector('.clan-mode-tabs');if(_clanModeTabs)_clanModeTabs.style.display='';
+    // Reset to "Buscar Clan" mode (may have been left on ranking)
+    setClanMode('search',document.querySelectorAll('.clan-mode-tab')[0]);
   }
   // Reset URL when navigating away from stats (but preserve /clan/ URLs)
   if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
