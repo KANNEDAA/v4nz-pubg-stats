@@ -1022,6 +1022,55 @@ app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
   }
 });
 
+// ═══ USAGE METRICS (in-memory) ═══
+const metrics = {
+  startedAt: Date.now(),
+  totalRequests: 0,
+  apiRequests: 0,
+  cacheHits: 0,
+  cacheMisses: 0,
+  rateLimited: 0,
+  pubgRateLimited: 0,
+  uniqueIPs: new Set(),
+  searchesTotal: 0,
+  // Per-hour breakdown (last 24h)
+  hourly: {},
+  // Per-IP request counts (for current window)
+  topIPs: new Map(),
+  // Endpoint counts
+  endpoints: {},
+};
+function trackMetric(req, type) {
+  metrics.totalRequests++;
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+  metrics.uniqueIPs.add(ip);
+  // Hourly tracking
+  const hourKey = new Date().toISOString().slice(0, 13); // "2026-04-01T14"
+  if (!metrics.hourly[hourKey]) metrics.hourly[hourKey] = { requests: 0, uniqueIPs: new Set(), searches: 0, rateLimited: 0, cacheHits: 0 };
+  metrics.hourly[hourKey].requests++;
+  metrics.hourly[hourKey].uniqueIPs.add(ip);
+  // Top IPs
+  metrics.topIPs.set(ip, (metrics.topIPs.get(ip) || 0) + 1);
+  // Endpoint tracking
+  const ep = (req.method + ' ' + req.path).replace(/\/[a-zA-Z0-9_.-]{3,}$/, '/:param');
+  metrics.endpoints[ep] = (metrics.endpoints[ep] || 0) + 1;
+  if (type) {
+    if (type === 'api') metrics.apiRequests++;
+    if (type === 'search') { metrics.searchesTotal++; metrics.hourly[hourKey].searches++; }
+    if (type === 'cache-hit') { metrics.cacheHits++; metrics.hourly[hourKey].cacheHits++; }
+    if (type === 'cache-miss') metrics.cacheMisses++;
+    if (type === 'rate-limited') { metrics.rateLimited++; metrics.hourly[hourKey].rateLimited++; }
+    if (type === 'pubg-rate-limited') metrics.pubgRateLimited++;
+  }
+}
+// Cleanup hourly data older than 48h
+setInterval(() => {
+  const cutoff = new Date(Date.now() - 48 * 3600000).toISOString().slice(0, 13);
+  for (const key of Object.keys(metrics.hourly)) {
+    if (key < cutoff) delete metrics.hourly[key];
+  }
+}, 3600000);
+
 // ═══ RATE LIMITER (in-memory, no deps) ═══
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
@@ -1037,6 +1086,7 @@ function rateLimit(req, res, next) {
     entry.count++;
   }
   if (entry.count > RATE_LIMIT_MAX) {
+    trackMetric(req, 'rate-limited');
     return res.status(429).json({ error: 'Demasiadas peticiones. Espera un momento.' });
   }
   next();
@@ -1638,7 +1688,7 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
 
 // ═══ PUBG API PROXY (generic catch-all — MUST be after ALL /api/* specific routes) ═══
 app.all('/api/*', rateLimit, async (req, res) => {
-
+  trackMetric(req, 'api');
   const originalQuery = req.originalUrl.split('?')[1] || '';
   const pubgPath = req.params[0];
   const pubgUrl = `https://api.pubg.com/${pubgPath}${originalQuery ? '?' + originalQuery : ''}`;
@@ -1658,6 +1708,7 @@ app.all('/api/*', rateLimit, async (req, res) => {
         [cacheKey, ttlMinutes]
       );
       if (cached.rows.length > 0) {
+        trackMetric(req, 'cache-hit');
         res.status(cached.rows[0].status_code);
         res.set('Content-Type', 'application/vnd.api+json');
         res.set('X-Cache', 'HIT');
@@ -1682,6 +1733,8 @@ app.all('/api/*', rateLimit, async (req, res) => {
       ).catch(() => {}); // Fire and forget — don't block response
     }
 
+    trackMetric(req, 'cache-miss');
+    if (response.status === 429) trackMetric(req, 'pubg-rate-limited');
     res.status(response.status);
     res.set('Content-Type', 'application/vnd.api+json');
     res.set('X-Cache', 'MISS');
@@ -1732,6 +1785,61 @@ app.post('/auth/admin', rateLimit, (req, res) => {
     console.warn('[admin] Intento fallido desde', req.ip);
     res.status(401).json({ error: 'Contraseña incorrecta' });
   }
+});
+
+// ═══ METRICS ENDPOINT (admin only) ═══
+app.get('/admin/metrics', (req, res) => {
+  // Verify admin token
+  const token = req.headers.authorization?.replace('Bearer ', '') || '';
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role !== 'admin') throw new Error('Not admin');
+  } catch (e) {
+    return res.status(401).json({ error: 'Admin token requerido' });
+  }
+  const uptimeMs = Date.now() - metrics.startedAt;
+  const uptimeH = Math.round(uptimeMs / 3600000 * 10) / 10;
+  // Build hourly data (serializable — convert Sets to counts)
+  const hourly = {};
+  const sortedHours = Object.keys(metrics.hourly).sort().slice(-48);
+  for (const h of sortedHours) {
+    const d = metrics.hourly[h];
+    hourly[h] = { requests: d.requests, uniqueIPs: d.uniqueIPs.size, searches: d.searches, rateLimited: d.rateLimited, cacheHits: d.cacheHits };
+  }
+  // Top 10 IPs by request count
+  const topIPs = [...metrics.topIPs.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([ip, count]) => ({ ip, count }));
+  // Top endpoints
+  const topEndpoints = Object.entries(metrics.endpoints)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([ep, count]) => ({ endpoint: ep, count }));
+  // Active users right now (IPs with requests in last 5 min)
+  const fiveMinAgo = Date.now() - 300000;
+  let activeNow = 0;
+  for (const [, entry] of rateLimitMap) {
+    if (entry.start > fiveMinAgo) activeNow++;
+  }
+  // Cache efficiency
+  const cacheTotal = metrics.cacheHits + metrics.cacheMisses;
+  const cacheRate = cacheTotal > 0 ? Math.round(metrics.cacheHits / cacheTotal * 100) : 0;
+  res.json({
+    uptime: uptimeH + 'h',
+    uptimeMs,
+    totalRequests: metrics.totalRequests,
+    apiRequests: metrics.apiRequests,
+    searchesTotal: metrics.searchesTotal,
+    uniqueIPsTotal: metrics.uniqueIPs.size,
+    activeNow,
+    rateLimited: metrics.rateLimited,
+    pubgRateLimited: metrics.pubgRateLimited,
+    cache: { hits: metrics.cacheHits, misses: metrics.cacheMisses, rate: cacheRate + '%' },
+    hourly,
+    topIPs,
+    topEndpoints
+  });
 });
 
 // Sitemap for SEO — dynamic with clan URLs + popular players

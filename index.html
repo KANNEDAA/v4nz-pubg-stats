@@ -1439,6 +1439,13 @@ footer a { color: var(--accent); text-decoration: none; }
           <div id="adminDiscoverStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>
         </div>
         <div id="adminPendingRequests" style="margin-top:12px;"></div>
+        <div style="margin-top:12px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:0;">&#x1F4CA; Metricas de Uso</div>
+            <button onclick="loadAdminMetrics()" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani;font-size:.65rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;">&#x1F504; Actualizar</button>
+          </div>
+          <div id="adminMetricsContent" style="font-size:.7rem;color:var(--text-secondary);">Pulsa Actualizar para cargar metricas.</div>
+        </div>
       </div>
     </div>
     <div id="clanCompareMode" style="display:none;">
@@ -6315,6 +6322,56 @@ async function rejectRequest(id,btn){
     await fetch('/clans/requests/'+id+'/reject',{method:'POST',headers:{'Authorization':'Bearer '+(sessionStorage.getItem('adminToken')||'')}});
     btn.parentElement.style.opacity='0.3';btn.parentElement.innerHTML+='<span style="color:var(--accent-red);font-size:.65rem;margin-left:8px;">Rechazado</span>';
   }catch(e){btn.textContent='ERR';}
+}
+// Admin metrics
+async function loadAdminMetrics(){
+  const el=document.getElementById('adminMetricsContent');
+  if(!el)return;
+  const tk=sessionStorage.getItem('adminToken');
+  if(!tk){el.innerHTML='<span style="color:#ff4444;">No hay token admin. Navega a /admin primero.</span>';return;}
+  el.innerHTML='<div class="spinner" style="width:16px;height:16px;margin:8px auto;"></div>';
+  try{
+    const r=await fetch('/admin/metrics',{headers:{'Authorization':'Bearer '+tk}});
+    if(!r.ok)throw new Error('Error '+r.status);
+    const d=await r.json();
+    let h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:12px;">';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:var(--accent);">'+d.activeNow+'</div><div style="font-size:.6rem;color:var(--text-dim);">ACTIVOS AHORA</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:var(--accent-green);">'+d.uniqueIPsTotal+'</div><div style="font-size:.6rem;color:var(--text-dim);">IPs UNICAS</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;">'+d.totalRequests+'</div><div style="font-size:.6rem;color:var(--text-dim);">PETICIONES TOTAL</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:var(--accent-yellow);">'+d.apiRequests+'</div><div style="font-size:.6rem;color:var(--text-dim);">API PUBG</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:'+(d.rateLimited>0?'#ff4444':'var(--accent-green)')+';">'+d.rateLimited+'</div><div style="font-size:.6rem;color:var(--text-dim);">RATE LIMITED</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:'+(d.pubgRateLimited>0?'#ff4444':'var(--accent-green)')+';">'+d.pubgRateLimited+'</div><div style="font-size:.6rem;color:var(--text-dim);">PUBG 429</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;">'+d.cache.rate+'</div><div style="font-size:.6rem;color:var(--text-dim);">CACHE HIT</div></div>';
+    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:.9rem;font-weight:700;">'+d.uptime+'</div><div style="font-size:.6rem;color:var(--text-dim);">UPTIME</div></div>';
+    h+='</div>';
+    // Hourly chart (last 12 hours as bars)
+    const hours=Object.entries(d.hourly||{}).slice(-12);
+    if(hours.length){
+      const maxReq=Math.max(...hours.map(([,v])=>v.requests),1);
+      h+='<div style="font-size:.65rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;">ULTIMAS 12 HORAS</div>';
+      h+='<div style="display:flex;gap:2px;align-items:flex-end;height:60px;margin-bottom:8px;">';
+      hours.forEach(([hr,v])=>{
+        const pct=Math.max(3,Math.round(v.requests/maxReq*100));
+        const color=v.rateLimited>0?'#ff4444':'var(--accent)';
+        h+='<div title="'+hr.slice(11)+':00 — '+v.requests+' req, '+v.uniqueIPs+' IPs'+(v.rateLimited?' ('+v.rateLimited+' rate limited)':'')+'" style="flex:1;background:'+color+';border-radius:3px 3px 0 0;height:'+pct+'%;min-height:2px;cursor:help;"></div>';
+      });
+      h+='</div>';
+      h+='<div style="display:flex;justify-content:space-between;font-size:.5rem;color:var(--text-dim);">';
+      if(hours.length>0)h+='<span>'+hours[0][0].slice(11)+'h</span>';
+      if(hours.length>1)h+='<span>'+hours[hours.length-1][0].slice(11)+'h</span>';
+      h+='</div>';
+    }
+    // Top IPs
+    if(d.topIPs&&d.topIPs.length){
+      h+='<div style="font-size:.65rem;font-weight:600;color:var(--text-dim);margin-top:10px;margin-bottom:4px;">TOP IPs</div>';
+      h+='<div style="display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:.6rem;">';
+      d.topIPs.slice(0,10).forEach(ip=>{
+        h+='<span style="color:var(--text-secondary);font-family:monospace;">'+ip.ip+'</span><span style="color:var(--accent);font-weight:600;">'+ip.count+'</span>';
+      });
+      h+='</div>';
+    }
+    el.innerHTML=h;
+  }catch(e){el.innerHTML='<span style="color:#ff4444;">Error: '+e.message+'</span>';}
 }
 // Admin-only discover function
 function adminDiscoverMembers(){
