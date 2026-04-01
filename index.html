@@ -3029,7 +3029,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
   else if(clanMatch){setTimeout(()=>loadClanPage(decodeURIComponent(clanMatch[1])),100);}
-  else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
+  else{/* Pagina de inicio limpia — el usuario busca su gamertag */showHomepageContent();}
   // Sticky tabs shadow effect
   const _tc=document.getElementById('tabsContainer');
   if(_tc){
@@ -3047,6 +3047,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     else if(clanM){loadClanPage(decodeURIComponent(clanM[1]));}
     else if(location.pathname==='/'||location.pathname===''){
       // Volver a home limpio
+      currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;
       document.getElementById('searchInput').value='';
       document.getElementById('playerHeader').classList.remove('visible');
       document.getElementById('seasonBar').classList.remove('visible');
@@ -3059,6 +3060,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('frequentTeammates').style.display='none';
       document.title='V4NZ — PUBG Stats Tracker';
       switchTab('overview');
+      loadHomepageContent();
     }
     else{location.reload();}
   });
