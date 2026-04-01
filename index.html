@@ -3354,7 +3354,7 @@ function autoBestMode(){
 function switchTab(t){
   // Hide SEO content when navigating to any section (only visible on initial home)
   const seo=document.getElementById('seoContent');if(seo)seo.style.display='none';
-  // "ranking" is an alias — show clans panel in ranking mode
+  // "ranking" is an alias — show clans panel in ranking mode (hide clan chrome)
   if(t==='ranking'){
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     const cp=document.getElementById('panel-clans');if(cp)cp.classList.add('active');
@@ -3369,6 +3369,12 @@ function switchTab(t){
     document.getElementById('evolutionSection').style.display='none';
     document.getElementById('frequentTeammates').style.display='none';
     hideHomepageContent();
+    // Hide clan header chrome when accessed from main nav
+    const _clanTitle=document.querySelector('#panel-clans > .section-title');if(_clanTitle)_clanTitle.style.display='none';
+    const _clanDesc=document.querySelector('#panel-clans > p');if(_clanDesc)_clanDesc.style.display='none';
+    const _clanBanner=document.getElementById('myClanBanner');if(_clanBanner)_clanBanner.style.display='none';
+    const _clanFavs=document.getElementById('clanFavoritesSection');if(_clanFavs)_clanFavs.style.display='none';
+    document.querySelector('.clan-mode-tabs').style.display='none';
     // Switch to ranking sub-mode within clans
     setClanMode('ranking',document.querySelectorAll('.clan-mode-tab')[2]);
     if(!location.pathname.startsWith('/clan/')){history.pushState(null,'','/ranking');document.title='Ranking Clanes — V4NZ';}
@@ -3394,6 +3400,14 @@ function switchTab(t){
   document.getElementById('personalitySection').style.display=playerTabs.includes(t)?'':'none';
   document.getElementById('evolutionSection').style.display=playerTabs.includes(t)?'':'none';
   document.getElementById('frequentTeammates').style.display=playerTabs.includes(t)?'':'none';
+  // Restore clan chrome when switching to Clanes (may have been hidden by ranking shortcut)
+  if(t==='clans'){
+    const _clanTitle=document.querySelector('#panel-clans > .section-title');if(_clanTitle)_clanTitle.style.display='';
+    const _clanDesc=document.querySelector('#panel-clans > p');if(_clanDesc)_clanDesc.style.display='';
+    const _clanBanner=document.getElementById('myClanBanner');if(_clanBanner)_clanBanner.style.display='';
+    const _clanFavs=document.getElementById('clanFavoritesSection');if(_clanFavs)_clanFavs.style.display='';
+    const _clanModeTabs=document.querySelector('.clan-mode-tabs');if(_clanModeTabs)_clanModeTabs.style.display='';
+  }
   // Reset URL when navigating away from stats (but preserve /clan/ URLs)
   if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
     if(t==='compare'){history.pushState(null,'','/comparar');document.title='Comparar Jugadores — V4NZ';}
