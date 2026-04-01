@@ -3292,15 +3292,19 @@ function switchTab(t){
 }
 function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
 function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
+let _seasonTypeLoading=false;
 async function setSeasonType(type){
+  if(_seasonTypeLoading)return;
   seasonTypeMode=type;document.querySelectorAll('.season-type-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(type.substring(0,3))));
   if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}return;}
+  _seasonTypeLoading=true;
   try{
     showLoading(true);setLoaderStep('Cargando datos de '+type+'...');
     if(type==='ranked'&&!currentRankedData){const rd=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+currentSeasonId+'/ranked');currentRankedData=rd;console.log('Ranked data loaded:',currentRankedData);}else if(type==='lifetime'&&!currentLifetimeData){const ld=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/lifetime');currentLifetimeData=ld;console.log('Lifetime data loaded:',currentLifetimeData);}
+    if(seasonTypeMode!==type)return;
     const s=getActiveStats();
     if(!s.roundsPlayed){document.getElementById('overviewStats').innerHTML='<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px;"><p style="color:var(--text-secondary);font-size:.9rem;">No hay datos de '+(type==='ranked'?'Ranked':'Lifetime')+' para este modo. Prueba otro modo (Solo/Duo/Squad) o perspectiva (TPP/FPP).</p></div>';document.getElementById('funStatsGrid').innerHTML='';return;}
-    renderOverviewStats();renderFunStats();renderPersonality();  }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
+    renderOverviewStats();renderFunStats();renderPersonality();  }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{_seasonTypeLoading=false;showLoading(false);}
 }
 function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,12);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
 const DEFAULT_FAV_GROUPS=['Mi Squad','Rivales','Amigos','Seguimiento','Tramposos'];
