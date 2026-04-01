@@ -67,7 +67,7 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://cdn.discordapp.com https://v4nz.com https://www.v4nz.com",
+    "img-src 'self' data: blob: https://cdn.discordapp.com https://www.v4nz.com",
     "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://www.pubgclans.net https://api.pubg.report https://discord.com",
     "frame-src https://open.spotify.com https://discord.com",
     "media-src 'none'",
@@ -1852,7 +1852,7 @@ app.get('/sitemap.xml', async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT tag FROM clans WHERE active_members > 0 ORDER BY total_kills DESC LIMIT 500');
       rows.forEach(r => {
-        clanUrls += `  <url><loc>https://v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
+        clanUrls += `  <url><loc>https://www.v4nz.com/clan/${encodeURIComponent(r.tag)}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>\n`;
       });
     } catch(e) { console.error('Sitemap clan error:', e.message); }
     try {
@@ -1864,17 +1864,17 @@ app.get('/sitemap.xml', async (req, res) => {
         LIMIT 1000
       `);
       rows.forEach(r => {
-        playerUrls += `  <url><loc>https://v4nz.com/stats/${r.platform}/${encodeURIComponent(r.player_name)}</loc><changefreq>weekly</changefreq><priority>0.5</priority><lastmod>${today}</lastmod></url>\n`;
+        playerUrls += `  <url><loc>https://www.v4nz.com/stats/${r.platform}/${encodeURIComponent(r.player_name)}</loc><changefreq>weekly</changefreq><priority>0.5</priority><lastmod>${today}</lastmod></url>\n`;
       });
     } catch(e) { console.error('Sitemap player error:', e.message); }
   }
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
-  <url><loc>https://v4nz.com/comparar</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com/clanes</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com/ranking</loc><changefreq>daily</changefreq><priority>0.8</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com/top500</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${today}</lastmod></url>
+  <url><loc>https://www.v4nz.com/comparar</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${today}</lastmod></url>
 ${clanUrls}${playerUrls}</urlset>`);
 });
 
@@ -1887,7 +1887,7 @@ app.get('/googlef2390246b37ad8b0.html', (req, res) => {
 // Robots.txt
 app.get('/robots.txt', (req, res) => {
   res.set('Content-Type', 'text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://v4nz.com/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://www.v4nz.com/sitemap.xml');
 });
 
 // ═══ Dynamic OG Image (SVG → PNG via sharp) ═══
@@ -1907,41 +1907,44 @@ function buildPlayerSvg(player, platform, stats) {
   const hsRate = hasStats && kills > 0 ? (((stats.headshotKills || 0) / kills) * 100).toFixed(0) : '0';
 
   const statsSection = hasStats ? `
-    <!-- Stats boxes — solid colors only (no opacity attrs, Sharp compat) -->
-    <rect x="80" y="310" width="230" height="100" rx="12" fill="#111118" stroke="#1a3a3f"/>
+    <!-- Stats boxes -->
+    <rect x="80" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#00f0ff" stroke-opacity="0.15"/>
     <text x="195" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#00f0ff" text-anchor="middle">${escXml(kd)}</text>
-    <text x="195" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888888" text-anchor="middle" letter-spacing="2">K/D RATIO</text>
+    <text x="195" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">K/D RATIO</text>
 
-    <rect x="330" y="310" width="230" height="100" rx="12" fill="#111118" stroke="#3a3520"/>
+    <rect x="330" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ffd700" stroke-opacity="0.15"/>
     <text x="445" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#ffd700" text-anchor="middle">${escXml(String(wins))}</text>
-    <text x="445" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888888" text-anchor="middle" letter-spacing="2">WINS (${escXml(wr)}%)</text>
+    <text x="445" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">WINS (${escXml(wr)}%)</text>
 
-    <rect x="580" y="310" width="230" height="100" rx="12" fill="#111118" stroke="#3a2510"/>
+    <rect x="580" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ff6b00" stroke-opacity="0.15"/>
     <text x="695" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#ff6b00" text-anchor="middle">${escXml(String(avgDmg))}</text>
-    <text x="695" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888888" text-anchor="middle" letter-spacing="2">AVG DAMAGE</text>
+    <text x="695" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">AVG DAMAGE</text>
 
-    <rect x="830" y="310" width="230" height="100" rx="12" fill="#111118" stroke="#2a1a3a"/>
+    <rect x="830" y="310" width="230" height="100" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#a855f7" stroke-opacity="0.15"/>
     <text x="945" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#a855f7" text-anchor="middle">${escXml(hsRate)}%</text>
-    <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888888" text-anchor="middle" letter-spacing="2">HEADSHOT</text>
+    <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">HEADSHOT</text>
 
-    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#555555" letter-spacing="1">${escXml(String(kills))} kills · ${escXml(String(rounds))} partidas · ${platIcon}</text>
+    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#555" letter-spacing="1">${escXml(String(kills))} kills · ${escXml(String(rounds))} partidas · ${platIcon}</text>
   ` : `
-    <text x="80" y="380" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555555" letter-spacing="2">STATS EN TIEMPO REAL · K/D · WIN RATE · ADN PUBG</text>
-    <text x="80" y="420" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#888888" letter-spacing="3">${platIcon}</text>
+    <text x="80" y="380" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">STATS EN TIEMPO REAL · K/D · WIN RATE · ADN PUBG</text>
+    <text x="80" y="420" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#888" letter-spacing="3">${platIcon}</text>
   `;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-    <rect width="1200" height="630" fill="#0b0b12"/>
-    <rect y="0" width="1200" height="4" fill="#00f0ff"/>
-    <rect x="600" y="0" width="600" height="4" fill="#ff6b00"/>
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#12081f"/></linearGradient>
+      <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#ff6b00"/></linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect y="0" width="1200" height="4" fill="url(#accent)"/>
     <text x="80" y="80" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
-    <text x="190" y="80" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555555" letter-spacing="3">PUBG CONSOLE STATS</text>
+    <text x="190" y="80" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555" letter-spacing="3">PUBG CONSOLE STATS</text>
     <text x="80" y="200" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="2">${escXml(player)}</text>
-    <text x="80" y="260" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#888888" letter-spacing="3">${platIcon} · Squad TPP</text>
+    <text x="80" y="260" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#888" letter-spacing="3">${platIcon} · Squad TPP</text>
     ${statsSection}
     <text x="80" y="560" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#00f0ff" letter-spacing="1">v4nz.com/stats/${escXml(platform.toLowerCase())}/${escXml(player)}</text>
-    <rect x="80" y="580" width="1040" height="2" fill="#1a2a30"/>
-    <text x="1120" y="610" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#444444" text-anchor="end">Datos en tiempo real via PUBG API</text>
+    <rect x="80" y="580" width="1040" height="2" fill="url(#accent)" opacity="0.3"/>
+    <text x="1120" y="610" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#444" text-anchor="end">Datos en tiempo real via PUBG API</text>
   </svg>`;
 }
 
@@ -1949,35 +1952,38 @@ function buildClanSvg(tag, clan) {
   const hasClan = clan && clan.tag;
   const name = hasClan ? (clan.name || tag) : tag;
   const statsSection = hasClan ? `
-    <text x="80" y="280" font-family="Arial,Helvetica,sans-serif" font-size="22" fill="#888888" letter-spacing="2">${escXml(name)} · ${escXml((clan.platform || 'PSN').toUpperCase())} · Nivel ${clan.level || '?'}</text>
-    <rect x="80" y="320" width="230" height="90" rx="12" fill="#111118" stroke="#1a3a3f"/>
+    <text x="80" y="280" font-family="Arial,Helvetica,sans-serif" font-size="22" fill="#888" letter-spacing="2">${escXml(name)} · ${escXml((clan.platform || 'PSN').toUpperCase())} · Nivel ${clan.level || '?'}</text>
+    <rect x="80" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#00f0ff" stroke-opacity="0.15"/>
     <text x="195" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#00f0ff" text-anchor="middle">${clan.total_kills || 0}</text>
-    <text x="195" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888888" text-anchor="middle" letter-spacing="2">TOTAL KILLS</text>
-    <rect x="330" y="320" width="230" height="90" rx="12" fill="#111118" stroke="#1a3a28"/>
+    <text x="195" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">TOTAL KILLS</text>
+    <rect x="330" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#00ff88" stroke-opacity="0.15"/>
     <text x="445" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#00ff88" text-anchor="middle">${(parseFloat(clan.avg_kd) || 0).toFixed(2)}</text>
-    <text x="445" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888888" text-anchor="middle" letter-spacing="2">K/D MEDIO</text>
-    <rect x="580" y="320" width="230" height="90" rx="12" fill="#111118" stroke="#3a3520"/>
+    <text x="445" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">K/D MEDIO</text>
+    <rect x="580" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ffd700" stroke-opacity="0.15"/>
     <text x="695" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#ffd700" text-anchor="middle">${clan.total_wins || 0}</text>
-    <text x="695" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888888" text-anchor="middle" letter-spacing="2">VICTORIAS</text>
-    <rect x="830" y="320" width="230" height="90" rx="12" fill="#111118" stroke="#3a2510"/>
+    <text x="695" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">VICTORIAS</text>
+    <rect x="830" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ff6b00" stroke-opacity="0.15"/>
     <text x="945" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#ff6b00" text-anchor="middle">${clan.active_members || 0}</text>
-    <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888888" text-anchor="middle" letter-spacing="2">ACTIVOS</text>
-    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555555">${clan.member_count || 0} miembros · Win Rate ${(parseFloat(clan.win_rate) || 0).toFixed(1)}% · Dano medio ${(parseFloat(clan.avg_damage) || 0).toFixed(0)}</text>
+    <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">ACTIVOS</text>
+    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555">${clan.member_count || 0} miembros · Win Rate ${(parseFloat(clan.win_rate) || 0).toFixed(1)}% · Dano medio ${(parseFloat(clan.avg_damage) || 0).toFixed(0)}</text>
   ` : `
-    <text x="80" y="400" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555555" letter-spacing="2">MIEMBROS · KILLS · K/D · RANKING</text>
+    <text x="80" y="400" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">MIEMBROS · KILLS · K/D · RANKING</text>
   `;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-    <rect width="1200" height="630" fill="#0b0b12"/>
-    <rect y="0" width="1200" height="4" fill="#00f0ff"/>
-    <rect x="600" y="0" width="600" height="4" fill="#ff6b00"/>
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#12081f"/></linearGradient>
+      <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#ff6b00"/></linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect y="0" width="1200" height="4" fill="url(#accent)"/>
     <text x="80" y="80" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
-    <text x="190" y="80" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555555" letter-spacing="3">PUBG CONSOLE STATS</text>
+    <text x="190" y="80" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555" letter-spacing="3">PUBG CONSOLE STATS</text>
     <text x="80" y="145" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#ff6b00" letter-spacing="3">CLAN</text>
     <text x="80" y="220" font-family="Arial,Helvetica,sans-serif" font-size="80" font-weight="900" fill="#ffffff" letter-spacing="4">[${escXml(tag)}]</text>
     ${statsSection}
     <text x="80" y="560" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#ff6b00" letter-spacing="1">v4nz.com/clan/${escXml(tag)}</text>
-    <rect x="80" y="580" width="1040" height="2" fill="#1a2a30"/>
-    <text x="1120" y="610" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#444444" text-anchor="end">Datos en tiempo real via PUBG API</text>
+    <rect x="80" y="580" width="1040" height="2" fill="url(#accent)" opacity="0.3"/>
+    <text x="1120" y="610" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#444" text-anchor="end">Datos en tiempo real via PUBG API</text>
   </svg>`;
 }
 
@@ -2101,29 +2107,20 @@ app.get('/icon-maskable.svg', (req, res) => {
   </svg>`);
 });
 
-// OG Image (static — generates real PNG via Sharp for social sharing)
-app.get('/og-image.png', async (req, res) => {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-    <rect width="1200" height="630" fill="#0b0b12"/>
-    <rect y="0" width="1200" height="4" fill="#00f0ff"/>
-    <rect x="600" y="0" width="600" height="4" fill="#ff6b00"/>
-    <rect x="16" y="16" width="1168" height="598" rx="24" fill="none" stroke="#1a2a30" stroke-width="2"/>
-    <text x="600" y="260" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="140" fill="#00f0ff">V4NZ</text>
-    <text x="600" y="360" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="600" font-size="42" fill="#eaeaf2">PUBG Console Stats Tracker</text>
-    <text x="600" y="430" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="400" font-size="28" fill="#9e9eb8">PlayStation &amp; Xbox — Estadisticas en Tiempo Real</text>
-    <text x="600" y="560" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="24" fill="#ff6b00">v4nz.com</text>
-  </svg>`;
-  try {
-    const png = await svgToPng(svg);
-    if (png) {
-      res.set('Content-Type', 'image/png');
-      res.set('Cache-Control', 'public, max-age=86400');
-      return res.send(png);
-    }
-  } catch(e) { /* fallback to SVG */ }
+// OG Image (static SVG served as image for social sharing previews)
+app.get('/og-image.png', (req, res) => {
+  // Serve an SVG with .png extension — most crawlers accept this
+  // For pixel-perfect PNG, install 'canvas' or 'sharp' npm packages
   res.set('Content-Type', 'image/svg+xml');
-  res.set('Cache-Control', 'public, max-age=86400');
-  res.send(svg);
+  res.send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b12"/><stop offset="100%" stop-color="#131320"/></linearGradient></defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect x="16" y="16" width="1168" height="598" rx="24" fill="none" stroke="#00f0ff" stroke-width="2" opacity=".2"/>
+    <text x="600" y="260" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="140" fill="#00f0ff">V4NZ</text>
+    <text x="600" y="360" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="42" fill="#eaeaf2">PUBG Console Stats Tracker</text>
+    <text x="600" y="430" text-anchor="middle" font-family="sans-serif" font-weight="400" font-size="28" fill="#9e9eb8">PlayStation &amp; Xbox — Estadisticas en Tiempo Real</text>
+    <text x="600" y="560" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="24" fill="#ff6b00">v4nz.com</text>
+  </svg>`);
 });
 
 // ═══ PLAYER NAME HISTORY ═══
@@ -2255,13 +2252,13 @@ app.get('*', (req, res) => {
       title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
       desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
       canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
-      ogImage = `https://v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
+      ogImage = `https://www.v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
     } else if (clanMatch) {
       const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
       title = `Clan [${clanTag}] — PUBG Stats Consola | V4NZ`;
       desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
-      canonicalUrl = `https://v4nz.com/clan/${encodeURIComponent(clanTag)}`;
-      ogImage = `https://v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
+      canonicalUrl = `https://www.v4nz.com/clan/${encodeURIComponent(clanTag)}`;
+      ogImage = `https://www.v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
     } else if (spaPages[req.path]) {
       title = spaPages[req.path].title;
       desc = spaPages[req.path].desc;
@@ -2279,12 +2276,9 @@ app.get('*', (req, res) => {
         .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${safeDesc}">`)
         .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${safeDesc}">`);
       if (canonicalUrl) {
-        const safeCan = escHtml(canonicalUrl);
         html = html
-          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${safeCan}">`)
-          .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${safeCan}">`)
-          .replace(/<link rel="alternate" hreflang="es"[^>]*>/, `<link rel="alternate" hreflang="es" href="${safeCan}">`)
-          .replace(/<link rel="alternate" hreflang="x-default"[^>]*>/, `<link rel="alternate" hreflang="x-default" href="${safeCan}">`);
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${escHtml(canonicalUrl)}">`)
+          .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${escHtml(canonicalUrl)}">`);
       }
       if (ogImage) {
         html = html
