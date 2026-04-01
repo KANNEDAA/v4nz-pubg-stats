@@ -1968,10 +1968,11 @@ let cmpPlatform='psn',cmpMode='squad';
 function setCmpMode(m){cmpMode=m;['squad','squad-fpp','solo','duo'].forEach(k=>{const el=document.getElementById('cmpMode-'+k);if(el)el.classList.toggle('active',k===m);});}
 let seasonTypeMode='season',currentSeasonId=null,currentRankedData=null,currentLifetimeData=null,allSeasons=null;
 
-const MAP_NAMES={'Baltic_Main':'Erangel','Chimera_Main':'Paramo','Desert_Main':'Miramar','DihorOtok_Main':'Vikendi','Erangel_Main':'Erangel','Heaven_Main':'Haven','Kiki_Main':'Deston','Range_Main':'Camp Jackal','Savage_Main':'Sanhok','Summerland_Main':'Karakin','Tiger_Main':'Taego','Neon_Main':'Rondo'};
+const MAP_NAMES={'Baltic_Main':'Erangel','Chimera_Main':'Paramo','Desert_Main':'Miramar','DihorOtok_Main':'Vikendi','Erangel_Main':'Erangel','Heaven_Main':'Haven','Kiki_Main':'Deston','Range_Main':'Camp Jackal','Savage_Main':'Sanhok','Summerland_Main':'Karakin','Tiger_Main':'Taego','Neon_Main':'Rondo','Italy_TDM_Main':'Italia TDM','Warehouse_TDM_Main':'Almacen TDM','Arena_TDM_Main':'Arena TDM','Pillar_TDM_Main':'Pillar TDM','Summerland_TDM_Main':'Karakin TDM','Heaven_TDM_Main':'Haven TDM','Tiger_TDM_Main':'Taego TDM','Desert_TDM_Main':'Miramar TDM','Savage_TDM_Main':'Sanhok TDM','Baltic_TDM_Main':'Erangel TDM','DihorOtok_TDM_Main':'Vikendi TDM','Kiki_TDM_Main':'Deston TDM'};
 const SEASON_NAMES={1:'T1 — Ene 2018',2:'T2 — Mar 2018',3:'T3 — Jun 2018',4:'T4 — Sep 2018',5:'T5 — Ene 2019',6:'T6 — Mar 2019',7:'T7 — Jun 2019',8:'T8 — Ago 2019',9:'T9 — Oct 2019',10:'T10 — Ene 2020',11:'T11 — Mar 2020',12:'T12 — Jun 2020',13:'T13 — Sep 2020',14:'T14 — Dic 2020',15:'T15 — Feb 2021',16:'T16 — Abr 2021',17:'T17 — Jul 2021',18:'T18 — Sep 2021',19:'T19 — Ene 2022',20:'T20 — Mar 2022',21:'T21 — Jun 2022',22:'T22 — Ago 2022',23:'T23 — Nov 2022',24:'T24 — Ene 2023',25:'T25 — Mar 2023',26:'T26 — Jun 2023',27:'T27 — Ago 2023',28:'T28 — Nov 2023',29:'T29 — Ene 2024',30:'T30 — Mar 2024',31:'T31 — May 2024',32:'T32 — Jul 2024',33:'T33 — Sep 2024',34:'T34 — Nov 2024',35:'T35 — Ene 2025',36:'T36 — Mar 2025',37:'T37 — May 2025',38:'T38 — Jul 2025',39:'T39 — Sep 2025',40:'T40 — Nov 2025',41:'T41 — Ene 2026',42:'T42 — Mar 2026',43:'T43 — May 2026',44:'T44 — Jul 2026',45:'T45 — Sep 2026'};
 function getSeasonNum(id){const cm=id.match(/console-(\d+)/);if(cm)return parseInt(cm[1]);const num=parseInt(id.replace(/\D/g,''))||0;return num<=100?num:0;}
 function getSeasonLabel(id){const num=getSeasonNum(id);if(num&&SEASON_NAMES[num])return SEASON_NAMES[num];if(id.includes('2018'))return'Pre-Season (2018)';return'Temporada '+num;}
+function cleanMapName(raw){if(!raw||raw==='?')return'?';if(MAP_NAMES[raw])return MAP_NAMES[raw];return raw.replace(/_Main$/i,'').replace(/_TDM/gi,' TDM').replace(/_/g,' ');}
 const MAP_COLORS={'Erangel':'#4caf50','Miramar':'#ff9800','Sanhok':'#8bc34a','Vikendi':'#90caf9','Karakin':'#e6a23c','Taego':'#66bb6a','Deston':'#5c6bc0','Haven':'#ef5350','Paramo':'#78909c','Rondo':'#ab47bc','Camp Jackal':'#ffa726'};
 const MAP_SIZE={'Erangel':'8x8','Miramar':'8x8','Sanhok':'4x4','Vikendi':'6x6','Karakin':'2x2','Taego':'8x8','Deston':'8x8','Haven':'1x1','Paramo':'3x3','Rondo':'1.2x1.2','Camp Jackal':'2x2'};
 const WEAPON_TYPES={'M416':'Fusil de Asalto','Beryl M762':'Fusil de Asalto','AKM':'Fusil de Asalto','SCAR-L':'Fusil de Asalto','AUG':'Fusil de Asalto','G36C':'Fusil de Asalto','Groza':'Fusil de Asalto','QBZ':'Fusil de Asalto','M16A4':'Fusil de Asalto','ACE32':'Fusil de Asalto','Mk47':'Fusil de Asalto','FAMAS':'Fusil de Asalto','K2':'Fusil de Asalto','L85A3':'Fusil de Asalto','Mini 14':'DMR','SKS':'DMR','SLR':'DMR','QBU':'DMR','Mk14':'DMR','VSS':'DMR','Dragunov':'DMR','Kar98k':'Francotirador','M24':'Francotirador','AWM':'Francotirador','Mosin':'Francotirador','Lynx AMR':'Francotirador','Win94':'Francotirador','UMP45':'SMG','Vector':'SMG','MP5K':'SMG','P90':'SMG','Bizon':'SMG','Tommy Gun':'SMG','MP9':'SMG','JS9':'SMG','Skorpion':'SMG','S12K':'Escopeta','S686':'Escopeta','S1897':'Escopeta','Origin 12':'Escopeta','DBS':'Escopeta','M249':'LMG','DP-28':'LMG','MG3':'LMG','Pan':'Cuerpo a cuerpo','Machete':'Cuerpo a cuerpo','Sickle':'Cuerpo a cuerpo','Crossbow':'Arco','Deagle':'Pistola','P1911':'Pistola','P92':'Pistola','Rhino':'Pistola','Nagant':'Pistola','Skorpion':'Pistola','Flare Gun':'Especial','Mortar':'Especial','Panzerfaust':'Especial','C4':'Explosivo','Grenade':'Explosivo','Sticky Bomb':'Explosivo','Molotov':'Explosivo','Smoke':'Utilidad','Jolt':'Especial','BZ-187':'Especial'};
@@ -2397,7 +2398,7 @@ async function loadClanFeed(tag){
     section.style.display='';
     let h='';
     d.feed.forEach(e=>{
-      const mapName=MAP_NAMES[e.map]||e.map||'?';
+      const mapName=cleanMapName(e.map);
       const mc=MAP_COLORS[mapName]||'#888';
       const pc=e.place===1?'var(--accent-yellow)':e.place<=10?'var(--accent-green)':'var(--text-dim)';
       const placeIcon=e.place===1?'&#x1F3C6;':e.place<=3?'&#x1F3C5;':'#'+e.place;
@@ -3638,7 +3639,7 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}i
   // Build rivals set for badge detection
   window._matchRivalsSet=new Set();
   const _rc={};currentMatchData.forEach(match=>{const seen=new Set();(match.included||[]).filter(i=>i.type==='participant').forEach(p=>{const nmL=p.attributes.stats.name.toLowerCase();if(nmL===pn.toLowerCase()||seen.has(nmL))return;seen.add(nmL);_rc[nmL]=(_rc[nmL]||0)+1;});});Object.entries(_rc).forEach(([k,v])=>{if(v>=3)window._matchRivalsSet.add(k);});
-  let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgoMatch(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+' Ast / '+(ps.DBNOs||0)+' Knk</span>':'';
+  let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=cleanMapName(a.mapName);const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgoMatch(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+' Ast / '+(ps.DBNOs||0)+' Knk</span>':'';
   // Match badges
   const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{if(b.url){badgeHtml+='<a href="'+esc(b.url)+'" target="_blank" rel="noopener" class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();">'+b.icon+' '+esc(b.text)+'</a>';}else if(b.playerName){badgeHtml+='<span class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+escJs(b.playerName)+'\';searchPlayer();">'+b.icon+' '+esc(b.text)+'</span>';}else{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';}});badgeHtml+='</div>';}
   h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')"><div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div>'+badgeHtml+'</div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
@@ -3656,7 +3657,7 @@ function renderMatchStreaks(){
     const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn);
     if(!pp)return;
     const ps=pp.attributes.stats;const a=match.data.attributes;
-    games.push({kills:ps.kills||0,damage:Math.round(ps.damageDealt||0),place:ps.winPlace||99,hs:ps.headshotKills||0,assists:ps.assists||0,knocks:ps.DBNOs||0,time:ps.timeSurvived||0,map:MAP_NAMES[a.mapName]||a.mapName||'?',mode:(a.gameMode||'').toUpperCase(),date:a.createdAt});
+    games.push({kills:ps.kills||0,damage:Math.round(ps.damageDealt||0),place:ps.winPlace||99,hs:ps.headshotKills||0,assists:ps.assists||0,knocks:ps.DBNOs||0,time:ps.timeSurvived||0,map:cleanMapName(a.mapName),mode:(a.gameMode||'').toUpperCase(),date:a.createdAt});
   });
   if(games.length<2){el.style.display='none';return;}
   // Calculate streaks and records
@@ -3713,7 +3714,7 @@ function renderMatchStreaks(){
 }
 function showMatchDetail(idx){
   const match=currentMatchData[idx];if(!match)return;
-  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';
+  const a=match.data.attributes;const mn=cleanMapName(a.mapName);const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';
   const pn=currentPlayerData.attributes.name;
   const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());
   if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;
@@ -3849,7 +3850,7 @@ async function generateSeasonWrapped(){
 // ═══ SHARE MATCH CARD ═══
 async function shareMatchCard(idx){
   const match=currentMatchData[idx];if(!match)return;
-  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';
+  const a=match.data.attributes;const mn=cleanMapName(a.mapName);const mc=MAP_COLORS[mn]||'#888';
   const gm=(a.gameMode||'').toUpperCase();
   const pn=currentPlayerData.attributes.name;
   const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());
@@ -4074,8 +4075,12 @@ function getMatchBadges(match,pn){
     const k=p.attributes.stats.kills||0;
     if(k>topKills){topKills=k;topKiller=p.attributes.stats.name;}
   });
-  // Flag: someone got 15+ kills = possible suspect / very good player
-  if(topKills>=15){
+  // Flag: someone got high kills = possible suspect / very good player
+  // Skip for TDM/Arena modes where high kills are normal
+  const gm=(match.data&&match.data.attributes&&match.data.attributes.gameMode||'').toLowerCase();
+  const isTDM=gm.includes('tdm')||gm.includes('deathmatch')||gm.includes('arena')||gm.includes('war');
+  const killThreshold=isTDM?50:15;
+  if(topKills>=killThreshold){
     const isMe=topKiller&&topKiller.toLowerCase()===pn.toLowerCase();
     if(!isMe){
       badges.push({type:'suspect',text:topKiller+': '+topKills+' kills',icon:'⚠️',playerName:topKiller});
@@ -4176,7 +4181,7 @@ async function generateHeatmap(){
     const mapEntries=Object.entries(byMap).sort((a,b)=>b[1].length-a[1].length);
     const targetMap=mapEntries[0][0];const targetUrls=mapEntries[0][1];
     const mapSize=TELEM_MAP_SIZES[targetMap]||816000;
-    const mn=MAP_NAMES[targetMap]||targetMap;
+    const mn=cleanMapName(targetMap);
 
     /* Fetch all telemetries */
     const allKills=[];const allDeaths=[];const allPositions=[];
@@ -4301,7 +4306,7 @@ async function openTelemMap(url,playerName,mapName,matchIdx){
     const telem=await resp.json();
     const pn=playerName.toLowerCase();
     const mapSize=TELEM_MAP_SIZES[mapName]||816000;
-    const mn=MAP_NAMES[mapName]||mapName;
+    const mn=cleanMapName(mapName);
 
     /* --- Find teammates --- */
     const match=currentMatchData[matchIdx];
@@ -5228,7 +5233,7 @@ function renderWLGrid(){
     if(!pp)return;
     const pl=pp.attributes.stats.winPlace;
     const k=pp.attributes.stats.kills;
-    const mn=MAP_NAMES[match.data.attributes.mapName]||'?';
+    const mn=cleanMapName(match.data.attributes.mapName);
     let cls='normal',tip='';
     if(pl===1){cls='win';wins++;tip='\u{1F3C6} #1';}
     else if(pl<=10){cls='top10';top10s++;tip='Top '+pl;}
