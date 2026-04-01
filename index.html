@@ -3369,6 +3369,7 @@ function switchTab(t){
     document.getElementById('evolutionSection').style.display='none';
     document.getElementById('frequentTeammates').style.display='none';
     hideHomepageContent();
+    const _hero=document.getElementById('searchHero');if(_hero)_hero.style.display='none';
     // Hide clan header chrome when accessed from main nav
     const _clanTitle=document.querySelector('#panel-clans > .section-title');if(_clanTitle)_clanTitle.style.display='none';
     const _clanDesc=document.querySelector('#panel-clans > p');if(_clanDesc)_clanDesc.style.display='none';
@@ -3417,9 +3418,23 @@ function switchTab(t){
   }
   if(t==='leaderboard')renderLeaderboard();
   if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
-  // Homepage content: show only when on overview with no player
-  if(t==='overview'&&!currentPlayerData){showHomepageContent();const hero=document.getElementById('searchHero');if(hero)hero.scrollIntoView({behavior:'smooth'});}
-  else{hideHomepageContent();}
+  // Search hero & homepage content visibility
+  const _hero=document.getElementById('searchHero');
+  const standaloneTabs=['compare','leaderboard'];
+  if(standaloneTabs.includes(t)){
+    // Full-screen sections: hide search hero and homepage content
+    if(_hero)_hero.style.display='none';
+    hideHomepageContent();
+  } else if(t==='overview'&&!currentPlayerData){
+    // Home: show everything
+    if(_hero)_hero.style.display='';
+    showHomepageContent();
+    _hero?.scrollIntoView({behavior:'smooth'});
+  } else {
+    // Player views & clans: show search hero, hide homepage content
+    if(_hero)_hero.style.display='';
+    hideHomepageContent();
+  }
 }
 function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
 function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}

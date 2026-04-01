@@ -1,5 +1,5 @@
-// V4NZ PUBG Stats — Service Worker v1.0
-const CACHE_NAME = 'v4nz-cache-v1';
+// V4NZ PUBG Stats — Service Worker v2.0
+const CACHE_NAME = 'v4nz-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -38,7 +38,21 @@ self.addEventListener('fetch', event => {
     return; // Let browser handle normally — always fresh data
   }
 
-  // Static assets: stale-while-revalidate
+  // Navigation requests (HTML pages): network-first so SPA routes always get fresh code
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request).then(c => c || caches.match('/')))
+    );
+    return;
+  }
+
+  // Static assets (JS, CSS, images, fonts): stale-while-revalidate
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(response => {
