@@ -3082,7 +3082,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
-  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panelId=t==='ranking'?'panel-clans':'panel-'+t;const panel=document.getElementById(panelId);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);if(t==='overview'&&!currentPlayerData){window.scrollTo({top:0,behavior:'smooth'});}else{const panelId=t==='ranking'?'panel-clans':'panel-'+t;const panel=document.getElementById(panelId);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER or /clan/TAG
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
