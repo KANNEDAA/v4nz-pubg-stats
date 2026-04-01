@@ -113,7 +113,8 @@
     {"@type": "ListItem", "position": 2, "name": "Buscar Jugador", "item": "https://v4nz.com/stats"},
     {"@type": "ListItem", "position": 3, "name": "Clanes", "item": "https://v4nz.com/clanes"},
     {"@type": "ListItem", "position": 4, "name": "Ranking", "item": "https://v4nz.com/ranking"},
-    {"@type": "ListItem", "position": 5, "name": "Top 500", "item": "https://v4nz.com/top500"}
+    {"@type": "ListItem", "position": 5, "name": "Top 500", "item": "https://v4nz.com/top500"},
+    {"@type": "ListItem", "position": 6, "name": "Comparar", "item": "https://v4nz.com/comparar"}
   ]
 }
 </script>
@@ -1204,9 +1205,11 @@ footer a:hover { color: var(--accent); text-shadow: 0 0 8px rgba(0,240,255,0.3);
       </div>
     </div>
     <nav id="mainNav">
-      <a href="#" class="active" data-tab="overview">Buscar</a>
+      <a href="#" class="active" data-tab="overview">Jugador</a>
       <a href="#" data-tab="clans">Clanes</a>
-      <a href="#" data-tab="leaderboard">Rankings</a>
+      <a href="#" data-tab="ranking">Ranking</a>
+      <a href="#" data-tab="leaderboard">Top 500</a>
+      <a href="#" data-tab="compare">Comparar</a>
     </nav>
     <div style="display:flex;align-items:center;gap:6px;">
       <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()">Iniciar Sesion</button>
@@ -1265,7 +1268,7 @@ footer a:hover { color: var(--accent); text-shadow: 0 0 8px rgba(0,240,255,0.3);
     <div class="home-card">
       <div class="home-card-header">
         <span class="home-card-title">Top Clanes</span>
-        <button class="home-card-link" onclick="switchTab('clans');setTimeout(()=>{const b=document.querySelector('.clan-mode-tab:last-child');if(b)b.click();},100);">Ver ranking</button>
+        <button class="home-card-link" onclick="switchTab('ranking');">Ver ranking</button>
       </div>
       <div id="homeTopClans" class="home-clan-list"><div class="home-loading">Cargando...</div></div>
     </div>
@@ -1371,7 +1374,6 @@ footer a:hover { color: var(--accent); text-shadow: 0 0 8px rgba(0,240,255,0.3);
         <button class="tab-btn" data-tab="matches" onclick="switchTab('matches')"><span class="tab-icon">&#x1F3AE;</span>Partidas</button>
         <button class="tab-btn" data-tab="weapons" onclick="switchTab('weapons')"><span class="tab-icon">&#x1F52B;</span>Armas</button>
         <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')"><span class="tab-icon">&#x1F50D;</span>Curiosidades</button>
-        <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')"><span class="tab-icon">&#x2694;&#xFE0F;</span>Comparar</button>
       </div>
       <div class="mode-selector"><button class="mode-btn active" onclick="setGameMode('tpp')">TPP</button><button class="mode-btn" onclick="setGameMode('fpp')">FPP</button></div>
     </div>
@@ -3079,12 +3081,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
-  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panelId=t==='ranking'?'panel-clans':'panel-'+t;const panel=document.getElementById(panelId);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER or /clan/TAG
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
   else if(clanMatch){setTimeout(()=>loadClanPage(decodeURIComponent(clanMatch[1])),100);}
+  else if(location.pathname==='/ranking'){switchTab('ranking');}
+  else if(location.pathname==='/comparar'){switchTab('compare');}
+  else if(location.pathname==='/top500'){switchTab('leaderboard');}
+  else if(location.pathname==='/clanes'){switchTab('clans');}
   else{/* Pagina de inicio limpia — el usuario busca su gamertag */showHomepageContent();}
   // Sticky tabs shadow effect
   const _tc=document.getElementById('tabsContainer');
@@ -3118,6 +3124,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       switchTab('overview');
       loadHomepageContent();
     }
+    else if(location.pathname==='/ranking'){switchTab('ranking');}
+    else if(location.pathname==='/comparar'){switchTab('compare');}
+    else if(location.pathname==='/top500'){switchTab('leaderboard');}
+    else if(location.pathname==='/clanes'){switchTab('clans');}
     else{location.reload();}
   });
   // Admin panel: check if admin is stored in sessionStorage from /admin route
@@ -3344,10 +3354,30 @@ function autoBestMode(){
 function switchTab(t){
   // Hide SEO content when navigating to any section (only visible on initial home)
   const seo=document.getElementById('seoContent');if(seo)seo.style.display='none';
+  // "ranking" is an alias — show clans panel in ranking mode
+  if(t==='ranking'){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    const cp=document.getElementById('panel-clans');if(cp)cp.classList.add('active');
+    document.querySelectorAll('#mainNav a').forEach(a=>a.classList.toggle('active',a.dataset.tab==='ranking'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tabsContainer').style.display='none';
+    document.getElementById('seasonBar').style.display='none';
+    document.getElementById('seasonTypeSelector').style.display='none';
+    document.getElementById('playerHeader').style.display='none';
+    document.getElementById('narrativeInsights').style.display='none';
+    document.getElementById('personalitySection').style.display='none';
+    document.getElementById('evolutionSection').style.display='none';
+    document.getElementById('frequentTeammates').style.display='none';
+    hideHomepageContent();
+    // Switch to ranking sub-mode within clans
+    setClanMode('ranking',document.querySelectorAll('.clan-mode-tab')[2]);
+    if(!location.pathname.startsWith('/clan/')){history.pushState(null,'','/ranking');document.title='Ranking Clanes — V4NZ';}
+    return;
+  }
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  // All player-related sub-tabs highlight "Buscar" in main nav
-  const playerTabs=['overview','matches','weapons','funstats','compare'];
+  // Player-related sub-tabs (compare is now a main nav item, not a player tab)
+  const playerTabs=['overview','matches','weapons','funstats'];
   document.querySelectorAll('#mainNav a').forEach(a=>{
     const navTab=a.dataset.tab;
     if(navTab==='overview') a.classList.toggle('active',playerTabs.includes(t));
@@ -3366,8 +3396,10 @@ function switchTab(t){
   document.getElementById('frequentTeammates').style.display=playerTabs.includes(t)?'':'none';
   // Reset URL when navigating away from stats (but preserve /clan/ URLs)
   if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
-    history.pushState(null,'','/');
-    document.title='V4NZ — PUBG Console Stats Tracker';
+    if(t==='compare'){history.pushState(null,'','/comparar');document.title='Comparar Jugadores — V4NZ';}
+    else if(t==='leaderboard'){history.pushState(null,'','/top500');document.title='Top 500 — V4NZ';}
+    else if(t==='clans'){history.pushState(null,'','/clanes');document.title='Clanes PUBG — V4NZ';}
+    else{history.pushState(null,'','/');document.title='V4NZ — PUBG Console Stats Tracker';}
   }
   if(t==='leaderboard')renderLeaderboard();
   if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
