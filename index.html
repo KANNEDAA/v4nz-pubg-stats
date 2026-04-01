@@ -3836,17 +3836,13 @@ async function generateSeasonWrapped(){
   try{
     const canvas=await html2canvas(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
     card.remove();
-    canvas.toBlob(async blob=>{
-      if(!blob)return;
-      const fname=name+'_Season_Wrapped.png';
-      const file=new File([blob],fname,{type:'image/png'});
-      const txt=name+' — '+seasonLabel+': '+s.kills+' kills, K/D '+kd+', '+s.wins+' wins | v4nz.com';
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'Mi Temporada PUBG — V4NZ',text:txt});
-      }else{
-        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
-      }
-    },'image/png');
+    const fname=name+'_Season_Wrapped.png';
+    const dataUrl=canvas.toDataURL('image/png');
+    // Try download via data URL (most reliable on desktop)
+    const a=document.createElement('a');a.href=dataUrl;a.download=fname;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{a.remove();},500);
+    showError('Imagen descargada: '+fname);
   }catch(e){console.error('Season wrapped error:',e);card.remove();showError('Error generando la imagen. Intenta de nuevo.');}
 }
 
