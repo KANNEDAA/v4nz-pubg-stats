@@ -2159,7 +2159,8 @@ function renderClanHistoryUI(){
     nonMyClan.forEach(c=>{
       const memberHint=c.members&&c.members.length?c.members.length+' miembros':'Nivel '+c.level+' &mdash; '+c.memberCount+' miembros';
       const ago=getTimeAgo(c.date);
-      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+c.platform.toUpperCase()+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions"><button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
+      const tagEsc=c.tag.replace(/'/g,"\\'");const nameEsc=escJs(c.name);const isFav=isClanFavorite(c.tag);
+      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+tagEsc+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+esc(c.tag)+'] '+esc(c.name)+'</div><div class="chi-meta">'+memberHint+' &mdash; '+c.platform.toUpperCase()+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions"><button class="chi-action-btn'+(isFav?' set-my-clan':'')+'" onclick="toggleClanFavorite(\''+tagEsc+'\',\''+nameEsc+'\',\''+c.platform+'\',event)" title="'+(isFav?'Quitar de favoritos':'Anadir a favoritos')+'">'+(isFav?'&#9733;':'&#9734;')+'</button><button class="chi-action-btn" onclick="setAsMyClan(\''+tagEsc+'\',event)" title="Fijar como Mi Clan" style="font-size:.7rem;">&#x1F3E0;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+tagEsc+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
     });
     h+='</div>';
     histSec.innerHTML=h;
@@ -4850,7 +4851,7 @@ async function loadEvolutionChart(){
     }
     _evoData={snaps};_evoMetric='kd';
     const latest=snaps[snaps.length-1];const prev=snaps[snaps.length-2];
-    function delta(curr,old){const d=curr-old;return d>0?'+'+d.toFixed(2):d<0?d.toFixed(2):'sin cambio'}
+    function delta(curr,old,suffix){const d=curr-old;const sf=suffix||'';return d>0?'+'+d.toFixed(2)+sf:d<0?d.toFixed(2)+sf:'sin cambio'}
     function deltaClass(curr,old){return curr>old?'evo-delta-up':curr<old?'evo-delta-down':'evo-delta-same';}
     const kdNow=parseFloat(latest.kd)||0,kdPrev=parseFloat(prev.kd)||0;
     const wrNow=parseFloat(latest.win_rate)||0,wrPrev=parseFloat(prev.win_rate)||0;
@@ -4869,9 +4870,9 @@ async function loadEvolutionChart(){
     // Delta metrics
     h+='<div class="evo-metrics">';
     h+='<div class="evo-metric" onclick="switchEvoMetric(\'kd\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent);">'+kdNow.toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta '+deltaClass(kdNow,kdPrev)+'">'+delta(kdNow,kdPrev)+'</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'win_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta '+deltaClass(wrNow,wrPrev)+'">'+delta(wrNow,wrPrev)+'%</div></div>';
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\'win_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta '+deltaClass(wrNow,wrPrev)+'">'+delta(wrNow,wrPrev,'%')+'</div></div>';
     h+='<div class="evo-metric" onclick="switchEvoMetric(\'avg_damage\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(dmgNow)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta '+deltaClass(dmgNow,dmgPrev)+'">'+delta(dmgNow,dmgPrev)+'</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'hs_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-purple);">'+hsNow.toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta '+deltaClass(hsNow,hsPrev)+'">'+delta(hsNow,hsPrev)+'%</div></div>';
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\'hs_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-purple);">'+hsNow.toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta '+deltaClass(hsNow,hsPrev)+'">'+delta(hsNow,hsPrev,'%')+'</div></div>';
     h+='</div></div>';
     sec.innerHTML=h;sec.style.display='block';
     drawEvoChart();
