@@ -3970,13 +3970,10 @@ async function generateSeasonWrapped(){
     canvas.toBlob(async blob=>{
       if(!blob)return;
       const fname=name+'_Season_Wrapped.png';
-      const file=new File([blob],fname,{type:'image/png'});
-      const txt=name+' — '+seasonLabel+': '+s.kills+' kills, K/D '+kd+', '+s.wins+' wins | v4nz.com';
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'Mi Temporada PUBG — V4NZ',text:txt});
-      }else{
-        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
-      }
+      const txt=name+' — '+seasonLabel+': '+s.kills+' kills, K/D '+kd+', '+s.wins+' wins | v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name);
+      const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+      if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(txt);}catch(e){}}
+      const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Mi Temporada guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
     },'image/png');
   }catch(e){console.error('Season wrapped error:',e);card.remove();}
 }
@@ -4888,7 +4885,7 @@ function renderPersonality(){
   document.getElementById('personalitySection').classList.add('visible');
   drawDnaRadar('dnaRadarCanvas',dn,coHex);
 }
-function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi ADN PUBG es: '+t+'! Descubre el tuyo en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://v4nz.com'});else{navigator.clipboard?.writeText(x+' https://v4nz.com');alert('Copiado al portapapeles!');}}
+function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi ADN PUBG es: '+t+'! Descubre el tuyo en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(x).then(()=>{const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Texto copiado al portapapeles';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});});}else{prompt('Copia este texto:',x);}}
 async function shareAdnImage(){
   const s=getActiveStats();if(!s.roundsPlayed)return;
   const name=currentPlayerData?.attributes?.name||'Jugador';
@@ -4941,12 +4938,11 @@ async function shareAdnImage(){
     card.remove();
     canvas.toBlob(async blob=>{
       if(!blob)return;
-      const file=new File([blob],name+'_ADN_PUBG.png',{type:'image/png'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'Mi ADN PUBG — V4NZ',text:'Mi ADN PUBG es: '+role+'! Descubre el tuyo en v4nz.com'});
-      }else{
-        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name+'_ADN_PUBG.png';a.click();URL.revokeObjectURL(url);
-      }
+      const fname=name+'_ADN_PUBG.png';
+      const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+      const shareText='Mi ADN PUBG es: '+role+'! Descubre el tuyo en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name);
+      if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(shareText);}catch(e){}}
+      const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Imagen ADN guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
     },'image/png');
   }catch(e){console.error('Share ADN image error:',e);card.remove();sharePersonality(role);}
 }
@@ -5315,9 +5311,12 @@ async function shareStatsCard(){
   const c=document.getElementById('statsCardCanvas');
   try{
     const blob=await new Promise(r=>c.toBlob(r,'image/png'));
-    const f=new File([blob],(currentPlayerData?.attributes?.name||'stats')+'_v4nz.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'V4NZ PUBG Stats',text:'Stats de '+(currentPlayerData?.attributes?.name||'')+' en v4nz.com'});}
-    else{downloadStatsCard();}
+    const pName=currentPlayerData?.attributes?.name||'stats';
+    const fname=pName+'_v4nz.png';
+    const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+    const shareText='Stats de '+pName+' en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(pName);
+    if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(shareText);}catch(e){}}
+    const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Stats Card guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
   }catch(e){downloadStatsCard();}
 }
 
