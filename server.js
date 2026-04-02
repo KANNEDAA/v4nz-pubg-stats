@@ -1686,6 +1686,117 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
   } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
 });
 
+// ============ AI DNA Analysis (MUST be before the PUBG API catch-all proxy) ============
+app.get('/api/ai-dna', async (req, res) => {
+  try {
+    const { playerName, platform, stats: statsParam } = req.query;
+    let stats;
+    try { stats = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { stats = null; }
+    if (!playerName || !stats) return res.status(400).json({ error: 'Missing playerName or stats' });
+
+    const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;
+
+    // Check cache
+    try {
+      const cached = await pool.query(
+        `SELECT data FROM api_cache WHERE cache_key = $1 AND created_at + (ttl_seconds || ' seconds')::interval > NOW()`,
+        [cacheKey]
+      );
+      if (cached.rows.length > 0) {
+        return res.json(cached.rows[0].data);
+      }
+    } catch (e) { console.error('AI DNA cache check error:', e); }
+
+    // Check if Anthropic API key is configured
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'AI analysis not available' });
+    }
+
+    // Dynamic import of Anthropic SDK
+    let AnthropicSDK;
+    try {
+      AnthropicSDK = await import('@anthropic-ai/sdk');
+    } catch (e) {
+      console.error('Failed to import Anthropic SDK:', e);
+      return res.status(503).json({ error: 'AI service unavailable' });
+    }
+    const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const systemPrompt = `Eres V4NZ AI, un analista experto de PUBG para consola (PlayStation/Xbox). Analizas estadísticas de jugadores y generas perfiles de personalidad ÚNICOS y detallados.
+
+REGLAS ESTRICTAS:
+- El rol SIEMPRE debe ser 2 palabras creativas en español, NUNCA una sola palabra
+- Los insights deben ser MUY ESPECÍFICOS a los números del jugador, nunca genéricos
+- Habla directamente al jugador usando "tú"
+- Incluye percentiles aproximados cuando sea relevante
+- Responde SOLO con JSON válido, sin markdown ni explicaciones
+- Los scores pueden diferir de los heurísticos si tu análisis lo justifica`;
+
+    const userPrompt = `Analiza este jugador de PUBG:
+
+Nombre: ${playerName} (${platform || 'psn'})
+K/D: ${stats.kd} | Daño medio/partida: ${stats.avgDamage} | Headshot%: ${stats.hsRate}%
+Win Rate: ${stats.winRate}% | Top 10: ${stats.top10Rate}%
+Kills/partida: ${stats.killsPerRound} | Longest Kill: ${stats.longestKill}m
+Distancia a pie/partida: ${stats.walkDistPerRound}m | En vehículo/partida: ${stats.rideDistPerRound}m
+Revives/partida: ${stats.revivesPerRound} | Asistencias/partida: ${stats.assistsPerRound}
+Curas/partida: ${stats.healsPerRound}
+Total partidas jugadas: ${stats.roundsPlayed}
+${stats.botRatio != null ? `Bot ratio: ${stats.botRatio}%` : ''}
+Rol heurístico actual: ${stats.role}
+Scores actuales: AGR ${stats.dnaScores?.agresividad || '?'}, PRE ${stats.dnaScores?.precision || '?'}, SUP ${stats.dnaScores?.supervivencia || '?'}, MOV ${stats.dnaScores?.movilidad || '?'}, SOP ${stats.dnaScores?.soporte || '?'}
+
+Genera el análisis JSON con este formato:
+{
+  "role": "DOS PALABRAS CREATIVAS EN MAYÚSCULAS",
+  "roleColor": "#hexcolor (elige: #ff3355=agresivo, #a855f7=técnico, #ffd700=élite, #00ff88=superviviente, #ff6b00=caótico, #00f0ff=táctico)",
+  "description": "2-3 frases personalizadas analizando su estilo real",
+  "insights": ["curiosidad 1 específica", "curiosidad 2 específica", "curiosidad 3 específica"],
+  "scores": {"agresividad": 0-100, "precision": 0-100, "supervivencia": 0-100, "movilidad": 0-100, "soporte": 0-100}
+}`;
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 800,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    });
+
+    const text = response.content[0]?.text || '';
+    let aiResult;
+    try {
+      // Try to parse JSON, handle potential markdown wrapping
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      aiResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    } catch (e) {
+      console.error('AI DNA parse error:', text);
+      return res.status(500).json({ error: 'Failed to parse AI response' });
+    }
+
+    // Validate required fields
+    if (!aiResult.role || !aiResult.description || !aiResult.scores) {
+      return res.status(500).json({ error: 'Incomplete AI response' });
+    }
+
+    aiResult.generatedAt = new Date().toISOString();
+
+    // Cache result (7 days)
+    try {
+      await pool.query(
+        `INSERT INTO api_cache (cache_key, data, ttl_seconds) VALUES ($1, $2, $3) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW(), ttl_seconds = $3`,
+        [cacheKey, JSON.stringify(aiResult), 604800]
+      );
+    } catch (e) { console.error('AI DNA cache save error:', e); }
+
+    res.json(aiResult);
+
+  } catch (e) {
+    console.error('AI DNA error:', e);
+    res.status(500).json({ error: 'AI analysis failed' });
+  }
+});
+
 // ═══ PUBG API PROXY (generic catch-all — MUST be after ALL /api/* specific routes) ═══
 app.all('/api/*', rateLimit, async (req, res) => {
   trackMetric(req, 'api');
@@ -2286,116 +2397,6 @@ app.get('/maps/:name.png', async (req, res) => {
   res.status(502).send('Map image unavailable');
 });
 
-// ============ AI DNA Analysis ============
-app.get('/api/ai-dna', async (req, res) => {
-  try {
-    const { playerName, platform, stats: statsParam } = req.query;
-    let stats;
-    try { stats = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { stats = null; }
-    if (!playerName || !stats) return res.status(400).json({ error: 'Missing playerName or stats' });
-
-    const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;
-
-    // Check cache
-    try {
-      const cached = await pool.query(
-        `SELECT data FROM api_cache WHERE cache_key = $1 AND created_at + (ttl_seconds || ' seconds')::interval > NOW()`,
-        [cacheKey]
-      );
-      if (cached.rows.length > 0) {
-        return res.json(cached.rows[0].data);
-      }
-    } catch (e) { console.error('AI DNA cache check error:', e); }
-
-    // Check if Anthropic API key is configured
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return res.status(503).json({ error: 'AI analysis not available' });
-    }
-
-    // Dynamic import of Anthropic SDK
-    let AnthropicSDK;
-    try {
-      AnthropicSDK = await import('@anthropic-ai/sdk');
-    } catch (e) {
-      console.error('Failed to import Anthropic SDK:', e);
-      return res.status(503).json({ error: 'AI service unavailable' });
-    }
-    const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-    const systemPrompt = `Eres V4NZ AI, un analista experto de PUBG para consola (PlayStation/Xbox). Analizas estadísticas de jugadores y generas perfiles de personalidad ÚNICOS y detallados.
-
-REGLAS ESTRICTAS:
-- El rol SIEMPRE debe ser 2 palabras creativas en español, NUNCA una sola palabra
-- Los insights deben ser MUY ESPECÍFICOS a los números del jugador, nunca genéricos
-- Habla directamente al jugador usando "tú"
-- Incluye percentiles aproximados cuando sea relevante
-- Responde SOLO con JSON válido, sin markdown ni explicaciones
-- Los scores pueden diferir de los heurísticos si tu análisis lo justifica`;
-
-    const userPrompt = `Analiza este jugador de PUBG:
-
-Nombre: ${playerName} (${platform || 'psn'})
-K/D: ${stats.kd} | Daño medio/partida: ${stats.avgDamage} | Headshot%: ${stats.hsRate}%
-Win Rate: ${stats.winRate}% | Top 10: ${stats.top10Rate}%
-Kills/partida: ${stats.killsPerRound} | Longest Kill: ${stats.longestKill}m
-Distancia a pie/partida: ${stats.walkDistPerRound}m | En vehículo/partida: ${stats.rideDistPerRound}m
-Revives/partida: ${stats.revivesPerRound} | Asistencias/partida: ${stats.assistsPerRound}
-Curas/partida: ${stats.healsPerRound}
-Total partidas jugadas: ${stats.roundsPlayed}
-${stats.botRatio != null ? `Bot ratio: ${stats.botRatio}%` : ''}
-Rol heurístico actual: ${stats.role}
-Scores actuales: AGR ${stats.dnaScores?.agresividad || '?'}, PRE ${stats.dnaScores?.precision || '?'}, SUP ${stats.dnaScores?.supervivencia || '?'}, MOV ${stats.dnaScores?.movilidad || '?'}, SOP ${stats.dnaScores?.soporte || '?'}
-
-Genera el análisis JSON con este formato:
-{
-  "role": "DOS PALABRAS CREATIVAS EN MAYÚSCULAS",
-  "roleColor": "#hexcolor (elige: #ff3355=agresivo, #a855f7=técnico, #ffd700=élite, #00ff88=superviviente, #ff6b00=caótico, #00f0ff=táctico)",
-  "description": "2-3 frases personalizadas analizando su estilo real",
-  "insights": ["curiosidad 1 específica", "curiosidad 2 específica", "curiosidad 3 específica"],
-  "scores": {"agresividad": 0-100, "precision": 0-100, "supervivencia": 0-100, "movilidad": 0-100, "soporte": 0-100}
-}`;
-
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 800,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }]
-    });
-
-    const text = response.content[0]?.text || '';
-    let aiResult;
-    try {
-      // Try to parse JSON, handle potential markdown wrapping
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      aiResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-    } catch (e) {
-      console.error('AI DNA parse error:', text);
-      return res.status(500).json({ error: 'Failed to parse AI response' });
-    }
-
-    // Validate required fields
-    if (!aiResult.role || !aiResult.description || !aiResult.scores) {
-      return res.status(500).json({ error: 'Incomplete AI response' });
-    }
-
-    aiResult.generatedAt = new Date().toISOString();
-
-    // Cache result (7 days)
-    try {
-      await pool.query(
-        `INSERT INTO api_cache (cache_key, data, ttl_seconds) VALUES ($1, $2, $3) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW(), ttl_seconds = $3`,
-        [cacheKey, JSON.stringify(aiResult), 604800]
-      );
-    } catch (e) { console.error('AI DNA cache save error:', e); }
-
-    res.json(aiResult);
-
-  } catch (e) {
-    console.error('AI DNA error:', e);
-    res.status(500).json({ error: 'AI analysis failed' });
-  }
-});
 
 // Fallback: serve index.html for SPA routes with dynamic meta tags
 app.get('*', (req, res) => {
