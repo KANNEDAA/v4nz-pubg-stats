@@ -2229,6 +2229,63 @@ app.get('/clans/:tag/member-aliases', async (req, res) => {
 // HTML attribute escaping for dynamic meta tags
 function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+// ═══ MAP IMAGE PROXY (GitHub LFS workaround) ═══
+const MAP_IMG_CACHE = {};  // In-memory cache: { mapKey: { buffer, contentType, fetchedAt } }
+const MAP_IMG_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days cache
+const MAP_IMG_NAMES = {
+  'erangel': 'Erangel_Main_Low_Res.png',
+  'miramar': 'Miramar_Main_Low_Res.png',
+  'vikendi': 'Vikendi_Main_Low_Res.png',
+  'sanhok': 'Sanhok_Main_Low_Res.png',
+  'taego': 'Taego_Main_Low_Res.png',
+  'deston': 'Deston_Main_Low_Res.png',
+  'rondo': 'Rondo_Main_Low_Res.png',
+  'haven': 'Haven_Main_Low_Res.png',
+  'karakin': 'Karakin_Main_Low_Res.png',
+  'paramo': 'Paramo_Main_Low_Res.png',
+  'camp_jackal': 'Camp_Jackal_Main_Low_Res.png'
+};
+
+app.get('/maps/:name.png', async (req, res) => {
+  const mapKey = (req.params.name || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const fileName = MAP_IMG_NAMES[mapKey];
+  if (!fileName) return res.status(404).send('Map not found');
+
+  // Check cache
+  const cached = MAP_IMG_CACHE[mapKey];
+  if (cached && (Date.now() - cached.fetchedAt) < MAP_IMG_TTL) {
+    res.set('Content-Type', cached.contentType || 'image/png');
+    res.set('Cache-Control', 'public, max-age=604800'); // 7 days
+    return res.send(cached.buffer);
+  }
+
+  // Try multiple GitHub URL patterns for LFS files
+  const urls = [
+    `https://media.githubusercontent.com/media/pubg/api-assets/master/Assets/Maps/${fileName}`,
+    `https://raw.githubusercontent.com/pubg/api-assets/master/Assets/Maps/${fileName}`,
+    `https://cdn.jsdelivr.net/gh/pubg/api-assets@master/Assets/Maps/${fileName}`
+  ];
+
+  for (const url of urls) {
+    try {
+      const resp = await fetchWithTimeout(fetch, url, {}, 12000);
+      if (resp.ok) {
+        const buffer = Buffer.from(await resp.arrayBuffer());
+        // Verify it's actually an image (LFS pointer files are small text)
+        if (buffer.length > 1000) {
+          const contentType = resp.headers.get('content-type') || 'image/png';
+          MAP_IMG_CACHE[mapKey] = { buffer, contentType, fetchedAt: Date.now() };
+          res.set('Content-Type', contentType);
+          res.set('Cache-Control', 'public, max-age=604800');
+          return res.send(buffer);
+        }
+      }
+    } catch (e) { /* try next URL */ }
+  }
+
+  res.status(502).send('Map image unavailable');
+});
+
 // Fallback: serve index.html for SPA routes with dynamic meta tags
 app.get('*', (req, res) => {
   const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
