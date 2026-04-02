@@ -2287,9 +2287,11 @@ app.get('/maps/:name.png', async (req, res) => {
 });
 
 // ============ AI DNA Analysis ============
-app.post('/api/ai-dna', async (req, res) => {
+app.get('/api/ai-dna', async (req, res) => {
   try {
-    const { playerName, platform, stats } = req.body;
+    const { playerName, platform, stats: statsParam } = req.query;
+    let stats;
+    try { stats = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { stats = null; }
     if (!playerName || !stats) return res.status(400).json({ error: 'Missing playerName or stats' });
 
     const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;

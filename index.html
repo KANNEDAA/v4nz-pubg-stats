@@ -5016,35 +5016,16 @@ async function requestAiDna() {
   const bi = window._lastBotIndex;
 
   try {
-    const resp = await fetch('/api/ai-dna', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + (sessionStorage.getItem('jwt') || localStorage.getItem('jwt') || '')
-      },
-      body: JSON.stringify({
-        playerName: name,
-        platform: currentPlatform,
-        stats: {
-          kd: kd.toFixed(2),
-          avgDamage: avgDamage.toFixed(1),
-          hsRate: hsRate.toFixed(1),
-          winRate: winRate.toFixed(1),
-          top10Rate: top10Rate.toFixed(1),
-          killsPerRound: killsPerRound.toFixed(2),
-          longestKill: longestKill,
-          walkDistPerRound: Math.round(walkDistPerRound),
-          rideDistPerRound: Math.round(rideDistPerRound),
-          revivesPerRound: revivesPerRound.toFixed(2),
-          assistsPerRound: assistsPerRound.toFixed(2),
-          healsPerRound: healsPerRound.toFixed(2),
-          roundsPlayed: s.roundsPlayed,
-          botRatio: bi ? bi.botRatio : null,
-          role: role,
-          dnaScores: dnaScores
-        }
-      })
-    });
+    const statsObj = {
+      kd: kd.toFixed(2), avgDamage: avgDamage.toFixed(1), hsRate: hsRate.toFixed(1),
+      winRate: winRate.toFixed(1), top10Rate: top10Rate.toFixed(1), killsPerRound: killsPerRound.toFixed(2),
+      longestKill: longestKill, walkDistPerRound: Math.round(walkDistPerRound), rideDistPerRound: Math.round(rideDistPerRound),
+      revivesPerRound: revivesPerRound.toFixed(2), assistsPerRound: assistsPerRound.toFixed(2),
+      healsPerRound: healsPerRound.toFixed(2), roundsPlayed: s.roundsPlayed,
+      botRatio: bi ? bi.botRatio : null, role: role, dnaScores: dnaScores
+    };
+    const qp = new URLSearchParams({ playerName: name, platform: currentPlatform, stats: JSON.stringify(statsObj) });
+    const resp = await fetch('/api/ai-dna?' + qp.toString());
 
     if (!resp.ok) throw new Error('API error');
     const data = await resp.json();
