@@ -457,6 +457,28 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
   .dna-bar-label { width: 75px; font-size: 0.65rem; }
 }
 
+/* AI DNA FEATURE */
+.ai-dna-btn { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px auto 0; padding: 10px 24px; background: linear-gradient(135deg, rgba(0,240,255,0.09), rgba(168,85,247,0.09)); border: 1px solid rgba(0,240,255,0.27); border-radius: 10px; color: #00f0ff; font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+.ai-dna-btn:hover { background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(168,85,247,0.15)); border-color: rgba(0,240,255,0.53); box-shadow: 0 0 20px rgba(0,240,255,0.13); }
+.ai-dna-btn .ai-icon { font-size: 1.1rem; }
+.ai-dna-scanning { text-align: center; padding: 30px 20px; }
+.ai-dna-scanning .scan-orb { width: 60px; height: 60px; margin: 0 auto 16px; border-radius: 50%; background: radial-gradient(circle, rgba(0,240,255,0.2), transparent); border: 2px solid rgba(0,240,255,0.27); animation: aiPulse 1.5s ease-in-out infinite; }
+.ai-dna-scanning .scan-text { font-family: 'Rajdhani', sans-serif; color: #00f0ff; font-size: 0.85rem; font-weight: 600; animation: aiFade 1.5s ease-in-out infinite; }
+@keyframes aiPulse { 0%, 100% { box-shadow: 0 0 20px rgba(0,240,255,0.13); transform: scale(1); } 50% { box-shadow: 0 0 40px rgba(0,240,255,0.27); transform: scale(1.08); } }
+@keyframes aiFade { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+.ai-dna-result { animation: fadeInUp 0.5s ease; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+.ai-dna-role { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin: 8px 0 4px; }
+.ai-dna-subtitle { font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; color: #888; text-align: center; margin-bottom: 12px; }
+.ai-dna-desc { font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; color: #ccc; line-height: 1.5; text-align: center; padding: 0 10px; margin: 10px 0 14px; }
+.ai-dna-insights { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+.ai-dna-insight { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; font-family: 'Rajdhani', sans-serif; font-size: 0.8rem; color: #aaa; line-height: 1.4; }
+.ai-dna-insight::before { content: '💡 '; font-size: 0.85rem; }
+.ai-dna-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-family: 'Rajdhani', sans-serif; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 4px auto; background: rgba(0,240,255,0.09); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
+.ai-dna-teaser { text-align: center; margin: 14px 0 0; padding: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.05)); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-size: 0.8rem; color: #888; }
+.ai-dna-teaser a { color: #00f0ff; text-decoration: none; font-weight: 700; }
+.ai-dna-powered { text-align: center; font-family: 'Rajdhani', sans-serif; font-size: 0.6rem; color: #555; margin-top: 12px; letter-spacing: 0.5px; }
+
 /* NARRATIVE INSIGHTS */
 #narrativeInsights { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); }
 #narrativeInsights.visible { display: block; }
@@ -4884,6 +4906,14 @@ function renderPersonality(){
   document.getElementById('personalitySection').innerHTML='<div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="personality-icon">'+ic+'</div><div class="personality-title" style="color:'+co+';">'+ti+'</div><div class="personality-desc">'+de+'</div><div class="personality-tags">'+tg.map(t=>'<span class="personality-tag" style="background:'+co+'22;color:'+co+';border:1px solid '+co+'44;">'+t+'</span>').join('')+'</div><div class="dna-bars">'+barsHtml+'</div>'+combatLine+'<div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:'+co+'18;border-color:'+co+'44;color:'+co+';" onclick="shareAdnImage()">&#x1F4F8; COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\''+ti+'\')">&#x1F517; COMPARTIR TEXTO</button></div></div></div>';
   document.getElementById('personalitySection').classList.add('visible');
   drawDnaRadar('dnaRadarCanvas',dn,coHex);
+  // AI DNA: show button for registered users, teaser for guests
+  const aiContainer=document.createElement('div');
+  if(currentUser){
+    aiContainer.innerHTML='<button class="ai-dna-btn" onclick="requestAiDna()"><span class="ai-icon">🤖</span> ANALIZAR CON IA</button>';
+  } else {
+    aiContainer.innerHTML='<div class="ai-dna-teaser">🔒 Desbloquea tu ADN completo generado por IA — <a href="javascript:void(0)" onclick="showAuthModal()">Regístrate gratis</a></div>';
+  }
+  document.getElementById('personalitySection').appendChild(aiContainer);
 }
 function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi ADN PUBG es: '+t+'! Descubre el tuyo en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(x).then(()=>{const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Texto copiado al portapapeles';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});});}else{prompt('Copia este texto:',x);}}
 async function shareAdnImage(){
@@ -4945,6 +4975,120 @@ async function shareAdnImage(){
       const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Imagen ADN guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
     },'image/png');
   }catch(e){console.error('Share ADN image error:',e);card.remove();sharePersonality(role);}
+}
+
+// === AI DNA Feature ===
+async function requestAiDna() {
+  const s = getActiveStats();
+  if (!s || !s.roundsPlayed) return;
+  const name = currentPlayerData?.attributes?.name;
+  if (!name) return;
+
+  // Check sessionStorage cache first
+  const cacheKey = 'ai-dna:' + name.toLowerCase() + ':' + currentPlatform;
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      renderAiDna(JSON.parse(cached));
+      return;
+    } catch(e) {}
+  }
+
+  // Show scanning animation
+  const sect = document.getElementById('personalitySection');
+  sect.innerHTML = '<div class="ai-dna-scanning"><div class="scan-orb"></div><div class="scan-text">V4NZ AI analizando perfil de combate...</div></div>';
+  sect.classList.add('visible');
+
+  const kd = parseFloat(calcKD(s));
+  const avgDamage = parseFloat(calcAvgDmg(s));
+  const hsRate = parseFloat(calcHSRate(s));
+  const winRate = parseFloat(calcWinRate(s));
+  const top10Rate = parseFloat(calcTop10Rate(s));
+  const killsPerRound = s.roundsPlayed ? (s.kills || 0) / s.roundsPlayed : 0;
+  const longestKill = s.longestKill || 0;
+  const walkDistPerRound = s.roundsPlayed ? (s.walkDistance || 0) / s.roundsPlayed : 0;
+  const rideDistPerRound = s.roundsPlayed ? (s.rideDistance || 0) / s.roundsPlayed : 0;
+  const revivesPerRound = s.roundsPlayed ? (s.revives || 0) / s.roundsPlayed : 0;
+  const assistsPerRound = s.roundsPlayed ? (s.assists || 0) / s.roundsPlayed : 0;
+  const healsPerRound = s.roundsPlayed ? (s.heals || 0) / s.roundsPlayed : 0;
+  const role = getPersonalityType();
+  const dnaScores = calcDnaScores(s);
+  const bi = window._lastBotIndex;
+
+  try {
+    const resp = await fetch('/api/ai-dna', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (sessionStorage.getItem('jwt') || localStorage.getItem('jwt') || '')
+      },
+      body: JSON.stringify({
+        playerName: name,
+        platform: currentPlatform,
+        stats: {
+          kd: kd.toFixed(2),
+          avgDamage: avgDamage.toFixed(1),
+          hsRate: hsRate.toFixed(1),
+          winRate: winRate.toFixed(1),
+          top10Rate: top10Rate.toFixed(1),
+          killsPerRound: killsPerRound.toFixed(2),
+          longestKill: longestKill,
+          walkDistPerRound: Math.round(walkDistPerRound),
+          rideDistPerRound: Math.round(rideDistPerRound),
+          revivesPerRound: revivesPerRound.toFixed(2),
+          assistsPerRound: assistsPerRound.toFixed(2),
+          healsPerRound: healsPerRound.toFixed(2),
+          roundsPlayed: s.roundsPlayed,
+          botRatio: bi ? bi.botRatio : null,
+          role: role,
+          dnaScores: dnaScores
+        }
+      })
+    });
+
+    if (!resp.ok) throw new Error('API error');
+    const data = await resp.json();
+
+    // Cache in sessionStorage
+    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+
+    renderAiDna(data);
+  } catch (e) {
+    console.error('AI DNA error:', e);
+    // Fallback to regular personality
+    renderPersonality();
+    // Show error toast
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#ff3355;color:#fff;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';
+    toast.textContent = 'Error al generar ADN IA. Mostrando ADN clásico.';
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000); });
+  }
+}
+
+function renderAiDna(data) {
+  const s = getActiveStats();
+  const scores = data.scores || calcDnaScores(s);
+  const roleColor = data.roleColor || '#00f0ff';
+
+  const bars = [
+    { label: 'Agresividad', val: scores.agresividad, col: '#ff3355' },
+    { label: 'Precisión', val: scores.precision, col: '#a855f7' },
+    { label: 'Supervivencia', val: scores.supervivencia, col: '#00ff88' },
+    { label: 'Movilidad', val: scores.movilidad, col: '#ff6b00' },
+    { label: 'Soporte', val: scores.soporte, col: '#00f0ff' }
+  ];
+  const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" style="width:' + b.val + '%;background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
+
+  const insightsHtml = (data.insights || []).map(i => '<div class="ai-dna-insight">' + i + '</div>').join('');
+
+  const name = currentPlayerData?.attributes?.name || 'Jugador';
+  const rounds = s.roundsPlayed || 0;
+
+  const sect = document.getElementById('personalitySection');
+  sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + data.role + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-desc">' + data.description + '</div><div class="ai-dna-insights">' + insightsHtml + '</div><div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + (data.role || '').replace(/'/g, "\\'") + '\')">🔗 COMPARTIR TEXTO</button></div><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
+  sect.classList.add('visible');
+  drawDnaRadar('dnaRadarCanvas', scores, roleColor);
 }
 
 /* === MI EVOLUCION === */
