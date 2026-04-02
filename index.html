@@ -4856,6 +4856,7 @@ function drawDnaRadar(canvasId,scores,color){
   for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const lx=cx+(R+16)*Math.cos(a),ly=cy+(R+16)*Math.sin(a);ctx.fillStyle='#8888a0';ctx.fillText(labels[i],lx,ly);}
 }
 function renderPersonality(){
+  _lastAiDnaData=null; // Reset AI data when showing heuristic personality
   const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('personalitySection').classList.remove('visible');return;}
   const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
   const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;const rd=s.roundsPlayed?(s.rideDistance||0)/s.roundsPlayed:0;
@@ -4920,22 +4921,29 @@ async function shareAdnImage(){
   const s=getActiveStats();if(!s.roundsPlayed)return;
   const name=currentPlayerData?.attributes?.name||'Jugador';
   const plat=currentPlatform==='psn'?'PlayStation':'Xbox';
-  const dn=calcDnaScores(s);
   const kd=calcKD(s),wr=calcWinRate(s),ad=calcAvgDmg(s),hs=calcHSRate(s);
-  const role=getPersonalityType();
+  const isAi=!!_lastAiDnaData;
+  const dn=isAi?_lastAiDnaData.scores:calcDnaScores(s);
+  const role=isAi?_lastAiDnaData.role:getPersonalityType();
+  const roleColor=isAi?(_lastAiDnaData.roleColor||'#00f0ff'):null;
   const roleMap={'Mata Bots':{ic:'&#x1F916;',col:'#ff6b00'},'Francotirador':{ic:'&#x1F3AF;',col:'#a855f7'},'Depredador':{ic:'&#x1F525;',col:'#ff3355'},'Campeon':{ic:'&#x1F3C6;',col:'#ffd700'},'Maquina de Racha':{ic:'&#x26A1;',col:'#ffd700'},'Pusheador':{ic:'&#x1F4AA;',col:'#ff3355'},'Rematador':{ic:'&#x1F4A5;',col:'#ff3355'},'Roba Kills':{ic:'&#x1F977;',col:'#ffd700'},'Kamikaze':{ic:'&#x1F4A3;',col:'#ff6b00'},'Medico de Combate':{ic:'&#x1FA7A;',col:'#00ff88'},'Piloto Loco':{ic:'&#x1F697;',col:'#ff6b00'},'Guerrero':{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'},'Looteador':{ic:'&#x1F9F3;',col:'#a855f7'},'Rata':{ic:'&#x1F400;',col:'#00ff88'},'Superviviente':{ic:'&#x1F9BE;',col:'#00ff88'},'Novato Prometedor':{ic:'&#x1F476;',col:'#00f0ff'}};
-  const rm=roleMap[role]||{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'};
+  const rm=isAi?{ic:'&#x1F9E0;',col:roleColor}:(roleMap[role]||{ic:'&#x2694;&#xFE0F;',col:'#00f0ff'});
   const bars=[{l:'Agresividad',v:dn.agresividad,c:'#ff3355'},{l:'Precision',v:dn.precision,c:'#a855f7'},{l:'Supervivencia',v:dn.supervivencia,c:'#00ff88'},{l:'Movilidad',v:dn.movilidad,c:'#ff6b00'},{l:'Soporte',v:dn.soporte,c:'#00f0ff'}];
+  const aiBadge=isAi?'<div style="position:absolute;top:12px;right:12px;background:'+rm.col+'22;border:1px solid '+rm.col+'44;color:'+rm.col+';font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:1px;">GENERADO POR IA</div>':'';
+  const aiDesc=isAi&&_lastAiDnaData.description?'<div style="font-family:Rajdhani,sans-serif;font-size:13px;color:#bbb;text-align:center;padding:0 16px;margin:-4px 0 8px;line-height:1.4;">'+_lastAiDnaData.description+'</div>':'';
+  const aiInsights=isAi&&_lastAiDnaData.insights?'<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:0 12px;margin-bottom:8px;">'+_lastAiDnaData.insights.map(i=>'<div style="background:'+rm.col+'15;border:1px solid '+rm.col+'33;color:'+rm.col+';font-family:Rajdhani,sans-serif;font-size:11px;padding:4px 10px;border-radius:16px;">'+i+'</div>').join('')+'</div>':'';
   // Create offscreen card
   const card=document.createElement('div');
   card.className='adn-share-card';
   card.innerHTML=
-    '<div class="asc-bg"></div>'+
+    '<div class="asc-bg"></div>'+aiBadge+
     '<div class="asc-header"><div class="asc-logo">V4NZ</div><div class="asc-subtitle">PUBG Console Stats</div></div>'+
     '<div class="asc-player"><div class="asc-name">'+name+'</div><div class="asc-plat">'+plat+' &mdash; '+currentSquadMode.toUpperCase()+' '+currentGameMode.toUpperCase()+'</div></div>'+
     '<div class="asc-role-icon">'+rm.ic+'</div>'+
     '<div class="asc-role" style="color:'+rm.col+';">'+role.toUpperCase()+'</div>'+
+    aiDesc+
     '<div class="asc-radar-wrap"><canvas id="adnShareRadar" width="280" height="280"></canvas></div>'+
+    aiInsights+
     '<div class="asc-bars">'+bars.map(b=>
       '<div class="asc-bar-row"><span class="asc-bar-label">'+b.l+'</span><div class="asc-bar-track"><div class="asc-bar-fill" style="width:'+b.v+'%;background:'+b.c+';"></div></div><span class="asc-bar-val" style="color:'+b.c+';">'+b.v+'</span></div>'
     ).join('')+'</div>'+
@@ -4945,7 +4953,7 @@ async function shareAdnImage(){
       '<div class="asc-stat"><div class="asc-stat-val">'+ad+'</div><div class="asc-stat-lbl">Avg DMG</div></div>'+
       '<div class="asc-stat"><div class="asc-stat-val">'+hs+'%</div><div class="asc-stat-lbl">HS%</div></div>'+
     '</div>'+
-    '<div class="asc-footer"><span>v4nz.com</span><span>Descubre tu ADN PUBG</span></div>';
+    '<div class="asc-footer"><span>v4nz.com</span><span>'+(isAi?'ADN PUBG generado por IA':'Descubre tu ADN PUBG')+'</span></div>';
   document.body.appendChild(card);
   // Draw radar on the card canvas
   const rc=document.getElementById('adnShareRadar');
@@ -4968,16 +4976,17 @@ async function shareAdnImage(){
     card.remove();
     canvas.toBlob(async blob=>{
       if(!blob)return;
-      const fname=name+'_ADN_PUBG.png';
+      const fname=name+(isAi?'_ADN_IA_PUBG':'_ADN_PUBG')+'.png';
       const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
-      const shareText='Mi ADN PUBG es: '+role+'! Descubre el tuyo en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name);
+      const shareText=isAi?'La IA dice que soy: '+role+' en PUBG! Descubre tu ADN en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name):'Mi ADN PUBG es: '+role+'! Descubre el tuyo en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name);
       if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(shareText);}catch(e){}}
-      const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Imagen ADN guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
+      const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Imagen ADN'+(isAi?' IA':'')+' guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
     },'image/png');
   }catch(e){console.error('Share ADN image error:',e);card.remove();sharePersonality(role);}
 }
 
 // === AI DNA Feature ===
+let _lastAiDnaData = null; // Store last AI DNA result for share card
 async function requestAiDna() {
   const s = getActiveStats();
   if (!s || !s.roundsPlayed) return;
@@ -5048,6 +5057,7 @@ async function requestAiDna() {
 }
 
 function renderAiDna(data) {
+  _lastAiDnaData = data; // Store for share card
   const s = getActiveStats();
   const scores = data.scores || calcDnaScores(s);
   const roleColor = data.roleColor || '#00f0ff';
