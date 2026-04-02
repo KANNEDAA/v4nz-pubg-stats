@@ -4023,11 +4023,10 @@ async function shareMatchCard(idx){
       const fname=pn+'_'+mn+'_'+ps.kills+'kills.png';
       const file=new File([blob],fname,{type:'image/png'});
       const shareText=pl===1?pn+' CHICKEN DINNER en '+mn+'! '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano':pn+' #'+pl+' en '+mn+' — '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano';
+      const doDownload=()=>{const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:shareText,text:shareText+' | v4nz.com'});
-      }else{
-        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
-      }
+        try{await navigator.share({files:[file],title:shareText,text:shareText+' | v4nz.com'});}catch(shareErr){if(shareErr.name!=='AbortError')doDownload();}
+      }else{doDownload();}
     },'image/png');
   }catch(e){console.error('Share match card error:',e);card.remove();}
 }
