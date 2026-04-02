@@ -2229,7 +2229,7 @@ function renderClanHistoryUI(){
     nonMyClan.forEach(c=>{
       const memberHint=c.members&&c.members.length?c.members.length+' miembros':'Nivel '+c.level+' &mdash; '+c.memberCount+' miembros';
       const ago=getTimeAgo(c.date);
-      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+c.platform.toUpperCase()+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions"><button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
+      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+c.platform.toUpperCase()+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions">'+clanFavStar(c.tag,c.name,c.platform,'.85rem')+'<button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
     });
     h+='</div>';
     histSec.innerHTML=h;
@@ -2273,6 +2273,7 @@ async function loadClanRanking(){
       h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">'+c.name+'</div>';
       h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(c.platform||'psn').toUpperCase()+' &middot; Nivel '+(c.level||'?')+'</div></div>';
       h+='</div>';
+      h+=clanFavStar(c.tag,c.name,c.platform||'psn','.9rem');
       h+='<div style="font-size:.7rem;color:var(--text-dim);">&#x25BC;</div>';
       h+='</div>';
       // Stats row
@@ -3036,6 +3037,7 @@ async function loadHomepageContent(){
         '<span class="home-clan-tag">'+esc(c.tag)+'</span>'+
         '<span class="home-clan-name">'+esc(c.name||'')+'</span>'+
         '<span class="home-clan-stat">'+fmtNum(c.total_kills||0)+' kills</span>'+
+        clanFavStar(c.tag,c.name||c.tag,c.platform||'psn','.8rem')+
         '</div>'
       ).join('');
     }else if(topEl){topEl.innerHTML='<div class="home-loading">Sin datos aun</div>';}
@@ -3048,6 +3050,7 @@ async function loadHomepageContent(){
         '<span class="home-clan-tag">'+esc(c.tag)+'</span>'+
         '<span class="home-clan-name">'+esc(c.name||'')+'</span>'+
         '<span class="home-clan-new">'+(ago?ago:'nuevo')+'</span>'+
+        clanFavStar(c.tag,c.name||c.tag,c.platform||'psn','.8rem')+
         '</div>';
       }).join('');
     }else if(recEl){recEl.innerHTML='<div class="home-loading">Sin datos aun</div>';}
@@ -3463,6 +3466,18 @@ function cycleFavGroup(name,evt){if(evt)evt.stopPropagation();const f=favorites.
 function isFavorite(name){return favorites.some(f=>f.name===name);}
 /* ═══ CLAN FAVORITES ═══ */
 function isClanFavorite(tag){return clanFavorites.some(f=>f.tag===tag);}
+function clanFavStar(tag,name,platform,size){
+  size=size||'.75rem';const fav=isClanFavorite(tag);
+  return '<span data-clan-fav="'+esc(tag)+'" data-clan-name="'+esc(name||tag)+'" data-clan-plat="'+(platform||'psn')+'" onclick="toggleClanFavorite(\''+escJs(tag)+'\',\''+escJs(name||tag)+'\',\''+(platform||'psn')+'\',event)" style="cursor:pointer;font-size:'+size+';color:'+(fav?'var(--accent-yellow)':'var(--text-dim)')+';transition:color .2s;flex-shrink:0;" title="'+(fav?'Quitar de favoritos':'Añadir a favoritos')+'">'+(fav?'&#x2605;':'&#x2606;')+'</span>';
+}
+function updateAllClanFavStars(){
+  document.querySelectorAll('[data-clan-fav]').forEach(function(el){
+    var tag=el.dataset.clanFav;var fav=isClanFavorite(tag);
+    el.innerHTML=fav?'&#x2605;':'&#x2606;';
+    el.style.color=fav?'var(--accent-yellow)':'var(--text-dim)';
+    el.title=fav?'Quitar de favoritos':'Añadir a favoritos';
+  });
+}
 function toggleClanFavorite(tag,name,platform,evt){
   if(evt)evt.stopPropagation();
   const idx=clanFavorites.findIndex(f=>f.tag===tag);
@@ -3476,6 +3491,7 @@ function toggleClanFavorite(tag,name,platform,evt){
   localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));
   renderClanHistoryUI();
   updateClanFavBtn();
+  updateAllClanFavStars();
 }
 function setClanFavGroup(tag,group,evt){
   if(evt)evt.stopPropagation();
@@ -3603,7 +3619,7 @@ async function detectPlayerClan(){
 
   // Helper to show badge
   function showClanBadge(tag,name){
-    badge.innerHTML='<a class="player-clan-badge" href="javascript:void(0)" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+escJs(tag)+'\';searchClanByName();">&#x1F6E1; ['+esc(tag)+'] '+esc(name)+'</a>';
+    badge.innerHTML='<a class="player-clan-badge" href="javascript:void(0)" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+escJs(tag)+'\';searchClanByName();">&#x1F6E1; ['+esc(tag)+'] '+esc(name)+'</a> '+clanFavStar(tag,name,currentPlatform,'.85rem');
     badge.style.display='block';
   }
 
@@ -6383,6 +6399,7 @@ async function searchClanByName(){
       h+='</div>';
       h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:2px;">'+((cl.active_members||0))+' miembros</div>';
       h+='</div>';
+      h+=clanFavStar(cl.tag,cl.name,cl.platform||'psn','.9rem');
       h+='<div style="font-size:.65rem;color:var(--accent);font-family:Rajdhani,sans-serif;font-weight:600;">VER &rarr;</div>';
       h+='</div>';
     });
