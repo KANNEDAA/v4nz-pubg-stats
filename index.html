@@ -1744,6 +1744,10 @@ footer a { color: var(--accent); text-decoration: none; }
         <input class="auth-input" id="regEmail" type="email" placeholder="Email">
         <input class="auth-input" id="regPass" type="password" placeholder="Contrasena (minimo 4 caracteres)">
         <input class="auth-input" id="regGamertag" type="text" placeholder="Gamertag PUBG (opcional)" maxlength="50">
+        <label style="display:flex;align-items:center;gap:8px;margin:12px 0 4px;cursor:pointer;font-size:.75rem;color:var(--text-secondary);">
+          <input type="checkbox" id="regNewsOptIn" checked style="accent-color:var(--accent);width:16px;height:16px;cursor:pointer;">
+          Quiero recibir novedades y actualizaciones de V4NZ
+        </label>
         <button class="auth-submit" onclick="doRegister()">CREAR CUENTA</button>
         <div style="text-align:center;margin-top:14px;font-size:.72rem;color:var(--text-dim);">Ya tienes cuenta? <a style="color:var(--accent);cursor:pointer;font-weight:600;" onclick="showAuthView('login')">Iniciar sesion</a></div>
       </div>
@@ -1780,6 +1784,10 @@ footer a { color: var(--accent); text-decoration: none; }
               <div class="auth-error" id="profileError" style="display:none;margin-top:8px;"></div>
             </div>
           </div>
+          <label id="profileNewsOptIn" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:.72rem;color:var(--text-secondary);justify-content:center;">
+            <input type="checkbox" id="profileNewsCheck" onchange="toggleNewsOptIn()" style="accent-color:var(--accent);width:16px;height:16px;cursor:pointer;">
+            Recibir novedades de V4NZ
+          </label>
           <button class="auth-submit" onclick="syncFavoritesToServer()" style="margin-bottom:8px;font-size:.7rem;">Sincronizar Favoritos</button>
           <button class="auth-submit" onclick="doLogout()" style="background:var(--gradient-orange);font-size:.7rem;">Cerrar Sesion</button>
         </div>
@@ -1838,6 +1846,9 @@ function updateAuthUI(){
     const avWrap=document.getElementById('authAvatarWrap');
     if(currentUser.avatar_url){avWrap.style.display='';document.getElementById('authAvatar').src=currentUser.avatar_url;}
     else{avWrap.style.display='none';}
+    // News opt-in checkbox
+    const newsCheck=document.getElementById('profileNewsCheck');
+    if(newsCheck)newsCheck.checked=!!currentUser.news_opt_in;
     // Gamertag profile section
     updateProfileGT();
   }else{
@@ -1873,6 +1884,13 @@ function profileShowEdit(){
   profileUpdatePlatBtns();
 }
 function profileCancelEdit(){updateProfileGT();}
+async function toggleNewsOptIn(){
+  const checked=document.getElementById('profileNewsCheck').checked;
+  try{
+    await fetch('/auth/profile',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({newsOptIn:checked})});
+    if(currentUser)currentUser.news_opt_in=checked;
+  }catch(e){console.error('News opt-in toggle error:',e);}
+}
 async function profileSaveGamertag(){
   const gt=document.getElementById('profileGTInput').value.trim();
   if(!gt){showAuthError('profileError','Introduce tu gamertag');return;}
@@ -1924,10 +1942,11 @@ async function doRegister(){
   const email=document.getElementById('regEmail').value.trim();
   const pass=document.getElementById('regPass').value;
   const gt=document.getElementById('regGamertag').value.trim();
+  const newsOptIn=document.getElementById('regNewsOptIn').checked;
   if(!name||!email||!pass){showAuthError('authRegError','Nombre, email y contrasena son obligatorios');return;}
   if(pass.length<4){showAuthError('authRegError','La contrasena debe tener al menos 4 caracteres');return;}
   try{
-    const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({email,password:pass,displayName:name,gamertag:gt,platform:currentPlatform})});
+    const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({email,password:pass,displayName:name,gamertag:gt,platform:currentPlatform,newsOptIn})});
     const d=await r.json();
     if(!r.ok){showAuthError('authRegError',d.error||'Error al registrar');return;}
     authToken=d.token;currentUser=d.user;

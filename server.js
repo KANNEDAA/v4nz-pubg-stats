@@ -168,11 +168,14 @@ async function initDB() {
         gamertag VARCHAR(50),
         platform VARCHAR(10) DEFAULT 'psn',
         avatar_url TEXT,
+        news_opt_in BOOLEAN DEFAULT false,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         last_login TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_users_discord ON users(discord_id);
+      -- Migration: add news_opt_in column if missing
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS news_opt_in BOOLEAN DEFAULT false;
       CREATE TABLE IF NOT EXISTS user_favorites (
         id SERIAL PRIMARY KEY,
         user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -1148,7 +1151,7 @@ function generateToken(user) {
 // POST /auth/register — Email + password registration
 app.post('/auth/register', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
-  const { email, password, displayName, gamertag, platform } = req.body;
+  const { email, password, displayName, gamertag, platform, newsOptIn } = req.body;
   if (!email || !password || !displayName) return res.status(400).json({ error: 'Email, contrasena y nombre son obligatorios' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email no valido' });
   if (password.length < 8) return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
@@ -1157,8 +1160,8 @@ app.post('/auth/register', rateLimit, async (req, res) => {
     if (exists.rows.length) return res.status(409).json({ error: 'Este email ya esta registrado' });
     const hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, display_name, gamertag, platform) VALUES ($1, $2, $3, $4, $5) RETURNING id, display_name, gamertag, platform',
-      [email.toLowerCase(), hash, displayName.slice(0, 50), (gamertag || '').slice(0, 50), platform || 'psn']
+      'INSERT INTO users (email, password_hash, display_name, gamertag, platform, news_opt_in) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, display_name, gamertag, platform',
+      [email.toLowerCase(), hash, displayName.slice(0, 50), (gamertag || '').slice(0, 50), platform || 'psn', !!newsOptIn]
     );
     const user = result.rows[0];
     const token = generateToken(user);
@@ -1273,21 +1276,30 @@ app.get('/auth/discord/callback', async (req, res) => {
 app.get('/auth/me', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
-    const result = await pool.query('SELECT id, display_name, gamertag, platform, email, discord_name, avatar_url FROM users WHERE id = $1', [req.user.id]);
+    const result = await pool.query('SELECT id, display_name, gamertag, platform, email, discord_name, avatar_url, news_opt_in FROM users WHERE id = $1', [req.user.id]);
     if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json({ user: result.rows[0] });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// PUT /auth/profile — Update gamertag + platform
+// PUT /auth/profile — Update gamertag + platform + news opt-in
 app.put('/auth/profile', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
-  const { gamertag, platform } = req.body;
-  const cleanGT = (gamertag || '').trim().slice(0, 50);
-  const cleanPlat = ['psn', 'xbox'].includes(platform) ? platform : 'psn';
+  const { gamertag, platform, newsOptIn } = req.body;
   try {
+    // If only updating news opt-in preference
+    if (newsOptIn !== undefined && gamertag === undefined) {
+      const result = await pool.query(
+        'UPDATE users SET news_opt_in = $1 WHERE id = $2 RETURNING id, display_name, gamertag, platform, email, discord_name, avatar_url, news_opt_in',
+        [!!newsOptIn, req.user.id]
+      );
+      if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.json({ user: result.rows[0] });
+    }
+    const cleanGT = (gamertag || '').trim().slice(0, 50);
+    const cleanPlat = ['psn', 'xbox'].includes(platform) ? platform : 'psn';
     const result = await pool.query(
-      'UPDATE users SET gamertag = $1, platform = $2 WHERE id = $3 RETURNING id, display_name, gamertag, platform, email, discord_name, avatar_url',
+      'UPDATE users SET gamertag = $1, platform = $2 WHERE id = $3 RETURNING id, display_name, gamertag, platform, email, discord_name, avatar_url, news_opt_in',
       [cleanGT || null, cleanPlat, req.user.id]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
