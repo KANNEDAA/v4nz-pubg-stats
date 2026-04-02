@@ -2031,7 +2031,7 @@ function safeParse(key,fallback){try{return JSON.parse(localStorage.getItem(key)
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function escJs(s){if(!s)return'';return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');}
 let isUsingDemo=false,recentSearches=safeParse('recent_searches',[]),favorites=safeParse('pubg_favorites',[]),clanFavorites=safeParse('pubg_clan_favorites',[]);
-let lbPlatform='console',lbRegion='eu',lbMode='squad';
+let lbPlatform='console',lbRegion='eu',lbMode='squad',lbAbort=null;
 let cmpPlatform='psn',cmpMode='squad';
 function setCmpMode(m){cmpMode=m;['squad','squad-fpp','solo','duo'].forEach(k=>{const el=document.getElementById('cmpMode-'+k);if(el)el.classList.toggle('active',k===m);});}
 let seasonTypeMode='season',currentSeasonId=null,currentRankedData=null,currentLifetimeData=null,allSeasons=null;
@@ -7074,26 +7074,32 @@ function timeAgo(dateStr){
   return 'hace '+Math.floor(hrs/24)+' dias';
 }
 async function renderLeaderboard(){
+  if(lbAbort){try{lbAbort.abort();}catch(e){}}
+  const reqMode=lbMode,reqPlatform=lbPlatform,reqRegion=lbRegion;
   const lbContent=document.getElementById('leaderboardContent');
-  lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500...</div></div></div>';
+  lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500 '+reqMode.toUpperCase()+' '+reqRegion.toUpperCase()+'...</div></div></div>';
   try{
     const controller=new AbortController();
+    lbAbort=controller;
     const timeout=setTimeout(()=>controller.abort(),15000);
-    const resp=await fetch('/api/leaderboard?platform='+lbPlatform+'&region='+lbRegion+'&mode='+lbMode,{signal:controller.signal});
+    const resp=await fetch('/api/leaderboard?platform='+reqPlatform+'&region='+reqRegion+'&mode='+reqMode,{signal:controller.signal});
     clearTimeout(timeout);
+    if(lbMode!==reqMode||lbPlatform!==reqPlatform||lbRegion!==reqRegion)return;
     if(!resp.ok){renderLeaderboardDemo();return;}
     const data=await resp.json();
     if(!data.players||data.players.length===0){renderLeaderboardDemo();return;}
-    const isConsole=lbPlatform==='console';
+    const isConsole=reqPlatform==='console';
     const showPlat=isConsole;
-    let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th>'+(showPlat?'<th>Plat.</th>':'')+'<th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
+    const modeLabel=reqMode.toUpperCase().replace('-',' ');
+    let h='<div style="text-align:center;margin-bottom:12px;"><span style="display:inline-block;background:var(--accent-dim);color:var(--accent);font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:1px;">'+modeLabel+' &mdash; '+(isConsole?'CONSOLAS':reqPlatform.toUpperCase())+' '+reqRegion.toUpperCase()+'</span></div>';
+    h+='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th>'+(showPlat?'<th>Plat.</th>':'')+'<th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
     let rank=1;
     data.players.forEach(entry=>{
       const stats=entry.stats;const ik=entry.name==='KANNEDA';
       const lbDeaths=((stats.roundsPlayed||0)-(stats.wins||0));
       const kd=lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0';
       const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-      const searchPlat=(entry.platforms&&entry.platforms.includes('PSN'))?'psn':(entry.platforms&&entry.platforms.includes('Xbox')?'xbox':lbPlatform);
+      const searchPlat=(entry.platforms&&entry.platforms.includes('PSN'))?'psn':(entry.platforms&&entry.platforms.includes('Xbox')?'xbox':reqPlatform);
       const platBadge=showPlat?(entry.platforms&&entry.platforms.length>1?'Ambas':(entry.platforms?entry.platforms[0]:'')):'';
       h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+esc(entry.name)+'</td>';
       if(showPlat)h+='<td class="sc" style="font-size:.65rem;">'+platBadge+'</td>';
@@ -7103,9 +7109,9 @@ async function renderLeaderboard(){
     h+='</tbody></table>';
     // Footer with update time
     const updatedText=data.cachedAt?timeAgo(data.cachedAt):'ahora';
-    const platLabel=isConsole?'CONSOLAS (PSN+Xbox)':lbPlatform.toUpperCase();
+    const platLabel=isConsole?'CONSOLAS (PSN+Xbox)':reqPlatform.toUpperCase();
     h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;padding:0 4px;">';
-    h+='<span style="color:var(--text-dim);font-size:.7rem;">Top 500 via PUBG API &mdash; '+platLabel+' '+lbRegion.toUpperCase()+' '+lbMode.toUpperCase()+'</span>';
+    h+='<span style="color:var(--text-dim);font-size:.7rem;">Top 500 via PUBG API &mdash; '+platLabel+' '+reqRegion.toUpperCase()+' '+modeLabel+'</span>';
     h+='<span style="color:var(--accent);font-size:.65rem;font-family:Orbitron,sans-serif;font-weight:600;">Actualizado '+updatedText+'</span>';
     h+='</div>';
     lbContent.innerHTML=h;
