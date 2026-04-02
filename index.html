@@ -2995,7 +2995,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
-  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','top500','compare','clans'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER, /clan/TAG, /ranking, /top500, /comparar, /clanes
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
@@ -3274,9 +3274,18 @@ function switchTab(t){
     else a.classList.toggle('active',navTab===t);
   });
   const p=document.getElementById('panel-'+t);if(p)p.classList.add('active');
-  // Show player sub-tabs for player-related views only
-  if(playerTabs.includes(t)&&currentPlayerData)document.getElementById('tabsContainer').style.display='block';
-  else document.getElementById('tabsContainer').style.display='none';
+  // Show/hide player chrome depending on tab type
+  const isPlayerView=playerTabs.includes(t)&&currentPlayerData;
+  document.getElementById('tabsContainer').style.display=isPlayerView?'block':'none';
+  document.getElementById('seasonBar').style.display=isPlayerView?'':'none';
+  document.getElementById('seasonTypeSelector').style.display=isPlayerView?'':'none';
+  document.getElementById('playerHeader').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('personalitySection').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('evolutionSection').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('narrativeInsights').style.display=playerTabs.includes(t)?'':'none';
+  document.getElementById('frequentTeammates').style.display=playerTabs.includes(t)?'':'none';
+  const _sb=document.querySelector('.streamer-banner');if(_sb)_sb.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
+  const _pod=document.querySelector('.podcast-embed');if(_pod)_pod.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
   // URL management: push friendly URLs for main sections
   if(mainSections.includes(t)){
     history.pushState(null,'','/'+t);
