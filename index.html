@@ -5028,6 +5028,10 @@ async function requestAiDna() {
   const name = currentPlayerData?.attributes?.name;
   if (!name) return;
 
+  // Disable button while loading
+  const aiBtn = document.querySelector('.ai-dna-btn');
+  if (aiBtn) { aiBtn.disabled = true; aiBtn.innerHTML = '<span class="ai-icon">⏳</span> ANALIZANDO...'; aiBtn.style.opacity = '0.6'; aiBtn.style.pointerEvents = 'none'; }
+
   // Check sessionStorage cache first
   const cacheKey = 'ai-dna:' + name.toLowerCase() + ':' + currentPlatform;
   const cached = sessionStorage.getItem(cacheKey);
@@ -5042,6 +5046,7 @@ async function requestAiDna() {
   const sect = document.getElementById('personalitySection');
   sect.innerHTML = '<div class="ai-dna-scanning"><div class="scan-orb"></div><div class="scan-text">V4NZ AI analizando perfil de combate...</div></div>';
   sect.classList.add('visible');
+  sect.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const kd = parseFloat(calcKD(s));
   const avgDamage = parseFloat(calcAvgDmg(s));
@@ -5082,6 +5087,9 @@ async function requestAiDna() {
     console.error('AI DNA error:', e);
     // Fallback to regular personality
     renderPersonality();
+    // Restore button if still in DOM
+    const restoreBtn = document.querySelector('.ai-dna-btn');
+    if (restoreBtn) { restoreBtn.disabled = false; restoreBtn.innerHTML = '<span class="ai-icon">🤖</span> ANALIZAR CON IA'; restoreBtn.style.opacity = '1'; restoreBtn.style.pointerEvents = 'auto'; }
     // Show error toast
     const toast = document.createElement('div');
     toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#ff3355;color:#fff;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';
@@ -5115,6 +5123,8 @@ function renderAiDna(data) {
   sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + data.role + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-desc">' + data.description + '</div><div class="ai-dna-insights">' + insightsHtml + '</div><div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + (data.role || '').replace(/'/g, "\\'") + '\')">🔗 COMPARTIR TEXTO</button></div><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
   sect.classList.add('visible');
   drawDnaRadar('dnaRadarCanvas', scores, roleColor);
+  // Scroll to result after render so fadeInUp animation is visible
+  setTimeout(function(){ sect.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
 }
 
 /* === MI EVOLUCION === */
