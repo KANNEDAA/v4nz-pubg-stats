@@ -17,7 +17,7 @@
 <meta property="og:title" content="V4NZ — PUBG Console Stats Tracker | Estadísticas PS5 y Xbox en Español">
 <meta property="og:description" content="De jugadores, para jugadores. El tracker de stats PUBG para PS5 y Xbox creado con +6000 horas de experiencia. Busca jugadores, compara stats, clanes y ranking en español.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.v4nz.com">
+<meta property="og:url" content="https://v4nz.com">
 <meta property="og:image" content="https://www.v4nz.com/og-image.png">
 <meta property="og:site_name" content="V4NZ PUBG Stats">
 <meta property="og:locale" content="es_ES">
@@ -31,9 +31,10 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:image" content="https://www.v4nz.com/og-image.png">
 <meta name="twitter:site" content="@Kanneda__">
-<link rel="alternate" hreflang="es" href="https://www.v4nz.com">
+<link rel="alternate" hreflang="es" href="https://v4nz.com">
+<link rel="alternate" hreflang="x-default" href="https://v4nz.com">
 <meta name="theme-color" content="#00f0ff">
-<link rel="canonical" href="https://www.v4nz.com">
+<link rel="canonical" href="https://v4nz.com">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -48,7 +49,7 @@
   "@context": "https://schema.org",
   "@type": "WebApplication",
   "name": "V4NZ PUBG Console Stats",
-  "url": "https://www.v4nz.com",
+  "url": "https://v4nz.com",
   "description": "Tracker de estadisticas PUBG para PlayStation y Xbox en espanol. Busca jugadores, compara stats, gestiona clanes y consulta rankings en tiempo real desde la API oficial de PUBG.",
   "applicationCategory": "GameApplication",
   "operatingSystem": "Web",
@@ -76,10 +77,10 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "V4NZ",
-  "url": "https://www.v4nz.com",
+  "url": "https://v4nz.com",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "https://www.v4nz.com/stats/psn/{search_term_string}",
+    "target": "https://v4nz.com/stats/psn/{search_term_string}",
     "query-input": "required name=search_term_string"
   }
 }
@@ -910,6 +911,7 @@ footer a { color: var(--accent); text-decoration: none; }
 @media(max-width:900px){
   .header-inner{flex-direction:column;height:auto;padding:10px 0;gap:6px}
   nav{justify-content:center}
+  nav a{font-size:.68rem;padding:6px 10px;letter-spacing:1px}
   .search-hero h1{font-size:1.6rem;letter-spacing:2px}
   .search-hero{padding:44px 1rem 30px}
   .search-box{flex-direction:column;border-radius:14px}
@@ -1090,25 +1092,35 @@ footer a { color: var(--accent); text-decoration: none; }
   "@type": "WebApplication",
   "name": "V4NZ PUBG Stats",
   "alternateName": "V4NZ",
-  "url": "https://www.v4nz.com",
+  "url": "https://v4nz.com",
   "description": "De jugadores, para jugadores. El tracker de stats PUBG para PS5 y Xbox creado con +6000 horas de experiencia. Busca jugadores, compara stats, clanes y ranking en español.",
   "applicationCategory": "GameApplication",
   "operatingSystem": "Web",
   "inLanguage": "es",
   "author": {"@type": "Person", "name": "KANNEDA", "url": "https://www.kanneda.com"},
   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
-  "screenshot": "https://www.v4nz.com/og-image.png",
+  "screenshot": "https://v4nz.com/og-image.png",
   "featureList": "Estadísticas de jugador, Historial de partidas, Comparador de jugadores, Sistema de clanes, Ranking de clanes, Top 500 leaderboard, Mapa de telemetría, Heatmap de kills"
 },{
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "V4NZ PUBG Stats",
-  "url": "https://www.v4nz.com",
+  "url": "https://v4nz.com",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "https://www.v4nz.com/stats/psn/{search_term_string}",
+    "target": "https://v4nz.com/stats/psn/{search_term_string}",
     "query-input": "required name=search_term_string"
   }
+},{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Jugador", "item": "https://v4nz.com"},
+    {"@type": "ListItem", "position": 2, "name": "Clanes", "item": "https://v4nz.com/clanes"},
+    {"@type": "ListItem", "position": 3, "name": "Ranking", "item": "https://v4nz.com/ranking"},
+    {"@type": "ListItem", "position": 4, "name": "Top 500", "item": "https://v4nz.com/top500"},
+    {"@type": "ListItem", "position": 5, "name": "Comparar", "item": "https://v4nz.com/comparar"}
+  ]
 }]
 </script>
 </head>
@@ -1139,9 +1151,11 @@ footer a { color: var(--accent); text-decoration: none; }
       </div>
     </div>
     <nav id="mainNav">
-      <a href="#" class="active" data-tab="overview">Buscar</a>
+      <a href="#" class="active" data-tab="overview">Jugador</a>
       <a href="#" data-tab="clans">Clanes</a>
-      <a href="#" data-tab="leaderboard">Rankings</a>
+      <a href="#" data-tab="ranking">Ranking</a>
+      <a href="#" data-tab="top500">Top 500</a>
+      <a href="#" data-tab="compare">Comparar</a>
     </nav>
     <div style="display:flex;align-items:center;gap:6px;">
       <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()">Iniciar Sesion</button>
@@ -1199,7 +1213,7 @@ footer a { color: var(--accent); text-decoration: none; }
     <div class="home-card">
       <div class="home-card-header">
         <span class="home-card-title">Top Clanes</span>
-        <button class="home-card-link" onclick="switchTab('clans');setTimeout(()=>{const b=document.querySelector('.clan-mode-tab:last-child');if(b)b.click();},100);">Ver ranking</button>
+        <button class="home-card-link" onclick="switchTab('ranking')">Ver ranking</button>
       </div>
       <div id="homeTopClans" class="home-clan-list"><div class="home-loading">Cargando...</div></div>
     </div>
@@ -1305,7 +1319,6 @@ footer a { color: var(--accent); text-decoration: none; }
         <button class="tab-btn" data-tab="matches" onclick="switchTab('matches')"><span class="tab-icon">&#x1F3AE;</span>Partidas</button>
         <button class="tab-btn" data-tab="weapons" onclick="switchTab('weapons')"><span class="tab-icon">&#x1F52B;</span>Armas</button>
         <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')"><span class="tab-icon">&#x1F50D;</span>Curiosidades</button>
-        <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')"><span class="tab-icon">&#x2694;&#xFE0F;</span>Comparar</button>
       </div>
       <div class="mode-selector"><button class="mode-btn active" onclick="setGameMode('tpp')">TPP</button><button class="mode-btn" onclick="setGameMode('fpp')">FPP</button></div>
     </div>
@@ -1329,66 +1342,12 @@ footer a { color: var(--accent); text-decoration: none; }
   <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div class="match-list" id="matchList"></div><div id="matchStreaksSection" style="display:none;margin-top:20px;"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
   <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
-  <div class="panel" id="panel-compare">
-    <!-- COMPARE MODE TABS: 1v1 vs Mi Squad -->
-    <div style="display:flex;justify-content:center;gap:4px;margin-bottom:20px;">
-      <button class="lb-btn active" id="cmpTab-1v1" onclick="switchCompareMode('1v1')" style="padding:10px 24px;font-size:.8rem;">&#x2694;&#xFE0F; 1 vs 1</button>
-      <button class="lb-btn" id="cmpTab-squad" onclick="switchCompareMode('squad')" style="padding:10px 24px;font-size:.8rem;">&#x1F3AE; Mi Squad</button>
-    </div>
-
-    <!-- 1v1 MODE (existing) -->
-    <div id="compareMode1v1">
-      <div class="section-title">Comparar Jugadores</div>
-      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="lb-btn active" id="cmpPlat-psn" onclick="cmpPlatform='psn';this.classList.add('active');document.getElementById('cmpPlat-xbox').classList.remove('active');">PlayStation</button>
-        <button class="lb-btn" id="cmpPlat-xbox" onclick="cmpPlatform='xbox';this.classList.add('active');document.getElementById('cmpPlat-psn').classList.remove('active');">Xbox</button>
-        <span style="width:8px;display:inline-block;"></span>
-        <button class="lb-btn active" id="cmpMode-squad" onclick="setCmpMode('squad')">Squad</button>
-        <button class="lb-btn" id="cmpMode-squad-fpp" onclick="setCmpMode('squad-fpp')">Squad FPP</button>
-        <button class="lb-btn" id="cmpMode-solo" onclick="setCmpMode('solo')">Solo</button>
-        <button class="lb-btn" id="cmpMode-duo" onclick="setCmpMode('duo')">Duo</button>
-      </div>
-      <div class="compare-container">
-        <div><div class="compare-search"><input class="compare-input" id="compare1Input" placeholder="Jugador 1..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard1"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
-        <div class="compare-vs">VS</div>
-        <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
-      </div>
-      <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
-      <div id="quickPick1v1" style="margin-top:12px;"></div>
-      <div id="compareRadarWrap" style="display:none;margin-top:24px;text-align:center;"><canvas id="compareRadarCanvas" width="500" height="500" style="max-width:100%;"></canvas></div>
-      <div id="compareVerdict" style="display:none;margin-top:16px;"></div>
-      <div id="compareBarChart" style="margin-top:20px;"></div>
-    </div>
-
-    <!-- SQUAD MODE (new) -->
-    <div id="compareModeSquad" style="display:none;">
-      <div class="section-title">&#x1F3AE; Analiza tu Squad</div>
-      <p style="color:var(--text-secondary);font-size:.8rem;margin-bottom:16px;text-align:center;">Mete los gamertags de tu equipo y descubre como es tu squad: roles, fortalezas, debilidades y quimca.</p>
-      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="lb-btn active" id="sqPlat-psn" onclick="sqPlatform='psn';this.classList.add('active');document.getElementById('sqPlat-xbox').classList.remove('active');">PlayStation</button>
-        <button class="lb-btn" id="sqPlat-xbox" onclick="sqPlatform='xbox';this.classList.add('active');document.getElementById('sqPlat-psn').classList.remove('active');">Xbox</button>
-        <span style="width:8px;display:inline-block;"></span>
-        <button class="lb-btn active" id="sqMode-squad" onclick="setSqMode('squad')">Squad</button>
-        <button class="lb-btn" id="sqMode-squad-fpp" onclick="setSqMode('squad-fpp')">Squad FPP</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;margin:0 auto;">
-        <input class="compare-input" id="sq1Input" placeholder="Jugador 1..." style="text-align:center;border:2px solid rgba(0,240,255,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq2Input').focus()">
-        <input class="compare-input" id="sq2Input" placeholder="Jugador 2..." style="text-align:center;border:2px solid rgba(255,107,0,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq3Input').focus()">
-        <input class="compare-input" id="sq3Input" placeholder="Jugador 3..." style="text-align:center;border:2px solid rgba(0,255,136,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq4Input').focus()">
-        <input class="compare-input" id="sq4Input" placeholder="Jugador 4 (opcional)..." style="text-align:center;border:2px solid rgba(168,85,247,0.2);" onkeydown="if(event.key==='Enter')analyzeSquad()">
-      </div>
-      <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;padding:12px 32px;" onclick="analyzeSquad()">&#x1F50D; ANALIZAR SQUAD</button></div>
-      <div id="quickPickSquad" style="margin-top:12px;"></div>
-      <div id="squadResults" style="margin-top:24px;"></div>
-    </div>
-  </div>
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
     <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Busca el clan de cualquier jugador. Si el clan ya esta registrado, veras a todos sus miembros con stats.</p>
     <div class="clan-mode-tabs">
       <button class="clan-mode-tab active" onclick="setClanMode('search',this)">Buscar Clan</button>
       <button class="clan-mode-tab" onclick="setClanMode('compare',this)">Comparar Clanes</button>
-      <button class="clan-mode-tab" onclick="setClanMode('ranking',this)">Ranking</button>
       <button class="clan-mode-tab" onclick="setClanMode('analysis',this)">&#x1F9E0; Analisis</button>
     </div>
     <div id="clanSearchMode">
@@ -1500,25 +1459,25 @@ footer a { color: var(--accent); text-decoration: none; }
       <div style="text-align:center;margin-bottom:20px;"><button class="search-btn" style="border-radius:8px;padding:12px 30px;" onclick="compareClans()">COMPARAR CLANES</button></div>
       <div id="clanCompareResults"></div>
     </div>
-    <div id="clanRankingMode" style="display:none;">
-      <div class="section-title">Ranking de Clanes</div>
-      <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Los mejores clanes de consola clasificados por stats reales.</p>
-      <div class="leaderboard-controls">
-        <button class="lb-btn active" onclick="setCRSort('kills',this)">Kills</button>
-        <button class="lb-btn" onclick="setCRSort('kd',this)">K/D</button>
-        <button class="lb-btn" onclick="setCRSort('wins',this)">Victorias</button>
-        <button class="lb-btn" onclick="setCRSort('winrate',this)">Win Rate</button>
-        <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
-      </div>
-      <div id="clanRankingContent"><div class="empty-state"><p>Cargando ranking de clanes...</p></div></div>
-    </div>
     <div id="clanAnalysisMode" style="display:none;">
       <div class="section-title">&#x1F9E0; Analisis de Clanes</div>
       <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Inteligencia completa de tus clanes favoritos. Carries, lastres, fantasmas y cotilleo.</p>
       <div id="clanAnalysisContent"><div class="empty-state"><p>No tienes clanes guardados. Busca un clan primero para que aparezca aqui.</p></div></div>
     </div>
   </div>
-  <div class="panel" id="panel-leaderboard">
+  <div class="panel" id="panel-ranking">
+    <div class="section-title">Ranking de Clanes</div>
+    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Los mejores clanes de consola clasificados por stats reales.</p>
+    <div class="leaderboard-controls">
+      <button class="lb-btn active" onclick="setCRSort('kills',this)">Kills</button>
+      <button class="lb-btn" onclick="setCRSort('kd',this)">K/D</button>
+      <button class="lb-btn" onclick="setCRSort('wins',this)">Victorias</button>
+      <button class="lb-btn" onclick="setCRSort('winrate',this)">Win Rate</button>
+      <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
+    </div>
+    <div id="clanRankingContent"><div class="empty-state"><p>Cargando ranking de clanes...</p></div></div>
+  </div>
+  <div class="panel" id="panel-top500">
     <div class="section-title">Top 500 &mdash; Leaderboard Consola</div>
     <div class="leaderboard-controls">
       <span id="lbPlatBtns"><button class="lb-btn active" onclick="setLBPlatform('console',this)">Consolas</button><button class="lb-btn" onclick="setLBPlatform('psn',this)">PlayStation</button><button class="lb-btn" onclick="setLBPlatform('xbox',this)">Xbox</button></span>
@@ -1528,6 +1487,59 @@ footer a { color: var(--accent); text-decoration: none; }
       <span id="lbModeBtns"><button class="lb-btn active" onclick="setLBMode('squad',this)">Squad</button><button class="lb-btn" onclick="setLBMode('squad-fpp',this)">Squad FPP</button><button class="lb-btn" onclick="setLBMode('duo',this)">Duo</button><button class="lb-btn" onclick="setLBMode('duo-fpp',this)">Duo FPP</button><button class="lb-btn" onclick="setLBMode('solo',this)">Solo</button><button class="lb-btn" onclick="setLBMode('solo-fpp',this)">Solo FPP</button></span>
     </div>
     <div id="leaderboardContent"><div class="empty-state"><p>Selecciona plataforma y modo</p></div></div>
+  </div>
+  <div class="panel" id="panel-compare">
+    <!-- COMPARE MODE TABS: 1v1 vs Mi Squad -->
+    <div style="display:flex;justify-content:center;gap:4px;margin-bottom:20px;">
+      <button class="lb-btn active" id="cmpTab-1v1" onclick="switchCompareMode('1v1')" style="padding:10px 24px;font-size:.8rem;">&#x2694;&#xFE0F; 1 vs 1</button>
+      <button class="lb-btn" id="cmpTab-squad" onclick="switchCompareMode('squad')" style="padding:10px 24px;font-size:.8rem;">&#x1F3AE; Mi Squad</button>
+    </div>
+
+    <!-- 1v1 MODE -->
+    <div id="compareMode1v1">
+      <div class="section-title">Comparar Jugadores</div>
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="lb-btn active" id="cmpPlat-psn" onclick="cmpPlatform='psn';this.classList.add('active');document.getElementById('cmpPlat-xbox').classList.remove('active');">PlayStation</button>
+        <button class="lb-btn" id="cmpPlat-xbox" onclick="cmpPlatform='xbox';this.classList.add('active');document.getElementById('cmpPlat-psn').classList.remove('active');">Xbox</button>
+        <span style="width:8px;display:inline-block;"></span>
+        <button class="lb-btn active" id="cmpMode-squad" onclick="setCmpMode('squad')">Squad</button>
+        <button class="lb-btn" id="cmpMode-squad-fpp" onclick="setCmpMode('squad-fpp')">Squad FPP</button>
+        <button class="lb-btn" id="cmpMode-solo" onclick="setCmpMode('solo')">Solo</button>
+        <button class="lb-btn" id="cmpMode-duo" onclick="setCmpMode('duo')">Duo</button>
+      </div>
+      <div class="compare-container">
+        <div><div class="compare-search"><input class="compare-input" id="compare1Input" placeholder="Jugador 1..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard1"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+        <div class="compare-vs">VS</div>
+        <div><div class="compare-search"><input class="compare-input" id="compare2Input" placeholder="Jugador 2..." onkeydown="if(event.key==='Enter')comparePlayers()"/></div><div class="compare-player-card" id="compareCard2"><div class="empty-state"><p>Busca un jugador</p></div></div></div>
+      </div>
+      <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;" onclick="comparePlayers()">COMPARAR</button></div>
+      <div id="quickPick1v1" style="margin-top:12px;"></div>
+      <div id="compareRadarWrap" style="display:none;margin-top:24px;text-align:center;"><canvas id="compareRadarCanvas" width="500" height="500" style="max-width:100%;"></canvas></div>
+      <div id="compareVerdict" style="display:none;margin-top:16px;"></div>
+      <div id="compareBarChart" style="margin-top:20px;"></div>
+    </div>
+
+    <!-- SQUAD MODE -->
+    <div id="compareModeSquad" style="display:none;">
+      <div class="section-title">&#x1F3AE; Analiza tu Squad</div>
+      <p style="color:var(--text-secondary);font-size:.8rem;margin-bottom:16px;text-align:center;">Mete los gamertags de tu equipo y descubre como es tu squad: roles, fortalezas, debilidades y quimca.</p>
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="lb-btn active" id="sqPlat-psn" onclick="sqPlatform='psn';this.classList.add('active');document.getElementById('sqPlat-xbox').classList.remove('active');">PlayStation</button>
+        <button class="lb-btn" id="sqPlat-xbox" onclick="sqPlatform='xbox';this.classList.add('active');document.getElementById('sqPlat-psn').classList.remove('active');">Xbox</button>
+        <span style="width:8px;display:inline-block;"></span>
+        <button class="lb-btn active" id="sqMode-squad" onclick="setSqMode('squad')">Squad</button>
+        <button class="lb-btn" id="sqMode-squad-fpp" onclick="setSqMode('squad-fpp')">Squad FPP</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;margin:0 auto;">
+        <input class="compare-input" id="sq1Input" placeholder="Jugador 1..." style="text-align:center;border:2px solid rgba(0,240,255,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq2Input').focus()">
+        <input class="compare-input" id="sq2Input" placeholder="Jugador 2..." style="text-align:center;border:2px solid rgba(255,107,0,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq3Input').focus()">
+        <input class="compare-input" id="sq3Input" placeholder="Jugador 3..." style="text-align:center;border:2px solid rgba(0,255,136,0.2);" onkeydown="if(event.key==='Enter')document.getElementById('sq4Input').focus()">
+        <input class="compare-input" id="sq4Input" placeholder="Jugador 4 (opcional)..." style="text-align:center;border:2px solid rgba(168,85,247,0.2);" onkeydown="if(event.key==='Enter')analyzeSquad()">
+      </div>
+      <div style="text-align:center;margin-top:16px;"><button class="search-btn" style="border-radius:8px;padding:12px 32px;" onclick="analyzeSquad()">&#x1F50D; ANALIZAR SQUAD</button></div>
+      <div id="quickPickSquad" style="margin-top:12px;"></div>
+      <div id="squadResults" style="margin-top:24px;"></div>
+    </div>
   </div>
   <div class="empty-state" id="emptyState"><p>Busca un jugador para ver sus stats</p></div>
 </div>
@@ -2317,7 +2329,7 @@ async function loadClanPage(tag){
     h+='<div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">';
     h+='<button id="clanRefreshBtn" onclick="refreshClanStats(\''+escJs(c.tag)+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar Stats</button>';
     h+='<span style="font-size:.65rem;color:'+ageColor+';">&#x1F4C5; Actualizado '+ageText+'</span>';
-    const shareUrl='https://www.v4nz.com/clan/'+c.tag;
+    const shareUrl='https://v4nz.com/clan/'+c.tag;
     h+='<div class="clan-page-share" onclick="navigator.clipboard.writeText(\''+shareUrl+'\').then(()=>{this.innerHTML=\'&#x2705; Copiado!\';setTimeout(()=>{this.innerHTML=\'&#x1F517; Compartir Clan\';},2000);})">&#x1F517; Compartir Clan</div>';
     const isCFav=isClanFavorite(c.tag);
     h+='<button id="clanFavBtn" data-tag="'+escJs(c.tag)+'" onclick="toggleClanFavorite(\''+escJs(c.tag)+'\',\''+escJs(c.name)+'\',\''+c.platform+'\',event)" style="background:transparent;border:1px solid '+(isCFav?'var(--accent-yellow)':'rgba(0,240,255,0.3)')+';color:'+(isCFav?'var(--accent-yellow)':'var(--accent)')+';font-family:Rajdhani,sans-serif;font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;">'+(isCFav?'&#x2605; Favorito':'&#x2606; Favorito')+'</button>';
@@ -2984,11 +2996,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
-  // Friendly URLs: /stats/psn/PLAYER or /stats/xbox/PLAYER or /clan/TAG
+  // Friendly URLs: /stats/psn/PLAYER, /clan/TAG, /ranking, /top500, /comparar, /clanes
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
+  const sectionMatch=location.pathname.match(/^\/(ranking|top500|compare|comparar|clans|clanes)$/i);
   if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
   else if(clanMatch){setTimeout(()=>loadClanPage(decodeURIComponent(clanMatch[1])),100);}
+  else if(sectionMatch){const sec=sectionMatch[1].toLowerCase();const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};setTimeout(()=>switchTab(tabMap[sec]||sec),100);}
   else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
   // Sticky tabs shadow effect
   const _tc=document.getElementById('tabsContainer');
@@ -3003,8 +3017,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('popstate',()=>{
     const statsM=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
     const clanM=location.pathname.match(/^\/clan\/(.+)$/i);
+    const secM=location.pathname.match(/^\/(ranking|top500|compare|comparar|clans|clanes)$/i);
     if(statsM){const plat=statsM[1].toLowerCase(),pname=decodeURIComponent(statsM[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
     else if(clanM){loadClanPage(decodeURIComponent(clanM[1]));}
+    else if(secM){const sec=secM[1].toLowerCase();const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};switchTab(tabMap[sec]||sec);}
     else if(location.pathname==='/'||location.pathname===''){
       // Volver a home limpio
       document.getElementById('searchInput').value='';
@@ -3248,27 +3264,50 @@ function switchTab(t){
   const seo=document.getElementById('seoContent');if(seo)seo.style.display='none';
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  // All player-related sub-tabs highlight "Buscar" in main nav
-  const playerTabs=['overview','matches','weapons','funstats','compare'];
+  // Player-related sub-tabs highlight "Jugador" in main nav
+  const playerTabs=['overview','matches','weapons','funstats'];
+  // Main nav sections (not player sub-tabs)
+  const mainSections=['clans','ranking','top500','compare'];
   document.querySelectorAll('#mainNav a').forEach(a=>{
     const navTab=a.dataset.tab;
     if(navTab==='overview') a.classList.toggle('active',playerTabs.includes(t));
     else a.classList.toggle('active',navTab===t);
   });
   const p=document.getElementById('panel-'+t);if(p)p.classList.add('active');
-  // Show player sub-tabs for all player-related views
+  // Show player sub-tabs for player-related views only
   if(playerTabs.includes(t)&&currentPlayerData)document.getElementById('tabsContainer').style.display='block';
   else document.getElementById('tabsContainer').style.display='none';
-  // Reset URL when navigating away from stats (but preserve /clan/ URLs)
-  if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
+  // URL management: push friendly URLs for main sections
+  if(mainSections.includes(t)){
+    history.pushState(null,'','/'+t);
+    document.title={'clans':'Clanes — V4NZ','ranking':'Ranking Clanes — V4NZ','top500':'Top 500 — V4NZ','compare':'Comparar — V4NZ'}[t]||'V4NZ — PUBG Console Stats Tracker';
+  } else if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
-  if(t==='leaderboard')renderLeaderboard();
+  if(t==='top500')renderLeaderboard();
+  if(t==='ranking')loadClanRanking();
   if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
+  // Standalone tabs: hide search hero and empty state (they have their own content)
+  const standaloneTabs=['ranking','top500','compare'];
+  const hero=document.getElementById('searchHero');
+  const emptyEl=document.getElementById('emptyState');
+  if(standaloneTabs.includes(t)){
+    if(hero)hero.style.display='none';
+    if(emptyEl)emptyEl.style.display='none';
+  } else {
+    if(hero)hero.style.display='';
+    if(emptyEl&&!currentPlayerData&&playerTabs.includes(t))emptyEl.style.display='block';
+    else if(emptyEl)emptyEl.style.display='none';
+  }
   // Homepage content: show only when on overview with no player
-  if(t==='overview'&&!currentPlayerData){showHomepageContent();const hero=document.getElementById('searchHero');if(hero)hero.scrollIntoView({behavior:'smooth'});}
+  if(t==='overview'&&!currentPlayerData){showHomepageContent();if(hero)hero.scrollIntoView({behavior:'smooth'});}
   else{hideHomepageContent();}
+  // When switching to Clanes, reset to search mode
+  if(t==='clans'){
+    const searchBtn=document.querySelector('.clan-mode-tab');
+    if(searchBtn)setClanMode('search',searchBtn);
+  }
 }
 function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
 function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
@@ -3556,7 +3595,7 @@ async function detectPlayerClan(){
   }catch(e){console.log('Clan detection error:',e.message);}
 }
 
-function copyPlayerLink(btn){const n=currentPlayerData?.attributes?.name;if(!n)return;const url='https://www.v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);navigator.clipboard?.writeText(url).then(()=>{btn.classList.add('copied');btn.innerHTML='&#x2705; Copiado!';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='&#x1F517; Copiar Enlace';},2000);}).catch(()=>{prompt('Copia este enlace:',url);});}
+function copyPlayerLink(btn){const n=currentPlayerData?.attributes?.name;if(!n)return;const url='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);navigator.clipboard?.writeText(url).then(()=>{btn.classList.add('copied');btn.innerHTML='&#x2705; Copiado!';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='&#x1F517; Copiar Enlace';},2000);}).catch(()=>{prompt('Copia este enlace:',url);});}
 function renderSeasonBar(season){document.getElementById('seasonName').textContent=getSeasonLabel(season.id);document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 function renderSeasonBarDemo(){document.getElementById('seasonName').textContent='Temporada 40';document.getElementById('seasonDates').textContent='Temporada actual — Datos reales via PUBG API';document.getElementById('seasonBar').classList.add('visible');}
 
@@ -4725,7 +4764,7 @@ function renderPersonality(){
   document.getElementById('personalitySection').classList.add('visible');
   drawDnaRadar('dnaRadarCanvas',dn,coHex);
 }
-function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi ADN PUBG es: '+t+'! Descubre el tuyo en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://www.v4nz.com'});else{navigator.clipboard?.writeText(x+' https://www.v4nz.com');alert('Copiado al portapapeles!');}}
+function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const x='Mi ADN PUBG es: '+t+'! Descubre el tuyo en v4nz.com';if(navigator.share)navigator.share({title:'V4NZ PUBG Stats',text:x,url:'https://v4nz.com'});else{navigator.clipboard?.writeText(x+' https://v4nz.com');alert('Copiado al portapapeles!');}}
 async function shareAdnImage(){
   const s=getActiveStats();if(!s.roundsPlayed)return;
   const name=currentPlayerData?.attributes?.name||'Jugador';
@@ -5705,9 +5744,7 @@ function setClanMode(mode,btn){
   document.querySelectorAll('.clan-mode-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('clanSearchMode').style.display=mode==='search'?'block':'none';
   document.getElementById('clanCompareMode').style.display=mode==='compare'?'block':'none';
-  document.getElementById('clanRankingMode').style.display=mode==='ranking'?'block':'none';
   document.getElementById('clanAnalysisMode').style.display=mode==='analysis'?'block':'none';
-  if(mode==='ranking')loadClanRanking();
   if(mode==='analysis')loadClanAnalysisHub();
 }
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
