@@ -3285,7 +3285,7 @@ function switchTab(t){
   document.getElementById('narrativeInsights').style.display=playerTabs.includes(t)?'':'none';
   document.getElementById('frequentTeammates').style.display=playerTabs.includes(t)?'':'none';
   const _sb=document.querySelector('.streamer-banner');if(_sb)_sb.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
-  const _pod=document.querySelector('.podcast-embed');if(_pod)_pod.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
+  const _pod=document.getElementById('podcastPlayer');if(_pod)_pod.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
   // URL management: push friendly URLs for main sections
   if(mainSections.includes(t)){
     history.pushState(null,'','/'+t);
