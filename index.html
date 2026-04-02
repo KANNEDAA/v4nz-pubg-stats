@@ -534,7 +534,8 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-detail-card .close-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
 .match-back-btn { width:100%; margin-top:16px; padding:10px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
 .match-back-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
-.match-map-img { width:100%; height:200px; border-radius:10px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; margin-bottom:16px; overflow:hidden; position:relative; }
+.match-map-img { width:100%; height:80px; border-radius:10px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; margin-bottom:16px; overflow:hidden; position:relative; }
+.match-map-img.has-bg { height:160px; }
 .match-map-img .map-label { font-family:'Orbitron',sans-serif; font-size:1.6rem; font-weight:800; color:var(--accent); text-shadow:0 0 20px rgba(0,240,255,.3); }
 .match-detail-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
 .match-detail-stat { text-align:center; background:var(--bg-secondary); border-radius:8px; padding:12px 8px; }
@@ -3789,7 +3790,8 @@ function showMatchDetail(idx){
   const plClass=pl===1?'placement-win':pl<=5?'placement-top5':pl<=10?'placement-top10':pl<=25?'placement-top25':'placement-low';
   const plIcon=pl===1?' &#x1F451;':'';
   const matchDur=a.duration?formatTime(a.duration):'?';
-  const mapBg=TELEM_MAP_IMGS[a.mapName]?'background:url('+TELEM_MAP_IMGS[a.mapName]+') center/cover no-repeat;':'background:linear-gradient(135deg,'+mc+'22,var(--bg-secondary));';
+  const mapImgUrl=TELEM_MAP_IMGS[a.mapName]||'';
+  const mapBg='background:linear-gradient(135deg,'+mc+'33,'+mc+'11,var(--bg-secondary));';
   // Get player averages for comparison
   const avgS=getActiveStats();
   const hasAvg=avgS&&avgS.roundsPlayed>0;
@@ -3800,8 +3802,8 @@ function showMatchDetail(idx){
   const avgAssists=hasAvg?((avgS.assists||0)/avgS.roundsPlayed):0;
   const avgKnocks=hasAvg?((avgS.DBNOs||0)/avgS.roundsPlayed):0;
   const avgRevives=hasAvg?((avgS.revives||0)/avgS.roundsPlayed):0;
-  // Build HTML — Map header
-  let h='<div class="match-map-img" style="'+mapBg+'"><div class="map-label" style="color:'+mc+';text-shadow:0 2px 8px rgba(0,0,0,.7);">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:#ccc;text-shadow:0 1px 4px rgba(0,0,0,.8);">'+(MAP_SIZE[mn]||'')+'</div></div>';
+  // Build HTML — Map header (gradient always, image lazy-upgrade)
+  let h='<div class="match-map-img" id="mdMapHeader" style="'+mapBg+'"><div class="map-label" style="color:'+mc+';text-shadow:0 2px 8px rgba(0,0,0,.7);">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:#ccc;text-shadow:0 1px 4px rgba(0,0,0,.8);">'+(MAP_SIZE[mn]||'')+'</div></div>';
   // Placement — BIGGER with icon for #1
   h+='<div style="text-align:center;margin-bottom:16px;">';
   h+='<span style="font-family:Orbitron,sans-serif;font-size:2.4rem;font-weight:800;color:'+plColor+';line-height:1;">#'+pl+plIcon+'</span>';
@@ -3907,6 +3909,8 @@ function showMatchDetail(idx){
   h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F4F7; Compartir Partida</button></div>';
   h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
   document.getElementById('matchDetailContent').innerHTML=h;
+  // Try loading map image in background — if it works, upgrade the header
+  if(mapImgUrl){const _mi=new Image();_mi.onload=function(){const hdr=document.getElementById('mdMapHeader');if(hdr){hdr.style.background='url('+mapImgUrl+') center/cover no-repeat';hdr.classList.add('has-bg');}};_mi.src=mapImgUrl;}
   // Apply placement color class to card
   const card=document.querySelector('.match-detail-card');
   card.className='match-detail-card '+plClass;
