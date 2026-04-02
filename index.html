@@ -1844,9 +1844,9 @@ function profileLoadMyStats(){
 }
 function autoLoadMyStats(){
   if(!currentUser||!currentUser.gamertag)return;
-  // Solo auto-cargar si estamos en la home, no si ya hay una URL de stats/clan
+  // Solo auto-cargar si estamos en la home, no si ya hay una URL de stats/clan/section
   const p=location.pathname;
-  if(p.startsWith('/stats/')||p.startsWith('/clan/'))return;
+  if(p.startsWith('/stats/')||p.startsWith('/clan/')||p==='/ranking'||p==='/top500'||p==='/compare'||p==='/comparar'||p==='/clans'||p==='/clanes')return;
   // Solo si no hay ya un jugador cargado
   if(document.getElementById('searchInput').value.trim())return;
   setTimeout(()=>{
@@ -3290,6 +3290,10 @@ function switchTab(t){
   if(mainSections.includes(t)){
     history.pushState(null,'','/'+t);
     document.title={'clans':'Clanes — V4NZ','ranking':'Ranking Clanes — V4NZ','top500':'Top 500 — V4NZ','compare':'Comparar — V4NZ'}[t]||'V4NZ — PUBG Console Stats Tracker';
+  } else if(playerTabs.includes(t)&&currentPlayerData){
+    const pName=currentPlayerData.attributes?.name||currentPlayerData.id;
+    history.pushState(null,'','/stats/'+currentPlatform+'/'+encodeURIComponent(pName));
+    document.title='V4NZ — '+pName+' | PUBG '+currentPlatform.toUpperCase()+' Stats';
   } else if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
