@@ -540,6 +540,31 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-detail-stat { text-align:center; background:var(--bg-secondary); border-radius:8px; padding:12px 8px; }
 .match-detail-stat .val { font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:700; }
 .match-detail-stat .lbl { font-size:.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+.match-detail-stat .avg-cmp { font-size:.6rem; font-weight:600; margin-top:3px; letter-spacing:.5px; }
+.match-detail-stat .avg-cmp.up { color:var(--accent-green); }
+.match-detail-stat .avg-cmp.down { color:var(--accent-red); }
+.match-detail-stat .avg-cmp.neutral { color:var(--text-dim); }
+/* Placement color bands */
+.match-detail-card.placement-win { border-color:var(--accent-yellow); box-shadow:0 0 30px rgba(255,200,0,.12); }
+.match-detail-card.placement-top5 { border-color:var(--accent-green); box-shadow:0 0 20px rgba(0,255,100,.08); }
+.match-detail-card.placement-top10 { border-color:var(--accent); box-shadow:0 0 20px rgba(0,240,255,.08); }
+.match-detail-card.placement-top25 { border-color:var(--border); }
+.match-detail-card.placement-low { border-color:rgba(255,51,85,.3); }
+/* Team contribution bar */
+.team-contrib-bar { display:flex; height:8px; border-radius:4px; overflow:hidden; margin:8px 0 12px; background:var(--bg-secondary); }
+.team-contrib-bar .seg { height:100%; transition:width .4s; }
+/* Collapsible sections */
+.md-collapsible-toggle { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.75rem; text-transform:uppercase; letter-spacing:1px; padding:10px; border-radius:8px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+.md-collapsible-toggle:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+.md-collapsible-toggle .arrow { transition:transform .2s; }
+.md-collapsible-toggle.open .arrow { transform:rotate(180deg); }
+.md-collapsible-body { overflow:hidden; max-height:0; transition:max-height .3s ease; }
+.md-collapsible-body.open { max-height:600px; }
+@media(max-width:480px){
+  .match-detail-card { padding:16px; }
+  .match-detail-stats { grid-template-columns:repeat(2,1fr); }
+  .match-detail-stats .md-stat-secondary { font-size:.9rem; }
+}
 
 /* TABS */
 .tabs-container { margin-bottom: 24px; display: none; position: sticky; top: 0; z-index: 90; padding-top: 10px; padding-bottom: 10px; background: var(--bg-primary); transition: box-shadow 0.3s; }
@@ -3738,6 +3763,19 @@ function renderMatchStreaks(){
   h+='</div></div>';
   el.innerHTML=h;
 }
+function _mdAvgCmp(val,avg,unit){
+  if(!avg||avg===0)return'';
+  const diff=val-avg;const absDiff=Math.abs(diff);
+  const sign=diff>0?'+':'';const cls=diff>0?'up':diff<0?'down':'neutral';
+  const display=unit?sign+absDiff.toFixed(1)+unit:sign+(Number.isInteger(absDiff)?absDiff:absDiff.toFixed(1));
+  const arrow=diff>0?' &#x25B2;':diff<0?' &#x25BC;':'';
+  return'<div class="avg-cmp '+cls+'">'+display+arrow+'</div>';
+}
+function _mdToggleCollapsible(btn){
+  btn.classList.toggle('open');
+  const body=btn.nextElementSibling;
+  if(body)body.classList.toggle('open');
+}
 function showMatchDetail(idx){
   const match=currentMatchData[idx];if(!match)return;
   const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';
@@ -3746,38 +3784,99 @@ function showMatchDetail(idx){
   if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;
   const totalP=(match.included||[]).filter(i=>i.type==='participant').length;
   const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;
-  const plColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-primary)';
+  // Placement color system: gold win, green top5, cyan top10, gray top25, red rest
+  const plColor=pl===1?'var(--accent-yellow)':pl<=5?'var(--accent-green)':pl<=10?'var(--accent)':pl<=25?'var(--text-secondary)':'var(--accent-red)';
+  const plClass=pl===1?'placement-win':pl<=5?'placement-top5':pl<=10?'placement-top10':pl<=25?'placement-top25':'placement-low';
+  const plIcon=pl===1?' &#x1F451;':'';
   const matchDur=a.duration?formatTime(a.duration):'?';
   const mapBg=TELEM_MAP_IMGS[a.mapName]?'background:url('+TELEM_MAP_IMGS[a.mapName]+') center/cover no-repeat;':'background:linear-gradient(135deg,'+mc+'22,var(--bg-secondary));';
+  // Get player averages for comparison
+  const avgS=getActiveStats();
+  const hasAvg=avgS&&avgS.roundsPlayed>0;
+  const avgKills=hasAvg?(avgS.kills/avgS.roundsPlayed):0;
+  const avgDmg=hasAvg?(avgS.damageDealt/avgS.roundsPlayed):0;
+  const avgHS=hasAvg&&avgS.kills>0?(avgS.headshotKills/avgS.kills*avgS.kills/avgS.roundsPlayed):0;
+  const avgHSPerRound=hasAvg?(avgS.headshotKills/avgS.roundsPlayed):0;
+  const avgAssists=hasAvg?((avgS.assists||0)/avgS.roundsPlayed):0;
+  const avgKnocks=hasAvg?((avgS.DBNOs||0)/avgS.roundsPlayed):0;
+  const avgRevives=hasAvg?((avgS.revives||0)/avgS.roundsPlayed):0;
+  // Build HTML — Map header
   let h='<div class="match-map-img" style="'+mapBg+'"><div class="map-label" style="color:'+mc+';text-shadow:0 2px 8px rgba(0,0,0,.7);">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:#ccc;text-shadow:0 1px 4px rgba(0,0,0,.8);">'+(MAP_SIZE[mn]||'')+'</div></div>';
-  h+='<div style="text-align:center;margin-bottom:16px;"><span style="font-family:Orbitron,sans-serif;font-size:1.8rem;font-weight:800;color:'+plColor+';">#'+pl+'</span>';
+  // Placement — BIGGER with icon for #1
+  h+='<div style="text-align:center;margin-bottom:16px;">';
+  h+='<span style="font-family:Orbitron,sans-serif;font-size:2.4rem;font-weight:800;color:'+plColor+';line-height:1;">#'+pl+plIcon+'</span>';
   h+='<span style="color:var(--text-dim);font-size:.8rem;"> / '+totalP+'</span>';
-  h+='<div style="margin:8px auto;width:80%;height:4px;border-radius:2px;background:var(--bg-secondary);"><div style="height:100%;width:'+survPct+'%;border-radius:2px;background:'+plColor+';transition:width .4s;"></div></div>';
+  h+='<div style="margin:8px auto;width:80%;height:5px;border-radius:3px;background:var(--bg-secondary);"><div style="height:100%;width:'+survPct+'%;border-radius:3px;background:'+plColor+';transition:width .4s;"></div></div>';
   h+='<span style="display:block;color:var(--text-secondary);font-size:.78rem;">'+gm.toUpperCase()+' &mdash; '+new Date(a.createdAt).toLocaleString('es-ES')+'</span>';
   h+='<span style="display:block;color:var(--text-dim);font-size:.68rem;margin-top:2px;">Duracion partida: '+matchDur+'</span></div>';
+  // Primary stats row — kills, damage, time (bigger)
+  h+='<div class="match-detail-stats" style="margin-bottom:8px;">';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent);font-size:1.4rem;">'+ps.kills+'</div><div class="lbl">Kills</div>'+_mdAvgCmp(ps.kills,avgKills)+'</div>';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-orange);font-size:1.4rem;">'+Math.round(ps.damageDealt)+'</div><div class="lbl">Dano</div>'+_mdAvgCmp(Math.round(ps.damageDealt),Math.round(avgDmg))+'</div>';
+  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-green);font-size:1.4rem;">'+formatTime(ps.timeSurvived)+'</div><div class="lbl">Tiempo</div></div>';
+  h+='</div>';
+  // Secondary stats row — HS, assists, knocks
   h+='<div class="match-detail-stats">';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent);">'+ps.kills+'</div><div class="lbl">Kills</div></div>';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-orange);">'+Math.round(ps.damageDealt)+'</div><div class="lbl">Dano</div></div>';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-green);">'+formatTime(ps.timeSurvived)+'</div><div class="lbl">Tiempo</div></div>';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-purple);">'+(ps.headshotKills||0)+'</div><div class="lbl">Headshots</div></div>';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-yellow);">'+(ps.assists||0)+'</div><div class="lbl">Assists</div></div>';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-red);">'+(ps.DBNOs||0)+'</div><div class="lbl">Knocks</div></div>';
-  h+='<div class="match-detail-stat"><div class="val">'+((ps.walkDistance||0)/1000).toFixed(1)+'km</div><div class="lbl">A pie</div></div>';
-  h+='<div class="match-detail-stat"><div class="val">'+((ps.rideDistance||0)/1000).toFixed(1)+'km</div><div class="lbl">Vehiculo</div></div>';
-  h+='<div class="match-detail-stat"><div class="val">'+(ps.revives||0)+'</div><div class="lbl">Revives</div></div>';
+  h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-purple);">'+(ps.headshotKills||0)+'</div><div class="lbl">Headshots</div>'+_mdAvgCmp(ps.headshotKills||0,avgHSPerRound)+'</div>';
+  h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-yellow);">'+(ps.assists||0)+'</div><div class="lbl">Assists</div>'+_mdAvgCmp(ps.assists||0,avgAssists)+'</div>';
+  h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-red);">'+(ps.DBNOs||0)+'</div><div class="lbl">Knocks</div>'+_mdAvgCmp(ps.DBNOs||0,avgKnocks)+'</div>';
   h+='</div>';
   // Combat summary: damage dealt vs avg, efficiency
   const dmgDealt=Math.round(ps.damageDealt||0);const killDmgRatio=ps.kills>0?Math.round(dmgDealt/ps.kills):0;
   const dpm=ps.timeSurvived>0?(dmgDealt/(ps.timeSurvived/60)).toFixed(1):'0';
   h+='<div class="md-combat-summary"><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent-orange);">'+dmgDealt+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano Total</div></div><div style="text-align:center;padding:0 16px;"><div style="font-size:.7rem;color:var(--text-dim);margin-bottom:4px;">Eficiencia</div><div style="font-family:Orbitron,sans-serif;font-size:1rem;color:var(--accent);">'+killDmgRatio+'</div><div style="font-size:.6rem;color:var(--text-dim);">dano/kill</div></div><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent);">'+dpm+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano/min</div></div></div>';
-  // Loot & resources used
+  // Team section with contribution bar
+  const myRoster=(match.included||[]).find(i=>i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(p=>p.id===pp.id));let teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){const partIds=myRoster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>(b.damageDealt||0)-(a.damageDealt||0));}
+  if(teammates.length>1){
+    const totalDmg=teammates.reduce((s,tm)=>s+(tm.damageDealt||0),0);
+    const tmColors=['var(--accent)','var(--accent-orange)','var(--accent-purple)','var(--accent-green)'];
+    h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">';
+    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">Tu Equipo</div>';
+    // Contribution bar
+    if(totalDmg>0){
+      h+='<div class="team-contrib-bar">';
+      teammates.forEach((tm,ti)=>{
+        const pct=((tm.damageDealt||0)/totalDmg*100).toFixed(1);
+        h+='<div class="seg" style="width:'+pct+'%;background:'+tmColors[ti%4]+';"></div>';
+      });
+      h+='</div>';
+    }
+    // Teammate cards
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;">';
+    teammates.forEach((tm,ti)=>{
+      const isMe=tm.name.toLowerCase()===pn.toLowerCase();
+      const pct=totalDmg>0?Math.round((tm.damageDealt||0)/totalDmg*100):0;
+      const isMvp=ti===0;
+      h+='<div style="background:var(--bg-secondary);padding:10px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'border:1px solid var(--border);')+'">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">';
+      h+='<span style="color:'+(isMe?'var(--accent)':tmColors[ti%4])+';font-weight:700;font-size:.78rem;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();goToPlayer(\''+escJs(tm.name)+'\');" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.55rem;opacity:.6;">(tu)</span>':'')+'</span>';
+      if(isMvp)h+='<span style="font-size:.6rem;background:rgba(255,200,0,.15);color:var(--accent-yellow);padding:1px 5px;border-radius:3px;font-weight:700;">MVP</span>';
+      h+='</div>';
+      h+='<div style="display:flex;gap:8px;align-items:baseline;">';
+      h+='<span style="color:var(--accent);font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;">'+tm.kills+'<span style="font-size:.6rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;"> kills</span></span>';
+      h+='<span style="color:var(--accent-orange);font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;">'+Math.round(tm.damageDealt)+'<span style="font-size:.6rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;"> dmg</span></span>';
+      h+='<span style="color:var(--text-dim);font-size:.65rem;margin-left:auto;">'+pct+'%</span>';
+      h+='</div></div>';
+    });
+    h+='</div></div>';
+  }
+  // Collapsible: Loot & movement
   const lootItems=[];
   if(ps.heals)lootItems.push({l:'Heals',v:ps.heals});if(ps.boosts)lootItems.push({l:'Boosts',v:ps.boosts});if(ps.weaponsAcquired)lootItems.push({l:'Armas',v:ps.weaponsAcquired});if(ps.roadKills)lootItems.push({l:'Atropellos',v:ps.roadKills});if(ps.vehicleDestroys)lootItems.push({l:'Vehiculos',v:ps.vehicleDestroys});if(ps.longestKill)lootItems.push({l:'Kill lejano',v:Math.round(ps.longestKill)+'m'});if(ps.swimDistance>0)lootItems.push({l:'Nado',v:((ps.swimDistance)/1000).toFixed(2)+'km'});
-  if(lootItems.length){h+='<div class="md-loot-grid">';lootItems.forEach(i=>{h+='<div class="md-loot-item"><span class="loot-val">'+i.v+'</span>'+i.l+'</div>';});h+='</div>';}
-  const myRoster=(match.included||[]).find(i=>i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(p=>p.id===pp.id));let teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){const partIds=myRoster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>b.kills-a.kills);}
-  if(teammates.length>0){h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:12px;">Tu Equipo</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">';teammates.forEach(tm=>{const isMe=tm.name.toLowerCase()===pn.toLowerCase();h+='<div style="background:var(--bg-secondary);padding:8px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'')+'"><div style="color:'+(isMe?'var(--accent)':'var(--text-primary)')+';font-weight:600;margin-bottom:3px;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();goToPlayer(\''+escJs(tm.name)+'\');" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-primary)\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.6rem;opacity:.6;">(tu)</span>':'')+'</div><div style="color:var(--accent);font-size:.7rem;margin-bottom:2px;">'+tm.kills+' kills</div><div style="color:var(--accent-orange);font-size:.7rem;">'+Math.round(tm.damageDealt)+' dano</div></div>';});h+='</div></div>';}
-  const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
-  // Top killer warning in detail view
+  const walkKm=((ps.walkDistance||0)/1000).toFixed(1);const rideKm=((ps.rideDistance||0)/1000).toFixed(1);
+  const hasLootOrMove=lootItems.length>0||parseFloat(walkKm)>0||parseFloat(rideKm)>0;
+  if(hasLootOrMove){
+    h+='<button class="md-collapsible-toggle" onclick="_mdToggleCollapsible(this)"><span>Loot y Movimiento</span><span class="arrow">&#x25BC;</span></button>';
+    h+='<div class="md-collapsible-body">';
+    // Movement stats
+    h+='<div style="display:flex;gap:12px;margin-top:12px;margin-bottom:8px;">';
+    h+='<div style="flex:1;background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);"><div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:700;">'+walkKm+'km</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;margin-top:2px;">A pie</div></div>';
+    h+='<div style="flex:1;background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);"><div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:700;">'+rideKm+'km</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;margin-top:2px;">Vehiculo</div></div>';
+    h+='</div>';
+    if(lootItems.length){h+='<div class="md-loot-grid">';lootItems.forEach(i=>{h+='<div class="md-loot-item"><span class="loot-val">'+i.v+'</span>'+i.l+'</div>';});h+='</div>';}
+    h+='</div>';
+  }
+  // Top killer warning
   const allParts=(match.included||[]).filter(i=>i.type==='participant');
   let detailTopK=null,detailTopKills=0;allParts.forEach(p=>{const k=p.attributes.stats.kills||0;if(k>detailTopKills){detailTopKills=k;detailTopK=p.attributes.stats.name;}});
   if(detailTopKills>=10&&detailTopK&&detailTopK.toLowerCase()!==pn.toLowerCase()){
@@ -3788,11 +3887,14 @@ function showMatchDetail(idx){
     h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(detailTopK)+'\');">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
     h+='</div></div>';
   }
-  // Kill Tree section
+  // Collapsible: Kill Tree
+  const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
   if(telemetryUrl){
-    h+='<div class="kt-section" id="killTreeSection"><div class="kt-title">&#x1F332; Kill Tree</div>';
+    h+='<button class="md-collapsible-toggle" onclick="_mdToggleCollapsible(this)"><span>Kill Tree</span><span class="arrow">&#x25BC;</span></button>';
+    h+='<div class="md-collapsible-body">';
+    h+='<div class="kt-section" id="killTreeSection" style="margin-top:0;border-top:none;padding-top:8px;">';
     h+='<div id="killTreeContent"><button onclick="loadKillTree(\''+telemetryUrl.replace(/'/g,"\\'")+'\',\''+pn.replace(/'/g,"\\'")+'\',this)" style="width:100%;background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.2);color:var(--accent);padding:10px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;">&#x1F52E; Cargar Kill Tree</button></div>';
-    h+='</div>';
+    h+='</div></div>';
   }
   // PUBG Report clip link
   const matchIdForClip=match.data?match.data.id:null;
@@ -3805,8 +3907,11 @@ function showMatchDetail(idx){
   h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F4F7; Compartir Partida</button></div>';
   h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
   document.getElementById('matchDetailContent').innerHTML=h;
+  // Apply placement color class to card
+  const card=document.querySelector('.match-detail-card');
+  card.className='match-detail-card '+plClass;
   document.getElementById('matchDetailPopup').classList.add('active');
-  document.querySelector('.match-detail-card').scrollTop=0;
+  card.scrollTop=0;
 }
 // ═══ SEASON WRAPPED ═══
 async function generateSeasonWrapped(){
