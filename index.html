@@ -18,7 +18,7 @@
 <meta property="og:description" content="De jugadores, para jugadores. El tracker de stats PUBG para PS5 y Xbox creado con +6000 horas de experiencia. Busca jugadores, compara stats, clanes y ranking en español.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://v4nz.com">
-<meta property="og:image" content="https://www.v4nz.com/og-image.png">
+<meta property="og:image" content="https://v4nz.com/og-image.png">
 <meta property="og:site_name" content="V4NZ PUBG Stats">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
 <meta name="google-site-verification" content="SlzlNt-fWG2S2fdsrJfkQGdYOxhMAvFRrjWO1Fw5A7M">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta name="twitter:image" content="https://www.v4nz.com/og-image.png">
+<meta name="twitter:image" content="https://v4nz.com/og-image.png">
 <meta name="twitter:site" content="@Kanneda__">
 <link rel="alternate" hreflang="es" href="https://v4nz.com">
 <link rel="alternate" hreflang="x-default" href="https://v4nz.com">
@@ -48,45 +48,51 @@
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <!-- Schema.org Structured Data for Google -->
 <script type="application/ld+json">
-{
+[{
   "@context": "https://schema.org",
   "@type": "WebApplication",
   "name": "V4NZ PUBG Console Stats",
+  "alternateName": "V4NZ",
   "url": "https://v4nz.com",
-  "description": "Tracker de estadisticas PUBG para PlayStation y Xbox en espanol. Busca jugadores, compara stats, gestiona clanes y consulta rankings en tiempo real desde la API oficial de PUBG.",
+  "description": "Tracker de estadísticas PUBG para PlayStation y Xbox en español. Busca jugadores, compara stats, gestiona clanes y consulta rankings en tiempo real desde la API oficial de PUBG.",
   "applicationCategory": "GameApplication",
   "operatingSystem": "Web",
   "inLanguage": "es",
-  "author": {
-    "@type": "Person",
-    "name": "KANNEDA",
-    "url": "https://www.kanneda.com"
-  },
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "EUR"
-  },
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.8",
-    "ratingCount": "50",
-    "bestRating": "5"
-  }
-}
-</script>
-<script type="application/ld+json">
-{
+  "author": {"@type": "Person", "name": "KANNEDA", "url": "https://www.kanneda.com"},
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
+  "screenshot": "https://v4nz.com/og-image.png",
+  "featureList": "Estadísticas de jugador, Historial de partidas, Comparador de jugadores, Sistema de clanes, Ranking de clanes, Top 500 leaderboard, Mapa de telemetría, Análisis IA del estilo de juego",
+  "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "50", "bestRating": "5"}
+},{
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "V4NZ",
+  "name": "V4NZ PUBG Stats",
   "url": "https://v4nz.com",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "https://v4nz.com/stats/psn/{search_term_string}",
+    "target": {"@type": "EntryPoint", "urlTemplate": "https://v4nz.com/stats/psn/{search_term_string}"},
     "query-input": "required name=search_term_string"
   }
-}
+},{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Jugador", "item": "https://v4nz.com"},
+    {"@type": "ListItem", "position": 2, "name": "Clanes", "item": "https://v4nz.com/clanes"},
+    {"@type": "ListItem", "position": 3, "name": "Ranking", "item": "https://v4nz.com/ranking"},
+    {"@type": "ListItem", "position": 4, "name": "Top 500", "item": "https://v4nz.com/top500"},
+    {"@type": "ListItem", "position": 5, "name": "Comparar", "item": "https://v4nz.com/comparar"}
+  ]
+},{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "¿Cómo buscar mis stats de PUBG en consola?", "acceptedAnswer": {"@type": "Answer", "text": "Entra en v4nz.com, selecciona tu plataforma (PlayStation o Xbox), escribe tu gamertag y pulsa buscar. Verás tu K/D, ADR, victorias, armas favoritas y más en tiempo real."}},
+    {"@type": "Question", "name": "¿V4NZ funciona para PS5 y Xbox Series?", "acceptedAnswer": {"@type": "Answer", "text": "Sí, V4NZ soporta todas las consolas: PS4, PS5, Xbox One y Xbox Series X/S. Los datos vienen de la API oficial de PUBG."}},
+    {"@type": "Question", "name": "¿Qué es el ADN de Jugador en V4NZ?", "acceptedAnswer": {"@type": "Answer", "text": "El ADN de Jugador es un análisis de tu estilo de juego que mide Agresividad, Precisión, Supervivencia, Movilidad y Soporte. Incluye un análisis avanzado con inteligencia artificial que clasifica tu perfil en arquetipos como Depredador, Francotirador o Rata."}},
+    {"@type": "Question", "name": "¿Cómo crear un clan en V4NZ?", "acceptedAnswer": {"@type": "Answer", "text": "Regístrate con Discord, ve a la pestaña Clanes, y crea tu clan con un tag y nombre. Puedes invitar miembros, ver stats agregadas del clan y competir en el ranking de clanes."}}
+  ]
+}]
 </script>
 <style>
 :root {
@@ -1233,45 +1239,19 @@ footer a { color: var(--accent); text-decoration: none; }
   .clan-stat .cs-label{font-size:.5rem}
 }
 </style>
-<script type="application/ld+json">
-[{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "V4NZ PUBG Stats",
-  "alternateName": "V4NZ",
-  "url": "https://v4nz.com",
-  "description": "De jugadores, para jugadores. El tracker de stats PUBG para PS5 y Xbox creado con +6000 horas de experiencia. Busca jugadores, compara stats, clanes y ranking en español.",
-  "applicationCategory": "GameApplication",
-  "operatingSystem": "Web",
-  "inLanguage": "es",
-  "author": {"@type": "Person", "name": "KANNEDA", "url": "https://www.kanneda.com"},
-  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
-  "screenshot": "https://v4nz.com/og-image.png",
-  "featureList": "Estadísticas de jugador, Historial de partidas, Comparador de jugadores, Sistema de clanes, Ranking de clanes, Top 500 leaderboard, Mapa de telemetría, Heatmap de kills"
-},{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "V4NZ PUBG Stats",
-  "url": "https://v4nz.com",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://v4nz.com/stats/psn/{search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
-},{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "Jugador", "item": "https://v4nz.com"},
-    {"@type": "ListItem", "position": 2, "name": "Clanes", "item": "https://v4nz.com/clanes"},
-    {"@type": "ListItem", "position": 3, "name": "Ranking", "item": "https://v4nz.com/ranking"},
-    {"@type": "ListItem", "position": 4, "name": "Top 500", "item": "https://v4nz.com/top500"},
-    {"@type": "ListItem", "position": 5, "name": "Comparar", "item": "https://v4nz.com/comparar"}
-  ]
-}]
-</script>
 </head>
 <body>
+<noscript>
+<div style="max-width:700px;margin:40px auto;padding:20px;font-family:sans-serif;color:#ccc;background:#0b0b12;">
+<h1>V4NZ — PUBG Console Stats Tracker</h1>
+<p>El tracker de estadísticas PUBG para PS5 y Xbox en español. Creado por jugadores de consola con más de 6000 horas de experiencia.</p>
+<h2>Funcionalidades</h2>
+<p>Búsqueda de jugadores por gamertag · Historial de partidas · Comparador de stats · Sistema de clanes · Ranking de clanes · Top 500 leaderboard · Mapa de telemetría · Análisis IA del estilo de juego (ADN de Jugador)</p>
+<h2>Secciones</h2>
+<p><a href="/clanes">Clanes PUBG</a> · <a href="/ranking">Ranking de Clanes</a> · <a href="/top500">Top 500</a> · <a href="/comparar">Comparar Jugadores</a></p>
+<p>Activa JavaScript para usar V4NZ.</p>
+</div>
+</noscript>
 <div class="bg-grid"></div>
 <div class="bg-radial"></div>
 

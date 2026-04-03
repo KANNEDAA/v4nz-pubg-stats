@@ -18,6 +18,16 @@ try { sharp = require('sharp'); } catch(e) { console.warn('⚠️  sharp not ins
 // Single dynamic import for node-fetch (ESM)
 const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
 
+// Cache index.html in memory (reload on file change in dev, or every 5min in prod)
+let _cachedHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+if (!process.env.RAILWAY_ENVIRONMENT) {
+  fs.watchFile(path.join(__dirname, 'index.html'), { interval: 2000 }, () => {
+    try { _cachedHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'); console.log('[HTML cache] reloaded'); } catch(e) {}
+  });
+} else {
+  setInterval(() => { try { _cachedHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'); } catch(e) {} }, 300000);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
@@ -2880,7 +2890,7 @@ app.get('*', (req, res) => {
   };
 
   try {
-    let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+    let html = _cachedHtml;
     let title, desc, canonicalUrl, ogImage;
 
     if (statsMatch) {
@@ -2889,13 +2899,13 @@ app.get('*', (req, res) => {
       title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
       desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
       canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
-      ogImage = `https://www.v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
+      ogImage = `https://v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
     } else if (clanMatch) {
       const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
       title = `Clan [${clanTag}] — PUBG Stats Consola | V4NZ`;
       desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
       canonicalUrl = `https://v4nz.com/clan/${encodeURIComponent(clanTag)}`;
-      ogImage = `https://www.v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
+      ogImage = `https://v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
     } else if (spaPages[req.path]) {
       title = spaPages[req.path].title;
       desc = spaPages[req.path].desc;
