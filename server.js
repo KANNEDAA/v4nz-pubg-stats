@@ -1698,6 +1698,17 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
   } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
 });
 
+// ============ Clear AI DNA cache for a player (admin use) ============
+app.delete('/api/ai-dna-cache', async (req, res) => {
+  const { playerName, platform } = req.query;
+  if (!playerName || !pool) return res.status(400).json({ error: 'Missing playerName' });
+  const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;
+  try {
+    const result = await pool.query('DELETE FROM api_cache WHERE cache_key = $1', [cacheKey]);
+    res.json({ ok: true, deleted: result.rowCount });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ============ AI DNA Analysis (MUST be before the PUBG API catch-all proxy) ============
 app.get('/api/ai-dna', async (req, res) => {
   try {
