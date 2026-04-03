@@ -556,6 +556,29 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-detail-card .close-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
 .match-back-btn { width:100%; margin-top:16px; padding:10px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
 .match-back-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+.audit-btn { width:100%; background:linear-gradient(135deg,rgba(255,200,0,0.12),rgba(255,106,0,0.12)); border:1px solid rgba(255,200,0,0.3); color:var(--accent-yellow); padding:10px 12px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.82rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; transition:all .2s; }
+.audit-btn:hover { background:linear-gradient(135deg,rgba(255,200,0,0.22),rgba(255,106,0,0.22)); }
+.audit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.audit-result { margin-top:16px; animation:fadeInUp .5s ease; }
+.audit-grade { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:16px; }
+.audit-grade-letter { font-family:'Orbitron',sans-serif; font-size:3rem; font-weight:900; line-height:1; }
+.audit-grade-info { text-align:left; }
+.audit-grade-score { font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:700; color:var(--text-primary); }
+.audit-grade-label { font-size:.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; }
+.audit-cats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.audit-cat { background:var(--bg-secondary); border-radius:8px; padding:10px; border:1px solid var(--border); }
+.audit-cat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.audit-cat-name { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-secondary); }
+.audit-cat-score { font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700; }
+.audit-cat-bar { height:4px; border-radius:2px; background:var(--bg-tertiary); overflow:hidden; }
+.audit-cat-fill { height:100%; border-radius:2px; transition:width .6s ease; }
+.audit-cat-detail { font-size:.68rem; color:var(--text-dim); margin-top:6px; line-height:1.3; }
+.audit-section { margin-top:12px; background:var(--bg-secondary); border-radius:8px; padding:12px; border:1px solid var(--border); }
+.audit-section-title { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.audit-section ul { list-style:none; padding:0; margin:0; }
+.audit-section li { font-size:.78rem; color:var(--text-secondary); padding:4px 0; line-height:1.4; }
+.audit-section li::before { margin-right:6px; }
+.audit-consejo { margin-top:12px; background:rgba(255,200,0,0.06); border:1px solid rgba(255,200,0,0.15); border-radius:8px; padding:12px; font-size:.78rem; color:var(--text-secondary); line-height:1.5; }
 .match-map-img { width:100%; height:80px; border-radius:10px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; margin-bottom:16px; overflow:hidden; position:relative; }
 .match-map-img.has-bg { height:160px; }
 .match-map-img .map-label { font-family:'Orbitron',sans-serif; font-size:1.6rem; font-weight:800; color:var(--accent); text-shadow:0 0 20px rgba(0,240,255,.3); }
@@ -3962,6 +3985,12 @@ function showMatchDetail(idx){
     h+='<div style="margin-top:12px;"><a href="'+esc(clip.url)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--accent-purple);padding:10px 12px;border-radius:6px;font-weight:700;font-size:.82rem;font-family:Rajdhani,sans-serif;text-decoration:none;text-transform:uppercase;letter-spacing:1px;transition:all .2s;" onmouseover="this.style.background=\'rgba(168,85,247,0.25)\'" onmouseout="this.style.background=\'rgba(168,85,247,0.12)\'">&#x1F3AC; Ver Video en PUBG Report ('+esc(clip.streamer)+')</a></div>';
   }
   if(telemetryUrl){h+='<div style="margin-top:12px;"><button onclick="openTelemMap(\''+telemetryUrl+'\',\''+pn.replace(/'/g,"\\'")+'\',\''+a.mapName+'\','+idx+')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;font-family:Rajdhani,sans-serif;">&#x1F5FA; Ver Mapa de Telemetria</button></div>';}
+  // Telemetry audit button
+  const auditMatchId=match.data?match.data.id:null;
+  if(auditMatchId){
+    h+='<div style="margin-top:12px;" id="auditBtnWrap"><button class="audit-btn" onclick="requestTelemetryAudit(\''+escJs(auditMatchId)+'\',\''+escJs(pn)+'\',\''+escJs(currentPlatform||'psn')+'\',this)">&#x1F50D; Auditar Partida con IA</button></div>';
+    h+='<div id="auditResult"></div>';
+  }
   // Share match card button
   h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F4F7; Compartir Partida</button></div>';
   h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
@@ -3974,6 +4003,96 @@ function showMatchDetail(idx){
   document.getElementById('matchDetailPopup').classList.add('active');
   card.scrollTop=0;
 }
+// ═══ TELEMETRY AUDIT ═══
+let _auditAbort=null;
+async function requestTelemetryAudit(matchId,playerName,platform,btn){
+  if(_auditAbort){try{_auditAbort.abort();}catch(e){}}
+  const resultDiv=document.getElementById('auditResult');
+  if(!resultDiv)return;
+  // Loading state
+  btn.disabled=true;
+  btn.innerHTML='&#x23F3; ANALIZANDO PARTIDA...';
+  btn.style.opacity='0.6';
+  resultDiv.innerHTML='<div style="text-align:center;padding:20px;"><div class="scan-line" style="width:80%;margin:0 auto;height:2px;background:linear-gradient(90deg,transparent,var(--accent-yellow),transparent);animation:pulse 1.5s infinite;border-radius:2px;"></div><div style="margin-top:12px;font-size:.75rem;color:var(--text-dim);">Descargando telemetria y analizando con IA...</div><div style="margin-top:4px;font-size:.65rem;color:var(--text-dim);">Esto puede tardar 15-30 segundos</div></div>';
+  resultDiv.scrollIntoView({behavior:'smooth',block:'center'});
+  const controller=new AbortController();
+  _auditAbort=controller;
+  try{
+    const url='/api/telemetry-audit?matchId='+encodeURIComponent(matchId)+'&playerName='+encodeURIComponent(playerName)+'&platform='+encodeURIComponent(platform);
+    const resp=await fetch(url,{signal:controller.signal});
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({error:'Error '+resp.status}));
+      throw new Error(err.error||'Error al auditar');
+    }
+    const data=await resp.json();
+    renderAuditResult(data,resultDiv);
+    btn.innerHTML='&#x2705; AUDITORIA COMPLETADA';
+    btn.style.opacity='0.5';
+  }catch(e){
+    if(e.name==='AbortError')return;
+    resultDiv.innerHTML='<div style="text-align:center;padding:16px;color:var(--accent-red);font-size:.8rem;">'+esc(e.message||'Error al auditar la partida')+'</div>';
+    btn.disabled=false;
+    btn.innerHTML='&#x1F50D; Reintentar Auditoria';
+    btn.style.opacity='1';
+  }
+}
+function renderAuditResult(data,container){
+  const gradeColors={S:'#ffd700',A:'#00ff88',B:'#00f0ff',C:'#ff6b00',D:'#ff3355',F:'#888'};
+  const gc=gradeColors[data.grade]||'var(--text-primary)';
+  let h='<div class="audit-result">';
+  // Grade header
+  h+='<div class="audit-grade">';
+  h+='<div class="audit-grade-letter" style="color:'+gc+';">'+esc(data.grade)+'</div>';
+  h+='<div class="audit-grade-info"><div class="audit-grade-score">'+data.score_total.toFixed(1)+' / 10</div>';
+  h+='<div class="audit-grade-label" style="color:'+gc+';">'+(esc(data.grade_label)||'')+'</div></div>';
+  h+='</div>';
+  // Resumen
+  if(data.resumen){
+    h+='<div style="text-align:center;font-size:.8rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.4;padding:0 8px;">'+esc(data.resumen)+'</div>';
+  }
+  // Category scores
+  if(data.scores){
+    const catNames={combate:'Combate',supervivencia:'Supervivencia',rotacion:'Rotacion',decisiones:'Decisiones',precision:'Precision',inventario:'Inventario'};
+    const catIcons={combate:'&#x2694;&#xFE0F;',supervivencia:'&#x1F6E1;&#xFE0F;',rotacion:'&#x1F3AF;',decisiones:'&#x1F9E0;',precision:'&#x1F52B;',inventario:'&#x1F392;'};
+    h+='<div class="audit-cats">';
+    for(const[key,val] of Object.entries(data.scores)){
+      const sc=typeof val==='object'?val.score:val;
+      const det=typeof val==='object'?val.detalle:'';
+      const pct=Math.max(0,Math.min(100,sc*10));
+      const catColor=sc>=7.5?'#00ff88':sc>=6?'#00f0ff':sc>=4.5?'#ff6b00':'#ff3355';
+      h+='<div class="audit-cat">';
+      h+='<div class="audit-cat-header"><span class="audit-cat-name">'+(catIcons[key]||'')+' '+(catNames[key]||key)+'</span><span class="audit-cat-score" style="color:'+catColor+';">'+sc.toFixed(1)+'</span></div>';
+      h+='<div class="audit-cat-bar"><div class="audit-cat-fill" style="width:'+pct+'%;background:'+catColor+';"></div></div>';
+      if(det)h+='<div class="audit-cat-detail">'+esc(det)+'</div>';
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+  // Lo que hiciste bien
+  if(data.lo_que_hiciste_bien&&data.lo_que_hiciste_bien.length){
+    h+='<div class="audit-section"><div class="audit-section-title" style="color:var(--accent-green);">&#x2705; Lo que hiciste bien</div><ul>';
+    data.lo_que_hiciste_bien.forEach(function(item){h+='<li>'+esc(item)+'</li>';});
+    h+='</ul></div>';
+  }
+  // Lo que puedes mejorar
+  if(data.lo_que_puedes_mejorar&&data.lo_que_puedes_mejorar.length){
+    h+='<div class="audit-section"><div class="audit-section-title" style="color:var(--accent-orange);">&#x26A0;&#xFE0F; Lo que puedes mejorar</div><ul>';
+    data.lo_que_puedes_mejorar.forEach(function(item){h+='<li>'+esc(item)+'</li>';});
+    h+='</ul></div>';
+  }
+  // Momento clave
+  if(data.momento_clave){
+    h+='<div class="audit-section"><div class="audit-section-title" style="color:var(--accent-purple);">&#x2B50; Momento clave</div><div style="font-size:.78rem;color:var(--text-secondary);line-height:1.4;">'+esc(data.momento_clave)+'</div></div>';
+  }
+  // Consejo
+  if(data.consejo){
+    h+='<div class="audit-consejo"><strong style="color:var(--accent-yellow);">&#x1F4A1; Consejo:</strong> '+esc(data.consejo)+'</div>';
+  }
+  h+='</div>';
+  container.innerHTML=h;
+  setTimeout(function(){container.scrollIntoView({behavior:'smooth',block:'start'});},150);
+}
+
 // ═══ SEASON WRAPPED ═══
 async function generateSeasonWrapped(){
   const s=getActiveStats();if(!s||!s.roundsPlayed)return;
