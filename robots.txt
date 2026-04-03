@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /favorites/
+
+Sitemap: https://v4nz.com/sitemap.xml

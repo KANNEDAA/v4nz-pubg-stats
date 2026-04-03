@@ -97,7 +97,19 @@ function clearAuthCookie(res) {
   res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
 }
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), {
+  maxAge: '7d',
+  setHeaders: (res, filePath) => {
+    // HTML always fresh (SPA with dynamic meta)
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+    // Service worker must not be cached aggressively
+    else if (filePath.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 // ═══ AUTO-CREATE TABLES ═══
 async function initDB() {
@@ -2812,6 +2824,45 @@ app.get('/maps/:name.png', async (req, res) => {
   res.status(502).send('Map image unavailable');
 });
 
+
+// ═══ DYNAMIC SITEMAP ═══
+app.get('/sitemap.xml', async (req, res) => {
+  const staticPages = [
+    { loc: '/', priority: '1.0', changefreq: 'daily' },
+    { loc: '/clanes', priority: '0.8', changefreq: 'daily' },
+    { loc: '/ranking', priority: '0.8', changefreq: 'daily' },
+    { loc: '/top500', priority: '0.7', changefreq: 'daily' },
+    { loc: '/comparar', priority: '0.6', changefreq: 'weekly' }
+  ];
+
+  let clanUrls = [];
+  if (pool) {
+    try {
+      const { rows } = await pool.query("SELECT tag FROM clans WHERE active = true ORDER BY total_kills DESC LIMIT 200");
+      clanUrls = rows.map(r => ({
+        loc: '/clan/' + encodeURIComponent(r.tag),
+        priority: '0.5',
+        changefreq: 'weekly'
+      }));
+    } catch (e) { console.error('Sitemap clan query error:', e.message); }
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const urls = [...staticPages, ...clanUrls];
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(u => `  <url>
+    <loc>https://v4nz.com${u.loc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+  res.set('Content-Type', 'application/xml');
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.send(xml);
+});
 
 // Fallback: serve index.html for SPA routes with dynamic meta tags
 app.get('*', (req, res) => {
