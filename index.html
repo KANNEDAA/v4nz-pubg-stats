@@ -383,6 +383,31 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .msc-footer { display:flex; justify-content:space-between; align-items:center; padding:0 32px 20px; }
 .msc-footer-logo { font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:900; background:linear-gradient(135deg,#00f0ff,#ff6b00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:4px; }
 .msc-footer-url { font-size:.65rem; color:#555; text-transform:uppercase; letter-spacing:2px; }
+/* Audit Share Card (offscreen, rendered by html2canvas) */
+.audit-share-card { position:fixed; left:-9999px; top:0; width:540px; background:linear-gradient(170deg,#0b0b12 0%,#0f1024 50%,#12081f 100%); font-family:'Rajdhani',sans-serif; display:flex; flex-direction:column; padding:0; box-sizing:border-box; overflow:hidden; z-index:99999; color:#fff; }
+.asc-header { padding:24px 32px 16px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.06); }
+.asc-title { font-family:'Orbitron',sans-serif; font-size:.7rem; font-weight:700; color:#ffd700; text-transform:uppercase; letter-spacing:3px; margin-bottom:4px; }
+.asc-player { font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:800; letter-spacing:2px; }
+.asc-match-info { font-size:.7rem; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; }
+.asc-grade-row { display:flex; align-items:center; justify-content:center; gap:16px; padding:20px 32px; }
+.asc-grade-letter { font-family:'Orbitron',sans-serif; font-size:4rem; font-weight:900; line-height:1; }
+.asc-grade-info { text-align:left; }
+.asc-grade-score { font-family:'Orbitron',sans-serif; font-size:1.4rem; font-weight:800; }
+.asc-grade-label { font-size:.75rem; color:#aaa; text-transform:uppercase; letter-spacing:1px; }
+.asc-cats { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 32px; }
+.asc-cat { background:rgba(255,255,255,0.03); border-radius:10px; padding:10px 12px; border:1px solid rgba(255,255,255,0.06); }
+.asc-cat-top { display:flex; justify-content:space-between; align-items:center; }
+.asc-cat-name { font-size:.65rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.5px; }
+.asc-cat-score { font-family:'Orbitron',sans-serif; font-size:.85rem; font-weight:700; }
+.asc-cat-bar { height:3px; border-radius:2px; background:rgba(255,255,255,0.08); margin-top:6px; }
+.asc-cat-fill { height:100%; border-radius:2px; }
+.asc-section { padding:0 32px; margin-top:12px; }
+.asc-section-title { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.asc-list { font-size:.72rem; color:#bbb; line-height:1.6; }
+.asc-consejo { margin:12px 32px; padding:10px 14px; background:rgba(255,200,0,0.06); border:1px solid rgba(255,200,0,0.12); border-radius:8px; font-size:.72rem; color:#ccc; line-height:1.5; }
+.asc-footer { display:flex; justify-content:space-between; align-items:center; padding:16px 32px; margin-top:auto; }
+.asc-footer-logo { font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:900; background:linear-gradient(135deg,#00f0ff,#ff6b00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:4px; }
+.asc-footer-url { font-size:.6rem; color:#555; text-transform:uppercase; letter-spacing:2px; }
 /* EVOLUTION SECTION */
 .evo-section { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-top:16px; }
 .evo-title { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
@@ -4088,9 +4113,77 @@ function renderAuditResult(data,container){
   if(data.consejo){
     h+='<div class="audit-consejo"><strong style="color:var(--accent-yellow);">&#x1F4A1; Consejo:</strong> '+esc(data.consejo)+'</div>';
   }
+  // Share button
+  h+='<div style="margin-top:14px;"><button class="audit-btn" onclick="shareAuditCard()" style="background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border-color:rgba(0,240,255,0.25);color:var(--accent);">&#x1F4F8; Compartir Auditoria</button></div>';
   h+='</div>';
   container.innerHTML=h;
+  // Store data for share card
+  window._lastAuditData=data;
   setTimeout(function(){container.scrollIntoView({behavior:'smooth',block:'start'});},150);
+}
+async function shareAuditCard(){
+  const data=window._lastAuditData;if(!data)return;
+  const gradeColors={S:'#ffd700',A:'#00ff88',B:'#00f0ff',C:'#ff6b00',D:'#ff3355',F:'#888'};
+  const gc=gradeColors[data.grade]||'#fff';
+  const catNames={combate:'Combate',supervivencia:'Supervivencia',rotacion:'Rotacion',decisiones:'Decisiones',precision:'Precision',inventario:'Inventario'};
+  const card=document.createElement('div');
+  card.className='audit-share-card';
+  // Header
+  let h='<div class="asc-header"><div class="asc-title">Auditoria de Partida IA</div>';
+  h+='<div class="asc-player">'+esc(data.playerName||'')+'</div>';
+  h+='<div class="asc-match-info">'+(data.mapName||'')+ ' &mdash; '+(data.gameMode||'')+' &mdash; #'+(data.placement||'?')+'</div></div>';
+  // Grade
+  h+='<div class="asc-grade-row"><div class="asc-grade-letter" style="color:'+gc+';">'+esc(data.grade)+'</div>';
+  h+='<div class="asc-grade-info"><div class="asc-grade-score">'+data.score_total.toFixed(1)+' / 10</div>';
+  h+='<div class="asc-grade-label" style="color:'+gc+';">'+esc(data.grade_label||'')+'</div></div></div>';
+  // Categories
+  if(data.scores){
+    h+='<div class="asc-cats">';
+    for(const[key,val] of Object.entries(data.scores)){
+      const sc=typeof val==='object'?val.score:val;
+      const pct=Math.max(0,Math.min(100,sc*10));
+      const cc=sc>=7.5?'#00ff88':sc>=6?'#00f0ff':sc>=4.5?'#ff6b00':'#ff3355';
+      h+='<div class="asc-cat"><div class="asc-cat-top"><span class="asc-cat-name">'+(catNames[key]||key)+'</span><span class="asc-cat-score" style="color:'+cc+';">'+sc.toFixed(1)+'</span></div>';
+      h+='<div class="asc-cat-bar"><div class="asc-cat-fill" style="width:'+pct+'%;background:'+cc+';"></div></div></div>';
+    }
+    h+='</div>';
+  }
+  // Strengths
+  if(data.lo_que_hiciste_bien&&data.lo_que_hiciste_bien.length){
+    h+='<div class="asc-section"><div class="asc-section-title" style="color:#00ff88;">&#x2705; Lo que hiciste bien</div>';
+    h+='<div class="asc-list">'+data.lo_que_hiciste_bien.map(function(i){return'• '+esc(i);}).join('<br>')+'</div></div>';
+  }
+  // Improvements
+  if(data.lo_que_puedes_mejorar&&data.lo_que_puedes_mejorar.length){
+    h+='<div class="asc-section"><div class="asc-section-title" style="color:#ff6b00;">&#x26A0;&#xFE0F; Lo que puedes mejorar</div>';
+    h+='<div class="asc-list">'+data.lo_que_puedes_mejorar.map(function(i){return'• '+esc(i);}).join('<br>')+'</div></div>';
+  }
+  // Consejo
+  if(data.consejo){
+    h+='<div class="asc-consejo"><strong style="color:#ffd700;">&#x1F4A1;</strong> '+esc(data.consejo)+'</div>';
+  }
+  // Footer
+  h+='<div class="asc-footer"><div class="asc-footer-logo">V4NZ</div><div class="asc-footer-url">v4nz.com</div></div>';
+  card.innerHTML=h;
+  document.body.appendChild(card);
+  try{
+    const canvas=await html2canvas(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
+    card.remove();
+    canvas.toBlob(async function(blob){
+      if(!blob)return;
+      const fname=(data.playerName||'audit')+'_audit_'+data.grade+'.png';
+      const url=URL.createObjectURL(blob);
+      const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+      const shareText=(data.playerName||'')+' — Auditoria IA: '+data.grade+' ('+data.score_total.toFixed(1)+'/10) en '+(data.mapName||'')+' | v4nz.com';
+      if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(shareText);}catch(e){}}
+      const toast=document.createElement('div');
+      toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#ffd700;color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';
+      toast.textContent='Imagen guardada + texto copiado';
+      document.body.appendChild(toast);
+      requestAnimationFrame(function(){toast.style.opacity='1';setTimeout(function(){toast.style.opacity='0';setTimeout(function(){toast.remove();},300);},2000);});
+    },'image/png');
+  }catch(e){console.error('Share audit card error:',e);card.remove();}
 }
 
 // ═══ SEASON WRAPPED ═══
