@@ -1835,12 +1835,28 @@ Genera el análisis JSON:
   "scores": {"agresividad": 0-100, "precision": 0-100, "supervivencia": 0-100, "movilidad": 0-100, "soporte": 0-100}
 }`;
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1200,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }]
-    });
+    // Retry up to 2 times on transient errors
+    let response, lastErr;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        response = await client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1200,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        });
+        break;
+      } catch (apiErr) {
+        lastErr = apiErr;
+        console.error(`AI DNA API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
+        if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        throw apiErr;
+      }
+    }
+    if (!response) throw lastErr || new Error('AI API failed after retries');
 
     const text = response.content[0]?.text || '';
     let aiResult;
@@ -1849,12 +1865,13 @@ Genera el análisis JSON:
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       aiResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
     } catch (e) {
-      console.error('AI DNA parse error:', text);
+      console.error('AI DNA parse error, raw text:', text.substring(0, 500));
       return res.status(500).json({ error: 'Failed to parse AI response' });
     }
 
     // Validate required fields
     if (!aiResult.role || !aiResult.description || !aiResult.scores) {
+      console.error('AI DNA incomplete response, keys:', Object.keys(aiResult));
       return res.status(500).json({ error: 'Incomplete AI response' });
     }
 
@@ -1871,8 +1888,8 @@ Genera el análisis JSON:
     res.json(aiResult);
 
   } catch (e) {
-    console.error('AI DNA error:', e);
-    res.status(500).json({ error: 'AI analysis failed' });
+    console.error('AI DNA error:', e.status || e.code || '', e.message || e);
+    res.status(500).json({ error: 'AI analysis failed', detail: e.message || 'Unknown error' });
   }
 });
 
