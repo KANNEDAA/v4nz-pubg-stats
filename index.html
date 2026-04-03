@@ -5326,13 +5326,19 @@ function renderAiDna(data) {
   ];
   const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" style="width:' + b.val + '%;background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
 
-  const insightsHtml = (data.insights || []).map(i => '<div class="ai-dna-insight">' + i + '</div>').join('');
+  const insightsHtml = (data.insights || []).map((ins, idx) => {
+    const icon = idx === 0 ? '💪' : idx === 1 ? '⚠️' : '🔍';
+    const label = idx === 0 ? 'Fortaleza' : idx === 1 ? 'Mejorable' : 'Curiosidad';
+    return '<div class="ai-dna-insight"><span style="font-weight:700;color:' + (idx === 0 ? '#00ff88' : idx === 1 ? '#ff6b00' : '#a855f7') + ';">' + icon + ' ' + label + ':</span> ' + ins + '</div>';
+  }).join('');
+
+  const tipHtml = data.tip ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(255,200,0,0.06);border:1px solid rgba(255,200,0,0.15);border-radius:8px;font-size:.78rem;color:#ccc;line-height:1.5;text-align:left;"><strong style="color:#ffd700;">💡 Consejo:</strong> ' + data.tip + '</div>' : '';
 
   const name = currentPlayerData?.attributes?.name || 'Jugador';
   const rounds = s.roundsPlayed || 0;
 
   const sect = document.getElementById('personalitySection');
-  sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + data.role + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-desc">' + data.description + '</div><div class="ai-dna-insights">' + insightsHtml + '</div><div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + (data.role || '').replace(/'/g, "\\'") + '\')">🔗 COMPARTIR TEXTO</button></div><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
+  sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + data.role + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-desc">' + data.description + '</div><div class="ai-dna-insights">' + insightsHtml + '</div>' + tipHtml + '<div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + (data.role || '').replace(/'/g, "\\'") + '\')">🔗 COMPARTIR TEXTO</button></div><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
   sect.classList.add('visible');
   drawDnaRadar('dnaRadarCanvas', scores, roleColor);
   // Scroll to result after render so fadeInUp animation is visible

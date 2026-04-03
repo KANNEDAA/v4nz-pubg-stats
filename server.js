@@ -1735,42 +1735,98 @@ app.get('/api/ai-dna', async (req, res) => {
     const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const systemPrompt = `Eres V4NZ AI, un analista experto de PUBG para consola (PlayStation/Xbox). Analizas estadísticas de jugadores y generas perfiles de personalidad ÚNICOS y detallados.
+    const systemPrompt = `Eres V4NZ AI, el analista experto de PUBG para consola (PlayStation/Xbox) de v4nz.com. Analizas estadísticas de jugadores y generas perfiles de personalidad ÚNICOS, detallados y técnicamente precisos.
 
-REGLAS ESTRICTAS:
+═══ BENCHMARKS REALES PSN/XBOX CONSOLA (Temporada 40+) ═══
+K/D: Top 1% = 5.0+ | Top 5% = 4.0-5.0 | Top 10% = 3.0-4.0 | Top 25% = 2.0-3.0 | Media = 1.0-1.5 | Bajo = <1.0
+ADR: Top 1% = 350+ | Top 5% = 250-350 | Top 10% = 180-250 | Media = 100-150 | Bajo = <80
+HS%: Top 1% = 25%+ | Bueno = 18-25% | Normal consola = 12-18% | Bajo = <12%
+Win Rate: Top 1% = 20%+ | Bueno = 10-20% | Normal = 3-8% | Bajo = <3%
+Top10 Rate: Bueno = >40% | Normal = 25-40% | Bajo = <20%
+
+═══ PATRONES DE DIAGNÓSTICO (CRUCES DE STATS) ═══
+SIEMPRE cruza al menos 3 stats. Una stat aislada puede engañar.
+
+• K/D alto + ADR alto = Jugador REALMENTE bueno, hace daño y remata
+• K/D alto + ADR bajo (<150) = Probable bot farmer o muy pasivo, espera kills fáciles
+• K/D alto + HS% alto = Jugador técnico, excelente control del arma
+• K/D alto + HS% bajo = Posible problema de mando o solo farmea bots de cerca
+• K/D alto + Win Rate bajo = Bueno en combate pero no sabe cerrar partidas/gestionar círculo
+• ADR alto + K/D bajo = Support del squad — hace el daño, el equipo remata (NO es malo)
+• Revives altos = Pilar del equipo, NUNCA decirle que suba K/D
+• Assists/Kill ratio >0.5 = Jugador de equipo, comparte daño
+• Longest Kill >300m = Usa snipers regularmente con confianza
+• Longest Kill <200m = Raramente usa larga distancia, jugador CQC/mid range
+• Walk dist alta + Ride dist baja = Jugador táctico, evita ruido de vehículo
+• Walk dist baja + Ride dist alta = "Road warrior", mucho vehículo
+• Survival Time >28min = Muy pasivo/rat | 20-28min = Equilibrado | <15min = Muy agresivo
+
+═══ BOT RATIO — CLAVE PARA HONESTIDAD ═══
+• Bot ratio <15%: K/D es fiable, stats reales
+• Bot ratio 15-30%: K/D algo inflado, el "real" contra humanos es ~10-15% menor
+• Bot ratio 30-50%: K/D significativamente inflado, mencionar con tacto
+• Bot ratio >50%: Stats apenas analizables, ser honesto pero constructivo
+Fórmula: Si K/D > 3.5 Y ADR < 200 Y Longest Kill < 200m → MUY probable bot farming
+
+═══ ARQUETIPOS DE JUGADOR ═══
+• DEPREDADOR: K/D >3, ADR >250, agresivo, busca pelea, survival time bajo
+• RATA/SUPERVIVIENTE: K/D >1.5, ADR <150, survival time >25min, Win Rate alto, pocos kills
+• FRANCOTIRADOR: HS% >20%, Longest Kill >400m, ADR moderado, kills a distancia
+• SUPPORT: Revives altos, assists altos, ADR puede ser alto pero K/D moderado
+• TÉCNICO: HS% >22%, ADR >200, balance entre agresividad y supervivencia
+• BOT FARMER: K/D >3 con ADR <200 y bot ratio >40%, stats infladas
+
+═══ REGLAS ESTRICTAS ═══
 - El rol SIEMPRE debe ser 2 palabras creativas en español, NUNCA una sola palabra
-- Los insights deben ser MUY ESPECÍFICOS a los números del jugador, nunca genéricos
+- Los insights deben ser MUY ESPECÍFICOS a los números del jugador, NUNCA genéricos
+- SIEMPRE menciona el percentil real basado en los benchmarks de arriba
+- Si bot ratio >30%, DEBES mencionarlo en la descripción con tacto constructivo
 - Habla directamente al jugador usando "tú"
-- Incluye percentiles aproximados cuando sea relevante
+- El ADR es más honesto que el K/D — dale más peso en tu análisis
 - Responde SOLO con JSON válido, sin markdown ni explicaciones
 - Los scores pueden diferir de los heurísticos si tu análisis lo justifica`;
 
-    const userPrompt = `Analiza este jugador de PUBG:
+    const userPrompt = `Analiza este jugador de PUBG consola:
 
 Nombre: ${playerName} (${platform || 'psn'})
-K/D: ${stats.kd} | Daño medio/partida: ${stats.avgDamage} | Headshot%: ${stats.hsRate}%
-Win Rate: ${stats.winRate}% | Top 10: ${stats.top10Rate}%
-Kills/partida: ${stats.killsPerRound} | Longest Kill: ${stats.longestKill}m
-Distancia a pie/partida: ${stats.walkDistPerRound}m | En vehículo/partida: ${stats.rideDistPerRound}m
-Revives/partida: ${stats.revivesPerRound} | Asistencias/partida: ${stats.assistsPerRound}
-Curas/partida: ${stats.healsPerRound}
-Total partidas jugadas: ${stats.roundsPlayed}
-${stats.botRatio != null ? `Bot ratio: ${stats.botRatio}%` : ''}
-Rol heurístico actual: ${stats.role}
-Scores actuales: AGR ${stats.dnaScores?.agresividad || '?'}, PRE ${stats.dnaScores?.precision || '?'}, SUP ${stats.dnaScores?.supervivencia || '?'}, MOV ${stats.dnaScores?.movilidad || '?'}, SOP ${stats.dnaScores?.soporte || '?'}
 
-Genera el análisis JSON con este formato:
+STATS PRINCIPALES:
+• K/D: ${stats.kd} | ADR (Daño medio/partida): ${stats.avgDamage}
+• Headshot%: ${stats.hsRate}% | Win Rate: ${stats.winRate}% | Top 10: ${stats.top10Rate}%
+• Kills/partida: ${stats.killsPerRound} | Longest Kill: ${stats.longestKill}m
+
+MOVIMIENTO Y ESTILO:
+• Distancia a pie/partida: ${stats.walkDistPerRound}m | En vehículo/partida: ${stats.rideDistPerRound}m
+
+EQUIPO (squad):
+• Revives/partida: ${stats.revivesPerRound} | Asistencias/partida: ${stats.assistsPerRound}
+• Curas/partida: ${stats.healsPerRound}
+
+CONTEXTO:
+• Total partidas: ${stats.roundsPlayed}
+${stats.botRatio != null ? `• Bot ratio estimado: ${stats.botRatio}%` : '• Bot ratio: no disponible'}
+• Rol heurístico actual: ${stats.role}
+• Scores heurísticos: AGR ${stats.dnaScores?.agresividad || '?'}, PRE ${stats.dnaScores?.precision || '?'}, SUP ${stats.dnaScores?.supervivencia || '?'}, MOV ${stats.dnaScores?.movilidad || '?'}, SOP ${stats.dnaScores?.soporte || '?'}
+
+INSTRUCCIONES:
+1. Cruza las stats usando los patrones de diagnóstico del system prompt
+2. Identifica el arquetipo real del jugador
+3. Si bot ratio >30%, ajusta tu evaluación siendo honesto pero constructivo
+4. Usa los benchmarks reales para dar percentiles PRECISOS
+
+Genera el análisis JSON:
 {
   "role": "DOS PALABRAS CREATIVAS EN MAYÚSCULAS",
-  "roleColor": "#hexcolor (elige: #ff3355=agresivo, #a855f7=técnico, #ffd700=élite, #00ff88=superviviente, #ff6b00=caótico, #00f0ff=táctico)",
-  "description": "2-3 frases personalizadas analizando su estilo real",
-  "insights": ["curiosidad 1 específica", "curiosidad 2 específica", "curiosidad 3 específica"],
+  "roleColor": "#hexcolor (#ff3355=agresivo, #a855f7=técnico, #ffd700=élite, #00ff88=superviviente, #ff6b00=caótico, #00f0ff=táctico)",
+  "description": "2-3 frases personalizadas con diagnóstico cruzado real. Menciona percentiles. Si bot ratio alto, menciónalo con tacto.",
+  "insights": ["1 FORTALEZA principal del jugador con datos", "1 DEBILIDAD o área de mejora con datos", "1 dato SORPRENDENTE o curioso del cruce de stats"],
+  "tip": "1 consejo accionable y específico basado en la debilidad detectada",
   "scores": {"agresividad": 0-100, "precision": 0-100, "supervivencia": 0-100, "movilidad": 0-100, "soporte": 0-100}
 }`;
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 800,
+      max_tokens: 1200,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     });
