@@ -1809,6 +1809,325 @@ Genera el análisis JSON con este formato:
   }
 });
 
+// ============ Telemetry Audit (MUST be before the PUBG API catch-all proxy) ============
+
+// Specific rate limit for telemetry: 3 requests per minute per IP
+const telemetryRateLimitMap = new Map();
+function telemetryRateLimit(req, res, next) {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+  const now = Date.now();
+  let entry = telemetryRateLimitMap.get(ip);
+  if (!entry || now - entry.start > 60000) {
+    entry = { start: now, count: 1 };
+    telemetryRateLimitMap.set(ip, entry);
+  } else {
+    entry.count++;
+  }
+  if (entry.count > 3) {
+    return res.status(429).json({ error: 'Máximo 3 auditorías por minuto. Espera un momento.' });
+  }
+  next();
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of telemetryRateLimitMap) {
+    if (now - entry.start > 120000) telemetryRateLimitMap.delete(ip);
+  }
+}, 300000);
+
+app.get('/api/telemetry-audit', telemetryRateLimit, async (req, res) => {
+  try {
+    const { matchId, playerName, platform } = req.query;
+    if (!matchId || !playerName) {
+      return res.status(400).json({ error: 'Missing matchId or playerName' });
+    }
+    const shard = platform || 'psn';
+
+    // 1. Check cache first (telemetry audits cached 24h)
+    const cacheKey = `telemetry-audit:${matchId}:${playerName.toLowerCase()}:${shard}`;
+    if (pool) {
+      try {
+        const cached = await pool.query(
+          `SELECT data FROM api_cache WHERE cache_key = $1 AND created_at + (ttl_seconds || ' seconds')::interval > NOW()`,
+          [cacheKey]
+        );
+        if (cached.rows.length > 0) {
+          return res.json(cached.rows[0].data);
+        }
+      } catch (e) { console.error('Telemetry cache check error:', e); }
+    }
+
+    // 2. Fetch match data from PUBG API
+    if (!SERVER_API_KEY) {
+      return res.status(503).json({ error: 'PUBG API key not configured' });
+    }
+
+    const matchUrl = `https://api.pubg.com/shards/${shard}/matches/${matchId}`;
+    const matchRes = await fetchWithTimeout(fetch, matchUrl, {
+      headers: { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' }
+    }, 15000);
+
+    if (!matchRes.ok) {
+      return res.status(matchRes.status).json({ error: `Match not found (${matchRes.status})` });
+    }
+
+    const matchData = await matchRes.json();
+
+    // Extract match info
+    const matchAttrs = matchData.data?.attributes || {};
+    const mapName = matchAttrs.mapName || 'Unknown';
+    const gameMode = matchAttrs.gameMode || 'Unknown';
+    const duration = matchAttrs.duration || 0;
+    const isCustomMatch = matchAttrs.isCustomMatch || false;
+
+    // Find player's placement from rosters
+    let playerPlacement = null;
+    let playerStats = null;
+    const included = matchData.included || [];
+    for (const item of included) {
+      if (item.type === 'participant' && item.attributes?.stats?.name?.toLowerCase() === playerName.toLowerCase()) {
+        playerStats = item.attributes.stats;
+        playerPlacement = playerStats.winPlace;
+        break;
+      }
+    }
+
+    // 3. Find telemetry URL
+    let telemetryUrl = null;
+    for (const item of included) {
+      if (item.type === 'asset' && item.attributes?.name === 'telemetry') {
+        telemetryUrl = item.attributes.URL;
+        break;
+      }
+    }
+
+    if (!telemetryUrl) {
+      return res.status(404).json({ error: 'Telemetry data not found for this match' });
+    }
+
+    // 4. Download telemetry (CDN, no API key needed)
+    const telRes = await fetchWithTimeout(fetch, telemetryUrl, {}, 30000);
+    if (!telRes.ok) {
+      return res.status(502).json({ error: `Failed to download telemetry (${telRes.status})` });
+    }
+    const telemetryData = await telRes.json();
+
+    // 5. Filter events for this player
+    const pName = playerName.toLowerCase();
+    const relevantTypes = new Set([
+      'LogWeaponFireCount', 'LogPlayerAttack', 'LogPlayerTakeDamage',
+      'LogPlayerKillV2', 'LogItemPickup', 'LogItemEquip', 'LogItemUse',
+      'LogPlayerUseThrowable', 'LogPlayerPosition', 'LogPhaseChange',
+      'LogVehicleRide', 'LogVehicleLeave', 'LogPlayerRevive',
+      'LogGameStatePeriodic'
+    ]);
+
+    let positionCount = 0;
+    let periodicCount = 0;
+    const filteredEvents = [];
+
+    for (const event of telemetryData) {
+      const type = event._T;
+      if (!relevantTypes.has(type)) continue;
+
+      // LogPhaseChange: keep all (few events)
+      if (type === 'LogPhaseChange') {
+        filteredEvents.push(event);
+        continue;
+      }
+
+      // LogGameStatePeriodic: keep every 3rd
+      if (type === 'LogGameStatePeriodic') {
+        periodicCount++;
+        if (periodicCount % 3 === 0) {
+          // Slim down: only keep numAlivePlayers and gameState
+          filteredEvents.push({
+            _T: type, _D: event._D,
+            gameState: event.gameState ? {
+              numAlivePlayers: event.gameState.numAlivePlayers,
+              safetyZonePosition: event.gameState.safetyZonePosition,
+              safetyZoneRadius: event.gameState.safetyZoneRadius,
+              poisonGasWarningPosition: event.gameState.poisonGasWarningPosition,
+              poisonGasWarningRadius: event.gameState.poisonGasWarningRadius
+            } : undefined
+          });
+        }
+        continue;
+      }
+
+      // LogPlayerPosition: only for target player, every 5th
+      if (type === 'LogPlayerPosition') {
+        if (event.character?.name?.toLowerCase() === pName) {
+          positionCount++;
+          if (positionCount % 5 === 0) {
+            filteredEvents.push({
+              _T: type, _D: event._D,
+              character: { name: event.character.name, location: event.character.location },
+              elapsedTime: event.elapsedTime
+            });
+          }
+        }
+        continue;
+      }
+
+      // All other events: check if player is involved
+      const charName = (event.character?.name || '').toLowerCase();
+      const attackerName = (event.attacker?.name || '').toLowerCase();
+      const victimName = (event.victim?.name || '').toLowerCase();
+      const killerName = (event.killer?.name || '').toLowerCase();
+      const reviverName = (event.reviver?.name || '').toLowerCase();
+
+      if (charName === pName || attackerName === pName || victimName === pName ||
+          killerName === pName || reviverName === pName) {
+        filteredEvents.push(event);
+      }
+    }
+
+    // 6. Size check: if filtered events JSON > 50KB, reduce position/periodic further
+    let eventsJson = JSON.stringify(filteredEvents);
+    if (eventsJson.length > 50000) {
+      // Re-filter with sparser sampling
+      positionCount = 0;
+      periodicCount = 0;
+      const sparseEvents = [];
+      for (const event of filteredEvents) {
+        if (event._T === 'LogPlayerPosition') {
+          positionCount++;
+          if (positionCount % 2 === 0) sparseEvents.push(event); // keep every 2nd of already filtered (= every 10th original)
+        } else if (event._T === 'LogGameStatePeriodic') {
+          periodicCount++;
+          if (periodicCount % 2 === 0) sparseEvents.push(event); // keep every 2nd (= every 6th original)
+        } else {
+          sparseEvents.push(event);
+        }
+      }
+      eventsJson = JSON.stringify(sparseEvents);
+    }
+
+    // 7. Send to Claude for analysis
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'AI analysis not available' });
+    }
+
+    let AnthropicSDK;
+    try {
+      AnthropicSDK = await import('@anthropic-ai/sdk');
+    } catch (e) {
+      console.error('Failed to import Anthropic SDK:', e);
+      return res.status(503).json({ error: 'AI service unavailable' });
+    }
+    const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const systemPrompt = `Eres V4NZ Auditor, un analista experto de partidas de PUBG para consola.
+Evalúas la telemetría de UNA partida individual y das un informe detallado y constructivo.
+
+SISTEMA DE SCORING (0-10):
+- Combate (25%): Trade ratio, kills por fase, calidad de kills (humanos vs bots)
+- Supervivencia (20%): Gestión del círculo, tiempo vivo, muertes evitables
+- Rotación (15%): Posición vs círculo, timing de movimientos, daño de zona recibido
+- Decisiones (15%): Selección de arma por distancia, cuándo pelear vs escapar
+- Precisión (15%): Hit rate por arma, headshot rate
+- Inventario (10%): Uso de consumibles, granadas, boost en end game
+
+ESCALA:
+S (9-10) = Élite | A (7.5-8.9) = Excelente | B (6-7.4) = Bueno
+C (4.5-5.9) = Normal | D (3-4.4) = Mejorable | F (0-2.9) = Crítico
+
+REGLAS:
+- Tono constructivo, habla al jugador con "tú"
+- Sé específico: menciona armas concretas, momentos concretos, distancias
+- Si hay muchos bots en las kills, menciónalo
+- Responde SOLO con JSON válido, sin markdown ni explicaciones`;
+
+    const userPrompt = `Audita esta partida de PUBG:
+
+MATCH INFO:
+- Mapa: ${mapName}
+- Modo: ${gameMode}
+- Duración: ${Math.round(duration / 60)} min
+- Jugador: ${playerName} (${shard})
+- Posición final: #${playerPlacement || '?'}
+${playerStats ? `- Kills: ${playerStats.kills} | Damage: ${Math.round(playerStats.damageDealt)} | Headshots: ${playerStats.headshotKills}` : ''}
+${playerStats ? `- Walk distance: ${Math.round(playerStats.walkDistance)}m | Ride distance: ${Math.round(playerStats.rideDistance)}m` : ''}
+${playerStats ? `- Heals: ${playerStats.heals} | Boosts: ${playerStats.boosts} | Revives: ${playerStats.revives}` : ''}
+${isCustomMatch ? '- ⚠️ Partida personalizada' : ''}
+
+TELEMETRY EVENTS (${filteredEvents.length} eventos filtrados del jugador):
+${eventsJson}
+
+Genera el análisis JSON con este formato exacto:
+{
+  "score_total": 7.2,
+  "grade": "B",
+  "grade_label": "Bueno",
+  "scores": {
+    "combate": { "score": 7.5, "detalle": "breve explicación" },
+    "supervivencia": { "score": 8.0, "detalle": "breve explicación" },
+    "rotacion": { "score": 6.5, "detalle": "breve explicación" },
+    "decisiones": { "score": 7.0, "detalle": "breve explicación" },
+    "precision": { "score": 6.8, "detalle": "breve explicación" },
+    "inventario": { "score": 7.0, "detalle": "breve explicación" }
+  },
+  "lo_que_hiciste_bien": ["punto 1 específico", "punto 2 específico"],
+  "lo_que_puedes_mejorar": ["punto 1 específico", "punto 2 específico"],
+  "momento_clave": "descripción del momento más importante de la partida",
+  "consejo": "1 consejo accionable basado en el error más frecuente",
+  "resumen": "2-3 frases resumen de la partida"
+}`;
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    });
+
+    const text = response.content[0]?.text || '';
+    let auditResult;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      auditResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    } catch (e) {
+      console.error('Telemetry audit parse error:', text.substring(0, 500));
+      return res.status(500).json({ error: 'Failed to parse AI audit response' });
+    }
+
+    // Validate required fields
+    if (!auditResult.score_total || !auditResult.grade || !auditResult.scores) {
+      return res.status(500).json({ error: 'Incomplete AI audit response' });
+    }
+
+    auditResult.matchId = matchId;
+    auditResult.playerName = playerName;
+    auditResult.platform = shard;
+    auditResult.mapName = mapName;
+    auditResult.gameMode = gameMode;
+    auditResult.placement = playerPlacement;
+    auditResult.generatedAt = new Date().toISOString();
+    auditResult.eventsProcessed = filteredEvents.length;
+
+    // 8. Cache result (24 hours)
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO api_cache (cache_key, data, ttl_seconds) VALUES ($1, $2, $3) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW(), ttl_seconds = $3`,
+          [cacheKey, JSON.stringify(auditResult), 86400]
+        );
+      } catch (e) { console.error('Telemetry audit cache save error:', e); }
+    }
+
+    res.json(auditResult);
+
+  } catch (e) {
+    console.error('Telemetry audit error:', e);
+    if (e.name === 'AbortError') {
+      return res.status(504).json({ error: 'Timeout downloading telemetry. Try again.' });
+    }
+    res.status(500).json({ error: 'Telemetry audit failed' });
+  }
+});
+
 // ═══ PUBG API PROXY (generic catch-all — MUST be after ALL /api/* specific routes) ═══
 app.all('/api/*', rateLimit, async (req, res) => {
   trackMetric(req, 'api');
