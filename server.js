@@ -77,7 +77,7 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://cdn.discordapp.com https://www.v4nz.com",
+    "img-src 'self' data: blob: https://cdn.discordapp.com https://v4nz.com",
     "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://www.pubgclans.net https://api.pubg.report https://discord.com",
     "frame-src https://open.spotify.com https://discord.com",
     "media-src 'none'",
@@ -2957,9 +2957,38 @@ async function prewarmLeaderboards() {
   }
 }
 
+// ═══ HEALTH CHECK ═══
+app.get('/health', async (req, res) => {
+  const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
+  if (pool) {
+    try { await pool.query('SELECT 1'); health.database = 'connected'; }
+    catch (e) { health.database = 'error'; health.status = 'degraded'; }
+  } else { health.database = 'not configured'; }
+  health.apiKey = SERVER_API_KEY ? 'configured' : 'missing';
+  res.status(health.status === 'ok' ? 200 : 503).json(health);
+});
+
+// ═══ GRACEFUL SHUTDOWN ═══
+function gracefulShutdown(signal) {
+  console.log(`\n[${signal}] Shutting down gracefully...`);
+  if (_server) {
+    _server.close(() => {
+      console.log('[shutdown] HTTP server closed');
+      if (pool) pool.end().then(() => { console.log('[shutdown] DB pool closed'); process.exit(0); }).catch(() => process.exit(0));
+      else process.exit(0);
+    });
+    setTimeout(() => { console.error('[shutdown] Forced exit after 10s timeout'); process.exit(1); }, 10000);
+  } else { process.exit(0); }
+}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('uncaughtException', (err) => { console.error('[FATAL] Uncaught exception:', err); gracefulShutdown('uncaughtException'); });
+process.on('unhandledRejection', (reason) => { console.error('[FATAL] Unhandled rejection:', reason); });
+
 // ═══ START ═══
+let _server;
 initDB().then(() => {
-  app.listen(PORT, () => {
+  _server = app.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════════╗
 ║  V4NZ PUBG Stats Server v2.0                 ║

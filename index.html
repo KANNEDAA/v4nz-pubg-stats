@@ -182,6 +182,11 @@
 .auth-error { background:rgba(255,51,85,.1); border:1px solid rgba(255,51,85,.2); color:var(--accent-red); padding:8px 12px; border-radius:8px; font-size:.72rem; margin-bottom:10px; text-align:center; display:none; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+/* Accessibility: focus-visible for keyboard navigation */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
+.skip-link { position:absolute; top:-100%; left:50%; transform:translateX(-50%); background:var(--accent); color:#000; padding:12px 24px; border-radius:0 0 8px 8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.9rem; z-index:9999; transition:top .2s; text-decoration:none; }
+.skip-link:focus { top:0; }
 body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
 .bg-grid { display: none; }
 .bg-radial { position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 900px; height: 600px; background: radial-gradient(ellipse, rgba(0,240,255,0.05) 0%, transparent 70%); z-index: 0; pointer-events: none; }
@@ -1241,6 +1246,7 @@ footer a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#searchInput">Ir al buscador</a>
 <noscript>
 <div style="max-width:700px;margin:40px auto;padding:20px;font-family:sans-serif;color:#ccc;background:#0b0b12;">
 <h1>V4NZ — PUBG Console Stats Tracker</h1>
@@ -1268,7 +1274,7 @@ footer a { color: var(--accent); text-decoration: none; }
 
 <header>
   <div class="header-inner">
-    <div class="logo-area" onclick="location.reload()">
+    <div class="logo-area" onclick="location.reload()" role="button" aria-label="V4NZ - Volver al inicio" tabindex="0">
       <div id="logoContainer" style="width:48px;height:48px;border-radius:10px;overflow:hidden;background:#0b0b12;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,240,255,0.15);box-shadow:0 0 12px rgba(0,240,255,0.15);">
         <img src="v4nz-logo.png" alt="V4NZ" style="width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(0,240,255,0.3));" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'font-family:Orbitron,sans-serif;font-size:11px;font-weight:900;color:#00f0ff;line-height:1.2;text-align:center;\'>V4NZ<br><span style=\'font-size:9px;color:#f2a900;\'>PUBG</span></div>';">
       </div>
@@ -1277,7 +1283,7 @@ footer a { color: var(--accent); text-decoration: none; }
         <div class="logo-sub">Console Stats Tracker</div>
       </div>
     </div>
-    <nav id="mainNav">
+    <nav id="mainNav" role="navigation" aria-label="Navegación principal">
       <a href="#" class="active" data-tab="overview">Jugador</a>
       <a href="#" data-tab="clans">Clanes</a>
       <a href="#" data-tab="ranking">Ranking</a>
@@ -1285,13 +1291,14 @@ footer a { color: var(--accent); text-decoration: none; }
       <a href="#" data-tab="compare">Comparar</a>
     </nav>
     <div style="display:flex;align-items:center;gap:6px;">
-      <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()">Iniciar Sesion</button>
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema">&#x1F319;</button>
-      <button class="hamburger" id="hamburgerBtn" onclick="this.classList.toggle('open');document.getElementById('mainNav').classList.toggle('mobile-open');"><span></span><span></span><span></span></button>
+      <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()" aria-label="Iniciar sesión con Discord">Iniciar Sesion</button>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">&#x1F319;</button>
+      <button class="hamburger" id="hamburgerBtn" onclick="this.classList.toggle('open');document.getElementById('mainNav').classList.toggle('mobile-open');this.setAttribute('aria-expanded',this.classList.contains('open'));" aria-label="Abrir menú de navegación" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </div>
 </header>
 
+<main id="mainContent">
 <section class="search-hero" id="searchHero">
   <h1>El tracker <span>PUBG</span> para consola</h1>
   <p class="hero-tagline">Stats en tiempo real para PlayStation y Xbox &mdash; en espanol</p>
@@ -1309,8 +1316,8 @@ footer a { color: var(--accent); text-decoration: none; }
       <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">PS</button>
       <button class="platform-btn" data-platform="xbox" onclick="setPlatform('xbox')">XBOX</button>
     </div>
-    <input type="text" class="search-input" id="searchInput" placeholder="Escribe tu gamertag..." autocomplete="off"/>
-    <button class="search-btn" onclick="smartSearch()">BUSCAR</button>
+    <input type="text" class="search-input" id="searchInput" placeholder="Escribe tu gamertag..." autocomplete="off" aria-label="Gamertag del jugador"/>
+    <button class="search-btn" onclick="smartSearch()" aria-label="Buscar jugador">BUSCAR</button>
   </div>
   <div id="searchClanResults" style="display:none;margin-top:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:700px;margin-left:auto;margin-right:auto;"></div>
   <div class="recent-searches" id="recentSearches"></div>
