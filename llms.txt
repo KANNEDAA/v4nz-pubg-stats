@@ -1,0 +1,28 @@
+# V4NZ PUBG Stats
+
+> Tracker de estadísticas PUBG para consola (PS5 y Xbox) en español. Creado por jugadores de consola con más de 6000 horas de experiencia. Permite buscar jugadores por gamertag, ver historial de partidas, comparar stats entre jugadores, gestionar clanes con ranking y estadísticas agregadas, y analizar el estilo de juego con inteligencia artificial.
+
+## Funcionalidades principales
+
+- [Búsqueda de jugadores](https://v4nz.com): Busca stats de cualquier jugador PUBG de PS5 o Xbox por gamertag. Incluye K/D, ADR, Win Rate, HS%, partidas, armas favoritas y más.
+- [Historial de partidas](https://v4nz.com): Últimas 20 partidas con detalle de kills, daño, placement, mapa y auditoría IA de rendimiento.
+- [Comparador de jugadores](https://v4nz.com): Compara stats cara a cara entre dos jugadores de cualquier plataforma.
+- [ADN de Jugador](https://v4nz.com): Perfil de estilo de juego con radar de habilidades (Agresividad, Precisión, Supervivencia, Movilidad, Soporte) generado algorítmicamente.
+- [Análisis IA](https://v4nz.com): Clasificación avanzada del estilo de juego generada por inteligencia artificial con arquetipos (Depredador, Francotirador, Rata, Support, Técnico, Bot Farmer), insights personalizados y consejos de mejora.
+- [Mapa de telemetría](https://v4nz.com): Visualización del movimiento y kills de una partida sobre el mapa real de PUBG.
+- [Sistema de clanes](https://v4nz.com): Crea y gestiona clanes con stats agregadas, ranking entre clanes, historial de miembros y comparador de clanes.
+- [Mi Evolución](https://v4nz.com): Seguimiento de la progresión de stats a lo largo del tiempo con gráficos de tendencia.
+- [Top 500](https://v4nz.com): Leaderboard de los 500 mejores jugadores de PUBG en consola.
+
+## Datos técnicos
+
+- Plataformas soportadas: PlayStation (PS4/PS5) y Xbox (One/Series)
+- Modos de juego: Solo, Duo, Squad en Normal y Ranked
+- Datos en tiempo real vía PUBG Official API
+- Idioma: Español
+- Gratuito y sin registro obligatorio (registro opcional para funciones IA)
+
+## Optional
+
+- [Comunidad Discord](https://discord.gg/pubgclans): Servidor de la comunidad V4NZ para jugadores PUBG de consola
+- [Twitter/X](https://x.com/v4nzpubg): Novedades y actualizaciones de V4NZ
