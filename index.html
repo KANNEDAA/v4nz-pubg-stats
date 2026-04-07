@@ -592,6 +592,17 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
    Compensated with a more opaque solid background. */
 .match-detail-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,8,14,.97); z-index:1001; justify-content:center; align-items:center; }
 .match-detail-popup.active { display:flex; }
+/* CRITICAL: while the match detail popup is open, kill all backdrop-filter blurs
+   underneath it. The sticky <header> with backdrop-filter:blur(24px) keeps being
+   composited behind the opaque popup → renderer crash on weak GPUs / mobile.
+   Also hide the main content visually so the GPU stops compositing canvas/SVG layers. */
+body.mdp-open header,
+body.mdp-open .streamer-banner,
+body.mdp-open .auth-popup,
+body.mdp-open .telem-popup,
+body.mdp-open .card-modal { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+body.mdp-open .container > *:not(.match-detail-popup):not(#matchDetailPopup) { visibility:hidden; }
+body.mdp-open header { visibility:hidden; }
 .match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; position:relative; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 .match-detail-card::-webkit-scrollbar { width:4px; } .match-detail-card::-webkit-scrollbar-thumb { background:var(--accent-dim); border-radius:4px; }
 .match-detail-card .close-btn { position:sticky; top:0; float:right; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
@@ -4141,6 +4152,7 @@ function showMatchDetail(idx){
   const card=document.querySelector('.match-detail-card');
   card.className='match-detail-card '+plClass;
   document.getElementById('matchDetailPopup').classList.add('active');
+  document.body.classList.add('mdp-open'); // disables backdrop-filter on header & hides bg layers (renderer crash fix)
   document.body.style.overflow='hidden'; // prevent background scroll/repaint while popup is open
   card.scrollTop=0;
 }
@@ -4510,7 +4522,7 @@ async function loadKillTree(telemUrl,playerName,btn){
     container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message)+'</div>';
   }
 }
-function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.style.overflow='';}
+function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');document.body.style.overflow='';}
 
 function renderFrequentTeammates(){
   const el=document.getElementById('frequentTeammates');const listEl=document.getElementById('frequentTeammatesList');
