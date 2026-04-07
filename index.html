@@ -629,33 +629,47 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .streamer-banner-link.kick { background:#53FC18; color:#000; }
 @media(max-width:768px){ .streamer-banner { flex-direction:column; text-align:center; } .streamer-banner-links { justify-content:center; } }
 
-/* MATCH DETAIL — page mode (not a modal anymore).
-   Was a fixed popup overlay; that was causing a renderer crash on Chrome
-   (sticky header + backdrop-filter + popup composited together → black screen).
-   Now it's a normal in-flow page section that replaces the rest of the container
-   while open. Header stays visible so the user has navigation context. */
+/* MATCH DETAIL — fixed overlay below the header, no scroll movement when opening.
+   The original modal crashed Chrome because the sticky <header> with
+   backdrop-filter:blur(24px) composited under an opaque fixed popup → black screen.
+   FIX: while popup is open, force backdrop-filter:none on the header (and any other
+   blurred element). That removes the GPU compositing conflict but keeps the popup
+   as a fixed overlay so the user's scroll position in the matches list is preserved. */
 .match-detail-popup { display:none; }
-.match-detail-popup.active { display:block; width:100%; }
-/* Hide everything else inside .main-content when match detail page is open. */
-body.mdp-open .main-content > *:not(.match-detail-popup):not(#matchDetailPopup) { display:none !important; }
-/* Hide the streamer banner (it's between header and main-content, would push the page down) */
-body.mdp-open .streamer-banner { display:none !important; }
-/* Keep backdrop-filter blurs killed under any leftover popups for safety */
+.match-detail-popup.active {
+  display:block;
+  position:fixed;
+  top:64px; /* below the header */
+  left:0; right:0; bottom:0;
+  background:var(--bg-primary);
+  z-index:99; /* under header (z:100) but over everything else */
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:0;
+}
+@media (max-width:600px){
+  .match-detail-popup.active { top:56px; }
+}
+/* Kill backdrop-filter on header while popup is open — this is the renderer crash fix */
+body.mdp-open header { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background:rgba(11,11,18,0.98) !important; }
 body.mdp-open .auth-popup,
 body.mdp-open .telem-popup,
 body.mdp-open .card-modal { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+/* Lock body scroll so the underlying matches list doesn't scroll behind the popup */
+body.mdp-open { overflow:hidden; }
 /* Frequent teammate / rival chip — class-based hover (avoid iOS hover-on-touch double tap) */
 .freq-tm-chip { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; transition:border-color .2s, box-shadow .2s; white-space:nowrap; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
 @media(hover:hover){ .freq-tm-chip:hover { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); } }
 .freq-tm-chip:active { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); }
-.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; width:100%; max-width:100%; position:relative; margin-top:8px; }
+.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; width:calc(100% - 32px); max-width:1200px; margin:16px auto; position:relative; }
 /* Desktop 70/30 layout: main analytical content + sticky action sidebar */
 .md-grid { display:block; }
 .md-main, .md-side { display:block; }
 @media (min-width: 980px) {
-  .match-detail-card { padding:28px 32px; }
+  .match-detail-card { padding:28px 32px; margin:24px auto; }
   .md-grid { display:grid; grid-template-columns:1fr 280px; gap:24px; align-items:start; margin-top:8px; }
-  .md-side { position:sticky; top:90px; display:flex; flex-direction:column; gap:12px; }
+  .md-side { position:sticky; top:8px; display:flex; flex-direction:column; gap:12px; }
   .md-side > div, .md-side > button { margin-top:0 !important; }
 }
 .match-detail-card .close-btn { position:absolute; top:14px; right:14px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
@@ -728,7 +742,7 @@ body.mdp-open .card-modal { backdrop-filter:none !important; -webkit-backdrop-fi
 }
 @media(max-width:600px){
   /* Match detail page: edge-to-edge on mobile */
-  .match-detail-card { width:100%; max-width:100%; border-radius:0; padding:20px 16px; margin-top:0; border-left:none; border-right:none; }
+  .match-detail-card { width:100%; max-width:100%; border-radius:0; padding:20px 16px; margin:0; border-left:none; border-right:none; }
   .match-detail-card .close-btn { width:36px; height:36px; font-size:1.2rem; }
   .match-back-btn { padding:12px; font-size:.85rem; }
   .audit-btn { padding:12px; font-size:.85rem; min-height:44px; }
@@ -4327,8 +4341,12 @@ function showMatchDetail(idx){
   // Apply placement color class to card
   const card=document.querySelector('.match-detail-card');
   card.className='match-detail-card '+plClass;
+  // Popup is position:fixed below the header, so no scroll movement happens.
+  // body.mdp-open kills backdrop-filter on header (renderer crash fix) AND locks body scroll.
   document.getElementById('matchDetailPopup').classList.add('active');
-  document.body.classList.add('mdp-open'); // hides other container children via CSS (page mode)
+  document.body.classList.add('mdp-open');
+  // Reset the popup's internal scroll to top so the user starts at the match header
+  document.getElementById('matchDetailPopup').scrollTop=0;
   // Push deep link URL ?match=ID so the user can copy/share it
   try{
     const matchId=match.data&&match.data.id;
@@ -4337,8 +4355,6 @@ function showMatchDetail(idx){
       history.pushState({matchDetail:true},'',baseUrl+'?match='+encodeURIComponent(matchId));
     }
   }catch(e){}
-  // Scroll page to top — popup is now the first visible content under the header
-  window.scrollTo(0,0);
 }
 // ═══ TELEMETRY AUDIT ═══
 let _auditAbort=null;
@@ -4723,7 +4739,7 @@ async function loadKillTree(telemUrl,playerName,btn){
     container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message)+'</div>';
   }
 }
-function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');document.body.style.overflow='';try{if(currentPlayerData){const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);history.replaceState(null,'',baseUrl);}}catch(e){}window.scrollTo(0,0);}
+function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');try{if(currentPlayerData){const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);history.replaceState(null,'',baseUrl);}}catch(e){}}
 
 function renderFrequentTeammates(){
   const el=document.getElementById('frequentTeammates');const listEl=document.getElementById('frequentTeammatesList');
