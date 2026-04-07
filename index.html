@@ -636,8 +636,10 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
    while open. Header stays visible so the user has navigation context. */
 .match-detail-popup { display:none; }
 .match-detail-popup.active { display:block; width:100%; }
-/* Hide everything else inside the container when match detail page is open. */
-body.mdp-open .container > *:not(.match-detail-popup):not(#matchDetailPopup) { display:none !important; }
+/* Hide everything else inside .main-content when match detail page is open. */
+body.mdp-open .main-content > *:not(.match-detail-popup):not(#matchDetailPopup) { display:none !important; }
+/* Also hide the sticky tabs bar (it's outside .main-content) */
+body.mdp-open .tabs-container { display:none !important; }
 /* Keep backdrop-filter blurs killed under any leftover popups for safety */
 body.mdp-open .auth-popup,
 body.mdp-open .telem-popup,
