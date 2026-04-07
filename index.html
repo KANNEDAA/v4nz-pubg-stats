@@ -2288,7 +2288,7 @@ function renderClanHistoryUI(){
   // Mi Clan banner
   if(myClan){
     const memberHintMC=myClan.members&&myClan.members.length?myClan.members.length+' miembros':'Nivel '+myClan.level+' &mdash; '+myClan.memberCount+' miembros';
-    banner.innerHTML='<div class="my-clan-banner" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+myClan.platform.toUpperCase()+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\');document.getElementById(\'clanResults\').scrollIntoView({behavior:\'smooth\',block:\'start\'});event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
+    banner.innerHTML='<div class="my-clan-banner" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+clanPlatLabel(myClan.platform)+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\');document.getElementById(\'clanResults\').scrollIntoView({behavior:\'smooth\',block:\'start\'});event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
   }else{banner.innerHTML='';}
   // Clanes Favoritos
   const favSec=document.getElementById('clanFavoritesSection');
@@ -2300,7 +2300,7 @@ function renderClanHistoryUI(){
         fh+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+tagEsc+'\')">';
         fh+='<div class="chi-icon" style="border-color:rgba(255,215,0,0.3);color:var(--accent-yellow);">'+cf.tag.charAt(0)+'</div>';
         fh+='<div class="chi-info"><div class="chi-name">['+esc(cf.tag)+'] '+esc(cf.name)+'</div>';
-        fh+='<div class="chi-meta">'+cf.platform.toUpperCase()+(cf.group?' &mdash; <span style="color:var(--accent-yellow);">'+esc(cf.group)+'</span>':'')+'</div></div>';
+        fh+='<div class="chi-meta">'+clanPlatLabel(cf.platform)+(cf.group?' &mdash; <span style="color:var(--accent-yellow);">'+esc(cf.group)+'</span>':'')+'</div></div>';
         fh+='<div class="chi-actions">';
         fh+='<button class="chi-action-btn" onclick="cycleClanFavGroup(\''+tagEsc+'\',event)" title="Cambiar grupo" style="font-size:.7rem;">&#x1F3F7;&#xFE0F;</button>';
         fh+='<button class="chi-action-btn remove-clan" onclick="toggleClanFavorite(\''+tagEsc+'\',\''+escJs(cf.name)+'\',\''+cf.platform+'\',event)" title="Quitar de favoritos">&times;</button>';
@@ -2317,7 +2317,7 @@ function renderClanHistoryUI(){
     nonMyClan.forEach(c=>{
       const memberHint=c.members&&c.members.length?c.members.length+' miembros':'Nivel '+c.level+' &mdash; '+c.memberCount+' miembros';
       const ago=getTimeAgo(c.date);
-      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+c.platform.toUpperCase()+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions">'+clanFavStar(c.tag,c.name,c.platform,'.85rem')+'<button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
+      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+clanPlatLabel(c.platform)+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions">'+clanFavStar(c.tag,c.name,c.platform,'.85rem')+'<button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
     });
     h+='</div>';
     histSec.innerHTML=h;
@@ -2359,7 +2359,11 @@ async function loadClanRanking(){
       h+='<div style="font-size:1.2rem;min-width:36px;text-align:center;">'+medal+'</div>';
       h+='<div class="cr-clan-icon" style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(0,240,255,0.05));display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:700;font-size:1rem;color:var(--accent);">'+c.tag.charAt(0)+'</div>';
       h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">'+c.name+'</div>';
+<<<<<<< HEAD
       h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(((c.platform||'')==='steam')?'STEAM':'CONSOLA')+' &middot; Nivel '+(c.level||'?')+'</div></div>';
+=======
+      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+clanPlatLabel(c.platform)+' &middot; Nivel '+(c.level||'?')+'</div></div>';
+>>>>>>> 41d280811291f25fbad8e550d65ddae8cb9fa719
       h+='</div>';
       h+=clanFavStar(c.tag,c.name,c.platform||'psn','.9rem');
       h+='<div style="font-size:.7rem;color:var(--text-dim);">&#x25BC;</div>';
@@ -2500,7 +2504,11 @@ async function loadClanPage(tag){
     let h='<div class="clan-page-header">';
     h+='<div style="display:flex;align-items:center;gap:16px;"><div class="clan-icon" style="width:56px;height:56px;font-size:1.5rem;">'+c.tag.charAt(0)+'</div>';
     h+='<div><div class="clan-name" style="font-size:1.4rem;">'+c.name+'</div>';
+<<<<<<< HEAD
     h+='<div class="clan-tag">['+c.tag+'] &mdash; '+(((c.platform||'')==='steam')?'STEAM':'CONSOLA')+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
+=======
+    h+='<div class="clan-tag">['+c.tag+'] &mdash; '+clanPlatLabel(c.platform)+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
+>>>>>>> 41d280811291f25fbad8e550d65ddae8cb9fa719
     // Aggregated stats
     h+='<div class="clan-stats-grid" style="margin-top:16px;">';
     h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent);">'+(c.total_kills||0)+'</div><div class="cs-label">Total Kills</div></div>';
@@ -3241,16 +3249,33 @@ document.addEventListener('DOMContentLoaded',()=>{
     const inp=document.getElementById('adminPwdInput');setTimeout(()=>inp.focus(),100);
     function doAdminLogin(){
       const pwd=inp.value;if(!pwd){inp.focus();return;}
+      const okBtn=document.getElementById('adminPwdOk');
+      if(okBtn){okBtn.disabled=true;okBtn.textContent='...';}
       fetch('/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({password:pwd})})
-      .then(r=>r.json()).then(d=>{
-        if(d.ok){
+      .then(async r=>{
+        let d=null;try{d=await r.json();}catch(e){}
+        if(okBtn){okBtn.disabled=false;okBtn.textContent='OK';}
+        if(r.ok&&d&&d.ok&&d.token){
           sessionStorage.setItem('adminMode','true');
           sessionStorage.setItem('adminToken',d.token);
           const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
           loadPendingRequests();
-        }else{inp.value='';inp.placeholder='Incorrecta — intenta de nuevo';inp.focus();return;}
-        modal.style.display='none';history.replaceState(null,'','/');
-      }).catch(()=>{modal.style.display='none';history.replaceState(null,'','/');});
+          modal.style.display='none';history.replaceState(null,'','/');
+        }else{
+          // Mostrar el error real en lugar de cerrar silenciosamente
+          inp.value='';
+          const errMsg=(d&&d.error)?d.error:('Error '+r.status+' — intenta de nuevo');
+          inp.placeholder=errMsg;
+          inp.focus();
+          console.warn('[admin] Login fallido:',r.status,d);
+        }
+      }).catch(err=>{
+        if(okBtn){okBtn.disabled=false;okBtn.textContent='OK';}
+        inp.value='';
+        inp.placeholder='Sin conexión con el servidor';
+        inp.focus();
+        console.error('[admin] Network error:',err);
+      });
     }
     document.getElementById('adminPwdOk').onclick=doAdminLogin;
     inp.addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin();});
@@ -3259,6 +3284,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
+// Etiqueta de plataforma para clanes: en consola (PSN/Xbox) los clanes son cross-platform, asi que mostramos CONSOLA. Solo Steam se distingue.
+function clanPlatLabel(p){p=(p||'psn').toLowerCase();return p==='steam'?'STEAM':'CONSOLA';}
 function checkApiKey(){return true;}
 function saveApiKey(){}
 async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;const timeoutErr=new Promise((_,reject)=>setTimeout(()=>{const err=new Error('La peticion ha tardado demasiado. Intentalo de nuevo.');err.status=408;reject(err);},20000));try{r=await Promise.race([fetch(u,{headers:h}),timeoutErr]);}catch(netErr){if(netErr.status===408)throw netErr;const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=await Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))]);if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;if(j.error)msg=j.error;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';showRateLimitCountdown();}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('La respuesta ha tardado demasiado.')),10000))]);}
@@ -3288,6 +3315,17 @@ function showRateLimitCountdown(){
 function showDataPanels(){document.getElementById('tabsContainer').classList.add('visible');document.getElementById('emptyState').style.display='none';}
 function formatTime(s){return Math.floor(s/60)+'m '+Math.floor(s%60)+'s';}
 function getTimeAgoMatch(d){const t=typeof d==='number'?d:d.getTime();const h=Math.floor((Date.now()-t)/3600000);if(h<1)return'ahora';if(h<24)return h+'h';return Math.floor(h/24)+'d';}
+// Formatea fecha+hora absoluta de una partida: "28 MAR · 18:14"
+function formatMatchDateTime(d){
+  const dt=(d instanceof Date)?d:new Date(d);
+  if(isNaN(dt.getTime()))return'';
+  const meses=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const dia=dt.getDate();
+  const mes=meses[dt.getMonth()];
+  const hh=String(dt.getHours()).padStart(2,'0');
+  const mm=String(dt.getMinutes()).padStart(2,'0');
+  return dia+' '+mes+' &middot; '+hh+':'+mm;
+}
 function getActiveStats(){
   const k=currentSquadMode==='solo'?(currentGameMode==='fpp'?'solo-fpp':'solo'):currentSquadMode==='duo'?(currentGameMode==='fpp'?'duo-fpp':'duo'):(currentGameMode==='fpp'?'squad-fpp':'squad');
   try{
@@ -3881,10 +3919,10 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}i
   // Build rivals set for badge detection
   window._matchRivalsSet=new Set();
   const _rc={};currentMatchData.forEach(match=>{const seen=new Set();(match.included||[]).filter(i=>i.type==='participant').forEach(p=>{const nmL=p.attributes.stats.name.toLowerCase();if(nmL===pn.toLowerCase()||seen.has(nmL))return;seen.add(nmL);_rc[nmL]=(_rc[nmL]||0)+1;});});Object.entries(_rc).forEach(([k,v])=>{if(v>=3)window._matchRivalsSet.add(k);});
-  let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const ta=getTimeAgoMatch(new Date(a.createdAt));const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+'A / '+(ps.DBNOs||0)+'K</span>':'';
+  let h='';currentMatchData.forEach((match,idx)=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const _md=new Date(a.createdAt);const ta=getTimeAgoMatch(_md);const tabs=formatMatchDateTime(_md);const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const miClass=pl===1?'mi-win':pl<=10?'mi-top10':'mi-normal';const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':'var(--text-dim)';const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+'A / '+(ps.DBNOs||0)+'K</span>':'';
   // Match badges
   const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{if(b.url){badgeHtml+='<a href="'+esc(b.url)+'" target="_blank" rel="noopener" class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();">'+b.icon+' '+esc(b.text)+'</a>';}else if(b.player){badgeHtml+='<span class="match-badge badge-'+b.type+'" style="cursor:pointer;" onclick="event.stopPropagation();goToPlayer(\''+escJs(b.player)+'\');">'+b.icon+' '+esc(b.text)+'</span>';}else{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';}});badgeHtml+='</div>';}
-  h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
+  h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span><span class="match-datetime" style="display:block;font-size:.6rem;font-weight:500;color:var(--text-dim);margin-top:3px;letter-spacing:.5px;">'+tabs+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="empty-state"><p>No se encontraron datos</p></div>';
   // Render rivals section
   try{renderMatchRivals();}catch(e){console.error('Match rivals error:',e);}
   // Render streaks & records
@@ -5310,10 +5348,24 @@ async function shareAdnImage(){
     canvas.toBlob(async blob=>{
       if(!blob)return;
       const fname=name+(isAi?'_ADN_IA_PUBG':'_ADN_PUBG')+'.png';
-      const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
       const shareText=isAi?'La IA dice que soy: '+role+' en PUBG! Descubre tu ADN en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name):'Mi ADN PUBG es: '+role+'! Descubre el tuyo en v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name);
-      if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(shareText);}catch(e){}}
-      const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Imagen ADN'+(isAi?' IA':'')+' guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
+      const shareUrl='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(name);
+      // 1) Intentar Web Share API nativa con file (móvil → abre share sheet del SO)
+      let nativeShared=false;
+      try{
+        const file=new File([blob],fname,{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+          await navigator.share({files:[file],title:'Mi ADN PUBG — V4NZ',text:shareText,url:shareUrl});
+          nativeShared=true;
+        }
+      }catch(e){if(e&&e.name==='AbortError')return; /* usuario canceló, no fallback */ }
+      // 2) Fallback: descargar el PNG + copiar texto al portapapeles
+      if(!nativeShared){
+        const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+        if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(shareText);}catch(e){}}
+      }
+      const toastMsg=nativeShared?('Compartido'+(isAi?' (IA)':'')):('Imagen ADN'+(isAi?' IA':'')+' guardada + enlace copiado');
+      const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent=toastMsg;document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
     },'image/png');
   }catch(e){console.error('Share ADN image error:',e);card.remove();sharePersonality(role);}
 }
@@ -6495,7 +6547,7 @@ async function loadClanAnalysisHub(){
       h+='<span style="font-size:.65rem;color:var(--text-dim);">WR <span style="font-family:Orbitron;font-weight:700;color:var(--accent-orange);font-size:.65rem;">'+(parseFloat(clan.win_rate)||0).toFixed(1)+'%</span></span>';
       h+='</div>';
     }else{
-      h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:4px;">'+(c.platform||'psn').toUpperCase()+' &mdash; '+(c.memberCount||'?')+' miembros</div>';
+      h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:4px;">'+clanPlatLabel(c.platform)+' &mdash; '+(c.memberCount||'?')+' miembros</div>';
     }
     h+='</div>';
     // Expand arrow
@@ -6962,7 +7014,13 @@ async function loadPendingRequests(){
   if(!container)return;
   try{
     const adminTk=sessionStorage.getItem('adminToken');
+    if(!adminTk){container.innerHTML='<div style="font-size:.72rem;color:#ff4444;text-align:center;padding:8px;">No hay token admin. Vuelve a /admin</div>';return;}
     const r=await fetch('/clans/requests/pending',{headers:{'Authorization':'Bearer '+adminTk}});
+    if(!r.ok){
+      container.innerHTML='<div style="font-size:.72rem;color:#ff4444;text-align:center;padding:8px;">Error '+r.status+(r.status===401?' — token expirado, vuelve a /admin':'')+'</div>';
+      console.warn('[admin] /clans/requests/pending →',r.status);
+      return;
+    }
     const d=await r.json();
     if(!d.requests||!d.requests.length){
       container.innerHTML='<div style="font-size:.72rem;color:var(--text-dim);text-align:center;padding:8px;">No hay solicitudes pendientes</div>';
@@ -6979,7 +7037,10 @@ async function loadPendingRequests(){
       h+='</div>';
     });
     container.innerHTML=h;
-  }catch(e){container.innerHTML='';}
+  }catch(e){
+    container.innerHTML='<div style="font-size:.72rem;color:#ff4444;text-align:center;padding:8px;">Error de red al cargar solicitudes</div>';
+    console.error('[admin] loadPendingRequests:',e);
+  }
 }
 async function approveRequest(id,btn){
   btn.disabled=true;btn.textContent='...';
@@ -7334,112 +7395,4 @@ async function compareClans(){
       h+='<div style="font-family:Orbitron,sans-serif;font-size:1.8rem;font-weight:800;color:'+(w2>=w1?ca:'var(--text-dim)')+';">'+w2+'</div>';
       h+='</div>';
       if(winner){h+='<div style="margin-top:8px;font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:'+(winner===1?co:ca)+';">&#x1F3C6; '+(winner===1?name1:name2)+' GANA</div>';}
-      else{h+='<div style="margin-top:8px;font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:var(--text-secondary);">EMPATE</div>';}
-      h+='</div>';
-
-      // Top 5 members side by side
-      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">';
-      h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent-orange);margin-bottom:8px;">Top 5 ['+tag1+']</div>';
-      m1.slice(0,5).forEach((m,i)=>{
-        const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
-        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
-        h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
-        if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
-        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
-        h+='<span style="color:var(--accent-orange);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
-        h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
-        h+='</div>';
-      });
-      h+='</div><div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px;">Top 5 ['+tag2+']</div>';
-      m2.slice(0,5).forEach((m,i)=>{
-        const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
-        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
-        h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
-        if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
-        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
-        h+='<span style="color:var(--accent);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
-        h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
-        h+='</div>';
-      });
-      h+='</div></div>';
-    }else{
-      // No DB data — show basic only + offer deep compare
-      h+='<div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">';
-      h+='<div style="font-size:.75rem;color:var(--text-dim);text-align:center;">Estos clanes no tienen stats completos en V4NZ aun. Busca cada clan en la pestana Clanes para importarlos.</div>';
-      h+='</div>';
-    }
-    h+='</div>';
-    cr.innerHTML=h;
-  }catch(e){
-    cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(e.message)+'</p>';
-  }finally{showLoading(false);}
-}
-
-function setLBPlatform(p,btn){lbPlatform=p;document.querySelectorAll('#lbPlatBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
-function setLBRegion(r,btn){lbRegion=r;document.querySelectorAll('#lbRegionBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
-function setLBMode(m,btn){lbMode=m;document.querySelectorAll('#lbModeBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
-function timeAgo(dateStr){
-  const diff=Date.now()-new Date(dateStr).getTime();
-  const mins=Math.floor(diff/60000);
-  if(mins<1)return 'ahora mismo';
-  if(mins<60)return 'hace '+mins+' min';
-  const hrs=Math.floor(mins/60);
-  if(hrs<24)return 'hace '+hrs+'h '+(mins%60)+'min';
-  return 'hace '+Math.floor(hrs/24)+' dias';
-}
-async function renderLeaderboard(){
-  if(lbAbort){try{lbAbort.abort();}catch(e){}}
-  const reqMode=lbMode,reqPlatform=lbPlatform,reqRegion=lbRegion;
-  const lbContent=document.getElementById('leaderboardContent');
-  lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500 '+reqMode.toUpperCase()+' '+reqRegion.toUpperCase()+'...</div></div></div>';
-  try{
-    const controller=new AbortController();
-    lbAbort=controller;
-    const timeout=setTimeout(()=>controller.abort(),15000);
-    const resp=await fetch('/api/leaderboard?platform='+reqPlatform+'&region='+reqRegion+'&mode='+reqMode,{signal:controller.signal});
-    clearTimeout(timeout);
-    if(lbMode!==reqMode||lbPlatform!==reqPlatform||lbRegion!==reqRegion)return;
-    if(!resp.ok){renderLeaderboardDemo();return;}
-    const data=await resp.json();
-    if(!data.players||data.players.length===0){renderLeaderboardDemo();return;}
-    const isConsole=reqPlatform==='console';
-    const showPlat=isConsole;
-    const modeLabel=reqMode.toUpperCase().replace('-',' ');
-    let h='<div style="text-align:center;margin-bottom:12px;"><span style="display:inline-block;background:var(--accent-dim);color:var(--accent);font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:1px;">'+modeLabel+' &mdash; '+(isConsole?'CONSOLAS':reqPlatform.toUpperCase())+' '+reqRegion.toUpperCase()+'</span></div>';
-    h+='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th>'+(showPlat?'<th>Plat.</th>':'')+'<th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
-    let rank=1;
-    data.players.forEach(entry=>{
-      const stats=entry.stats;const ik=entry.name==='KANNEDA';
-      const lbDeaths=((stats.roundsPlayed||0)-(stats.wins||0));
-      const kd=lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0';
-      const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-      const searchPlat=(entry.platforms&&entry.platforms.includes('PSN'))?'psn':(entry.platforms&&entry.platforms.includes('Xbox')?'xbox':reqPlatform);
-      const platBadge=showPlat?(entry.platforms&&entry.platforms.length>1?'Ambas':(entry.platforms?entry.platforms[0]:'')):'';
-      h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+esc(entry.name)+'</td>';
-      if(showPlat)h+='<td class="sc" style="font-size:.65rem;">'+platBadge+'</td>';
-      h+='<td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
-      rank++;
-    });
-    h+='</tbody></table>';
-    // Footer with update time
-    const updatedText=data.cachedAt?timeAgo(data.cachedAt):'ahora';
-    const platLabel=isConsole?'CONSOLAS (PSN+Xbox)':reqPlatform.toUpperCase();
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;padding:0 4px;">';
-    h+='<span style="color:var(--text-dim);font-size:.7rem;">Top 500 via PUBG API &mdash; '+platLabel+' '+reqRegion.toUpperCase()+' '+modeLabel+'</span>';
-    h+='<span style="color:var(--accent);font-size:.65rem;font-family:Orbitron,sans-serif;font-weight:600;">Actualizado '+updatedText+'</span>';
-    h+='</div>';
-    lbContent.innerHTML=h;
-  }catch(e){console.error('Leaderboard error:',e);renderLeaderboardDemo();}
-}
-function renderLeaderboardDemo(){
-  let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
-  DEMO_LB.forEach(p=>{const rc=p.r===1?'r1':p.r===2?'r2':p.r===3?'r3':'';const ik=p.n==='KANNEDA';
-    h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+p.r+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(p.n)+'\');">'+p.n+'</td><td class="sc">'+p.k+'</td><td class="sc">'+p.w+'</td><td class="sc">'+p.kd+'</td><td class="sc">'+p.d+'</td></tr>';
-  });h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 20 demo &mdash; Con servidor activo se cargan Top 500 reales via PUBG API</p>';
-  document.getElementById('leaderboardContent').innerHTML=h;
-}
-// PWA: Register Service Worker
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.log('SW registration failed:',e));}
-</script>
-</body>
-</html>
+      else{h+='<div style="margin-top:8px;font-family:Orbitro
