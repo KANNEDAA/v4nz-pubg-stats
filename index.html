@@ -2359,11 +2359,7 @@ async function loadClanRanking(){
       h+='<div style="font-size:1.2rem;min-width:36px;text-align:center;">'+medal+'</div>';
       h+='<div class="cr-clan-icon" style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(0,240,255,0.05));display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:700;font-size:1rem;color:var(--accent);">'+c.tag.charAt(0)+'</div>';
       h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">'+c.name+'</div>';
-<<<<<<< HEAD
-      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(((c.platform||'')==='steam')?'STEAM':'CONSOLA')+' &middot; Nivel '+(c.level||'?')+'</div></div>';
-=======
       h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+clanPlatLabel(c.platform)+' &middot; Nivel '+(c.level||'?')+'</div></div>';
->>>>>>> 41d280811291f25fbad8e550d65ddae8cb9fa719
       h+='</div>';
       h+=clanFavStar(c.tag,c.name,c.platform||'psn','.9rem');
       h+='<div style="font-size:.7rem;color:var(--text-dim);">&#x25BC;</div>';
@@ -2504,11 +2500,7 @@ async function loadClanPage(tag){
     let h='<div class="clan-page-header">';
     h+='<div style="display:flex;align-items:center;gap:16px;"><div class="clan-icon" style="width:56px;height:56px;font-size:1.5rem;">'+c.tag.charAt(0)+'</div>';
     h+='<div><div class="clan-name" style="font-size:1.4rem;">'+c.name+'</div>';
-<<<<<<< HEAD
-    h+='<div class="clan-tag">['+c.tag+'] &mdash; '+(((c.platform||'')==='steam')?'STEAM':'CONSOLA')+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
-=======
     h+='<div class="clan-tag">['+c.tag+'] &mdash; '+clanPlatLabel(c.platform)+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
->>>>>>> 41d280811291f25fbad8e550d65ddae8cb9fa719
     // Aggregated stats
     h+='<div class="clan-stats-grid" style="margin-top:16px;">';
     h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent);">'+(c.total_kills||0)+'</div><div class="cs-label">Total Kills</div></div>';
@@ -7395,4 +7387,112 @@ async function compareClans(){
       h+='<div style="font-family:Orbitron,sans-serif;font-size:1.8rem;font-weight:800;color:'+(w2>=w1?ca:'var(--text-dim)')+';">'+w2+'</div>';
       h+='</div>';
       if(winner){h+='<div style="margin-top:8px;font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:'+(winner===1?co:ca)+';">&#x1F3C6; '+(winner===1?name1:name2)+' GANA</div>';}
-      else{h+='<div style="margin-top:8px;font-family:Orbitro
+      else{h+='<div style="margin-top:8px;font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:var(--text-secondary);">EMPATE</div>';}
+      h+='</div>';
+
+      // Top 5 members side by side
+      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">';
+      h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent-orange);margin-bottom:8px;">Top 5 ['+tag1+']</div>';
+      m1.slice(0,5).forEach((m,i)=>{
+        const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
+        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
+        h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
+        if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+        h+='<span style="color:var(--accent-orange);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
+        h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
+        h+='</div>';
+      });
+      h+='</div><div><div style="font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px;">Top 5 ['+tag2+']</div>';
+      m2.slice(0,5).forEach((m,i)=>{
+        const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
+        h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
+        h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
+        if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+        h+='<span style="color:var(--accent);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
+        h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
+        h+='</div>';
+      });
+      h+='</div></div>';
+    }else{
+      // No DB data — show basic only + offer deep compare
+      h+='<div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">';
+      h+='<div style="font-size:.75rem;color:var(--text-dim);text-align:center;">Estos clanes no tienen stats completos en V4NZ aun. Busca cada clan en la pestana Clanes para importarlos.</div>';
+      h+='</div>';
+    }
+    h+='</div>';
+    cr.innerHTML=h;
+  }catch(e){
+    cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(e.message)+'</p>';
+  }finally{showLoading(false);}
+}
+
+function setLBPlatform(p,btn){lbPlatform=p;document.querySelectorAll('#lbPlatBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
+function setLBRegion(r,btn){lbRegion=r;document.querySelectorAll('#lbRegionBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
+function setLBMode(m,btn){lbMode=m;document.querySelectorAll('#lbModeBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
+function timeAgo(dateStr){
+  const diff=Date.now()-new Date(dateStr).getTime();
+  const mins=Math.floor(diff/60000);
+  if(mins<1)return 'ahora mismo';
+  if(mins<60)return 'hace '+mins+' min';
+  const hrs=Math.floor(mins/60);
+  if(hrs<24)return 'hace '+hrs+'h '+(mins%60)+'min';
+  return 'hace '+Math.floor(hrs/24)+' dias';
+}
+async function renderLeaderboard(){
+  if(lbAbort){try{lbAbort.abort();}catch(e){}}
+  const reqMode=lbMode,reqPlatform=lbPlatform,reqRegion=lbRegion;
+  const lbContent=document.getElementById('leaderboardContent');
+  lbContent.innerHTML='<div style="text-align:center;padding:40px 20px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando Top 500 '+reqMode.toUpperCase()+' '+reqRegion.toUpperCase()+'...</div></div></div>';
+  try{
+    const controller=new AbortController();
+    lbAbort=controller;
+    const timeout=setTimeout(()=>controller.abort(),15000);
+    const resp=await fetch('/api/leaderboard?platform='+reqPlatform+'&region='+reqRegion+'&mode='+reqMode,{signal:controller.signal});
+    clearTimeout(timeout);
+    if(lbMode!==reqMode||lbPlatform!==reqPlatform||lbRegion!==reqRegion)return;
+    if(!resp.ok){renderLeaderboardDemo();return;}
+    const data=await resp.json();
+    if(!data.players||data.players.length===0){renderLeaderboardDemo();return;}
+    const isConsole=reqPlatform==='console';
+    const showPlat=isConsole;
+    const modeLabel=reqMode.toUpperCase().replace('-',' ');
+    let h='<div style="text-align:center;margin-bottom:12px;"><span style="display:inline-block;background:var(--accent-dim);color:var(--accent);font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:1px;">'+modeLabel+' &mdash; '+(isConsole?'CONSOLAS':reqPlatform.toUpperCase())+' '+reqRegion.toUpperCase()+'</span></div>';
+    h+='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th>'+(showPlat?'<th>Plat.</th>':'')+'<th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
+    let rank=1;
+    data.players.forEach(entry=>{
+      const stats=entry.stats;const ik=entry.name==='KANNEDA';
+      const lbDeaths=((stats.roundsPlayed||0)-(stats.wins||0));
+      const kd=lbDeaths>0?(stats.kills/lbDeaths).toFixed(2):'0';
+      const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
+      const searchPlat=(entry.platforms&&entry.platforms.includes('PSN'))?'psn':(entry.platforms&&entry.platforms.includes('Xbox')?'xbox':reqPlatform);
+      const platBadge=showPlat?(entry.platforms&&entry.platforms.length>1?'Ambas':(entry.platforms?entry.platforms[0]:'')):'';
+      h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+esc(entry.name)+'</td>';
+      if(showPlat)h+='<td class="sc" style="font-size:.65rem;">'+platBadge+'</td>';
+      h+='<td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
+      rank++;
+    });
+    h+='</tbody></table>';
+    // Footer with update time
+    const updatedText=data.cachedAt?timeAgo(data.cachedAt):'ahora';
+    const platLabel=isConsole?'CONSOLAS (PSN+Xbox)':reqPlatform.toUpperCase();
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;padding:0 4px;">';
+    h+='<span style="color:var(--text-dim);font-size:.7rem;">Top 500 via PUBG API &mdash; '+platLabel+' '+reqRegion.toUpperCase()+' '+modeLabel+'</span>';
+    h+='<span style="color:var(--accent);font-size:.65rem;font-family:Orbitron,sans-serif;font-weight:600;">Actualizado '+updatedText+'</span>';
+    h+='</div>';
+    lbContent.innerHTML=h;
+  }catch(e){console.error('Leaderboard error:',e);renderLeaderboardDemo();}
+}
+function renderLeaderboardDemo(){
+  let h='<table class="lb-table"><thead><tr><th>#</th><th>Jugador</th><th>Kills</th><th>Wins</th><th>K/D</th><th>Avg Dmg</th></tr></thead><tbody>';
+  DEMO_LB.forEach(p=>{const rc=p.r===1?'r1':p.r===2?'r2':p.r===3?'r3':'';const ik=p.n==='KANNEDA';
+    h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+p.r+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(p.n)+'\');">'+p.n+'</td><td class="sc">'+p.k+'</td><td class="sc">'+p.w+'</td><td class="sc">'+p.kd+'</td><td class="sc">'+p.d+'</td></tr>';
+  });h+='</tbody></table><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">Top 20 demo &mdash; Con servidor activo se cargan Top 500 reales via PUBG API</p>';
+  document.getElementById('leaderboardContent').innerHTML=h;
+}
+// PWA: Register Service Worker
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.log('SW registration failed:',e));}
+</script>
+</body>
+</html>
