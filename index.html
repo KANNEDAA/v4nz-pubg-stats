@@ -668,6 +668,11 @@ body.mdp-open header { visibility:hidden; }
 .audit-btn:hover { background:linear-gradient(135deg,rgba(255,200,0,0.22),rgba(255,106,0,0.22)); }
 .audit-btn:disabled { opacity:0.6; cursor:not-allowed; }
 .audit-result { margin-top:16px; animation:fadeInUp .5s ease; }
+.audit-visual-header { display:flex; align-items:center; justify-content:center; gap:24px; margin-bottom:18px; flex-wrap:wrap; }
+.audit-grade-card { border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:16px 22px; min-width:170px; }
+.audit-radar-wrap { display:flex; align-items:center; justify-content:center; }
+.audit-resumen { text-align:center; font-size:.82rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.5; padding:0 10px; max-width:600px; margin-left:auto; margin-right:auto; }
+@media(max-width:680px){ .audit-visual-header { gap:14px; } .audit-grade-card { padding:12px 16px; min-width:0; } }
 .audit-grade { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:16px; }
 .audit-grade-letter { font-family:'Orbitron',sans-serif; font-size:3rem; font-weight:900; line-height:1; }
 .audit-grade-info { text-align:left; }
@@ -4359,25 +4364,31 @@ function renderAuditResult(data,container){
   const gradeColors={S:'#ffd700',A:'#00ff88',B:'#00f0ff',C:'#ff6b00',D:'#ff3355',F:'#888'};
   const gc=gradeColors[data.grade]||'var(--text-primary)';
   let h='<div class="audit-result">';
-  // Grade header
-  h+='<div class="audit-grade">';
-  h+='<div class="audit-grade-letter" style="color:'+gc+';">'+esc(data.grade)+'</div>';
+  // Grade + Radar header (visual)
+  h+='<div class="audit-visual-header">';
+  h+='<div class="audit-grade audit-grade-card" style="border-color:'+gc+'44;background:linear-gradient(135deg,'+gc+'08,transparent);">';
+  h+='<div class="audit-grade-letter" style="color:'+gc+';text-shadow:0 0 30px '+gc+'66;">'+esc(data.grade)+'</div>';
   h+='<div class="audit-grade-info"><div class="audit-grade-score">'+data.score_total.toFixed(1)+' / 10</div>';
   h+='<div class="audit-grade-label" style="color:'+gc+';">'+(esc(data.grade_label)||'')+'</div></div>';
   h+='</div>';
+  h+='<div class="audit-radar-wrap"><canvas id="auditRadarCanvas" width="220" height="220"></canvas></div>';
+  h+='</div>';
   // Resumen
   if(data.resumen){
-    h+='<div style="text-align:center;font-size:.8rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.4;padding:0 8px;">'+esc(data.resumen)+'</div>';
+    h+='<div class="audit-resumen">'+esc(data.resumen)+'</div>';
   }
   // Category scores
+  let scoresForRadar=null;
   if(data.scores){
     const catNames={combate:'Combate',supervivencia:'Supervivencia',rotacion:'Rotacion',decisiones:'Decisiones',precision:'Precision',inventario:'Inventario'};
     const catIcons={combate:'&#x2694;&#xFE0F;',supervivencia:'&#x1F6E1;&#xFE0F;',rotacion:'&#x1F3AF;',decisiones:'&#x1F9E0;',precision:'&#x1F52B;',inventario:'&#x1F392;'};
+    scoresForRadar={};
     h+='<div class="audit-cats">';
     for(const[key,val] of Object.entries(data.scores)){
       const sc=typeof val==='object'?val.score:val;
       const det=typeof val==='object'?val.detalle:'';
       const pct=Math.max(0,Math.min(100,sc*10));
+      scoresForRadar[key]=pct;
       const catColor=sc>=7.5?'#00ff88':sc>=6?'#00f0ff':sc>=4.5?'#ff6b00':'#ff3355';
       h+='<div class="audit-cat">';
       h+='<div class="audit-cat-header"><span class="audit-cat-name">'+(catIcons[key]||'')+' '+(catNames[key]||key)+'</span><span class="audit-cat-score" style="color:'+catColor+';">'+sc.toFixed(1)+'</span></div>';
@@ -4413,7 +4424,37 @@ function renderAuditResult(data,container){
   container.innerHTML=h;
   // Store data for share card
   window._lastAuditData=data;
+  // Draw radar chart
+  if(scoresForRadar){drawAuditRadar('auditRadarCanvas',scoresForRadar,gc);}
   setTimeout(function(){container.scrollIntoView({behavior:'smooth',block:'start'});},150);
+}
+function drawAuditRadar(canvasId,scores,color){
+  const c=document.getElementById(canvasId);if(!c)return;
+  const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;const size=220;
+  c.width=size*dpr;c.height=size*dpr;c.style.width=size+'px';c.style.height=size+'px';ctx.scale(dpr,dpr);
+  const cx=size/2,cy=size/2,R=78;
+  const labels=['CMB','SUP','ROT','DEC','PRE','INV'];
+  const keys=['combate','supervivencia','rotacion','decisiones','precision','inventario'];
+  const vals=keys.map(k=>scores[k]||0);
+  const n=6;const ang=-Math.PI/2;
+  // Grid hexagons
+  for(let r=1;r<=4;r++){
+    ctx.beginPath();
+    for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const rr=R*(r/4);const x=cx+rr*Math.cos(a),y=cy+rr*Math.sin(a);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+    ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();
+  }
+  // Axis lines
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.stroke();}
+  // Data polygon
+  ctx.beginPath();
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const v=R*(vals[i]/100);const x=cx+v*Math.cos(a),y=cy+v*Math.sin(a);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.closePath();ctx.fillStyle=color+'33';ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+  // Data points
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const v=R*(vals[i]/100);ctx.beginPath();ctx.arc(cx+v*Math.cos(a),cy+v*Math.sin(a),3.2,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+  // Labels
+  ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<n;i++){const a=ang+(2*Math.PI/n)*i;const lx=cx+(R+18)*Math.cos(a),ly=cy+(R+18)*Math.sin(a);ctx.fillStyle='#9098a8';ctx.fillText(labels[i],lx,ly);}
 }
 async function shareAuditCard(){
   const data=window._lastAuditData;if(!data)return;
