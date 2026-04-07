@@ -1,9 +1,17 @@
-// V4NZ PUBG Stats — Service Worker v3.0
-// FIX: bypass de Google Analytics / Tag Manager para que gtag.js cargue.
-// En v2 el SW interceptaba peticiones cross-origin y devolvia 503 cuando
-// fallaba algo, lo que impedia que la libreria de GA se ejecutara y por
-// tanto nunca se enviaban hits a Google Analytics.
-const CACHE_NAME = 'v4nz-cache-v3';
+// V4NZ PUBG Stats — Service Worker v3.1
+// FIX v3.1: bypass general cross-origin (arregla avatares Discord 503 + futuros).
+// FIX v3.0: bypass de Google Analytics / Tag Manager (gtag.js cargaba mal).
+//
+// Bug raiz comun: cuando el SW interceptaba un request cross-origin y el
+// fetch fallaba (CORS, CDN caido, blocker, etc), el .catch(() => cached)
+// devolvia undefined porque la respuesta no estaba en cache. El SW respondia
+// con undefined y el navegador lo mostraba como 503/error. Esto rompia
+// google-analytics, googletagmanager y cdn.discordapp.com avatares.
+//
+// Solucion: el SW solo intercepta requests al MISMO origen. Cualquier
+// peticion cross-origin se deja pasar al navegador sin tocar (excepto
+// los STATIC_ASSETS que precacheamos en install).
+const CACHE_NAME = 'v4nz-cache-v31';
 const STATIC_ASSETS = [
   '/manifest.json',
   'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap'
@@ -31,14 +39,11 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // BYPASS: dejar pasar Google Analytics / Tag Manager / Ads sin interceptar.
-  // Si el SW intenta servirlas y algo falla, devuelve 503 y la libreria de
-  // GA nunca se ejecuta. Es mas seguro dejar que el navegador las maneje.
-  if (url.hostname === 'www.googletagmanager.com' ||
-      url.hostname === 'www.google-analytics.com' ||
-      url.hostname.endsWith('.google-analytics.com') ||
-      url.hostname === 'www.googleadservices.com' ||
-      url.hostname === 'stats.g.doubleclick.net') {
+  // BYPASS GENERAL: cualquier request cross-origin pasa sin interceptar.
+  // Asi nunca rompemos cdn.discordapp.com, googletagmanager.com,
+  // google-analytics.com, ni ningun otro CDN externo. Solo cacheamos
+  // recursos del mismo origen + los STATIC_ASSETS precacheados.
+  if (url.origin !== self.location.origin) {
     return;
   }
 
@@ -66,12 +71,12 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request) || caches.match('/'))
+        .catch(() => caches.match(event.request).then(c => c || caches.match('/')))
     );
     return;
   }
 
-  // Other static assets (fonts, images, JS libs): stale-while-revalidate
+  // Other same-origin static assets (own images, JS, CSS): stale-while-revalidate
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(response => {
