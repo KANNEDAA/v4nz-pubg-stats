@@ -638,8 +638,8 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .match-detail-popup.active { display:block; width:100%; }
 /* Hide everything else inside .main-content when match detail page is open. */
 body.mdp-open .main-content > *:not(.match-detail-popup):not(#matchDetailPopup) { display:none !important; }
-/* Also hide the sticky tabs bar (it's outside .main-content) */
-body.mdp-open .tabs-container { display:none !important; }
+/* Hide the streamer banner (it's between header and main-content, would push the page down) */
+body.mdp-open .streamer-banner { display:none !important; }
 /* Keep backdrop-filter blurs killed under any leftover popups for safety */
 body.mdp-open .auth-popup,
 body.mdp-open .telem-popup,
@@ -4321,8 +4321,8 @@ function showMatchDetail(idx){
   card.className='match-detail-card '+plClass;
   document.getElementById('matchDetailPopup').classList.add('active');
   document.body.classList.add('mdp-open'); // hides other container children via CSS (page mode)
-  // Scroll page to top so the user starts at the match header
-  window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});
+  // Scroll page to top — popup is now the first visible content under the header
+  window.scrollTo(0,0);
 }
 // ═══ TELEMETRY AUDIT ═══
 let _auditAbort=null;
