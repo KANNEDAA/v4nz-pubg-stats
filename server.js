@@ -565,16 +565,18 @@ async function importClanByPubgId(clanId) {
 
   const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
 
-  // Step 1: Fetch clan metadata from PUBG API (try xbox first, then psn)
+  // Step 1: Fetch clan metadata from PUBG API (try xbox first, then psn, then steam)
+  // NOTE: Console clans are cross-platform (PSN + Xbox share the same clan), so we
+  // store 'console' regardless of which shard responded. Only 'steam' stays as-is.
   let clanMeta = null;
-  let detectedPlatform = 'xbox';
+  let detectedPlatform = 'console';
   for (const shard of ['xbox', 'psn', 'steam']) {
     try {
       const clanResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers }, 8000);
       if (clanResp.ok) {
         const clanData = await clanResp.json();
         clanMeta = clanData.data?.attributes;
-        detectedPlatform = shard;
+        detectedPlatform = (shard === 'steam') ? 'steam' : 'console';
         break;
       }
     } catch (e) { /* try next shard */ }
@@ -3003,9 +3005,17 @@ initDB().then(() => {
     setTimeout(prewarmLeaderboards, 5000);
     setInterval(prewarmLeaderboards, 2 * 60 * 60 * 1000);
 
-    // ═══ CRON: Auto-refresh all clans every 24h ═══
+    // ═══ CRON: Auto-refresh stale clans (>24h old) ═══
+    // NOTE: Runs every hour instead of every 24h. Railway restarts the process
+    // frequently (deploys, env changes, auto-restarts), so a 24h setInterval
+    // rarely fires. The SQL filter already restricts to clans with
+    // stats_updated_at older than 24h, so running hourly is safe — it just
+    // catches up faster after restarts and is self-healing.
+    let _cronRunning = false;
     async function cronRefreshAllClans() {
       if (!pool) return;
+      if (_cronRunning) { console.log('[cron] Skipped — previous run still in progress'); return; }
+      _cronRunning = true;
       try {
         const staleClans = await pool.query(
           "SELECT tag, pubg_clan_id FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 20"
@@ -3024,9 +3034,10 @@ initDB().then(() => {
         }
         console.log('[cron] Clan refresh cycle complete');
       } catch (e) { console.error('[cron] Error:', e.message); }
+      finally { _cronRunning = false; }
     }
-    // Run 30s after startup, then every 24 hours
+    // Run 30s after startup, then every hour (the SQL guard prevents wasted work)
     setTimeout(cronRefreshAllClans, 30000);
-    setInterval(cronRefreshAllClans, 24 * 60 * 60 * 1000);
+    setInterval(cronRefreshAllClans, 60 * 60 * 1000);
   });
 });

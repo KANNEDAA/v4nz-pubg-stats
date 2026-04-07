@@ -588,7 +588,9 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 @media(max-width:768px){ .streamer-banner { flex-direction:column; text-align:center; } .streamer-banner-links { justify-content:center; } }
 
 /* MATCH DETAIL POPUP */
-.match-detail-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,.92); backdrop-filter:blur(8px); z-index:1001; justify-content:center; align-items:center; }
+/* NOTE: backdrop-filter:blur removed — was causing severe lag/freeze on mobile and weak GPUs.
+   Compensated with a more opaque solid background. */
+.match-detail-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,8,14,.97); z-index:1001; justify-content:center; align-items:center; }
 .match-detail-popup.active { display:flex; }
 .match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; position:relative; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 .match-detail-card::-webkit-scrollbar { width:4px; } .match-detail-card::-webkit-scrollbar-thumb { background:var(--accent-dim); border-radius:4px; }
@@ -2357,7 +2359,7 @@ async function loadClanRanking(){
       h+='<div style="font-size:1.2rem;min-width:36px;text-align:center;">'+medal+'</div>';
       h+='<div class="cr-clan-icon" style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(0,240,255,0.05));display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:700;font-size:1rem;color:var(--accent);">'+c.tag.charAt(0)+'</div>';
       h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">'+c.name+'</div>';
-      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(c.platform||'psn').toUpperCase()+' &middot; Nivel '+(c.level||'?')+'</div></div>';
+      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(((c.platform||'')==='steam')?'STEAM':'CONSOLA')+' &middot; Nivel '+(c.level||'?')+'</div></div>';
       h+='</div>';
       h+=clanFavStar(c.tag,c.name,c.platform||'psn','.9rem');
       h+='<div style="font-size:.7rem;color:var(--text-dim);">&#x25BC;</div>';
@@ -2453,6 +2455,38 @@ async function publishClanToServer(clanTag,clanName,memberCount,level,platform,m
   }catch(e){throw e;}
 }
 
+// Helper: robust share with fallbacks (Web Share API → clipboard → execCommand)
+async function v4nzShare(url, title, text, btnEl){
+  const shareData = { title: title||'V4NZ', text: text||'', url };
+  // 1) Try native Web Share API (mobile + supported desktop)
+  if (navigator.share) {
+    try { await navigator.share(shareData); return true; }
+    catch(e){ if(e && e.name==='AbortError') return false; /* fall through */ }
+  }
+  // 2) Try modern clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try { await navigator.clipboard.writeText(url); v4nzShareToast(btnEl,'Copiado'); return true; }
+    catch(e){ /* fall through */ }
+  }
+  // 3) Legacy execCommand fallback
+  try {
+    const ta=document.createElement('textarea');
+    ta.value=url; ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0;';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok=document.execCommand('copy'); document.body.removeChild(ta);
+    if(ok){ v4nzShareToast(btnEl,'Copiado'); return true; }
+  } catch(e){}
+  // 4) Last resort: prompt
+  try { window.prompt('Copia el enlace:', url); } catch(e){}
+  return false;
+}
+function v4nzShareToast(btn, msg){
+  if(!btn) return;
+  const orig=btn.innerHTML;
+  btn.innerHTML='&#x2705; '+msg;
+  setTimeout(()=>{ btn.innerHTML=orig; }, 2000);
+}
+
 // Clan page rendering for /clan/:tag URLs
 async function loadClanPage(tag){
   switchTab('clans');
@@ -2466,7 +2500,7 @@ async function loadClanPage(tag){
     let h='<div class="clan-page-header">';
     h+='<div style="display:flex;align-items:center;gap:16px;"><div class="clan-icon" style="width:56px;height:56px;font-size:1.5rem;">'+c.tag.charAt(0)+'</div>';
     h+='<div><div class="clan-name" style="font-size:1.4rem;">'+c.name+'</div>';
-    h+='<div class="clan-tag">['+c.tag+'] &mdash; '+c.platform.toUpperCase()+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
+    h+='<div class="clan-tag">['+c.tag+'] &mdash; '+(((c.platform||'')==='steam')?'STEAM':'CONSOLA')+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
     // Aggregated stats
     h+='<div class="clan-stats-grid" style="margin-top:16px;">';
     h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent);">'+(c.total_kills||0)+'</div><div class="cs-label">Total Kills</div></div>';
@@ -2484,7 +2518,9 @@ async function loadClanPage(tag){
     h+='<button id="clanRefreshBtn" onclick="refreshClanStats(\''+escJs(c.tag)+'\',this)" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani,sans-serif;font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;">&#x1F504; Actualizar Stats</button>';
     h+='<span style="font-size:.65rem;color:'+ageColor+';">&#x1F4C5; Actualizado '+ageText+'</span>';
     const shareUrl='https://v4nz.com/clan/'+c.tag;
-    h+='<div class="clan-page-share" onclick="navigator.clipboard.writeText(\''+shareUrl+'\').then(()=>{this.innerHTML=\'&#x2705; Copiado!\';setTimeout(()=>{this.innerHTML=\'&#x1F517; Compartir Clan\';},2000);})">&#x1F517; Compartir Clan</div>';
+    const shareTitle='Clan ['+c.tag+'] '+c.name+' — V4NZ PUBG';
+    const shareText='Mira las stats del clan ['+c.tag+'] '+c.name+' en V4NZ';
+    h+='<div class="clan-page-share" onclick="v4nzShare(\''+shareUrl+'\',\''+escJs(shareTitle)+'\',\''+escJs(shareText)+'\',this)">&#x1F517; Compartir Clan</div>';
     const isCFav=isClanFavorite(c.tag);
     h+='<button id="clanFavBtn" data-tag="'+escJs(c.tag)+'" onclick="toggleClanFavorite(\''+escJs(c.tag)+'\',\''+escJs(c.name)+'\',\''+c.platform+'\',event)" style="background:transparent;border:1px solid '+(isCFav?'var(--accent-yellow)':'rgba(0,240,255,0.3)')+';color:'+(isCFav?'var(--accent-yellow)':'var(--accent)')+';font-family:Rajdhani,sans-serif;font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;">'+(isCFav?'&#x2605; Favorito':'&#x2606; Favorito')+'</button>';
     h+='</div>';
@@ -3437,9 +3473,20 @@ function switchTab(t){
   document.getElementById('seasonTypeSelector').style.display=isPlayerView?'':'none';
   document.getElementById('playerHeader').style.display=playerTabs.includes(t)?'':'none';
   document.getElementById('personalitySection').style.display=playerTabs.includes(t)?'':'none';
-  document.getElementById('evolutionSection').style.display=playerTabs.includes(t)?'':'none';
   document.getElementById('narrativeInsights').style.display=playerTabs.includes(t)?'':'none';
-  document.getElementById('frequentTeammates').style.display=playerTabs.includes(t)?'':'none';
+  // Bug #4 fix: evolutionSection and frequentTeammates have inline display:none in HTML
+  // (no CSS hide rule). Setting display='' would expose them as empty block-level boxes
+  // with padding/border/margin → ~hundreds of px of empty space above the tabs.
+  // Only show them if they actually have rendered content.
+  (function(){
+    var _isPT=playerTabs.includes(t);
+    var _evo=document.getElementById('evolutionSection');
+    var _ft=document.getElementById('frequentTeammates');
+    var _ftList=document.getElementById('frequentTeammatesList');
+    if(!_isPT){ _evo.style.display='none'; _ft.style.display='none'; return; }
+    _evo.style.display=(_evo.innerHTML.trim().length>0)?'':'none';
+    _ft.style.display=(_ftList&&_ftList.children.length>0)?'':'none';
+  })();
   const _sb=document.querySelector('.streamer-banner');if(_sb)_sb.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
   const _pod=document.getElementById('podcastPlayer');if(_pod)_pod.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
   // URL management: push friendly URLs for main sections
@@ -4064,6 +4111,7 @@ function showMatchDetail(idx){
   const card=document.querySelector('.match-detail-card');
   card.className='match-detail-card '+plClass;
   document.getElementById('matchDetailPopup').classList.add('active');
+  document.body.style.overflow='hidden'; // prevent background scroll/repaint while popup is open
   card.scrollTop=0;
 }
 // ═══ TELEMETRY AUDIT ═══
@@ -4432,7 +4480,7 @@ async function loadKillTree(telemUrl,playerName,btn){
     container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message)+'</div>';
   }
 }
-function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');}
+function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.style.overflow='';}
 
 function renderFrequentTeammates(){
   const el=document.getElementById('frequentTeammates');const listEl=document.getElementById('frequentTeammatesList');
