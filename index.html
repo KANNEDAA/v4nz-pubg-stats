@@ -4433,13 +4433,32 @@ async function shareMatchCard(idx){
       const fname=pn+'_'+mn+'_'+ps.kills+'kills.png';
       const file=new File([blob],fname,{type:'image/png'});
       const shareText=pl===1?pn+' CHICKEN DINNER en '+mn+'! '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano':pn+' #'+pl+' en '+mn+' — '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano';
-      // Always download image first (reliable), then try native share if available
+      const shareUrl='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(pn);
+      const fullText=shareText+' | '+shareUrl;
+      const showToast=(msg)=>{const t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(()=>{t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2200);});};
+      // 1) Try Web Share API with image file (mobile native share sheet: WhatsApp, Telegram, etc.)
+      try{
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:'V4NZ — '+pn,text:shareText,url:shareUrl});
+          return; // user shared via OS sheet
+        }
+      }catch(e){
+        if(e&&e.name==='AbortError')return; // user cancelled — do nothing
+        // any other error → fall through to download fallback
+      }
+      // 2) Try Web Share API text-only (desktop browsers that support share but not files)
+      try{
+        if(navigator.share&&!navigator.canShare){
+          await navigator.share({title:'V4NZ — '+pn,text:shareText,url:shareUrl});
+          // Also download the image so the user has it
+          const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+          return;
+        }
+      }catch(e){if(e&&e.name==='AbortError')return;}
+      // 3) Desktop fallback: download image + copy link to clipboard
       const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
-      // Also try clipboard copy of share text
-      const fullText=shareText+' | v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(pn);
       if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(fullText);}catch(e){}}
-      // Show brief toast
-      const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent='Imagen guardada + enlace copiado';document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});
+      showToast('Imagen guardada + enlace copiado');
     },'image/png');
   }catch(e){console.error('Share match card error:',e);card.remove();}
 }
