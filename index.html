@@ -3601,6 +3601,14 @@ async function searchPlayer(){
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
     showSkeletons(false);autoBestMode();renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
+    // Deep link: open specific match if ?match=ID is in URL (shared match link)
+    try{
+      const urlMatch=new URLSearchParams(location.search).get('match');
+      if(urlMatch){
+        const idx=currentMatchData.findIndex(m=>m&&m.data&&m.data.id===urlMatch);
+        if(idx>=0){switchTab('matches');setTimeout(()=>showMatchDetail(idx),120);}
+      }
+    }catch(e){console.log('Match deep link error:',e.message);}
     // PUBG Report link
     try{const prBtn=document.getElementById('pubgReportBtn');if(prBtn&&currentPlayerData&&currentPlayerData.id){prBtn.href='https://pubg.report/players/'+currentPlayerData.id;prBtn.style.display='inline-flex';}}catch(e){}
     // Frequent teammates
@@ -4309,7 +4317,7 @@ function showMatchDetail(idx){
     h+='<div id="auditResult"></div>';
   }
   // Share match card button
-  h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F4F7; Compartir Partida</button></div>';
+  h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F517; Compartir Enlace</button></div>';
   h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
   // Close md-side and md-grid wrapper
   h+='</div></div>';
@@ -4321,6 +4329,14 @@ function showMatchDetail(idx){
   card.className='match-detail-card '+plClass;
   document.getElementById('matchDetailPopup').classList.add('active');
   document.body.classList.add('mdp-open'); // hides other container children via CSS (page mode)
+  // Push deep link URL ?match=ID so the user can copy/share it
+  try{
+    const matchId=match.data&&match.data.id;
+    if(matchId&&currentPlayerData){
+      const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);
+      history.pushState({matchDetail:true},'',baseUrl+'?match='+encodeURIComponent(matchId));
+    }
+  }catch(e){}
   // Scroll page to top — popup is now the first visible content under the header
   window.scrollTo(0,0);
 }
@@ -4582,73 +4598,35 @@ async function generateSeasonWrapped(){
 // ═══ SHARE MATCH CARD ═══
 async function shareMatchCard(idx){
   const match=currentMatchData[idx];if(!match)return;
-  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';
-  const gm=(a.gameMode||'').toUpperCase();
+  const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';
   const pn=currentPlayerData.attributes.name;
   const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());
   if(!pp)return;
   const ps=pp.attributes.stats;const pl=ps.winPlace;
-  const totalP=(match.included||[]).filter(i=>i.type==='participant').length;
-  const plColor=pl===1?'#ffd700':pl<=3?'#c0c0c0':pl<=10?'#00ff88':'#ffffff';
-  const plIcon=pl===1?'&#x1F3C6;':pl<=3?'&#x1F3C5;':'';
-  const card=document.createElement('div');
-  card.className='match-share-card';
-  card.innerHTML=
-    '<div class="msc-map-banner" style="background:linear-gradient(135deg,'+mc+'44,#0b0b12);"><div class="msc-map-overlay"></div><div class="msc-map-name">'+mn+'</div></div>'+
-    '<div class="msc-body">'+
-      '<div class="msc-player-name">'+esc(pn)+'</div>'+
-      '<div class="msc-mode">'+gm+' &mdash; '+currentPlatform.toUpperCase()+'</div>'+
-      '<div class="msc-place-row"><div class="msc-place" style="color:'+plColor+';">'+plIcon+' #'+pl+'</div><div class="msc-place-sub">/ '+totalP+'</div></div>'+
-      '<div class="msc-stats">'+
-        '<div class="msc-stat"><div class="msc-stat-val" style="color:#00f0ff;">'+ps.kills+'</div><div class="msc-stat-lbl">Kills</div></div>'+
-        '<div class="msc-stat"><div class="msc-stat-val" style="color:#ff6b00;">'+Math.round(ps.damageDealt)+'</div><div class="msc-stat-lbl">Dano</div></div>'+
-        '<div class="msc-stat"><div class="msc-stat-val" style="color:#00ff88;">'+formatTime(ps.timeSurvived)+'</div><div class="msc-stat-lbl">Tiempo</div></div>'+
-      '</div>'+
-      '<div class="msc-stats" style="grid-template-columns:repeat(4,1fr);">'+
-        '<div class="msc-stat"><div class="msc-stat-val" style="color:#a855f7;font-size:1.1rem;">'+(ps.headshotKills||0)+'</div><div class="msc-stat-lbl">HS</div></div>'+
-        '<div class="msc-stat"><div class="msc-stat-val" style="color:#ffd700;font-size:1.1rem;">'+(ps.assists||0)+'</div><div class="msc-stat-lbl">Assists</div></div>'+
-        '<div class="msc-stat"><div class="msc-stat-val" style="color:#ff3355;font-size:1.1rem;">'+(ps.DBNOs||0)+'</div><div class="msc-stat-lbl">Knocks</div></div>'+
-        '<div class="msc-stat"><div class="msc-stat-val" style="font-size:1.1rem;">'+(ps.longestKill?Math.round(ps.longestKill)+'m':'--')+'</div><div class="msc-stat-lbl">Best Kill</div></div>'+
-      '</div>'+
-    '</div>'+
-    '<div class="msc-footer"><div class="msc-footer-logo">V4NZ</div><div class="msc-footer-url">v4nz.com</div></div>';
-  document.body.appendChild(card);
+  const matchId=match.data&&match.data.id;
+  if(!matchId)return;
+  const shareUrl='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(pn)+'?match='+encodeURIComponent(matchId);
+  const shareText=pl===1?pn+' CHICKEN DINNER en '+mn+'! '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano':pn+' #'+pl+' en '+mn+' — '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano';
+  const showToast=(msg)=>{const t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(()=>{t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2400);});};
+  // 1) Native share sheet (mobile) — link only, no image
   try{
-    const canvas=await html2canvas(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
-    card.remove();
-    canvas.toBlob(async blob=>{
-      if(!blob)return;
-      const fname=pn+'_'+mn+'_'+ps.kills+'kills.png';
-      const file=new File([blob],fname,{type:'image/png'});
-      const shareText=pl===1?pn+' CHICKEN DINNER en '+mn+'! '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano':pn+' #'+pl+' en '+mn+' — '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano';
-      const shareUrl='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(pn);
-      const fullText=shareText+' | '+shareUrl;
-      const showToast=(msg)=>{const t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(()=>{t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2200);});};
-      // 1) Try Web Share API with image file (mobile native share sheet: WhatsApp, Telegram, etc.)
-      try{
-        if(navigator.canShare&&navigator.canShare({files:[file]})){
-          await navigator.share({files:[file],title:'V4NZ — '+pn,text:shareText,url:shareUrl});
-          return; // user shared via OS sheet
-        }
-      }catch(e){
-        if(e&&e.name==='AbortError')return; // user cancelled — do nothing
-        // any other error → fall through to download fallback
-      }
-      // 2) Try Web Share API text-only (desktop browsers that support share but not files)
-      try{
-        if(navigator.share&&!navigator.canShare){
-          await navigator.share({title:'V4NZ — '+pn,text:shareText,url:shareUrl});
-          // Also download the image so the user has it
-          const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
-          return;
-        }
-      }catch(e){if(e&&e.name==='AbortError')return;}
-      // 3) Desktop fallback: download image + copy link to clipboard
-      const url=URL.createObjectURL(blob);const dl=document.createElement('a');dl.href=url;dl.download=fname;dl.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
-      if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(fullText);}catch(e){}}
-      showToast('Imagen guardada + enlace copiado');
-    },'image/png');
-  }catch(e){console.error('Share match card error:',e);card.remove();}
+    if(navigator.share){
+      await navigator.share({title:'V4NZ — '+pn,text:shareText,url:shareUrl});
+      return;
+    }
+  }catch(e){
+    if(e&&e.name==='AbortError')return; // user cancelled
+  }
+  // 2) Desktop fallback: copy link to clipboard
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    try{
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Enlace copiado al portapapeles');
+      return;
+    }catch(e){}
+  }
+  // 3) Last resort: prompt
+  try{window.prompt('Copia el enlace de la partida:',shareUrl);}catch(e){}
 }
 
 // ═══ KILL TREE ═══
@@ -4745,7 +4723,7 @@ async function loadKillTree(telemUrl,playerName,btn){
     container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message)+'</div>';
   }
 }
-function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');document.body.style.overflow='';window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});}
+function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');document.body.style.overflow='';try{if(currentPlayerData){const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);history.replaceState(null,'',baseUrl);}}catch(e){}window.scrollTo(0,0);}
 
 function renderFrequentTeammates(){
   const el=document.getElementById('frequentTeammates');const listEl=document.getElementById('frequentTeammatesList');
