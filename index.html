@@ -452,6 +452,23 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .home-card-link { background:none; border:none; color:var(--text-dim); font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:color .2s; }
 .home-card-link:hover { color:var(--accent); }
 .home-clan-list { display:flex; flex-direction:column; gap:6px; }
+/* Quien esta jugando — favoritos en vivo */
+@keyframes wpPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.4; transform:scale(.85); } }
+.who-playing-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+.wp-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:10px; cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s; }
+@media (hover:hover) { .wp-row:hover { transform:translateY(-1px); border-color:var(--accent); box-shadow:0 4px 12px rgba(0,240,255,.08); } }
+.wp-status { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.wp-status.online { background:var(--accent-green); box-shadow:0 0 8px var(--accent-green); animation:wpPulse 1.4s ease-in-out infinite; }
+.wp-status.recent { background:var(--accent-yellow); }
+.wp-status.today { background:var(--accent); }
+.wp-status.idle { background:var(--text-dim); }
+.wp-info { flex:1; min-width:0; }
+.wp-name { font-family:'Orbitron',sans-serif; font-size:.78rem; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wp-meta { font-size:.62rem; color:var(--text-dim); margin-top:2px; font-family:'Rajdhani',sans-serif; letter-spacing:.4px; text-transform:uppercase; }
+.wp-meta .wp-when-online { color:var(--accent-green); font-weight:700; }
+.wp-meta .wp-when-recent { color:var(--accent-yellow); font-weight:700; }
+.wp-meta .wp-when-today { color:var(--accent); font-weight:700; }
+.wp-empty { padding:14px; text-align:center; color:var(--text-dim); font-size:.78rem; }
 .home-clan-row { display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--bg-secondary); border-radius:8px; cursor:pointer; transition:background .2s; }
 .home-clan-row:hover { background:var(--bg-card-hover); }
 .home-clan-pos { font-family:'Orbitron',sans-serif; font-size:.75rem; font-weight:700; color:var(--text-dim); width:22px; text-align:center; }
@@ -518,6 +535,31 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .ai-dna-teaser { text-align: center; margin: 14px 0 0; padding: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.05)); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-size: 0.8rem; color: #888; }
 .ai-dna-teaser a { color: #00f0ff; text-decoration: none; font-weight: 700; }
 .ai-dna-powered { text-align: center; font-family: 'Rajdhani', sans-serif; font-size: 0.6rem; color: #555; margin-top: 12px; letter-spacing: 0.5px; }
+
+/* AI CLAN ANALYSIS */
+.ai-clan-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 26px; background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(0,240,255,0.12)); border:1px solid rgba(168,85,247,0.35); border-radius:10px; color:#d4a8ff; font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; cursor:pointer; transition:all .3s; text-transform:uppercase; letter-spacing:1px; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+@media(hover:hover){ .ai-clan-btn:hover { background:linear-gradient(135deg,rgba(168,85,247,0.22),rgba(0,240,255,0.22)); border-color:rgba(168,85,247,0.6); box-shadow:0 0 22px rgba(168,85,247,0.18); } }
+.ai-clan-btn .ai-icon { font-size:1.05rem; }
+.ai-clan-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:22px 24px; animation:fadeInUp .5s ease; position:relative; overflow:hidden; }
+.ai-clan-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#a855f7,#00f0ff); opacity:.8; }
+.ai-clan-arch { font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:900; text-align:center; text-transform:uppercase; letter-spacing:2px; margin:6px 0 4px; }
+.ai-clan-sub { font-family:'Rajdhani',sans-serif; font-size:.7rem; color:#888; text-align:center; margin-bottom:14px; }
+.ai-clan-desc { font-family:'Rajdhani',sans-serif; font-size:.9rem; color:#ccc; line-height:1.55; text-align:center; padding:0 6px; margin:10px 0 16px; }
+.ai-clan-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
+@media(max-width:680px){ .ai-clan-grid{grid-template-columns:1fr;} }
+.ai-clan-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px; }
+.ai-clan-block-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.ai-clan-block ul { list-style:none; padding:0; margin:0; }
+.ai-clan-block li { font-family:'Rajdhani',sans-serif; font-size:.78rem; color:#bbb; line-height:1.45; padding:4px 0; }
+.ai-clan-block li::before { content:'• '; color:inherit; opacity:.7; }
+.ai-clan-mvp { text-align:center; padding:10px 14px; background:rgba(255,200,0,0.06); border:1px solid rgba(255,200,0,0.2); border-radius:10px; margin:10px 0; font-family:'Rajdhani',sans-serif; font-size:.82rem; color:#ffd700; }
+.ai-clan-tip { padding:11px 14px; background:rgba(0,240,255,0.05); border:1px solid rgba(0,240,255,0.18); border-radius:10px; margin:10px 0 0; font-family:'Rajdhani',sans-serif; font-size:.78rem; color:#ccc; line-height:1.5; text-align:left; }
+.ai-clan-bars { margin-top:14px; display:flex; flex-direction:column; gap:7px; }
+.ai-clan-bar-row { display:flex; align-items:center; gap:10px; }
+.ai-clan-bar-label { font-family:'Rajdhani',sans-serif; font-size:.7rem; color:#aaa; min-width:108px; text-transform:uppercase; letter-spacing:.5px; }
+.ai-clan-bar-track { flex:1; height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+.ai-clan-bar-fill { height:100%; border-radius:4px; transition:width .8s ease; }
+.ai-clan-bar-val { font-family:'Orbitron',sans-serif; font-size:.7rem; font-weight:700; min-width:30px; text-align:right; }
 
 /* NARRATIVE INSIGHTS */
 #narrativeInsights { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); }
@@ -1371,6 +1413,15 @@ footer a { color: var(--accent); text-decoration: none; }
       <div class="home-counter-val" id="hcKills">--</div>
       <div class="home-counter-lbl">Kills Totales</div>
     </div>
+  </div>
+
+  <!-- Quien esta jugando ahora (favoritos) -->
+  <div class="home-card" id="whoPlayingCard" style="display:none;margin-bottom:24px;">
+    <div class="home-card-header">
+      <span class="home-card-title"><span style="display:inline-block;width:8px;height:8px;background:var(--accent-green);border-radius:50%;margin-right:6px;animation:wpPulse 1.4s ease-in-out infinite;"></span>EN VIVO &mdash; Tus Favoritos</span>
+      <button class="home-card-link" onclick="loadWhoIsPlaying(true)">Refrescar</button>
+    </div>
+    <div id="whoPlayingList" class="who-playing-list"><div class="home-loading">Comprobando...</div></div>
   </div>
 
   <!-- Two-column: Top clanes + Features -->
@@ -2554,6 +2605,11 @@ async function loadClanPage(tag){
     const isCFav=isClanFavorite(c.tag);
     h+='<button id="clanFavBtn" data-tag="'+escJs(c.tag)+'" onclick="toggleClanFavorite(\''+escJs(c.tag)+'\',\''+escJs(c.name)+'\',\''+c.platform+'\',event)" style="background:transparent;border:1px solid '+(isCFav?'var(--accent-yellow)':'rgba(0,240,255,0.3)')+';color:'+(isCFav?'var(--accent-yellow)':'var(--accent)')+';font-family:Rajdhani,sans-serif;font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;">'+(isCFav?'&#x2605; Favorito':'&#x2606; Favorito')+'</button>';
     h+='</div>';
+    // AI Clan analysis button + result container (only if 3+ active members)
+    if(members.length>=3){
+      h+='<div style="margin-top:14px;text-align:center;"><button class="ai-clan-btn" id="aiClanBtn" onclick="requestAiClanDna(\''+escJs(c.tag)+'\',this)"><span class="ai-icon">&#x1F916;</span> ANALIZAR CLAN CON IA</button></div>';
+      h+='<div id="aiClanResult" style="margin-top:14px;"></div>';
+    }
     h+='</div>';
     // Member ranking
     if(members.length){
@@ -3216,9 +3272,62 @@ async function loadHomepageContent(){
       }).join('');
     }else if(recEl){recEl.innerHTML='<div class="home-loading">Sin datos aun</div>';}
   }catch(e){console.error('Homepage content error:',e);}
+  // Tambien intenta cargar "quien esta jugando" (favoritos en vivo)
+  loadWhoIsPlaying();
+}
+
+// === QUIEN ESTA JUGANDO AHORA (favoritos en vivo) ===
+let _wpLastLoad=0;
+async function loadWhoIsPlaying(force){
+  const card=document.getElementById('whoPlayingCard');
+  const list=document.getElementById('whoPlayingList');
+  if(!card||!list)return;
+  // Throttle: no recargar mas de una vez cada 60s salvo force
+  if(!force&&Date.now()-_wpLastLoad<60000)return;
+  // Recolectar favoritos jugadores (localStorage)
+  let favs=[];
+  try{favs=JSON.parse(localStorage.getItem('pubg_favorites')||'[]');}catch(e){favs=[];}
+  if(!Array.isArray(favs)||!favs.length){card.style.display='none';return;}
+  // Filtrar a maximo 30 y normalizar
+  const players=favs.slice(0,30).map(f=>({name:f.name||f.player||'',platform:(f.platform||'psn').toLowerCase()})).filter(p=>p.name&&(p.platform==='psn'||p.platform==='xbox'));
+  if(!players.length){card.style.display='none';return;}
+  card.style.display='block';
+  if(force)list.innerHTML='<div class="home-loading">Comprobando...</div>';
+  _wpLastLoad=Date.now();
+  try{
+    const r=await fetch('/api/who-is-playing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({players})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    const arr=(j.players||[]).filter(p=>p.lastPlayedAt);
+    if(!arr.length){list.innerHTML='<div class="wp-empty">Ninguno de tus favoritos ha jugado recientemente</div>';return;}
+    // Sort: most recent first
+    arr.sort((a,b)=>new Date(b.lastPlayedAt)-new Date(a.lastPlayedAt));
+    const now=Date.now();
+    let h='';
+    arr.forEach(p=>{
+      const t=new Date(p.lastPlayedAt).getTime();
+      const minsAgo=Math.floor((now-t)/60000);
+      let cls,whenCls,whenTxt;
+      if(minsAgo<30){cls='online';whenCls='wp-when-online';whenTxt='ONLINE &mdash; hace '+minsAgo+'m';}
+      else if(minsAgo<180){cls='recent';whenCls='wp-when-recent';whenTxt='Hace '+Math.floor(minsAgo/60)+'h '+(minsAgo%60)+'m';}
+      else if(minsAgo<1440){cls='today';whenCls='wp-when-today';whenTxt='Hace '+Math.floor(minsAgo/60)+'h';}
+      else{cls='idle';whenCls='';whenTxt='Hace '+Math.floor(minsAgo/1440)+'d';}
+      const mn=MAP_NAMES[p.mapName]||p.mapName||'';
+      const gm=(p.gameMode||'').toUpperCase();
+      h+='<div class="wp-row" onclick="goToPlayer(\''+escJs(p.name)+'\',\''+escJs(p.platform)+'\');">';
+      h+='<div class="wp-status '+cls+'"></div>';
+      h+='<div class="wp-info"><div class="wp-name">'+esc(p.name)+'</div>';
+      h+='<div class="wp-meta"><span class="'+whenCls+'">'+whenTxt+'</span>'+(mn?' &middot; '+esc(mn):'')+(gm?' &middot; '+esc(gm):'')+'</div></div>';
+      h+='</div>';
+    });
+    list.innerHTML=h;
+  }catch(e){
+    console.error('whoPlaying error:',e);
+    list.innerHTML='<div class="wp-empty">Error al consultar (rate limit?)</div>';
+  }
 }
 function hideHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='none';}
-function showHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='block';}
+function showHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='block';loadWhoIsPlaying();}
 
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
@@ -5561,6 +5670,69 @@ function renderAiDna(data) {
   drawDnaRadar('dnaRadarCanvas', scores, roleColor);
   // Scroll to result after render so fadeInUp animation is visible
   setTimeout(function(){ sect.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+}
+
+// === AI Clan DNA Feature ===
+async function requestAiClanDna(tag, btn){
+  const container = document.getElementById('aiClanResult');
+  if(!container) return;
+  // Session cache
+  const cacheKey = 'ai-clan-dna:' + tag.toUpperCase();
+  const cached = sessionStorage.getItem(cacheKey);
+  if(cached){
+    try{ renderAiClanDna(JSON.parse(cached)); return; }catch(e){}
+  }
+  if(btn){ btn.disabled=true; btn.style.opacity='0.6'; btn.style.pointerEvents='none'; btn.innerHTML='<span class="ai-icon">&#x23F3;</span> ANALIZANDO CLAN...'; }
+  container.innerHTML = '<div class="ai-dna-scanning"><div class="scan-orb"></div><div class="scan-text">V4NZ AI analizando dinámica del clan ['+tag+']...</div></div>';
+  try{
+    const r = await fetch('/api/ai-clan-dna?tag=' + encodeURIComponent(tag));
+    if(!r.ok){
+      const errData = await r.json().catch(()=>({}));
+      throw new Error(errData.error || 'Error API');
+    }
+    const data = await r.json();
+    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+    renderAiClanDna(data);
+  }catch(e){
+    console.error('AI Clan DNA error:', e);
+    container.innerHTML = '<div style="text-align:center;padding:18px;color:var(--accent-red);font-family:Rajdhani,sans-serif;font-size:.82rem;">Error generando análisis IA del clan: '+(e.message||'desconocido')+'</div>';
+    if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.style.pointerEvents='auto'; btn.innerHTML='<span class="ai-icon">&#x1F916;</span> ANALIZAR CLAN CON IA'; }
+  }
+}
+
+function renderAiClanDna(data){
+  const container = document.getElementById('aiClanResult');
+  if(!container) return;
+  const archColor = data.archetypeColor || '#a855f7';
+  const scores = data.scores || {};
+  const bars = [
+    { label:'Competitividad', val:scores.competitividad||0, col:'#ff3355' },
+    { label:'Cohesión',       val:scores.cohesion||0,       col:'#00f0ff' },
+    { label:'Agresividad',    val:scores.agresividad||0,    col:'#ff6b00' },
+    { label:'Consistencia',   val:scores.consistencia||0,   col:'#a855f7' },
+    { label:'Actividad',      val:scores.actividad||0,      col:'#00ff88' }
+  ];
+  const barsHtml = bars.map(b=>'<div class="ai-clan-bar-row"><span class="ai-clan-bar-label">'+b.label+'</span><div class="ai-clan-bar-track"><div class="ai-clan-bar-fill" style="width:'+b.val+'%;background:'+b.col+';"></div></div><span class="ai-clan-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
+  const strengths = (data.strengths||[]).map(s=>'<li>'+esc(s)+'</li>').join('');
+  const weaknesses = (data.weaknesses||[]).map(s=>'<li>'+esc(s)+'</li>').join('');
+  const mvpHtml = data.mvp ? '<div class="ai-clan-mvp">&#x1F451; MVP del clan: <strong>'+esc(data.mvp)+'</strong></div>' : '';
+  const tipHtml = data.tip ? '<div class="ai-clan-tip"><strong style="color:#00f0ff;">&#x1F4A1; Consejo:</strong> '+esc(data.tip)+'</div>' : '';
+  let h = '<div class="ai-clan-card">';
+  h += '<div class="ai-dna-badge" style="display:block;margin:0 auto 4px;width:max-content;">GENERADO POR IA</div>';
+  h += '<div class="ai-clan-arch" style="color:'+archColor+';text-shadow:0 0 30px '+archColor+'44;">'+esc(data.archetype||'CLAN')+'</div>';
+  h += '<div class="ai-clan-sub">Análisis colectivo del clan ['+esc(data.tag||'')+']</div>';
+  h += '<div class="ai-clan-desc">'+esc(data.description||'')+'</div>';
+  h += '<div class="ai-clan-grid">';
+  h += '<div class="ai-clan-block"><div class="ai-clan-block-title" style="color:#00ff88;">&#x1F4AA; Fortalezas</div><ul style="color:#9be3b8;">'+strengths+'</ul></div>';
+  h += '<div class="ai-clan-block"><div class="ai-clan-block-title" style="color:#ff6b00;">&#x26A0;&#xFE0F; Debilidades</div><ul style="color:#e3b89b;">'+weaknesses+'</ul></div>';
+  h += '</div>';
+  h += mvpHtml;
+  h += '<div class="ai-clan-bars">'+barsHtml+'</div>';
+  h += tipHtml;
+  h += '<div class="ai-dna-powered">&#x26A1; Análisis IA del clan · Cacheado 7 días</div>';
+  h += '</div>';
+  container.innerHTML = h;
+  setTimeout(()=>{ container.scrollIntoView({ behavior:'smooth', block:'center' }); }, 100);
 }
 
 /* === MI EVOLUCION === */
