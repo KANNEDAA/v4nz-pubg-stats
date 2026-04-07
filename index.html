@@ -629,38 +629,34 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .streamer-banner-link.kick { background:#53FC18; color:#000; }
 @media(max-width:768px){ .streamer-banner { flex-direction:column; text-align:center; } .streamer-banner-links { justify-content:center; } }
 
-/* MATCH DETAIL POPUP */
-/* NOTE: backdrop-filter:blur removed — was causing severe lag/freeze on mobile and weak GPUs.
-   Compensated with a more opaque solid background. */
-.match-detail-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,8,14,.97); z-index:1001; justify-content:center; align-items:center; }
-.match-detail-popup.active { display:flex; }
-/* CRITICAL: while the match detail popup is open, kill all backdrop-filter blurs
-   underneath it. The sticky <header> with backdrop-filter:blur(24px) keeps being
-   composited behind the opaque popup → renderer crash on weak GPUs / mobile.
-   Also hide the main content visually so the GPU stops compositing canvas/SVG layers. */
-body.mdp-open header,
-body.mdp-open .streamer-banner,
+/* MATCH DETAIL — page mode (not a modal anymore).
+   Was a fixed popup overlay; that was causing a renderer crash on Chrome
+   (sticky header + backdrop-filter + popup composited together → black screen).
+   Now it's a normal in-flow page section that replaces the rest of the container
+   while open. Header stays visible so the user has navigation context. */
+.match-detail-popup { display:none; }
+.match-detail-popup.active { display:block; width:100%; }
+/* Hide everything else inside the container when match detail page is open. */
+body.mdp-open .container > *:not(.match-detail-popup):not(#matchDetailPopup) { display:none !important; }
+/* Keep backdrop-filter blurs killed under any leftover popups for safety */
 body.mdp-open .auth-popup,
 body.mdp-open .telem-popup,
 body.mdp-open .card-modal { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-body.mdp-open .container > *:not(.match-detail-popup):not(#matchDetailPopup) { visibility:hidden; }
-body.mdp-open header { visibility:hidden; }
 /* Frequent teammate / rival chip — class-based hover (avoid iOS hover-on-touch double tap) */
 .freq-tm-chip { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; transition:border-color .2s, box-shadow .2s; white-space:nowrap; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
 @media(hover:hover){ .freq-tm-chip:hover { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); } }
 .freq-tm-chip:active { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); }
-.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; position:relative; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; width:100%; max-width:100%; position:relative; margin-top:8px; }
 /* Desktop 70/30 layout: main analytical content + sticky action sidebar */
 .md-grid { display:block; }
 .md-main, .md-side { display:block; }
 @media (min-width: 980px) {
-  .match-detail-card { max-width:960px; padding:28px 32px; }
+  .match-detail-card { padding:28px 32px; }
   .md-grid { display:grid; grid-template-columns:1fr 280px; gap:24px; align-items:start; margin-top:8px; }
-  .md-side { position:sticky; top:0; display:flex; flex-direction:column; gap:12px; }
+  .md-side { position:sticky; top:90px; display:flex; flex-direction:column; gap:12px; }
   .md-side > div, .md-side > button { margin-top:0 !important; }
 }
-.match-detail-card::-webkit-scrollbar { width:4px; } .match-detail-card::-webkit-scrollbar-thumb { background:var(--accent-dim); border-radius:4px; }
-.match-detail-card .close-btn { position:sticky; top:0; float:right; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
+.match-detail-card .close-btn { position:absolute; top:14px; right:14px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
 .match-detail-card .close-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
 .match-back-btn { width:100%; margin-top:16px; padding:10px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
 .match-back-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
@@ -729,9 +725,8 @@ body.mdp-open header { visibility:hidden; }
   .audit-grade-score { font-size:1rem; }
 }
 @media(max-width:600px){
-  /* Match detail: near-fullscreen on mobile */
-  .match-detail-card { width:100%; max-width:100%; max-height:100vh; border-radius:0; padding:20px 16px; }
-  .match-detail-popup { align-items:stretch; }
+  /* Match detail page: edge-to-edge on mobile */
+  .match-detail-card { width:100%; max-width:100%; border-radius:0; padding:20px 16px; margin-top:0; border-left:none; border-right:none; }
   .match-detail-card .close-btn { width:36px; height:36px; font-size:1.2rem; }
   .match-back-btn { padding:12px; font-size:.85rem; }
   .audit-btn { padding:12px; font-size:.85rem; min-height:44px; }
@@ -1764,13 +1759,13 @@ footer a { color: var(--accent); text-decoration: none; }
     </div>
   </div>
   <div class="empty-state" id="emptyState"><p>Busca un jugador para ver sus stats</p></div>
-</div>
 
-<!-- MATCH DETAIL POPUP -->
-<div class="match-detail-popup" id="matchDetailPopup" onclick="if(event.target===this)closeMatchDetail();">
-  <div class="match-detail-card">
-    <button class="close-btn" onclick="closeMatchDetail();">&times;</button>
-    <div id="matchDetailContent"></div>
+  <!-- MATCH DETAIL PAGE (in-flow, not modal — fixes renderer freeze) -->
+  <div class="match-detail-popup" id="matchDetailPopup">
+    <div class="match-detail-card">
+      <button class="close-btn" onclick="closeMatchDetail();">&times;</button>
+      <div id="matchDetailContent"></div>
+    </div>
   </div>
 </div>
 
@@ -4323,9 +4318,9 @@ function showMatchDetail(idx){
   const card=document.querySelector('.match-detail-card');
   card.className='match-detail-card '+plClass;
   document.getElementById('matchDetailPopup').classList.add('active');
-  document.body.classList.add('mdp-open'); // disables backdrop-filter on header & hides bg layers (renderer crash fix)
-  document.body.style.overflow='hidden'; // prevent background scroll/repaint while popup is open
-  card.scrollTop=0;
+  document.body.classList.add('mdp-open'); // hides other container children via CSS (page mode)
+  // Scroll page to top so the user starts at the match header
+  window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});
 }
 // ═══ TELEMETRY AUDIT ═══
 let _auditAbort=null;
@@ -4748,7 +4743,7 @@ async function loadKillTree(telemUrl,playerName,btn){
     container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message)+'</div>';
   }
 }
-function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');document.body.style.overflow='';}
+function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');document.body.style.overflow='';window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});}
 
 function renderFrequentTeammates(){
   const el=document.getElementById('frequentTeammates');const listEl=document.getElementById('frequentTeammatesList');
