@@ -2298,7 +2298,7 @@ function renderClanHistoryUI(){
         fh+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+tagEsc+'\')">';
         fh+='<div class="chi-icon" style="border-color:rgba(255,215,0,0.3);color:var(--accent-yellow);">'+cf.tag.charAt(0)+'</div>';
         fh+='<div class="chi-info"><div class="chi-name">['+esc(cf.tag)+'] '+esc(cf.name)+'</div>';
-        fh+='<div class="chi-meta">'+cf.platform.toUpperCase()+(cf.group?' &mdash; <span style="color:var(--accent-yellow);">'+esc(cf.group)+'</span>':'')+'</div></div>';
+        fh+='<div class="chi-meta">'+clanPlatLabel(cf.platform)+(cf.group?' &mdash; <span style="color:var(--accent-yellow);">'+esc(cf.group)+'</span>':'')+'</div></div>';
         fh+='<div class="chi-actions">';
         fh+='<button class="chi-action-btn" onclick="cycleClanFavGroup(\''+tagEsc+'\',event)" title="Cambiar grupo" style="font-size:.7rem;">&#x1F3F7;&#xFE0F;</button>';
         fh+='<button class="chi-action-btn remove-clan" onclick="toggleClanFavorite(\''+tagEsc+'\',\''+escJs(cf.name)+'\',\''+cf.platform+'\',event)" title="Quitar de favoritos">&times;</button>';
@@ -2357,7 +2357,7 @@ async function loadClanRanking(){
       h+='<div style="font-size:1.2rem;min-width:36px;text-align:center;">'+medal+'</div>';
       h+='<div class="cr-clan-icon" style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(0,240,255,0.05));display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:700;font-size:1rem;color:var(--accent);">'+c.tag.charAt(0)+'</div>';
       h+='<div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">'+c.name+'</div>';
-      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+(c.platform||'psn').toUpperCase()+' &middot; Nivel '+(c.level||'?')+'</div></div>';
+      h+='<div style="font-family:Orbitron,monospace;font-size:.65rem;color:var(--accent);letter-spacing:1px;">['+c.tag+'] &middot; '+clanPlatLabel(c.platform)+' &middot; Nivel '+(c.level||'?')+'</div></div>';
       h+='</div>';
       h+=clanFavStar(c.tag,c.name,c.platform||'psn','.9rem');
       h+='<div style="font-size:.7rem;color:var(--text-dim);">&#x25BC;</div>';
@@ -2466,7 +2466,7 @@ async function loadClanPage(tag){
     let h='<div class="clan-page-header">';
     h+='<div style="display:flex;align-items:center;gap:16px;"><div class="clan-icon" style="width:56px;height:56px;font-size:1.5rem;">'+c.tag.charAt(0)+'</div>';
     h+='<div><div class="clan-name" style="font-size:1.4rem;">'+c.name+'</div>';
-    h+='<div class="clan-tag">['+c.tag+'] &mdash; '+c.platform.toUpperCase()+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
+    h+='<div class="clan-tag">['+c.tag+'] &mdash; '+clanPlatLabel(c.platform)+' &mdash; Nivel '+(c.level||'?')+' &mdash; '+(c.member_count||members.length)+' miembros</div></div></div>';
     // Aggregated stats
     h+='<div class="clan-stats-grid" style="margin-top:16px;">';
     h+='<div class="clan-stat"><div class="cs-val" style="color:var(--accent);">'+(c.total_kills||0)+'</div><div class="cs-label">Total Kills</div></div>';
@@ -3223,6 +3223,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
+// Etiqueta de plataforma para clanes: en consola (PSN/Xbox) los clanes son cross-platform, asi que mostramos CONSOLA. Solo Steam se distingue.
+function clanPlatLabel(p){p=(p||'psn').toLowerCase();return p==='steam'?'STEAM':'CONSOLA';}
 function checkApiKey(){return true;}
 function saveApiKey(){}
 async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;const timeoutErr=new Promise((_,reject)=>setTimeout(()=>{const err=new Error('La peticion ha tardado demasiado. Intentalo de nuevo.');err.status=408;reject(err);},20000));try{r=await Promise.race([fetch(u,{headers:h}),timeoutErr]);}catch(netErr){if(netErr.status===408)throw netErr;const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=await Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))]);if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;if(j.error)msg=j.error;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';showRateLimitCountdown();}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('La respuesta ha tardado demasiado.')),10000))]);}
@@ -6447,7 +6449,7 @@ async function loadClanAnalysisHub(){
       h+='<span style="font-size:.65rem;color:var(--text-dim);">WR <span style="font-family:Orbitron;font-weight:700;color:var(--accent-orange);font-size:.65rem;">'+(parseFloat(clan.win_rate)||0).toFixed(1)+'%</span></span>';
       h+='</div>';
     }else{
-      h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:4px;">'+(c.platform||'psn').toUpperCase()+' &mdash; '+(c.memberCount||'?')+' miembros</div>';
+      h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:4px;">'+clanPlatLabel(c.platform)+' &mdash; '+(c.memberCount||'?')+' miembros</div>';
     }
     h+='</div>';
     // Expand arrow
