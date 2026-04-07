@@ -603,6 +603,10 @@ body.mdp-open .telem-popup,
 body.mdp-open .card-modal { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 body.mdp-open .container > *:not(.match-detail-popup):not(#matchDetailPopup) { visibility:hidden; }
 body.mdp-open header { visibility:hidden; }
+/* Frequent teammate / rival chip — class-based hover (avoid iOS hover-on-touch double tap) */
+.freq-tm-chip { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; transition:border-color .2s, box-shadow .2s; white-space:nowrap; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+@media(hover:hover){ .freq-tm-chip:hover { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); } }
+.freq-tm-chip:active { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); }
 .match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; position:relative; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 .match-detail-card::-webkit-scrollbar { width:4px; } .match-detail-card::-webkit-scrollbar-thumb { background:var(--accent-dim); border-radius:4px; }
 .match-detail-card .close-btn { position:sticky; top:0; float:right; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
@@ -2571,6 +2575,11 @@ async function loadClanPage(tag){
     h+='<div id="clanFeedContent"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Cargando actividad...</div></div></div>';
     h+='</div>';
     cr.innerHTML=h;
+    // Scroll to the rendered clan so user lands on it (esp. when arriving via /clan/TAG deep-link)
+    requestAnimationFrame(()=>{
+      const tgt=document.getElementById('clanResults');
+      if(tgt){const y=tgt.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}
+    });
     // Load aliases for clan members (async — shows "Antes conocido como" badges)
     loadClanMemberAliases(c.tag);
     // Load async sections
@@ -2580,6 +2589,10 @@ async function loadClanPage(tag){
   }catch(e){
     // Not in DB — try searching via PUBG API
     cr.innerHTML='<div class="empty-state"><p style="color:var(--text-secondary);">Este clan aun no esta publicado en V4NZ.</p><p style="font-size:.8rem;color:var(--text-dim);">Busca un jugador del clan arriba para encontrarlo y publicarlo.</p></div>';
+    requestAnimationFrame(()=>{
+      const tgt=document.getElementById('clanResults');
+      if(tgt){const y=tgt.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}
+    });
   }
 }
 
@@ -3532,7 +3545,10 @@ function switchTab(t){
   const _pod=document.getElementById('podcastPlayer');if(_pod)_pod.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
   // URL management: push friendly URLs for main sections
   if(mainSections.includes(t)){
-    history.pushState(null,'','/'+t);
+    // Don't clobber /clan/TAG → /clans (preserve clan deep-links)
+    if(!(t==='clans'&&location.pathname.match(/^\/clan\//i))){
+      history.pushState(null,'','/'+t);
+    }
     document.title={'clans':'Clanes — V4NZ','ranking':'Ranking Clanes — V4NZ','top500':'Top 500 — V4NZ','compare':'Comparar — V4NZ'}[t]||'V4NZ — PUBG Console Stats Tracker';
   } else if(playerTabs.includes(t)&&currentPlayerData){
     const pName=currentPlayerData.attributes?.name||currentPlayerData.id;
@@ -4540,7 +4556,7 @@ function renderFrequentTeammates(){
   const sorted=Object.entries(tmCount).sort((a,b)=>b[1]-a[1]).filter(e=>e[1]>=2).slice(0,8);
   if(!sorted.length){el.style.display='none';return;}
   let h='';sorted.forEach(([name,count])=>{
-    h+='<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .2s;white-space:nowrap;" onclick="setPlatform(\''+currentPlatform+'\');document.getElementById(\'searchInput\').value=\''+escJs(name)+'\';searchPlayer();" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.boxShadow=\'0 0 8px rgba(0,240,255,0.15)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.boxShadow=\'none\'">';
+    h+='<div class="freq-tm-chip" onclick="event.stopPropagation();goToPlayer(\''+escJs(name)+'\',\''+currentPlatform+'\');">';
     h+='<span style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.7rem;color:var(--text-primary);">'+esc(name)+'</span>';
     h+='<span style="font-size:.55rem;color:var(--accent);font-family:Rajdhani,sans-serif;font-weight:700;background:var(--accent-dim);padding:1px 6px;border-radius:10px;">'+count+'x</span>';
     h+='</div>';
@@ -6508,13 +6524,22 @@ document.addEventListener('click',function(e){if(!e.target.closest('.clan-ac-wra
 async function loadClanAnalysisHub(){
   const container=document.getElementById('clanAnalysisContent');
   if(!container)return;
-  // Collect all clans to show: myClan first, then history (deduplicated)
+  // Collect all clans to show: myClan first, then favorites, then history (deduplicated)
   const allTags=[];
   const clansToShow=[];
-  if(myClan){allTags.push(myClan.tag);clansToShow.push({...myClan,isMyClan:true});}
-  clanHistory.forEach(c=>{if(!allTags.includes(c.tag)){allTags.push(c.tag);clansToShow.push({...c,isMyClan:false});}});
+  if(myClan){allTags.push(myClan.tag.toUpperCase());clansToShow.push({...myClan,isMyClan:true});}
+  // Bug fix: incluir tambien clanes favoritos (antes solo se mostraban myClan + historial)
+  if(Array.isArray(clanFavorites)){
+    clanFavorites.forEach(f=>{
+      const t=(f.tag||f.name||'').toUpperCase();
+      if(!t||allTags.includes(t))return;
+      allTags.push(t);
+      clansToShow.push({tag:t,name:f.name||t,platform:f.platform||'psn',memberCount:f.memberCount,isMyClan:false});
+    });
+  }
+  clanHistory.forEach(c=>{const t=(c.tag||'').toUpperCase();if(!t||allTags.includes(t))return;allTags.push(t);clansToShow.push({...c,isMyClan:false});});
   if(!clansToShow.length){
-    container.innerHTML='<div class="empty-state"><p>No tienes clanes guardados. Busca un clan primero y aparecera aqui automaticamente.</p></div>';
+    container.innerHTML='<div class="empty-state"><p>No tienes clanes guardados. Busca un clan o anade uno a favoritos y aparecera aqui automaticamente.</p></div>';
     return;
   }
   // Show loading
