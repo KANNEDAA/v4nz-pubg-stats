@@ -1197,8 +1197,13 @@ footer a { color: var(--accent); text-decoration: none; }
 .telem-hs { color: var(--accent-purple); font-weight: 700; }
 
 /* TELEMETRY MAP */
-.telem-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,10,.95); backdrop-filter:blur(12px); z-index:1002; justify-content:center; align-items:center; flex-direction:column; }
+/* NOTE: backdrop-filter removed — same renderer crash bug as match-detail.
+   Compensated with a more opaque background. */
+.telem-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,10,.98); z-index:1002; justify-content:center; align-items:center; flex-direction:column; }
 .telem-popup.active { display:flex; }
+/* Kill backdrop-filter on header while telem map is open (renderer crash fix) */
+body.telem-open header { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background:rgba(11,11,18,0.98) !important; }
+body.telem-open { overflow:hidden; }
 .telem-container { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; max-width:680px; width:95%; max-height:92vh; overflow-y:auto; position:relative; }
 .telem-container .close-btn { position:absolute; top:12px; right:12px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
 .telem-container .close-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
@@ -5037,13 +5042,14 @@ const TELEM_MAP_SIZES={Baltic_Main:816000,Desert_Main:816000,DihorOtok_Main:6120
 const TELEM_MAP_IMGS={Baltic_Main:'/maps/erangel.png',Desert_Main:'/maps/miramar.png',DihorOtok_Main:'/maps/vikendi.png',Savage_Main:'/maps/sanhok.png',Tiger_Main:'/maps/taego.png',Kiki_Main:'/maps/deston.png',Neon_Main:'/maps/rondo.png'};
 const TELEM_TEAM_COLORS=['#00f0ff','#ff6b00','#a855f7','#ffd700'];
 
-function closeTelemMap(){document.getElementById('telemPopup').classList.remove('active');}
+function closeTelemMap(){document.getElementById('telemPopup').classList.remove('active');document.body.classList.remove('telem-open');}
 
 async function openTelemMap(url,playerName,mapName,matchIdx){
   const popup=document.getElementById('telemPopup');
   const content=document.getElementById('telemContent');
   content.innerHTML='<div style="text-align:center;padding:60px 20px;"><div style="font-family:Orbitron,sans-serif;font-size:1rem;color:var(--accent);margin-bottom:12px;">Cargando telemetria...</div><div style="font-size:.75rem;color:var(--text-dim);">Esto puede tardar unos segundos</div></div>';
   popup.classList.add('active');
+  document.body.classList.add('telem-open'); // kills header backdrop-filter to prevent renderer crash
   try{
     const resp=await fetch(url);
     const telem=await resp.json();
