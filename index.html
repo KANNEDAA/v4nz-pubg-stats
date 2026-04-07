@@ -608,6 +608,15 @@ body.mdp-open header { visibility:hidden; }
 @media(hover:hover){ .freq-tm-chip:hover { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); } }
 .freq-tm-chip:active { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); }
 .match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; position:relative; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+/* Desktop 70/30 layout: main analytical content + sticky action sidebar */
+.md-grid { display:block; }
+.md-main, .md-side { display:block; }
+@media (min-width: 980px) {
+  .match-detail-card { max-width:960px; padding:28px 32px; }
+  .md-grid { display:grid; grid-template-columns:1fr 280px; gap:24px; align-items:start; margin-top:8px; }
+  .md-side { position:sticky; top:0; display:flex; flex-direction:column; gap:12px; }
+  .md-side > div, .md-side > button { margin-top:0 !important; }
+}
 .match-detail-card::-webkit-scrollbar { width:4px; } .match-detail-card::-webkit-scrollbar-thumb { background:var(--accent-dim); border-radius:4px; }
 .match-detail-card .close-btn { position:sticky; top:0; float:right; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
 .match-detail-card .close-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
@@ -992,7 +1001,13 @@ footer a { color: var(--accent); text-decoration: none; }
 @keyframes slideIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
 @keyframes scaleIn { from { opacity:0; transform:scale(.92); } to { opacity:1; transform:scale(1); } }
 .animate-in { opacity:0; animation: fadeInUp 0.45s ease forwards; }
-.animate-in:nth-child(1){animation-delay:.03s}.animate-in:nth-child(2){animation-delay:.06s}.animate-in:nth-child(3){animation-delay:.09s}.animate-in:nth-child(4){animation-delay:.12s}.animate-in:nth-child(5){animation-delay:.15s}.animate-in:nth-child(6){animation-delay:.18s}.animate-in:nth-child(7){animation-delay:.21s}.animate-in:nth-child(8){animation-delay:.24s}
+.animate-in:nth-child(1){animation-delay:.02s}.animate-in:nth-child(2){animation-delay:.04s}.animate-in:nth-child(3){animation-delay:.06s}.animate-in:nth-child(4){animation-delay:.08s}.animate-in:nth-child(5){animation-delay:.10s}.animate-in:nth-child(6){animation-delay:.12s}.animate-in:nth-child(7){animation-delay:.14s}.animate-in:nth-child(8){animation-delay:.16s}.animate-in:nth-child(9){animation-delay:.18s}.animate-in:nth-child(10){animation-delay:.20s}.animate-in:nth-child(11){animation-delay:.22s}.animate-in:nth-child(12){animation-delay:.24s}.animate-in:nth-child(13){animation-delay:.26s}.animate-in:nth-child(14){animation-delay:.28s}.animate-in:nth-child(15){animation-delay:.30s}.animate-in:nth-child(16){animation-delay:.32s}.animate-in:nth-child(17){animation-delay:.34s}.animate-in:nth-child(18){animation-delay:.36s}.animate-in:nth-child(19){animation-delay:.38s}.animate-in:nth-child(20){animation-delay:.40s}
+/* Match item hover lift — sutil pero notable, deshabilita ripple en mobile */
+.match-item { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; will-change: transform; }
+@media (hover:hover) {
+  .match-item:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,240,255,.08); border-color: rgba(0,240,255,.25); }
+}
+.match-item:active { transform: translateY(0); }
 .stat-card { opacity:0; animation: scaleIn .4s ease forwards; }
 .stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.1s}.stat-card:nth-child(3){animation-delay:.15s}.stat-card:nth-child(4){animation-delay:.2s}.stat-card:nth-child(5){animation-delay:.25s}.stat-card:nth-child(6){animation-delay:.3s}
 .weapon-card { opacity:0; animation: slideIn .4s ease forwards; }
@@ -3304,7 +3319,11 @@ function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-b
 function clanPlatLabel(p){p=(p||'psn').toLowerCase();return p==='steam'?'STEAM':'CONSOLA';}
 function checkApiKey(){return true;}
 function saveApiKey(){}
-async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;const timeoutErr=new Promise((_,reject)=>setTimeout(()=>{const err=new Error('La peticion ha tardado demasiado. Intentalo de nuevo.');err.status=408;reject(err);},20000));try{r=await Promise.race([fetch(u,{headers:h}),timeoutErr]);}catch(netErr){if(netErr.status===408)throw netErr;const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=await Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))]);if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;if(j.error)msg=j.error;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';showRateLimitCountdown();}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('La respuesta ha tardado demasiado.')),10000))]);}
+// Global rate limit state — checked by entry points (searchPlayer, etc.) to bail early
+window._rateLimitedUntil = 0;
+function isRateLimited(){ return Date.now() < (window._rateLimitedUntil||0); }
+function getRateLimitSecondsLeft(){ return Math.max(0, Math.ceil((window._rateLimitedUntil - Date.now())/1000)); }
+async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;const timeoutErr=new Promise((_,reject)=>setTimeout(()=>{const err=new Error('La peticion ha tardado demasiado. Intentalo de nuevo.');err.status=408;reject(err);},20000));try{r=await Promise.race([fetch(u,{headers:h}),timeoutErr]);}catch(netErr){if(netErr.status===408)throw netErr;const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=await Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))]);if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;if(j.error)msg=j.error;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';/* Read Retry-After header (PUBG sends seconds) — fallback 15 */let retrySecs=15;try{const ra=r.headers.get('retry-after');if(ra){const n=parseInt(ra,10);if(!isNaN(n)&&n>0&&n<=300)retrySecs=n;}}catch(e){}window._rateLimitedUntil=Date.now()+retrySecs*1000;showRateLimitCountdown(retrySecs);}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('La respuesta ha tardado demasiado.')),10000))]);}
 function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div></div>';return null;}
 function stopApiLoader(iv){}
 function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);}
@@ -3315,17 +3334,30 @@ function showError(m){
   const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.textContent=m;e.classList.add('visible');errorTimeout=setTimeout(()=>{e.classList.remove('visible');errorTimeout=null;},10000);
 }
 function hideError(){const e=document.getElementById('errorMsg');if(errorTimeout)clearTimeout(errorTimeout);e.classList.remove('visible');errorTimeout=null;}
-function showRateLimitCountdown(){
+function showRateLimitCountdown(initialSecs){
   const e=document.getElementById('errorMsg');
   if(rateLimitInterval)clearInterval(rateLimitInterval);
   if(errorTimeout)clearTimeout(errorTimeout);
-  let secs=15;
-  e.innerHTML='&#x23F3; Demasiadas consultas. Puedes reintentar en <strong>'+secs+'s</strong>';
+  let secs=(typeof initialSecs==='number'&&initialSecs>0)?initialSecs:15;
+  // Disable search button visually
+  const sBtn=document.querySelector('.search-btn,#searchBtn,button[onclick*="searchPlayer"]');
+  if(sBtn){sBtn.disabled=true;sBtn.style.opacity='0.5';sBtn.style.cursor='not-allowed';}
+  const sInput=document.getElementById('searchInput');
+  if(sInput){sInput.style.opacity='0.6';}
+  e.innerHTML='&#x23F3; Demasiadas consultas a la API de PUBG. Puedes reintentar en <strong>'+secs+'s</strong>';
   e.classList.add('visible');
   rateLimitInterval=setInterval(()=>{
     secs--;
-    if(secs<=0){clearInterval(rateLimitInterval);rateLimitInterval=null;e.innerHTML='&#x2705; Ya puedes buscar de nuevo';setTimeout(()=>{e.classList.remove('visible');},2000);return;}
-    e.innerHTML='&#x23F3; Demasiadas consultas. Puedes reintentar en <strong>'+secs+'s</strong>';
+    if(secs<=0){
+      clearInterval(rateLimitInterval);rateLimitInterval=null;
+      window._rateLimitedUntil=0;
+      if(sBtn){sBtn.disabled=false;sBtn.style.opacity='';sBtn.style.cursor='';}
+      if(sInput){sInput.style.opacity='';}
+      e.innerHTML='&#x2705; Ya puedes buscar de nuevo';
+      setTimeout(()=>{e.classList.remove('visible');},2000);
+      return;
+    }
+    e.innerHTML='&#x23F3; Demasiadas consultas a la API de PUBG. Puedes reintentar en <strong>'+secs+'s</strong>';
   },1000);
 }
 function showDataPanels(){document.getElementById('tabsContainer').classList.add('visible');document.getElementById('emptyState').style.display='none';}
@@ -3424,7 +3456,10 @@ function showClanByTag(tag){
   loadClanPage(tag);
 }
 async function searchPlayer(){
-  if(!checkApiKey())return;const name=document.getElementById('searchInput').value.trim();if(!name){showError('Escribe el nombre de un jugador para buscar sus estadísticas');return;}
+  if(!checkApiKey())return;
+  // Bail early if still in cooldown — avoid wasting another call against the API
+  if(isRateLimited()){showRateLimitCountdown(getRateLimitSecondsLeft());return;}
+  const name=document.getElementById('searchInput').value.trim();if(!name){showError('Escribe el nombre de un jugador para buscar sus estadísticas');return;}
   showLoading(true);showSkeletons(true);hideError();isUsingDemo=false;window._lastBotIndex=null;document.getElementById('emptyState').style.display='none';hideHomepageContent();
   try{
     setLoaderStep('Buscando jugador '+name+'...');
@@ -4051,6 +4086,8 @@ function showMatchDetail(idx){
   const avgRevives=hasAvg?((avgS.revives||0)/avgS.roundsPlayed):0;
   // Build HTML — Map header (gradient always, image lazy-upgrade)
   let h='<div class="match-map-img" id="mdMapHeader" style="'+mapBg+'"><div class="map-label" style="color:'+mc+';text-shadow:0 2px 8px rgba(0,0,0,.7);">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:#ccc;text-shadow:0 1px 4px rgba(0,0,0,.8);">'+(MAP_SIZE[mn]||'')+'</div></div>';
+  // Open desktop 70/30 grid: md-main holds analytical content, md-side holds action buttons
+  h+='<div class="md-grid"><div class="md-main">';
   // Placement — BIGGER with icon for #1
   h+='<div style="text-align:center;margin-bottom:16px;">';
   h+='<span style="font-family:Orbitron,sans-serif;font-size:2.4rem;font-weight:800;color:'+plColor+';line-height:1;">#'+pl+plIcon+'</span>';
@@ -4152,15 +4189,19 @@ function showMatchDetail(idx){
     h+='<div style="margin-top:12px;"><a href="'+esc(clip.url)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--accent-purple);padding:10px 12px;border-radius:6px;font-weight:700;font-size:.82rem;font-family:Rajdhani,sans-serif;text-decoration:none;text-transform:uppercase;letter-spacing:1px;transition:all .2s;" onmouseover="this.style.background=\'rgba(168,85,247,0.25)\'" onmouseout="this.style.background=\'rgba(168,85,247,0.12)\'">&#x1F3AC; Ver Video en PUBG Report ('+esc(clip.streamer)+')</a></div>';
   }
   if(telemetryUrl){h+='<div style="margin-top:12px;"><button onclick="openTelemMap(\''+telemetryUrl+'\',\''+pn.replace(/'/g,"\\'")+'\',\''+a.mapName+'\','+idx+')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;font-family:Rajdhani,sans-serif;">&#x1F5FA; Ver Mapa de Telemetria</button></div>';}
+  // Close md-main, open md-side (desktop 70/30 layout)
+  h+='</div><div class="md-side">';
   // Telemetry audit button
   const auditMatchId=match.data?match.data.id:null;
   if(auditMatchId){
-    h+='<div style="margin-top:12px;" id="auditBtnWrap"><button class="audit-btn" onclick="requestTelemetryAudit(\''+escJs(auditMatchId)+'\',\''+escJs(pn)+'\',\''+escJs(currentPlatform||'psn')+'\',this)">&#x1F50D; Auditar Partida con IA</button></div>';
+    h+='<div style="margin-top:0;" id="auditBtnWrap"><button class="audit-btn" onclick="requestTelemetryAudit(\''+escJs(auditMatchId)+'\',\''+escJs(pn)+'\',\''+escJs(currentPlatform||'psn')+'\',this)">&#x1F50D; Auditar Partida con IA</button></div>';
     h+='<div id="auditResult"></div>';
   }
   // Share match card button
   h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F4F7; Compartir Partida</button></div>';
   h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
+  // Close md-side and md-grid wrapper
+  h+='</div></div>';
   document.getElementById('matchDetailContent').innerHTML=h;
   // Try loading map image in background — if it works, upgrade the header
   if(mapImgUrl){const _mi=new Image();_mi.onload=function(){const hdr=document.getElementById('mdMapHeader');if(hdr){hdr.style.background='url('+mapImgUrl+') center/cover no-repeat';hdr.classList.add('has-bg');}};_mi.src=mapImgUrl;}
