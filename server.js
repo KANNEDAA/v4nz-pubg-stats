@@ -3153,6 +3153,40 @@ ${urls.map(u => `  <url>
   res.send(xml);
 });
 
+// ═══ CRON DEBUG ═══
+// Public runtime status of the clan-refresh cron. Read from the browser
+// to verify the scheduler is alive without SSHing into Railway logs.
+// IMPORTANTE: debe ir ANTES del catch-all app.get('*') o Express lo intercepta.
+app.get('/debug/cron', async (req, res) => {
+  const s = global._cronState || null;
+  let staleNow = null;
+  if (pool) {
+    try {
+      const r = await pool.query("SELECT COUNT(*)::int AS c FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours')");
+      staleNow = r.rows[0].c;
+    } catch (e) { staleNow = 'query error: ' + e.message; }
+  }
+  res.json({
+    serverTime: new Date().toISOString(),
+    uptime: process.uptime(),
+    cron: s,
+    staleClansNow: staleNow,
+    dbConnected: !!pool
+  });
+});
+
+// ═══ HEALTH CHECK ═══
+// IMPORTANTE: debe ir ANTES del catch-all app.get('*') o Express lo intercepta.
+app.get('/health', async (req, res) => {
+  const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
+  if (pool) {
+    try { await pool.query('SELECT 1'); health.database = 'connected'; }
+    catch (e) { health.database = 'error'; health.status = 'degraded'; }
+  } else { health.database = 'not configured'; }
+  health.apiKey = SERVER_API_KEY ? 'configured' : 'missing';
+  res.status(health.status === 'ok' ? 200 : 503).json(health);
+});
+
 // Fallback: serve index.html for SPA routes with dynamic meta tags
 app.get('*', (req, res) => {
   const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
@@ -3235,38 +3269,6 @@ async function prewarmLeaderboards() {
     } catch (e) { console.error(`[Pre-warm] LB ${c.platform}/${c.region}/${c.mode} FAIL:`, e.message); }
   }
 }
-
-// ═══ CRON DEBUG ═══
-// Public runtime status of the clan-refresh cron. Read from the browser
-// to verify the scheduler is alive without SSHing into Railway logs.
-app.get('/debug/cron', async (req, res) => {
-  const s = global._cronState || null;
-  let staleNow = null;
-  if (pool) {
-    try {
-      const r = await pool.query("SELECT COUNT(*)::int AS c FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours')");
-      staleNow = r.rows[0].c;
-    } catch (e) { staleNow = 'query error: ' + e.message; }
-  }
-  res.json({
-    serverTime: new Date().toISOString(),
-    uptime: process.uptime(),
-    cron: s,
-    staleClansNow: staleNow,
-    dbConnected: !!pool
-  });
-});
-
-// ═══ HEALTH CHECK ═══
-app.get('/health', async (req, res) => {
-  const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
-  if (pool) {
-    try { await pool.query('SELECT 1'); health.database = 'connected'; }
-    catch (e) { health.database = 'error'; health.status = 'degraded'; }
-  } else { health.database = 'not configured'; }
-  health.apiKey = SERVER_API_KEY ? 'configured' : 'missing';
-  res.status(health.status === 'ok' ? 200 : 503).json(health);
-});
 
 // ═══ GRACEFUL SHUTDOWN ═══
 function gracefulShutdown(signal) {
