@@ -948,6 +948,14 @@ body.mdp-open { overflow:hidden; }
 .clan-platform-sel { display: flex; gap: 6px; margin-bottom: 16px; }
 .clan-plat-btn { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; color: var(--text-secondary); font-size: 0.75rem; font-family: 'Rajdhani', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .clan-plat-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+/* CC FAVS v143 — marker: cc-favs-v143 */
+.cc-fav-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cc-fav-row .cc-fav-label { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: .62rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); margin-right: 4px; }
+.cc-fav-chip { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 4px 10px; color: var(--text-secondary); font-size: .7rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 5px; }
+.cc-fav-chip:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.cc-fav-chip.selected { background: var(--accent); color: var(--bg-primary); border-color: var(--accent); box-shadow: 0 0 10px rgba(0,240,255,0.25); }
+.cc-fav-chip .cc-fav-star { color: var(--accent-orange); font-size: .72rem; }
+.cc-fav-empty { font-size: .68rem; color: var(--text-dim); font-style: italic; }
 .clan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); }
 .clan-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gradient-orange); }
 .clan-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
@@ -1709,6 +1717,8 @@ body.telem-open { overflow:hidden; }
             <button class="cc-tab" data-cc="1" data-mode="player" onclick="setCCSearchTab(1,'player',this)" style="flex:1;padding:7px 10px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;border:none;cursor:pointer;transition:all .2s;background:var(--bg-secondary);color:var(--text-dim);">&#x1F464; Por Jugador</button>
           </div>
           <div id="ccNamePanel1">
+            <!-- CC FAVS v143 — marker: cc-favs-v143 -->
+            <div id="ccFavRow1" class="cc-fav-row" style="margin-bottom:8px;"></div>
             <div class="clan-search-box clan-ac-wrap" style="margin-bottom:0;"><input class="clan-input" id="clanCompare1" placeholder="Nombre o tag del clan..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC1')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC1"></div></div>
           </div>
           <div id="ccPlayerPanel1" style="display:none;">
@@ -1729,6 +1739,7 @@ body.telem-open { overflow:hidden; }
             <button class="cc-tab" data-cc="2" data-mode="player" onclick="setCCSearchTab(2,'player',this)" style="flex:1;padding:7px 10px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;border:none;cursor:pointer;transition:all .2s;background:var(--bg-secondary);color:var(--text-dim);">&#x1F464; Por Jugador</button>
           </div>
           <div id="ccNamePanel2">
+            <div id="ccFavRow2" class="cc-fav-row" style="margin-bottom:8px;"></div>
             <div class="clan-search-box clan-ac-wrap" style="margin-bottom:0;"><input class="clan-input" id="clanCompare2" placeholder="Nombre o tag del clan..." autocomplete="off" oninput="clanAutocomplete(this,'clanAC2')" onkeydown="if(event.key==='Enter'){closeClanAC();compareClans();}"/><div class="clan-ac-list" id="clanAC2"></div></div>
           </div>
           <div id="ccPlayerPanel2" style="display:none;">
@@ -2218,6 +2229,7 @@ async function loadFavoritesFromServer(){
       }
       renderRecentSearches();
       renderClanHistoryUI();
+      if(typeof renderCCFavs==='function')renderCCFavs();
     }
   }catch(e){console.error('Load favs error:',e);}
 }
@@ -3927,6 +3939,7 @@ function toggleClanFavorite(tag,name,platform,evt){
   renderClanHistoryUI();
   updateClanFavBtn();
   updateAllClanFavStars();
+  if(typeof renderCCFavs==='function')renderCCFavs();
 }
 function setClanFavGroup(tag,group,evt){
   if(evt)evt.stopPropagation();
@@ -6777,6 +6790,7 @@ function setClanMode(mode,btn){
   document.getElementById('clanCompareMode').style.display=mode==='compare'?'block':'none';
   document.getElementById('clanAnalysisMode').style.display=mode==='analysis'?'block':'none';
   if(mode==='analysis')loadClanAnalysisHub();
+  if(mode==='compare'&&typeof renderCCFavs==='function')renderCCFavs();
 }
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
 function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
@@ -6807,6 +6821,46 @@ function getCCValue(side){
   }
   const inp=document.getElementById('clanCompare'+side);
   return {value:(inp?inp.value.trim():''),mode:'name',platform:_ccPlat[side]};
+}
+// ═══ CC FAVS v143 — marker: cc-favs-v143 ═══
+// Chips de clanes favoritos como selector rápido en Comparar Clanes
+function renderCCFavs(){
+  try{
+    [1,2].forEach(side=>{
+      const row=document.getElementById('ccFavRow'+side);if(!row)return;
+      if(!Array.isArray(clanFavorites)||clanFavorites.length===0){
+        row.innerHTML='<span class="cc-fav-empty">Sin clanes favoritos aún — guárdalos desde la búsqueda para usarlos aquí.</span>';
+        return;
+      }
+      const inp=document.getElementById('clanCompare'+side);
+      const curVal=inp?inp.value.trim().toLowerCase():'';
+      const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      let h='<span class="cc-fav-label">⭐ Favs:</span>';
+      clanFavorites.slice(0,12).forEach(f=>{
+        const tag=(f.tag||f.name||'').toString();
+        const label=esc(tag);
+        const sel=curVal && curVal===tag.toLowerCase()?' selected':'';
+        h+='<button type="button" class="cc-fav-chip'+sel+'" onclick="pickCCFav('+side+',\''+escJs(tag)+'\',\''+escJs(f.platform||'psn')+'\')" title="'+esc(f.name||tag)+'"><span class="cc-fav-star">★</span>'+label+'</button>';
+      });
+      row.innerHTML=h;
+    });
+  }catch(e){console.warn('renderCCFavs err',e);}
+}
+function pickCCFav(side,tag,platform){
+  try{
+    // Asegurar modo "name" activo
+    if(_ccMode[side]!=='name'){
+      const btn=document.querySelector('.cc-tab[data-cc="'+side+'"][data-mode="name"]');
+      if(btn)setCCSearchTab(side,'name',btn);
+    }
+    const inp=document.getElementById('clanCompare'+side);
+    if(inp){inp.value=tag;inp.focus();}
+    renderCCFavs();
+    // Auto-compare si ambos slots tienen valor
+    const v1=document.getElementById('clanCompare1');
+    const v2=document.getElementById('clanCompare2');
+    if(v1&&v2&&v1.value.trim()&&v2.value.trim()){setTimeout(()=>compareClans(),150);}
+  }catch(e){console.warn('pickCCFav err',e);}
 }
 
 // ═══ CLAN AUTOCOMPLETE (Compare inputs) — busca por clan Y por jugador ═══
