@@ -2657,16 +2657,13 @@ async function loadClanPage(tag){
     h+='</div>';
     // Member ranking
     if(members.length){
-      // Carry/Lastre index — compute clan avg K/D from active members and compute delta per member
       const clanAvgKd=parseFloat(c.avg_kd)||0;
       h+='<div style="margin-top:16px;"><div class="section-title" style="font-size:.85rem;">Ranking de Miembros</div>';
-      // Legend
       h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:.6rem;color:var(--text-dim);"><span>Carry/Lastre vs K/D medio del clan ('+clanAvgKd.toFixed(2)+'):</span><span style="color:#22d3ee;">&#x1F48E; Carry (+25%)</span><span style="color:var(--accent-green);">&#x2B06;&#xFE0F; Sobre media</span><span>&#x1F3AF; Media</span><span style="color:var(--accent-orange);">&#x2B07;&#xFE0F; Bajo media</span><span style="color:#ef4444;">&#x1FAA8; Lastre (-25%)</span></div>';
       members.forEach((m,i)=>{
         const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':'';
         const maxKills=members[0]?.kills||1;
         const barW=Math.max(5,Math.round(((m.kills||0)/maxKills)*100));
-        // Carry/Lastre badge (requires minimum 10 rounds and clan avg > 0 to be meaningful)
         const mKd=parseFloat(m.kd)||0;
         const mRounds=parseInt(m.rounds||0,10);
         let clBadge='';
@@ -2695,6 +2692,12 @@ async function loadClanPage(tag){
         h+='<div>Dano: <span>'+(parseFloat(m.damage)||0).toFixed(0)+'</span></div>';
         h+='</div></div>';
       });
+      // Falta alguien? Form — flujo automatico (verifica en PUBG API y anade al instante)
+      h+='<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">';
+      h+='<div style="font-size:.72rem;color:var(--text-dim);margin-bottom:8px;">&#x2753; Falta alguien? Se anade automaticamente tras verificarlo en PUBG:</div>';
+      h+='<div style="display:flex;gap:8px;"><input id="requestPlayerInputFull_'+esc(c.tag)+'" class="clan-input" style="flex:1;font-size:.8rem;" placeholder="Gamertag del jugador..." onkeydown="if(event.key===\'Enter\')requestAddPlayerFull(\''+escJs(c.tag)+'\')"/><button class="search-btn" style="border-radius:8px;padding:8px 16px;font-size:.7rem;" onclick="requestAddPlayerFull(\''+escJs(c.tag)+'\')">ANADIR</button></div>';
+      h+='<div id="requestStatusFull_'+c.tag+'" style="margin-top:6px;font-size:.68rem;color:var(--text-dim);"></div>';
+      h+='</div>';
       h+='</div>';
     }
     // Clan Analytics
@@ -7272,6 +7275,30 @@ async function searchClan(){
   }catch(e){
     document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(e.message)+'</p>';
   }finally{showLoading(false);}
+}
+// Request to add a player via full clan page (auto-add flow, no admin review)
+async function requestAddPlayerFull(clanTag){
+  const input=document.getElementById('requestPlayerInputFull_'+clanTag);
+  const statusEl=document.getElementById('requestStatusFull_'+clanTag);
+  if(!input||!input.value.trim()){alert('Escribe el gamertag del jugador');return;}
+  const playerName=input.value.trim();
+  statusEl.innerHTML='<span style="color:var(--accent);">&#x1F50D; Verificando en PUBG...</span>';
+  try{
+    const resp=await fetch('/clans/request-member',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanTag,playerName,requestedBy:'web_auto'})});
+    const data=await resp.json();
+    if(!resp.ok)throw new Error(data.error||'Error al enviar solicitud');
+    if(data.autoAdded){
+      statusEl.innerHTML='<span style="color:var(--accent-green);">&#x2705; <b>'+(data.playerName||playerName)+'</b> verificado y anadido! Recargando...</span>';
+      input.value='';
+      setTimeout(()=>loadClanPage(clanTag),1200);
+    }else if(data.message&&data.message.includes('ya esta')){
+      statusEl.innerHTML='<span style="color:var(--accent-yellow);">&#x26A0;&#xFE0F; '+data.message+'</span>';
+    }else{
+      statusEl.innerHTML='<span style="color:var(--accent-orange);">&#x23F3; '+(data.message||'Solicitud enviada')+'</span>';
+    }
+  }catch(e){
+    statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
+  }
 }
 // Request to add a player to a clan
 async function requestAddPlayer(clanTag){
