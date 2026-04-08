@@ -4291,7 +4291,7 @@ function showMatchDetail(idx){
       const isMvp=ti===0;
       h+='<div style="background:var(--bg-secondary);padding:10px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'border:1px solid var(--border);')+'">';
       h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">';
-      h+='<span style="color:'+(isMe?'var(--accent)':tmColors[ti%4])+';font-weight:700;font-size:.78rem;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();goToPlayer(\''+escJs(tm.name)+'\');" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.55rem;opacity:.6;">(tu)</span>':'')+'</span>';
+      h+='<span style="color:'+(isMe?'var(--accent)':tmColors[ti%4])+';font-weight:700;font-size:.78rem;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();goToPlayer(\''+escJs(tm.name)+'\',\''+currentPlatform+'\');" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.55rem;opacity:.6;">(tu)</span>':'')+'</span>';
       if(isMvp)h+='<span style="font-size:.6rem;background:rgba(255,200,0,.15);color:var(--accent-yellow);padding:1px 5px;border-radius:3px;font-weight:700;">MVP</span>';
       h+='</div>';
       h+='<div style="display:flex;gap:8px;align-items:baseline;">';
@@ -4326,7 +4326,7 @@ function showMatchDetail(idx){
     h+='<div style="margin-top:16px;background:rgba(255,51,85,0.08);border:1px solid rgba(255,51,85,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;">';
     h+='<span style="font-size:1.2rem;">'+(detailTopKills>=15?'&#x26A0;&#xFE0F;':'&#x1F525;')+'</span>';
     h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">Top Killer de la Partida</div>';
-    h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(detailTopK)+'\');">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
+    h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(detailTopK)+'\',\''+currentPlatform+'\');">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
     h+='</div></div>';
   }
   // Collapsible: Kill Tree
@@ -4719,7 +4719,7 @@ async function loadKillTree(telemUrl,playerName,btn){
         const dist=k.distance?Math.round(k.distance/100):0;
         const isHs=k.killerDamageInfo?.additionalInfo==='HeadShot'||k.isHeadShot;
         h+='<div class="kt-node kt-kill">';
-        h+='<span class="kt-player" style="cursor:pointer;color:var(--accent-green);" onclick="closeMatchDetail();goToPlayer(\''+escJs(victim)+'\');">'+esc(victim)+'</span>';
+        h+='<span class="kt-player" style="cursor:pointer;color:var(--accent-green);" onclick="closeMatchDetail();goToPlayer(\''+escJs(victim)+'\',\''+currentPlatform+'\');">'+esc(victim)+'</span>';
         h+=' <span class="kt-weapon">'+esc(weapon)+(isHs?' &#x1F3AF;':'')+'</span>';
         if(dist>0)h+=' <span class="kt-distance">'+dist+'m</span>';
         h+='</div>';
@@ -4745,7 +4745,7 @@ async function loadKillTree(telemUrl,playerName,btn){
         const nodeClass=i===0?'kt-death':'kt-kill';
         const label=i===0?'te mato':'mato a '+esc(killChain[i-1].player);
         h+='<div class="kt-node '+nodeClass+'">';
-        h+='<span class="kt-player" style="cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(k.player)+'\');">'+esc(k.player)+'</span>';
+        h+='<span class="kt-player" style="cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(k.player)+'\',\''+currentPlatform+'\');">'+esc(k.player)+'</span>';
         h+=' <span style="font-size:.6rem;color:var(--text-dim);">'+label+'</span>';
         h+=' <span class="kt-weapon">'+esc(k.weapon)+'</span>';
         if(k.distance>0)h+=' <span class="kt-distance">'+k.distance+'m</span>';
@@ -4790,12 +4790,22 @@ function renderFrequentTeammates(){
 
 function searchRival(name){goToPlayer(name);}
 function goToPlayer(name,plat){
-  if(plat)setPlatform(plat);
-  else if(currentPlatform)setPlatform(currentPlatform);
-  const inp=document.getElementById('searchInput');if(!inp)return;
-  inp.value=name;inp.focus();
+  if(!name)return;
+  // Set platform explicitly FIRST (fixes plataforma no preseleccionada)
+  const targetPlat=(plat||currentPlatform||'psn').toLowerCase();
+  currentPlatform=targetPlat;setPlatform(targetPlat);
+  // Clear stale data so switchTab doesn't render the previous player's stats
+  currentPlayerData=null;currentMatchData=[];
+  // Populate search input (sin .focus() para no abrir teclado en móvil)
+  const inp=document.getElementById('searchInput');
+  if(inp)inp.value=name;
+  // Scroll to top so the user sees the loader kick off
+  try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);}
+  // Switch to player tab and kick off the search.
+  // Defer searchPlayer one animation frame so switchTab's layout reflow
+  // finishes first — avoids the "double click needed" race condition.
   switchTab('overview');
-  searchPlayer();
+  requestAnimationFrame(()=>{searchPlayer();});
 }
 
 /* ===== RIVALES HABITUALES (todos los jugadores, no solo equipo) ===== */
@@ -5146,8 +5156,8 @@ async function openTelemMap(url,playerName,mapName,matchIdx){
     /* Kill feed */
     if(kills.length>0||deathEvent){
       h+='<div class="telem-kill-feed"><div class="feed-title">Feed de Combate</div>';
-      kills.forEach((k,i)=>{h+='<div class="telem-event telem-kill"><span style="color:var(--accent-green);font-weight:600;">'+esc(playerName)+'</span> elimino a <span style="color:var(--text-primary);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(k.victim)+'\');">'+esc(k.victim)+'</span> con <span class="telem-weapon">'+cleanWeaponName(k.weapon)+'</span> <span class="telem-distance">('+k.dist+'m)</span></div>';});
-      knocks.forEach(k=>{h+='<div class="telem-event telem-knock"><span style="color:var(--accent-yellow);font-weight:600;">'+esc(playerName)+'</span> noqueo a <span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(k.victim)+'\');">'+esc(k.victim)+'</span></div>';});
+      kills.forEach((k,i)=>{h+='<div class="telem-event telem-kill"><span style="color:var(--accent-green);font-weight:600;">'+esc(playerName)+'</span> elimino a <span style="color:var(--text-primary);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(k.victim)+'\',\''+currentPlatform+'\');">'+esc(k.victim)+'</span> con <span class="telem-weapon">'+cleanWeaponName(k.weapon)+'</span> <span class="telem-distance">('+k.dist+'m)</span></div>';});
+      knocks.forEach(k=>{h+='<div class="telem-event telem-knock"><span style="color:var(--accent-yellow);font-weight:600;">'+esc(playerName)+'</span> noqueo a <span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(k.victim)+'\',\''+currentPlatform+'\');">'+esc(k.victim)+'</span></div>';});
       if(deathEvent){h+='<div class="telem-event telem-death"><span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;" onclick="closeTelemMap();goToPlayer(\''+escJs(deathEvent.killer)+'\');">'+esc(deathEvent.killer)+'</span> elimino a <span style="color:var(--accent-red);font-weight:600;">'+esc(playerName)+'</span>'+(deathEvent.weapon?' con <span class="telem-weapon">'+cleanWeaponName(deathEvent.weapon)+'</span>':'')+(deathEvent.dist?' <span class="telem-distance">('+deathEvent.dist+'m)</span>':'')+'</div>';}
       h+='</div>';
     }
