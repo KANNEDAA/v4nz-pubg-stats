@@ -3346,6 +3346,58 @@ initDB().then(() => {
       intervalMs: 15 * 60 * 1000
     };
     const _cron = global._cronState;
+    // Helper: resolve a clan's pubg_clan_id via its first member across shards.
+    // Mirrors the fallback logic in POST /clans/refresh-stats/:tag.
+    async function resolveOrphanClanId(tag, platform) {
+      if (!SERVER_API_KEY) return null;
+      const firstMember = await pool.query(
+        'SELECT player_name FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC LIMIT 1',
+        [tag]
+      );
+      if (!firstMember.rows.length) return null;
+      const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+      const shardsToTry = [platform || 'psn', 'xbox', 'psn', 'steam'].filter((v, i, a) => a.indexOf(v) === i);
+      for (const shard of shardsToTry) {
+        try {
+          const playerResp = await fetchWithTimeout(fetch,
+            `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(firstMember.rows[0].player_name)}`,
+            { headers }, 8000);
+          if (playerResp.ok) {
+            const playerData = await playerResp.json();
+            const cId = playerData.data?.[0]?.attributes?.clanId;
+            if (cId) return { foundClanId: cId, foundShard: shard };
+          }
+        } catch (e) {
+          console.log(`[cron] resolve ${tag} shard ${shard} failed: ${e.message}`);
+        }
+      }
+      return null;
+    }
+    async function cronResolveOrphans() {
+      // Query clans with NULL pubg_clan_id that are stale (or never updated)
+      const orphans = await pool.query(
+        "SELECT tag, platform FROM clans WHERE pubg_clan_id IS NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 10"
+      );
+      if (!orphans.rows.length) return { tried: 0, resolved: 0 };
+      console.log(`[cron] resolving ${orphans.rows.length} orphan clans (no pubg_clan_id)...`);
+      let resolved = 0;
+      for (const o of orphans.rows) {
+        try {
+          const r = await resolveOrphanClanId(o.tag, o.platform);
+          if (r) {
+            await pool.query('UPDATE clans SET pubg_clan_id = $1, platform = $2 WHERE tag = $3', [r.foundClanId, r.foundShard, o.tag]);
+            console.log(`[cron] ✓ resolved orphan [${o.tag}] → ${r.foundClanId} (${r.foundShard})`);
+            resolved++;
+          } else {
+            console.log(`[cron] ✗ could not resolve orphan [${o.tag}]`);
+          }
+          await new Promise(r => setTimeout(r, 2000));
+        } catch (e) {
+          console.error(`[cron] orphan resolution error [${o.tag}]:`, e.message);
+        }
+      }
+      return { tried: orphans.rows.length, resolved };
+    }
     async function cronRefreshAllClans() {
       _cron.tickCount++;
       const startMs = Date.now();
@@ -3375,14 +3427,24 @@ initDB().then(() => {
       _cron.running = true;
       _cron.runningSince = ts;
       let updated = 0, failed = 0, staleCount = 0;
+      let orphansResolved = { tried: 0, resolved: 0 };
       try {
+        // Step 1: resolve orphan clans (no pubg_clan_id) so they become eligible below
+        try {
+          orphansResolved = await cronResolveOrphans();
+          if (orphansResolved.tried) {
+            console.log(`[cron] orphans: tried ${orphansResolved.tried}, resolved ${orphansResolved.resolved}`);
+          }
+        } catch (oe) {
+          console.error('[cron] orphan phase error:', oe.message);
+        }
         const staleClans = await pool.query(
           "SELECT tag, pubg_clan_id FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 20"
         );
         staleCount = staleClans.rows.length;
         if (!staleCount) {
           console.log('[cron] all clans up to date (0 stale)');
-          _cron.lastResult = { staleCount: 0, updated: 0, failed: 0, message: 'all up to date' };
+          _cron.lastResult = { staleCount: 0, updated: 0, failed: 0, orphansResolved, message: 'all up to date' };
           return;
         }
         console.log(`[cron] refreshing ${staleCount} stale clans...`);
@@ -3399,7 +3461,7 @@ initDB().then(() => {
           }
         }
         console.log(`[cron] clan refresh cycle complete — ${updated} updated, ${failed} failed`);
-        _cron.lastResult = { staleCount, updated, failed, message: 'refresh complete' };
+        _cron.lastResult = { staleCount, updated, failed, orphansResolved, message: 'refresh complete' };
       } catch (e) {
         console.error('[cron] error:', e.message);
         _cron.lastError = { ts: new Date().toISOString(), message: e.message };
