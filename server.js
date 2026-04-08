@@ -3159,18 +3159,39 @@ ${urls.map(u => `  <url>
 // IMPORTANTE: debe ir ANTES del catch-all app.get('*') o Express lo intercepta.
 app.get('/debug/cron', async (req, res) => {
   const s = global._cronState || null;
-  let staleNow = null;
+  const stats = {};
   if (pool) {
     try {
-      const r = await pool.query("SELECT COUNT(*)::int AS c FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours')");
-      staleNow = r.rows[0].c;
-    } catch (e) { staleNow = 'query error: ' + e.message; }
+      const q = await pool.query(`
+        SELECT
+          COUNT(*)::int AS total_clans,
+          COUNT(*) FILTER (WHERE pubg_clan_id IS NOT NULL)::int AS with_pubg_id,
+          COUNT(*) FILTER (WHERE pubg_clan_id IS NULL)::int AS without_pubg_id,
+          COUNT(*) FILTER (WHERE stats_updated_at IS NULL)::int AS never_updated,
+          COUNT(*) FILTER (WHERE stats_updated_at < NOW() - INTERVAL '24 hours')::int AS stale_24h_all,
+          COUNT(*) FILTER (WHERE stats_updated_at < NOW() - INTERVAL '7 days')::int AS stale_7d_all,
+          COUNT(*) FILTER (WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours'))::int AS cron_eligible,
+          MIN(stats_updated_at) AS oldest_update,
+          MAX(stats_updated_at) AS newest_update
+        FROM clans
+      `);
+      Object.assign(stats, q.rows[0]);
+      // Top 5 clanes más viejos que el cron ignora por no tener pubg_clan_id
+      const orphans = await pool.query(`
+        SELECT tag, name, stats_updated_at
+        FROM clans
+        WHERE pubg_clan_id IS NULL
+        ORDER BY stats_updated_at ASC NULLS FIRST
+        LIMIT 5
+      `);
+      stats.orphan_samples = orphans.rows;
+    } catch (e) { stats.error = e.message; }
   }
   res.json({
     serverTime: new Date().toISOString(),
     uptime: process.uptime(),
     cron: s,
-    staleClansNow: staleNow,
+    dbStats: stats,
     dbConnected: !!pool
   });
 });
