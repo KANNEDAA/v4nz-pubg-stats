@@ -2543,7 +2543,7 @@ async function loadClanRanking(){
     h+='<p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">'+d.clans.length+' clanes registrados &mdash; Publica tu clan para aparecer aqui</p>';
     el.innerHTML=h;
   }catch(e){
-    el.innerHTML='<div class="empty-state"><p>'+esc(e.message)+'</p></div>';
+    el.innerHTML='<div class="empty-state"><p>'+esc(friendlyErr(e))+'</p></div>';
   }
 }
 
@@ -2598,7 +2598,7 @@ async function toggleClanMembers(tag,cardEl){
     container.innerHTML=mh;
     container.dataset.loaded='1';
   }catch(e){
-    container.innerHTML='<p style="font-size:.75rem;color:var(--accent-orange);text-align:center;">'+esc(e.message)+'</p>';
+    container.innerHTML='<p style="font-size:.75rem;color:var(--accent-orange);text-align:center;">'+esc(friendlyErr(e))+'</p>';
   }
 }
 
@@ -3323,7 +3323,7 @@ async function scanClanBots(tag,platform,uid){
     }
     container.innerHTML=h;
   }catch(e){
-    container.innerHTML='<div style="font-size:.7rem;color:var(--accent-red);">Error: '+esc(e.message)+'</div>';
+    container.innerHTML='<div style="font-size:.7rem;color:var(--accent-red);">Error: '+esc(friendlyErr(e))+'</div>';
   }
 }
 
@@ -3537,6 +3537,8 @@ function saveApiKey(){}
 window._rateLimitedUntil = 0;
 function isRateLimited(){ return Date.now() < (window._rateLimitedUntil||0); }
 function getRateLimitSecondsLeft(){ return Math.max(0, Math.ceil((window._rateLimitedUntil - Date.now())/1000)); }
+// v145 — marker: friendly-ratelimit-v145 — evita que el sentinela __RATELIMIT__ aparezca literal en la UI
+function friendlyErr(e){try{const m=(e&&e.message)||String(e||'');if(!m)return'Error desconocido';if(m==='__RATELIMIT__'||m.indexOf('__RATELIMIT__')>=0){const s=getRateLimitSecondsLeft();return 'Demasiadas consultas. Espera '+(s>0?s+'s':'unos segundos')+' e inténtalo de nuevo.';}return m;}catch(_){return'Error desconocido';}}
 async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;const timeoutErr=new Promise((_,reject)=>setTimeout(()=>{const err=new Error('La peticion ha tardado demasiado. Intentalo de nuevo.');err.status=408;reject(err);},20000));try{r=await Promise.race([fetch(u,{headers:h}),timeoutErr]);}catch(netErr){if(netErr.status===408)throw netErr;const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=await Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))]);if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;if(j.error)msg=j.error;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';/* Read Retry-After header (PUBG sends seconds) — fallback 15 */let retrySecs=15;try{const ra=r.headers.get('retry-after');if(ra){const n=parseInt(ra,10);if(!isNaN(n)&&n>0&&n<=300)retrySecs=n;}}catch(e){}window._rateLimitedUntil=Date.now()+retrySecs*1000;showRateLimitCountdown(retrySecs);}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('La respuesta ha tardado demasiado.')),10000))]);}
 function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div></div>';return null;}
 function stopApiLoader(iv){}
@@ -4173,7 +4175,7 @@ async function switchSeason(seasonId){
       document.getElementById('seasonDates').textContent=seasonObj.attributes.isCurrentSeason?'Temporada actual':'Temporada anterior';
     }
     autoBestMode();renderOverviewStats();renderWLGrid();renderCharts();try{renderFunStats();}catch(e){}try{renderPersonality();}catch(e){}renderNarrativeInsights();renderRankBadge();
-  }catch(e){console.error('Switch season error:',e);showError('Error al cargar temporada: '+e.message);}
+  }catch(e){console.error('Switch season error:',e);showError('Error al cargar temporada: '+friendlyErr(e));}
   finally{showLoading(false);}
 }
 
@@ -4828,7 +4830,7 @@ async function loadKillTree(telemUrl,playerName,btn){
     container.innerHTML=h;
   }catch(e){
     console.error('Kill tree error:',e);
-    container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message)+'</div>';
+    container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(friendlyErr(e))+'</div>';
   }
 }
 function closeMatchDetail(){document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');try{if(currentPlayerData){const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);history.replaceState(null,'',baseUrl);}}catch(e){}}
@@ -5123,7 +5125,7 @@ async function generateHeatmap(){
     else{drawHeatmap(null);}
   }catch(e){
     console.error('Heatmap error:',e);
-    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);">Error: '+esc(e.message)+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
+    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);">Error: '+esc(friendlyErr(e))+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
   }
 }
 
@@ -5340,7 +5342,7 @@ async function openTelemMap(url,playerName,mapName,matchIdx){
 
   }catch(e){
     console.error('Telemetry error:',e);
-    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);font-size:1rem;margin-bottom:8px;">Error al cargar telemetria</div><div style="color:var(--text-dim);font-size:.8rem;">'+esc(e.message)+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
+    content.innerHTML='<div style="text-align:center;padding:40px;"><div style="color:var(--accent-red);font-size:1rem;margin-bottom:8px;">Error al cargar telemetria</div><div style="color:var(--text-dim);font-size:.8rem;">'+esc(friendlyErr(e))+'</div><button class="match-back-btn" onclick="closeTelemMap()" style="margin-top:16px;">Cerrar</button></div>';
   }
 }
 
@@ -6641,7 +6643,7 @@ async function analyzeSquad(){
     renderSquadResults(players);
   }catch(e){
     console.error('Squad error:',e);
-    document.getElementById('squadResults').innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:20px;">'+esc(e.message)+'</div>';
+    document.getElementById('squadResults').innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:20px;">'+esc(friendlyErr(e))+'</div>';
   }finally{showLoading(false);}
 }
 
@@ -7170,7 +7172,7 @@ async function doPublishClan(tag,name,memberCount,level){
     history.pushState(null,'','/clan/'+tag);
   }catch(e){
     btn.disabled=false;btn.innerHTML='&#x1F4E2; PUBLICAR CLAN EN RANKING';
-    alert('Error: '+esc(e.message)+'. Puede que la base de datos no este configurada aun.');
+    alert('Error: '+esc(friendlyErr(e))+'. Puede que la base de datos no este configurada aun.');
   }
 }
 function setClanSearchTab(mode){
@@ -7374,7 +7376,7 @@ async function searchClan(){
       }
     }
   }catch(e){
-    document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(e.message)+'</p>';
+    document.getElementById('clanResults').innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(friendlyErr(e))+'</p>';
   }finally{showLoading(false);}
 }
 // Request to add a player via full clan page (auto-add flow, no admin review)
@@ -7398,7 +7400,7 @@ async function requestAddPlayerFull(clanTag){
       statusEl.innerHTML='<span style="color:var(--accent-orange);">&#x23F3; '+(data.message||'Solicitud enviada')+'</span>';
     }
   }catch(e){
-    statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
+    statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(friendlyErr(e))+'</span>';
   }
 }
 // Request to add a player to a clan
@@ -7425,7 +7427,7 @@ async function requestAddPlayer(clanTag){
     }
     input.value='';
   }catch(e){
-    statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
+    statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(friendlyErr(e))+'</span>';
   }
 }
 // ═══ PLAYER NAME HISTORY ═══
@@ -7483,7 +7485,7 @@ async function refreshClanStats(clanTag,btn){
     },1200);
   }catch(e){
     console.error('Refresh clan error:',e);
-    btn.innerHTML='&#x274C; '+esc(e.message);btn.style.color='var(--accent-orange)';
+    btn.innerHTML='&#x274C; '+esc(friendlyErr(e));btn.style.color='var(--accent-orange)';
     setTimeout(()=>{btn.innerHTML=origText;btn.disabled=false;btn.style.opacity='1';btn.style.color='';},3000);
   }
 }
@@ -7665,7 +7667,7 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
       });});
     }
   }catch(e){
-    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(friendlyErr(e))+'</span>';
   }
 }
 
@@ -7694,7 +7696,7 @@ async function importFromPubgclans(){
     // Refresh leaderboard
     loadClanRanking();
   }catch(e){
-    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(e.message)+'</span>';
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(friendlyErr(e))+'</span>';
   }
 }
 
@@ -7723,7 +7725,7 @@ async function analyzeClanMembers(clanName,clanTag,memberCount,level,namesArg){
     // Update history with member names
     saveClanToHistory(clanName,clanTag,memberCount,level,clanPlatform,names);
   }catch(e){
-    document.getElementById('clanResults').innerHTML+='<p style="color:var(--accent-orange);font-size:.85rem;margin-top:10px;">'+esc(e.message)+'</p>';
+    document.getElementById('clanResults').innerHTML+='<p style="color:var(--accent-orange);font-size:.85rem;margin-top:10px;">'+esc(friendlyErr(e))+'</p>';
   }finally{showLoading(false);}
 }
 
@@ -7912,7 +7914,7 @@ async function compareClans(){
     h+='</div>';
     cr.innerHTML=h;
   }catch(e){
-    cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(e.message)+'</p>';
+    cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(friendlyErr(e))+'</p>';
   }finally{showLoading(false);}
 }
 
