@@ -273,6 +273,12 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 .bot-badge-label { font-size:.6rem; color:var(--text-dim); letter-spacing:.08em; text-transform:uppercase; font-family:Rajdhani,sans-serif; }
 .player-clan-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.25); color:var(--accent-orange); padding:4px 12px; border-radius:20px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-top:6px; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:all .2s; text-decoration:none; }
 .player-clan-badge:hover { background:rgba(255,107,0,0.2); border-color:rgba(255,107,0,0.4); }
+.cl-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:10px; font-size:.58rem; font-weight:700; font-family:'Rajdhani',sans-serif; text-transform:uppercase; letter-spacing:.5px; border:1px solid transparent; white-space:nowrap; }
+.cl-badge.cl-carry { background:rgba(34,211,238,0.12); border-color:rgba(34,211,238,0.4); color:#22d3ee; }
+.cl-badge.cl-above { background:rgba(34,197,94,0.10); border-color:rgba(34,197,94,0.35); color:var(--accent-green); }
+.cl-badge.cl-normal { background:rgba(148,163,184,0.10); border-color:rgba(148,163,184,0.30); color:var(--text-dim); }
+.cl-badge.cl-below { background:rgba(255,107,0,0.10); border-color:rgba(255,107,0,0.35); color:var(--accent-orange); }
+.cl-badge.cl-lastre { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.45); color:#ef4444; }
 .player-quick-stats { display: flex; gap: 10px; }
 .quick-stat { text-align: center; padding: 6px 14px; background: var(--bg-secondary); border-radius: 10px; min-width: 65px; }
 .quick-stat .value { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent); line-height: 1.1; }
@@ -2651,17 +2657,32 @@ async function loadClanPage(tag){
     h+='</div>';
     // Member ranking
     if(members.length){
+      const clanAvgKd=parseFloat(c.avg_kd)||0;
       h+='<div style="margin-top:16px;"><div class="section-title" style="font-size:.85rem;">Ranking de Miembros</div>';
+      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:.6rem;color:var(--text-dim);"><span>Carry/Lastre vs K/D medio del clan ('+clanAvgKd.toFixed(2)+'):</span><span style="color:#22d3ee;">&#x1F48E; Carry (+25%)</span><span style="color:var(--accent-green);">&#x2B06;&#xFE0F; Sobre media</span><span>&#x1F3AF; Media</span><span style="color:var(--accent-orange);">&#x2B07;&#xFE0F; Bajo media</span><span style="color:#ef4444;">&#x1FAA8; Lastre (-25%)</span></div>';
       members.forEach((m,i)=>{
         const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':'';
         const maxKills=members[0]?.kills||1;
         const barW=Math.max(5,Math.round(((m.kills||0)/maxKills)*100));
+        const mKd=parseFloat(m.kd)||0;
+        const mRounds=parseInt(m.rounds||0,10);
+        let clBadge='';
+        if(clanAvgKd>0&&mRounds>=10){
+          const delta=((mKd-clanAvgKd)/clanAvgKd)*100;
+          const dStr=(delta>=0?'+':'')+delta.toFixed(0)+'%';
+          if(delta>=25)clBadge='<span class="cl-badge cl-carry" title="K/D '+dStr+' vs media del clan">&#x1F48E; Carry '+dStr+'</span>';
+          else if(delta>=10)clBadge='<span class="cl-badge cl-above" title="K/D '+dStr+' vs media del clan">&#x2B06;&#xFE0F; '+dStr+'</span>';
+          else if(delta>-10)clBadge='<span class="cl-badge cl-normal" title="K/D '+dStr+' vs media del clan">&#x1F3AF; '+dStr+'</span>';
+          else if(delta>-25)clBadge='<span class="cl-badge cl-below" title="K/D '+dStr+' vs media del clan">&#x2B07;&#xFE0F; '+dStr+'</span>';
+          else clBadge='<span class="cl-badge cl-lastre" title="K/D '+dStr+' vs media del clan">&#x1FAA8; Lastre '+dStr+'</span>';
+        }
         h+='<div class="clan-member" style="position:relative;overflow:hidden;">';
         h+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:8px;"></div>';
-        h+='<div style="display:flex;align-items:center;gap:8px;z-index:1;position:relative;">';
+        h+='<div style="display:flex;align-items:center;gap:8px;z-index:1;position:relative;flex-wrap:wrap;">';
         h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;width:24px;text-align:center;color:var(--text-dim);">'+(i+1)+'</span>';
         h+=medal?'<span>'+medal+'</span>':'';
         h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">'+m.player_name+'</span>';
+        h+=clBadge;
         h+='<span id="alias-'+escJs(m.player_name.toLowerCase())+'" style="font-size:.55rem;color:var(--accent-orange);opacity:.7;margin-left:6px;"></span>';
         h+='</div>';
         h+='<div class="clan-member-stats" style="z-index:1;position:relative;">';
@@ -4000,7 +4021,7 @@ async function detectPlayerClan(){
 
   // Helper to show badge
   function showClanBadge(tag,name){
-    badge.innerHTML='<a class="player-clan-badge" href="javascript:void(0)" onclick="switchTab(\'clans\');document.getElementById(\'clanNameInput\').value=\''+escJs(tag)+'\';searchClanByName();">&#x1F6E1; ['+esc(tag)+'] '+esc(name)+'</a> '+clanFavStar(tag,name,currentPlatform,'.85rem');
+    badge.innerHTML='<a class="player-clan-badge" href="/clan/'+encodeURIComponent(tag)+'" onclick="event.preventDefault();switchTab(\'clans\');history.pushState(null,\'\',\'/clan/\'+\''+escJs(tag)+'\');loadClanPage(\''+escJs(tag)+'\');return false;">&#x1F6E1; ['+esc(tag)+'] '+esc(name)+'</a> '+clanFavStar(tag,name,currentPlatform,'.85rem');
     badge.style.display='block';
   }
 
