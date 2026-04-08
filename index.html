@@ -4244,7 +4244,7 @@ function renderMatchStreaks(){
   // 6. Headshot machine
   const totalHs=games.reduce((s,g)=>s+g.hs,0);const totalKills=games.reduce((s,g)=>s+g.kills,0);
   const hsRate=totalKills>0?Math.round((totalHs/totalKills)*100):0;
-  if(hsRate>=30&&totalKills>=5)badges.push({ic:'&#x1F3AF;',title:'Maquina de HS',val:hsRate+'%',sub:totalHs+' headshots de '+totalKills+' kills',col:'#a855f7'});
+  if(hsRate>=25&&totalKills>=5)badges.push({ic:'&#x1F3AF;',title:'Maquina de HS',val:hsRate+'%',sub:totalHs+' headshots de '+totalKills+' kills — elite consola',col:'#a855f7'});
   // 7. Support hero
   const totalAssists=games.reduce((s,g)=>s+g.assists,0);
   if(totalAssists>=10)badges.push({ic:'&#x1F91D;',title:'Heroe de Soporte',val:totalAssists+' assists',sub:'En '+games.length+' partidas',col:'#00ff88'});
@@ -5492,8 +5492,8 @@ function getPersonalityType(){
   const bi=window._lastBotIndex;
   if(bi&&bi.matchesAnalyzed>=3&&bi.botRatio>=50)return'Mata Bots';
   if(hs>25&&(s.longestKill||0)>150)return'Francotirador';
-  if(kd>2.5&&ad>250)return'Depredador';
-  if(wr>25)return'Campeon';
+  if(kd>=3.5&&ad>=300)return'Depredador';
+  if(wr>=15)return'Campeon';
   // Maquina de Racha: insane kill streaks and best-game performance
   if((s.maxKillStreaks||0)>=5&&(s.roundMostKills||0)>=8&&kd>1.5)return'Maquina de Racha';
   // Pusheador: high kills/round + high dmg but low survival — always rushing first
@@ -5566,8 +5566,8 @@ function renderPersonality(){
   const hbpg=s.roundsPlayed?((s.heals||0)+(s.boosts||0))/s.roundsPlayed:0;
   if(bi&&bi.matchesAnalyzed>=3&&bi.botRatio>=50){ic='&#x1F916;';ti='MATA BOTS';de='Especialista en lobbies de bots. '+bi.botRatio+'% de tus kills son contra IA.';co='var(--accent-orange)';tg=['Bot lobbies','Farm','IA'];}
   else if(hs>25&&(s.longestKill||0)>150){ic='&#x1F3AF;';ti='FRANCOTIRADOR';de='Preciso y letal a distancia. Tus headshots hablan por ti.';co='var(--accent-purple)';tg=['Precision','Largo alcance','Paciencia'];}
-  else if(kd>2.5&&ad>250){ic='&#x1F525;';ti='DEPREDADOR';de='Maquina de matar. Tu agresividad domina el campo de batalla.';co='var(--accent-red)';tg=['Agresivo','Alto dano','Dominante'];}
-  else if(wr>25){ic='&#x1F3C6;';ti='CAMPEON';de='Nacido para ganar. Tu winrate es de otro nivel.';co='var(--accent-yellow)';tg=['Victorioso','Estratega','Constante'];}
+  else if(kd>=3.5&&ad>=300){ic='&#x1F525;';ti='DEPREDADOR';de='Top 15% consola. Maquina de matar que domina cada duelo.';co='var(--accent-red)';tg=['Elite','Alto dano','Dominante'];}
+  else if(wr>=15){ic='&#x1F3C6;';ti='CAMPEON';de='Winrate elite (15%+). Sabes cerrar partidas como pocos.';co='var(--accent-yellow)';tg=['Victorioso','Estratega','Constante'];}
   else if((s.maxKillStreaks||0)>=5&&(s.roundMostKills||0)>=8&&kd>1.5){ic='&#x26A1;';ti='MAQUINA DE RACHA';de='Cuando arrancas no hay quien te pare. Rachas de kills que dan miedo.';co='var(--accent-yellow)';tg=['Rachas','Imparable','Clutch'];}
   else if(kpr>=2&&ad>200&&t10<40&&kd>1){ic='&#x1F4AA;';ti='PUSHEADOR';de='Siempre el primero en entrar. No conoces la palabra campear.';co='var(--accent-red)';tg=['Agresivo','Primera sangre','Sin miedo'];}
   else if(kills>50&&dbnos>0&&(kills/dbnos)>=0.85&&ad>120&&kd>1.2){ic='&#x1F4A5;';ti='REMATADOR';de='No dejas a nadie en el suelo. Ejecutas rapido y sin piedad.';co='var(--accent-red)';tg=['Ejecucion','Eficiencia','Sin piedad'];}
@@ -5593,11 +5593,28 @@ function renderPersonality(){
   const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" style="width:'+b.val+'%;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
   // Build combat stats line (previously in narrativeInsights)
   const _wr=parseFloat(calcWinRate(s)),_t10=parseFloat(calcTop10Rate(s)),_ad2=parseFloat(calcAvgDmg(s));
-  let kdTier2,kdColor2;if(kd>3){kdTier2='Elite';kdColor2='#ffd700';}else if(kd>2){kdTier2='Muy bueno';kdColor2='#00ff88';}else if(kd>1.5){kdTier2='Bueno';kdColor2='#00f0ff';}else if(kd>1){kdTier2='Promedio';kdColor2='#aaa';}else{kdTier2='En progreso';kdColor2='#888';}
+  // v146 — marker: skill-benchmarks-v146 — umbrales reales consola PSN EU T40 (pubg-analyst skill)
+  let kdTier2,kdColor2,kdPct;
+  if(kd>=5){kdTier2='Pro';kdColor2='#ff00ff';kdPct='Top 1%';}
+  else if(kd>=4){kdTier2='Elite';kdColor2='#ffd700';kdPct='Top 5%';}
+  else if(kd>=3){kdTier2='Muy bueno';kdColor2='#00ff88';kdPct='Top 15%';}
+  else if(kd>=2){kdTier2='Bueno';kdColor2='#00f0ff';kdPct='Top 30%';}
+  else if(kd>=1.5){kdTier2='Media';kdColor2='#aaa';kdPct='Top 50%';}
+  else if(kd>=1){kdTier2='Normal';kdColor2='#888';kdPct='Top 70%';}
+  else{kdTier2='Aprendiendo';kdColor2='#666';kdPct='';}
+  // ADR tier según skill console-meta.md
+  let adrTier,adrColor;
+  if(_ad2>=350){adrTier='Elite';adrColor='#ffd700';}
+  else if(_ad2>=280){adrTier='Muy bueno';adrColor='#00ff88';}
+  else if(_ad2>=220){adrTier='Bueno';adrColor='#00f0ff';}
+  else if(_ad2>=150){adrTier='Normal';adrColor='#aaa';}
+  else{adrTier='Bajo';adrColor='#888';}
   const combatScore2=Math.min(100,Math.round((kd*15)+(_wr*0.4)+(_t10*0.2)+(Math.min(_ad2/3,30))));
   const csColor2=combatScore2>=80?'#ffd700':combatScore2>=50?'#00ff88':'#00f0ff';
   const combatLine='<div class="dna-combat-stats" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">'
-    +'<div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;color:'+kdColor2+';">'+kdTier2.toUpperCase()+'</div><div style="font-size:.55rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;">K/D Tier</div></div>'
+    +'<div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;color:'+kdColor2+';">'+kdTier2.toUpperCase()+'</div><div style="font-size:.55rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;">K/D Tier'+(kdPct?' · '+kdPct:'')+'</div></div>'
+    +'<div style="width:1px;background:rgba(255,255,255,0.08);"></div>'
+    +'<div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;color:'+adrColor+';">'+adrTier.toUpperCase()+'</div><div style="font-size:.55rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;">ADR Tier · '+Math.round(_ad2)+'</div></div>'
     +'<div style="width:1px;background:rgba(255,255,255,0.08);"></div>'
     +'<div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;color:'+csColor2+';">'+combatScore2+'<span style="font-size:.55rem;opacity:.6;">/100</span></div><div style="font-size:.55rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;">Combat Rating</div></div>'
     +'</div>';
@@ -6653,10 +6670,10 @@ function getSquadRole(s){
   const ar=s.roundsPlayed?(s.assists||0)/s.roundsPlayed:0;
   const lk=s.longestKill||0;
   if(hs>25&&lk>150)return{role:'Francotirador',icon:'\u{1F3AF}',desc:'Preciso a larga distancia'};
-  if(kd>2.5&&ad>250)return{role:'Entry Fragger',icon:'\u{1F525}',desc:'Abre camino y consigue kills'};
-  if(wr>20&&kd>1.5)return{role:'Clutcher',icon:'\u{1F451}',desc:'Cierra rondas y gana partidas'};
+  if(kd>=3.5&&ad>=300)return{role:'Entry Fragger',icon:'\u{1F525}',desc:'Top 15% — abre rondas'};
+  if(wr>=12&&kd>=2)return{role:'Clutcher',icon:'\u{1F451}',desc:'Cierra rondas y gana partidas'};
   if(rr>0.3&&ar>0.4)return{role:'Support',icon:'\u{1FA7A}',desc:'Revive y asiste al equipo'};
-  if(ad>200&&kd>1.5)return{role:'Slayer',icon:'\u{2694}\u{FE0F}',desc:'Alto dano y poder ofensivo'};
+  if(ad>=280&&kd>=2)return{role:'Slayer',icon:'\u{2694}\u{FE0F}',desc:'Alto dano y poder ofensivo'};
   if(parseFloat(calcTop10Rate(s))>50)return{role:'Superviviente',icon:'\u{1F6E1}\u{FE0F}',desc:'Llega lejos consistentemente'};
   if(ar>0.5)return{role:'IGL / Cerebro',icon:'\u{1F9E0}',desc:'Juego de equipo y asistencias'};
   return{role:'Soldado',icon:'\u{1F3AE}',desc:'Jugador versatil'};
