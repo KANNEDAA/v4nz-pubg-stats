@@ -2657,13 +2657,16 @@ async function loadClanPage(tag){
     h+='</div>';
     // Member ranking
     if(members.length){
+      // Carry/Lastre index — compute clan avg K/D from active members and compute delta per member
       const clanAvgKd=parseFloat(c.avg_kd)||0;
       h+='<div style="margin-top:16px;"><div class="section-title" style="font-size:.85rem;">Ranking de Miembros</div>';
+      // Legend
       h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:.6rem;color:var(--text-dim);"><span>Carry/Lastre vs K/D medio del clan ('+clanAvgKd.toFixed(2)+'):</span><span style="color:#22d3ee;">&#x1F48E; Carry (+25%)</span><span style="color:var(--accent-green);">&#x2B06;&#xFE0F; Sobre media</span><span>&#x1F3AF; Media</span><span style="color:var(--accent-orange);">&#x2B07;&#xFE0F; Bajo media</span><span style="color:#ef4444;">&#x1FAA8; Lastre (-25%)</span></div>';
       members.forEach((m,i)=>{
         const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':'';
         const maxKills=members[0]?.kills||1;
         const barW=Math.max(5,Math.round(((m.kills||0)/maxKills)*100));
+        // Carry/Lastre badge (requires minimum 10 rounds and clan avg > 0 to be meaningful)
         const mKd=parseFloat(m.kd)||0;
         const mRounds=parseInt(m.rounds||0,10);
         let clBadge='';
