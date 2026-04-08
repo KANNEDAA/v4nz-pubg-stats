@@ -221,13 +221,28 @@ nav a.active { color: var(--accent); }
 nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 24px; height: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 8px rgba(0,240,255,0.4); }
 
 /* SEARCH */
-.search-hero { position: relative; z-index: 1; text-align: center; padding: 70px 2rem 44px; }
-.search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 2.6rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 4px; line-height:1.1; }
+/* === HERO SEARCH PROTAGONIST v1.4.0 === marker: hero-search-protagonist-v140 */
+.search-hero { position: relative; z-index: 1; text-align: center; padding: 96px 2rem 60px; transition: padding .35s cubic-bezier(.4,0,.2,1); }
+.search-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse 60% 55% at 50% 45%, rgba(0,240,255,0.08), transparent 70%); pointer-events:none; z-index:-1; }
+.search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 3.4rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; line-height:1.05; transition: font-size .35s ease, margin .35s ease, opacity .35s ease; }
 .search-hero h1 span { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.hero-tagline { color:var(--text-secondary); font-size:1.05rem; margin-bottom:10px; font-family:'Inter',sans-serif; font-weight:400; }
-.hero-powered { font-size:.72rem; color:var(--text-dim); margin-bottom:28px; }
+.hero-tagline { color:var(--text-secondary); font-size:1.15rem; margin-bottom:12px; font-family:'Inter',sans-serif; font-weight:400; transition: opacity .3s ease, margin .35s ease; }
+.hero-powered { font-size:.76rem; color:var(--text-dim); margin-bottom:32px; transition: opacity .3s ease, margin .35s ease; }
 .hero-powered span { color:var(--accent-orange); font-weight:600; }
-.hero-platform-toggle { display:flex; justify-content:center; gap:8px; margin-bottom:18px; }
+.hero-platform-toggle { display:flex; justify-content:center; gap:8px; margin-bottom:20px; transition: opacity .3s ease, margin .35s ease, max-height .35s ease; max-height:80px; overflow:hidden; }
+.search-hero .search-box { max-width: 780px; box-shadow: 0 0 60px rgba(0,240,255,0.10), 0 0 120px rgba(0,240,255,0.04), var(--shadow-card); transition: max-width .35s ease, box-shadow .3s ease; }
+.search-hero .search-input { padding: 26px 26px; font-size: 1.2rem; transition: padding .35s ease, font-size .35s ease; }
+.search-hero .search-btn { padding: 26px 46px; font-size: 1.02rem; transition: padding .35s ease, font-size .35s ease; }
+/* Compact state — when a player is already loaded, collapse the hero so stats get focus */
+body.has-player-loaded .search-hero { padding: 18px 2rem 12px; }
+body.has-player-loaded .search-hero::before { opacity:0; }
+body.has-player-loaded .search-hero h1 { font-size:0; margin:0; opacity:0; height:0; overflow:hidden; }
+body.has-player-loaded .search-hero .hero-tagline,
+body.has-player-loaded .search-hero .hero-powered { opacity:0; margin:0; height:0; overflow:hidden; font-size:0; }
+body.has-player-loaded .search-hero .hero-platform-toggle { opacity:0; margin:0; max-height:0; }
+body.has-player-loaded .search-hero .search-box { max-width:620px; box-shadow: var(--shadow-card); }
+body.has-player-loaded .search-hero .search-input { padding:14px 18px; font-size:.95rem; }
+body.has-player-loaded .search-hero .search-btn { padding:14px 28px; font-size:.88rem; }
 .hero-platform-toggle .platform-btn { background:var(--bg-card); border:2px solid var(--border); color:var(--text-dim); cursor:pointer; padding:12px 28px; border-radius:12px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.88rem; text-transform:uppercase; letter-spacing:1.5px; transition:all .25s; display:inline-flex; align-items:center; gap:8px; }
 .hero-platform-toggle .platform-btn:hover { color:var(--text-primary); border-color:rgba(255,255,255,0.15); }
 .hero-platform-toggle .platform-btn.active { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); box-shadow:0 0 20px rgba(0,240,255,0.1); }
@@ -2240,6 +2255,7 @@ const API_BASE=IS_PROXIED?'/api/shards':'https://api.pubg.com/shards';
 let API_KEY=IS_PROXIED?'proxy':localStorage.getItem('pubg_api_key')||'';
 let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
 let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null,currentSurvivalData=null;
+function updateHeroState(){try{if(currentPlayerData){document.body.classList.add('has-player-loaded');}else{document.body.classList.remove('has-player-loaded');}}catch(e){}}
 function safeParse(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function escJs(s){if(!s)return'';return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');}
@@ -3406,7 +3422,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
   const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
   const sectionMatch=location.pathname.match(/^\/(ranking|top500|compare|comparar|clans|clanes)$/i);
-  if(urlMatch){const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
+  if(urlMatch){document.body.classList.add('has-player-loaded');const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
   else if(clanMatch){setTimeout(()=>loadClanPage(decodeURIComponent(clanMatch[1])),100);}
   else if(sectionMatch){const sec=sectionMatch[1].toLowerCase();const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};setTimeout(()=>switchTab(tabMap[sec]||sec),100);}
   else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
@@ -3639,7 +3655,7 @@ async function searchPlayer(){
   try{
     setLoaderStep('Buscando jugador '+name+'...');
     const pr=await findPlayer(name,currentPlatform);
-    currentPlayerData=pr.data[0];
+    currentPlayerData=pr.data[0];updateHeroState();
     // Update platform if found on different one
     const foundShard=pr.data[0]&&pr.data[0].attributes&&pr.data[0].attributes.shardId?pr.data[0].attributes.shardId:currentPlatform;
     if(foundShard==='psn'||foundShard==='xbox'){currentPlatform=foundShard;setPlatform(foundShard);}
@@ -3794,6 +3810,8 @@ function switchTab(t){
   // Homepage content: show only when on overview with no player
   if(t==='overview'&&!currentPlayerData){showHomepageContent();if(hero)hero.scrollIntoView({behavior:'smooth'});}
   else{hideHomepageContent();}
+  // Keep hero compact state in sync with current player
+  updateHeroState();
   // When switching to Clanes, reset to search mode
   if(t==='clans'){
     const searchBtn=document.querySelector('.clan-mode-tab');
@@ -4822,7 +4840,7 @@ function goToPlayer(name,plat){
   const targetPlat=(plat||currentPlatform||'psn').toLowerCase();
   currentPlatform=targetPlat;setPlatform(targetPlat);
   // Clear stale data so switchTab doesn't render the previous player's stats
-  currentPlayerData=null;currentMatchData=[];
+  currentPlayerData=null;currentMatchData=[];updateHeroState();
   // Populate search input (sin .focus() para no abrir teclado en móvil)
   const inp=document.getElementById('searchInput');
   if(inp)inp.value=name;
