@@ -3236,6 +3236,27 @@ async function prewarmLeaderboards() {
   }
 }
 
+// ═══ CRON DEBUG ═══
+// Public runtime status of the clan-refresh cron. Read from the browser
+// to verify the scheduler is alive without SSHing into Railway logs.
+app.get('/debug/cron', async (req, res) => {
+  const s = global._cronState || null;
+  let staleNow = null;
+  if (pool) {
+    try {
+      const r = await pool.query("SELECT COUNT(*)::int AS c FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours')");
+      staleNow = r.rows[0].c;
+    } catch (e) { staleNow = 'query error: ' + e.message; }
+  }
+  res.json({
+    serverTime: new Date().toISOString(),
+    uptime: process.uptime(),
+    cron: s,
+    staleClansNow: staleNow,
+    dbConnected: !!pool
+  });
+});
+
 // ═══ HEALTH CHECK ═══
 app.get('/health', async (req, res) => {
   const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
@@ -3288,40 +3309,90 @@ initDB().then(() => {
     // rarely fires. The SQL filter already restricts to clans with
     // stats_updated_at older than 24h, so running hourly is safe — it just
     // catches up faster after restarts and is self-healing.
-    let _cronRunning = false;
-    let _cronTickCount = 0;
+    // Shared cron state (exposed via GET /debug/cron for runtime diagnostics)
+    global._cronState = {
+      armedAt: new Date().toISOString(),
+      tickCount: 0,
+      running: false,
+      runningSince: null,
+      lastRunTs: null,
+      lastDurationMs: null,
+      lastResult: null,   // {staleCount, updated, failed, message}
+      lastError: null,    // {ts, message}
+      nextRunAt: null,
+      intervalMs: 15 * 60 * 1000
+    };
+    const _cron = global._cronState;
     async function cronRefreshAllClans() {
-      _cronTickCount++;
+      _cron.tickCount++;
+      const startMs = Date.now();
       const ts = new Date().toISOString();
+      _cron.nextRunAt = new Date(startMs + _cron.intervalMs).toISOString();
       // Heartbeat ALWAYS — so we can confirm in Railway logs that the cron is alive
-      console.log(`[cron] heartbeat #${_cronTickCount} @ ${ts}`);
-      if (!pool) { console.log('[cron] skipped — no DB pool'); return; }
-      if (_cronRunning) { console.log('[cron] skipped — previous run still in progress'); return; }
-      _cronRunning = true;
+      console.log(`[cron] heartbeat #${_cron.tickCount} @ ${ts}`);
+      if (!pool) {
+        _cron.lastResult = { staleCount: 0, updated: 0, failed: 0, message: 'no DB pool' };
+        _cron.lastRunTs = ts;
+        console.log('[cron] skipped — no DB pool');
+        return;
+      }
+      // Watchdog: if previous run has been "running" for >30 min, assume it's stuck and reset
+      if (_cron.running && _cron.runningSince) {
+        const stuckMin = (startMs - new Date(_cron.runningSince).getTime()) / 60000;
+        if (stuckMin > 30) {
+          console.warn(`[cron] watchdog: previous run stuck for ${stuckMin.toFixed(1)}min — resetting flag`);
+          _cron.running = false;
+          _cron.lastError = { ts, message: `watchdog reset after ${stuckMin.toFixed(1)}min stuck` };
+        }
+      }
+      if (_cron.running) {
+        console.log('[cron] skipped — previous run still in progress');
+        return;
+      }
+      _cron.running = true;
+      _cron.runningSince = ts;
+      let updated = 0, failed = 0, staleCount = 0;
       try {
         const staleClans = await pool.query(
           "SELECT tag, pubg_clan_id FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 20"
         );
-        if (!staleClans.rows.length) { console.log('[cron] all clans up to date (0 stale)'); return; }
-        console.log(`[cron] refreshing ${staleClans.rows.length} stale clans...`);
+        staleCount = staleClans.rows.length;
+        if (!staleCount) {
+          console.log('[cron] all clans up to date (0 stale)');
+          _cron.lastResult = { staleCount: 0, updated: 0, failed: 0, message: 'all up to date' };
+          return;
+        }
+        console.log(`[cron] refreshing ${staleCount} stale clans...`);
         for (const clan of staleClans.rows) {
           try {
             await importClanByPubgId(clan.pubg_clan_id);
+            updated++;
             console.log(`[cron] ✓ updated [${clan.tag}]`);
             // Small delay between imports to respect PUBG API rate limits
             await new Promise(r => setTimeout(r, 3000));
           } catch (e) {
+            failed++;
             console.error(`[cron] ✗ failed [${clan.tag}]:`, e.message);
           }
         }
-        console.log('[cron] clan refresh cycle complete');
-      } catch (e) { console.error('[cron] error:', e.message); }
-      finally { _cronRunning = false; }
+        console.log(`[cron] clan refresh cycle complete — ${updated} updated, ${failed} failed`);
+        _cron.lastResult = { staleCount, updated, failed, message: 'refresh complete' };
+      } catch (e) {
+        console.error('[cron] error:', e.message);
+        _cron.lastError = { ts: new Date().toISOString(), message: e.message };
+        _cron.lastResult = { staleCount, updated, failed, message: 'error: ' + e.message };
+      } finally {
+        _cron.running = false;
+        _cron.runningSince = null;
+        _cron.lastRunTs = new Date().toISOString();
+        _cron.lastDurationMs = Date.now() - startMs;
+      }
     }
     // Run 20s after startup, then every 15 min. SQL guard makes it cheap.
     // 15min keeps the heartbeat visible and self-heals fast after Railway restarts.
     setTimeout(cronRefreshAllClans, 20000);
-    setInterval(cronRefreshAllClans, 15 * 60 * 1000);
+    setInterval(cronRefreshAllClans, _cron.intervalMs);
+    _cron.nextRunAt = new Date(Date.now() + 20000).toISOString();
     console.log('[cron] scheduler armed: first run in 20s, then every 15min');
   });
 });
