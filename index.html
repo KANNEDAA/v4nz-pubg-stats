@@ -1784,11 +1784,13 @@ body.telem-open { overflow:hidden; }
     <div id="leaderboardContent"><div class="empty-state"><p>Selecciona plataforma y modo</p></div></div>
   </div>
   <div class="panel" id="panel-compare">
-    <!-- COMPARE MODE TABS: 1v1 vs Mi Squad -->
-    <div style="display:flex;justify-content:center;gap:4px;margin-bottom:20px;">
+    <!-- COMPARE MODE TABS: 1v1 vs Mi Squad vs Clanes — v144 marker: cc-compare-move-v144 -->
+    <div style="display:flex;justify-content:center;gap:4px;margin-bottom:20px;flex-wrap:wrap;">
       <button class="lb-btn active" id="cmpTab-1v1" onclick="switchCompareMode('1v1')" style="padding:10px 24px;font-size:.8rem;">&#x2694;&#xFE0F; 1 vs 1</button>
       <button class="lb-btn" id="cmpTab-squad" onclick="switchCompareMode('squad')" style="padding:10px 24px;font-size:.8rem;">&#x1F3AE; Mi Squad</button>
+      <button class="lb-btn" id="cmpTab-clans" onclick="switchCompareMode('clans')" style="padding:10px 24px;font-size:.8rem;">&#x1F6E1;&#xFE0F; Clanes</button>
     </div>
+    <div id="compareModeClansHost" style="display:none;"></div>
 
     <!-- 1v1 MODE -->
     <div id="compareMode1v1">
@@ -6524,11 +6526,29 @@ function setSqMode(m){sqMode=m;['squad','squad-fpp'].forEach(k=>{const el=docume
 function switchCompareMode(mode){
   document.getElementById('compareMode1v1').style.display=mode==='1v1'?'':'none';
   document.getElementById('compareModeSquad').style.display=mode==='squad'?'':'none';
+  const host=document.getElementById('compareModeClansHost');if(host)host.style.display=mode==='clans'?'':'none';
   document.getElementById('cmpTab-1v1').classList.toggle('active',mode==='1v1');
   document.getElementById('cmpTab-squad').classList.toggle('active',mode==='squad');
+  const ct=document.getElementById('cmpTab-clans');if(ct)ct.classList.toggle('active',mode==='clans');
   if(mode==='1v1')renderQuickPick1v1();
   if(mode==='squad')renderQuickPickSquad();
+  if(mode==='clans'&&typeof renderCCFavs==='function')renderCCFavs();
 }
+// v144 — Reubicar clanCompareMode dentro del panel Comparar
+function relocateClanCompareToCompareTab(){
+  try{
+    const src=document.getElementById('clanCompareMode');
+    const host=document.getElementById('compareModeClansHost');
+    if(src&&host&&src.parentElement!==host){
+      host.appendChild(src);
+      src.style.display='';
+    }
+    // Ocultar el botón "Comparar Clanes" del sub-menú de Clanes
+    const tabs=document.querySelectorAll('.clan-mode-tab');
+    tabs.forEach(b=>{if((b.textContent||'').trim().toLowerCase().includes('comparar clanes'))b.style.display='none';});
+  }catch(e){console.warn('relocateClanCompare err',e);}
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',relocateClanCompareToCompareTab);}else{relocateClanCompareToCompareTab();}
 
 /* ===== QUICK PICK — selector rápido de jugadores ===== */
 function getQuickPickPlayers(){
