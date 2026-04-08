@@ -221,7 +221,7 @@ nav a.active { color: var(--accent); }
 nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 24px; height: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 8px rgba(0,240,255,0.4); }
 
 /* SEARCH */
-/* === HERO SEARCH PROTAGONIST v1.4.0 === marker: hero-search-protagonist-v140 */
+/* === HERO SEARCH PROTAGONIST v1.4.1 === marker: hero-search-protagonist-v141-gohome */
 .search-hero { position: relative; z-index: 1; text-align: center; padding: 96px 2rem 60px; transition: padding .35s cubic-bezier(.4,0,.2,1); }
 .search-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse 60% 55% at 50% 45%, rgba(0,240,255,0.08), transparent 70%); pointer-events:none; z-index:-1; }
 .search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 3.4rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; line-height:1.05; transition: font-size .35s ease, margin .35s ease, opacity .35s ease; }
@@ -1407,7 +1407,7 @@ body.telem-open { overflow:hidden; }
 
 <header>
   <div class="header-inner">
-    <div class="logo-area" onclick="location.reload()" role="button" aria-label="V4NZ - Volver al inicio" tabindex="0">
+    <div class="logo-area" onclick="goHome()" onkeydown="if(event.key==='Enter'||event.key===' ')goHome()" role="button" aria-label="V4NZ - Volver al inicio" tabindex="0">
       <div id="logoContainer" style="width:48px;height:48px;border-radius:10px;overflow:hidden;background:#0b0b12;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,240,255,0.15);box-shadow:0 0 12px rgba(0,240,255,0.15);">
         <img src="v4nz-logo.png" alt="V4NZ" style="width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(0,240,255,0.3));" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'font-family:Orbitron,sans-serif;font-size:11px;font-weight:900;color:#00f0ff;line-height:1.2;text-align:center;\'>V4NZ<br><span style=\'font-size:9px;color:#f2a900;\'>PUBG</span></div>';">
       </div>
@@ -2256,6 +2256,7 @@ let API_KEY=IS_PROXIED?'proxy':localStorage.getItem('pubg_api_key')||'';
 let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
 let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null,currentSurvivalData=null;
 function updateHeroState(){try{if(currentPlayerData){document.body.classList.add('has-player-loaded');}else{document.body.classList.remove('has-player-loaded');}}catch(e){}}
+function goHome(){try{currentPlayerData=null;currentMatchData=[];currentSeasonData=null;currentWeaponData=null;currentSurvivalData=null;window._lastBotIndex=null;const inp=document.getElementById('searchInput');if(inp)inp.value='';history.pushState(null,'','/');updateHeroState();switchTab('overview');const e=document.getElementById('emptyState');if(e)e.style.display='none';window.scrollTo({top:0,behavior:'smooth'});}catch(err){location.href='/';}}
 function safeParse(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function escJs(s){if(!s)return'';return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');}
