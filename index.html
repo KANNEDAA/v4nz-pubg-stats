@@ -1182,10 +1182,11 @@ footer a { color: var(--accent); text-decoration: none; }
 .fade-cascade > *:nth-child(7){animation-delay:.28s}
 .fade-cascade > *:nth-child(8){animation-delay:.32s}
 
-/* PHASE 1 — DNA bars animated fill via CSS custom property */
+/* PHASE 1 — DNA bars animated fill — v150 marker: dna-bars-fix-v150
+   El keyframe anterior solo definia "from" con !important y "forwards",
+   lo que dejaba las barras a width:0 al terminar en algunos navegadores.
+   Ahora usamos solo transition sobre el width inline, sin animation. */
 .dna-bar-fill { transition: width 1.2s var(--ease-smooth); }
-.dna-bar-fill.animate-in { animation: dnaBarFill 1.2s var(--ease-smooth) forwards; }
-@keyframes dnaBarFill { from { width: 0 !important; } }
 
 /* PHASE 1 — Counter number flash on update */
 .counter-flash { animation: counterFlash .45s var(--ease-smooth); }
@@ -1280,6 +1281,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ VISUAL POLISH v148 — marker: visual-polish-v148-consolidate
    V4NZ v149 — admin panel removed (todo es automatico) — marker: admin-removed-v149
    V4NZ v149 — empty states para WL grid + match history (14 dias retencion) — marker: empty-state-14d-v149
+   V4NZ v150 — fix DNA bars invisibles (keyframe dnaBarFill roto) — marker: dna-bars-fix-v150
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
