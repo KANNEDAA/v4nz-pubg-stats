@@ -485,6 +485,16 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .evo-toggle { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); cursor:pointer; transition:all .2s; }
 .evo-toggle:hover { border-color:var(--tc,var(--accent)); color:var(--tc,var(--accent)); }
 .evo-toggle.active { background:var(--tc,var(--accent)); color:#000; border-color:var(--tc,var(--accent)); }
+/* v151 — Historial del jugador: controles extra */
+.evo-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+.evo-ctrl-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.evo-ctrl-label { font-size:.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-right:2px; }
+.evo-pill { background:var(--bg-secondary); border:1px solid var(--border); border-radius:999px; padding:5px 12px; font-family:'Rajdhani',sans-serif; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); cursor:pointer; transition:all .2s; }
+.evo-pill:hover { border-color:var(--accent); color:var(--accent); }
+.evo-pill.active { background:var(--accent); color:#000; border-color:var(--accent); }
+.evo-export { background:transparent; border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-family:'Rajdhani',sans-serif; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-secondary); cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
+.evo-export:hover { border-color:var(--accent-green); color:var(--accent-green); }
+.evo-mode-hint { font-size:.62rem; color:var(--text-dim); font-style:italic; text-align:center; padding:6px 10px; background:var(--bg-secondary); border-radius:8px; margin-top:10px; }
 /* HOMEPAGE CONTENT */
 .home-counters { display:flex; justify-content:center; gap:40px; margin:30px 0 28px; flex-wrap:wrap; }
 .home-counter { text-align:center; }
@@ -1282,6 +1292,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ v149 — admin panel removed (todo es automatico) — marker: admin-removed-v149
    V4NZ v149 — empty states para WL grid + match history (14 dias retencion) — marker: empty-state-14d-v149
    V4NZ v150 — fix DNA bars invisibles (keyframe dnaBarFill roto) — marker: dna-bars-fix-v150
+   V4NZ v151 — Historial del jugador (ex Mi Evolucion) — 9 metricas + modo delta + filtro temporal + export CSV — marker: historial-v151
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -6078,8 +6089,23 @@ async function savePlayerSnapshot(){
   try{await fetch('/api/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
   catch(e){console.log('Snapshot save failed:',e.message);}
 }
-let _evoData=null; // stored for toggle redraws
-let _evoMetric='kd'; // current selected metric
+/* ═══ v151 — HISTORIAL DEL JUGADOR (ex Mi Evolucion) ═══
+   9 metricas togglables + modo Acumulado/Delta + filtro temporal + export CSV */
+let _evoData=null;          // { snaps: [...] } raw data
+let _evoMetric='kd';        // current selected metric
+let _evoMode='total';       // 'total' (acumulado) | 'delta' (cambios)
+let _evoRange='all';        // '7' | '30' | '90' | 'all'
+const EVO_METRICS={
+  kd:         {color:'#00f0ff',label:'K/D',       dec:2,suffix:'', int:false},
+  win_rate:   {color:'#ffd700',label:'Win Rate',  dec:1,suffix:'%',int:false},
+  avg_damage: {color:'#ff6b00',label:'Avg DMG',   dec:0,suffix:'', int:false},
+  hs_rate:    {color:'#a855f7',label:'HS%',       dec:1,suffix:'%',int:false},
+  kills:      {color:'#ff3355',label:'Kills',     dec:0,suffix:'', int:true },
+  wins:       {color:'#00ff88',label:'Wins',      dec:0,suffix:'', int:true },
+  rounds:     {color:'#8888a0',label:'Partidas',  dec:0,suffix:'', int:true },
+  top10_rate: {color:'#00e5ff',label:'Top 10%',   dec:1,suffix:'%',int:false},
+  longest_kill:{color:'#ffa500',label:'Longest',  dec:0,suffix:'m',int:false}
+};
 async function loadEvolutionChart(){
   const sec=document.getElementById('evolutionSection');if(!sec)return;
   const name=currentPlayerData?.attributes?.name;if(!name){sec.style.display='none';return;}
@@ -6092,64 +6118,149 @@ async function loadEvolutionChart(){
       sec.style.display='block';
       if(snaps.length===1){
         const s1=snaps[0];
-        let h='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div>';
+        let h='<div class="evo-section"><div class="evo-title">&#x1F4C8; Historial del jugador</div>';
         h+='<div class="evo-metrics">';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+(parseFloat(s1.kd)||0).toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+(parseFloat(s1.win_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(parseFloat(s1.avg_damage)||0)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-purple);">'+(parseFloat(s1.hs_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='</div>';
-        h+='<div style="text-align:center;padding:16px 12px;margin-top:8px;background:var(--bg-secondary);border-radius:10px;font-size:.78rem;color:var(--text-secondary);">&#x2705; Stats guardadas hoy. Vuelve manana para ver tu evolucion en la grafica.</div>';
+        h+='<div style="text-align:center;padding:16px 12px;margin-top:8px;background:var(--bg-secondary);border-radius:10px;font-size:.78rem;color:var(--text-secondary);">&#x2705; Stats guardadas hoy. Vuelve manana para ver la evolucion en la grafica.</div>';
         h+='</div>';
         sec.innerHTML=h;
       }else{
-        sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div><div class="evo-empty">Busca tu perfil para empezar a registrar tu evolucion.</div></div>';
+        sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Historial del jugador</div><div class="evo-empty">Busca un perfil para empezar a registrar su historial.</div></div>';
       }
       return;
     }
-    _evoData={snaps};_evoMetric='kd';
-    const latest=snaps[snaps.length-1];const prev=snaps[snaps.length-2];
-    function delta(curr,old){const d=curr-old;return d>0?'+'+d.toFixed(2):d<0?d.toFixed(2):'='}
-    function deltaClass(curr,old){return curr>old?'evo-delta-up':curr<old?'evo-delta-down':'evo-delta-same';}
-    const kdNow=parseFloat(latest.kd)||0,kdPrev=parseFloat(prev.kd)||0;
-    const wrNow=parseFloat(latest.win_rate)||0,wrPrev=parseFloat(prev.win_rate)||0;
-    const dmgNow=parseFloat(latest.avg_damage)||0,dmgPrev=parseFloat(prev.avg_damage)||0;
-    const hsNow=parseFloat(latest.hs_rate)||0,hsPrev=parseFloat(prev.hs_rate)||0;
-    let h='<div class="evo-section">';
-    h+='<div class="evo-title">&#x1F4C8; Mi Evolucion <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+snaps.length+' registros</span></div>';
-    // Metric toggle buttons
-    h+='<div class="evo-toggles">';
-    h+='<button class="evo-toggle active" data-metric="kd" onclick="switchEvoMetric(\'kd\',this)" style="--tc:var(--accent);">K/D</button>';
-    h+='<button class="evo-toggle" data-metric="win_rate" onclick="switchEvoMetric(\'win_rate\',this)" style="--tc:var(--accent-yellow);">Win Rate</button>';
-    h+='<button class="evo-toggle" data-metric="avg_damage" onclick="switchEvoMetric(\'avg_damage\',this)" style="--tc:var(--accent-orange);">Avg DMG</button>';
-    h+='<button class="evo-toggle" data-metric="hs_rate" onclick="switchEvoMetric(\'hs_rate\',this)" style="--tc:var(--accent-purple);">HS%</button>';
-    h+='</div>';
-    h+='<div class="evo-chart"><canvas id="evoCanvas"></canvas></div>';
-    // Delta metrics
-    h+='<div class="evo-metrics">';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'kd\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent);">'+kdNow.toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta '+deltaClass(kdNow,kdPrev)+'">'+delta(kdNow,kdPrev)+'</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'win_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta '+deltaClass(wrNow,wrPrev)+'">'+delta(wrNow,wrPrev)+'%</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'avg_damage\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(dmgNow)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta '+deltaClass(dmgNow,dmgPrev)+'">'+delta(dmgNow,dmgPrev)+'</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'hs_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-purple);">'+hsNow.toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta '+deltaClass(hsNow,hsPrev)+'">'+delta(hsNow,hsPrev)+'%</div></div>';
-    h+='</div></div>';
-    sec.innerHTML=h;sec.style.display='block';
-    drawEvoChart();
+    _evoData={snaps};_evoMetric='kd';_evoMode='total';_evoRange='all';
+    sec.style.display='block';
+    renderEvoSection();
   }catch(e){console.error('Evolution chart error:',e);sec.style.display='none';}
+}
+function getFilteredEvoSnaps(){
+  if(!_evoData)return [];
+  let snaps=_evoData.snaps.slice();
+  if(_evoRange!=='all'){
+    const days=parseInt(_evoRange,10);
+    const cutoff=Date.now()-days*86400000;
+    snaps=snaps.filter(s=>new Date(s.created_at).getTime()>=cutoff);
+  }
+  return snaps;
+}
+function renderEvoSection(){
+  const sec=document.getElementById('evolutionSection');if(!sec||!_evoData)return;
+  const snaps=getFilteredEvoSnaps();
+  const totalCount=_evoData.snaps.length;
+  let h='<div class="evo-section">';
+  h+='<div class="evo-title">&#x1F4C8; Historial del jugador <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+totalCount+' registros</span></div>';
+  // --- Controles: modo + filtro temporal + export ---
+  h+='<div class="evo-controls">';
+  h+='<div class="evo-ctrl-group"><span class="evo-ctrl-label">Modo</span>';
+  h+='<button class="evo-pill'+(_evoMode==='total'?' active':'')+'" onclick="switchEvoMode(\'total\')">Acumulado</button>';
+  h+='<button class="evo-pill'+(_evoMode==='delta'?' active':'')+'" onclick="switchEvoMode(\'delta\')">Solo cambios</button>';
+  h+='</div>';
+  h+='<div class="evo-ctrl-group"><span class="evo-ctrl-label">Rango</span>';
+  ['7','30','90','all'].forEach(r=>{const lbl=r==='all'?'Todo':r+'d';h+='<button class="evo-pill'+(_evoRange===r?' active':'')+'" onclick="switchEvoRange(\''+r+'\')">'+lbl+'</button>';});
+  h+='</div>';
+  h+='<button class="evo-export" onclick="exportEvoCSV()" title="Descargar historial en CSV">&#x2B07; CSV</button>';
+  h+='</div>';
+  if(snaps.length<2){
+    h+='<div class="evo-empty">Sin suficientes datos para este rango. Prueba con un rango mayor.</div></div>';
+    sec.innerHTML=h;return;
+  }
+  // --- Botones de metrica (9) ---
+  h+='<div class="evo-toggles">';
+  Object.keys(EVO_METRICS).forEach(k=>{
+    const m=EVO_METRICS[k];
+    h+='<button class="evo-toggle'+(_evoMetric===k?' active':'')+'" data-metric="'+k+'" onclick="switchEvoMetric(\''+k+'\',this)" style="--tc:'+m.color+';">'+m.label+'</button>';
+  });
+  h+='</div>';
+  h+='<div class="evo-chart"><canvas id="evoCanvas"></canvas></div>';
+  // --- Hint explicativo del modo ---
+  if(_evoMode==='delta'){
+    h+='<div class="evo-mode-hint">&#x1F4CA; Mostrando cambios entre snapshots consecutivos (util para ver actividad real dia a dia)</div>';
+  }
+  // --- Metricas con delta (comparado al primer snapshot del rango) ---
+  const first=snaps[0];const latest=snaps[snaps.length-1];
+  const dClass=(a,b)=>a>b?'evo-delta-up':a<b?'evo-delta-down':'evo-delta-same';
+  const dFmt=(a,b,dec,suffix,isInt)=>{const d=a-b;if(d===0)return'=';const sign=d>0?'+':'';return sign+(isInt?Math.round(d):d.toFixed(dec))+suffix;};
+  h+='<div class="evo-metrics">';
+  ['kd','win_rate','avg_damage','hs_rate','kills','wins','rounds','top10_rate','longest_kill'].forEach(k=>{
+    const m=EVO_METRICS[k];
+    const now=parseFloat(latest[k])||0,old=parseFloat(first[k])||0;
+    const valStr=m.int?Math.round(now):now.toFixed(m.dec);
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\''+k+'\')" style="cursor:pointer;">';
+    h+='<div class="evo-metric-val" style="color:'+m.color+';">'+valStr+m.suffix+'</div>';
+    h+='<div class="evo-metric-lbl">'+m.label+'</div>';
+    h+='<div class="evo-metric-delta '+dClass(now,old)+'">'+dFmt(now,old,m.dec,m.suffix,m.int)+'</div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+  sec.innerHTML=h;
+  drawEvoChart();
 }
 function switchEvoMetric(metric,btn){
   _evoMetric=metric;
   document.querySelectorAll('.evo-toggle').forEach(b=>{b.classList.remove('active');if(b.dataset.metric===metric)b.classList.add('active');});
   drawEvoChart();
 }
-function drawEvoChart(){
+function switchEvoMode(mode){_evoMode=mode;renderEvoSection();}
+function switchEvoRange(range){_evoRange=range;renderEvoSection();}
+function exportEvoCSV(){
   if(!_evoData)return;
   const snaps=_evoData.snaps;
-  const metricMap={kd:{color:'#00f0ff',label:'K/D',dec:2},win_rate:{color:'#ffd700',label:'Win%',dec:1},avg_damage:{color:'#ff6b00',label:'DMG',dec:0},hs_rate:{color:'#a855f7',label:'HS%',dec:1}};
-  const m=metricMap[_evoMetric]||metricMap.kd;
-  const arr=snaps.map(s=>parseFloat(s[_evoMetric])||0);
-  const dates=snaps.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
+  const name=currentPlayerData?.attributes?.name||'player';
+  const cols=['created_at','squad_mode','game_mode','kd','win_rate','avg_damage','hs_rate','kills','wins','rounds','top10_rate','longest_kill'];
+  const lines=[cols.join(',')];
+  snaps.forEach(s=>{
+    const row=cols.map(c=>{
+      let v=s[c];if(v==null)v='';
+      if(c==='created_at')v=new Date(v).toISOString().slice(0,10);
+      if(c==='squad_mode')v=currentSquadMode;
+      if(c==='game_mode')v=currentGameMode;
+      return String(v).replace(/,/g,';');
+    });
+    lines.push(row.join(','));
+  });
+  const csv=lines.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='v4nz_'+name+'_'+currentSquadMode+'_'+currentGameMode+'_historial.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function drawEvoChart(){
+  if(!_evoData)return;
+  const snapsAll=getFilteredEvoSnaps();
+  if(snapsAll.length<2)return;
+  const m=EVO_METRICS[_evoMetric]||EVO_METRICS.kd;
+  // En modo delta: cada punto es la diferencia con el anterior (snaps[i] - snaps[i-1])
+  // En modo total: valores absolutos directos
+  let arr,dates;
+  if(_evoMode==='delta'){
+    arr=[];dates=[];
+    for(let i=1;i<snapsAll.length;i++){
+      const curr=parseFloat(snapsAll[i][_evoMetric])||0;
+      const prev=parseFloat(snapsAll[i-1][_evoMetric])||0;
+      arr.push(curr-prev);
+      const d=new Date(snapsAll[i].created_at);dates.push(d.getDate()+'/'+(d.getMonth()+1));
+    }
+    if(arr.length<1)return;
+  }else{
+    arr=snapsAll.map(s=>parseFloat(s[_evoMetric])||0);
+    dates=snapsAll.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
+  }
   const cvs=document.getElementById('evoCanvas');
-  if(!cvs||arr.length<2)return;
+  if(!cvs||arr.length<1)return;
+  if(arr.length<2){
+    // Dibujar un solo punto como fallback
+    const ctx=cvs.getContext('2d');ctx.clearRect(0,0,cvs.width,cvs.height);
+    ctx.fillStyle='#666';ctx.font='12px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Solo 1 punto en este rango',cvs.width/2,cvs.height/2);
+    return;
+  }
   const dpr=window.devicePixelRatio||1;
   const W=cvs.parentElement.clientWidth;const H=200;
   cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
@@ -6164,7 +6275,7 @@ function drawEvoChart(){
     const y=pad.t+(cH/4)*i;const val=max-((i/4)*range);
     ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
     ctx.fillStyle='#555';ctx.font='10px Rajdhani,sans-serif';ctx.textAlign='right';
-    ctx.fillText(val.toFixed(m.dec),pad.l-6,y+4);
+    ctx.fillText(m.int?Math.round(val):val.toFixed(m.dec),pad.l-6,y+4);
   }
   // Fill gradient under line
   ctx.beginPath();
@@ -6185,7 +6296,7 @@ function drawEvoChart(){
   // Last value label
   const lastY=pad.t+cH-(((arr[arr.length-1]-min)/range)*cH);
   ctx.font='bold 12px Orbitron,sans-serif';ctx.fillStyle=m.color;ctx.textAlign='left';
-  ctx.fillText(arr[arr.length-1].toFixed(m.dec),pad.l+cW+8,lastY+4);
+  ctx.fillText((m.int?Math.round(arr[arr.length-1]):arr[arr.length-1].toFixed(m.dec))+m.suffix,pad.l+cW+8,lastY+4);
   // X-axis dates
   ctx.font='10px Rajdhani,sans-serif';ctx.fillStyle='#555';ctx.textAlign='center';
   const step=Math.max(1,Math.floor(dates.length/7));
