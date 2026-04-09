@@ -204,7 +204,8 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .skip-link:focus { top:0; }
 body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
 .bg-grid { display: none; }
-.bg-radial { position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 900px; height: 600px; background: radial-gradient(ellipse, rgba(0,240,255,0.05) 0%, transparent 70%); z-index: 0; pointer-events: none; }
+.bg-radial { position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 900px; max-width: 100vw; height: 600px; background: radial-gradient(ellipse, rgba(0,240,255,0.05) 0%, transparent 70%); z-index: 0; pointer-events: none; animation: bgRadialPulse 8s ease-in-out infinite; }
+@keyframes bgRadialPulse { 0%,100% { opacity:.85; transform:translateX(-50%) scale(1); } 50% { opacity:1; transform:translateX(-50%) scale(1.06); } }
 
 /* HEADER */
 header { position: sticky; top: 0; z-index: 100; background: rgba(11,11,18,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0 2rem; }
@@ -1126,6 +1127,155 @@ footer a { color: var(--accent); text-decoration: none; }
 .fun-stat-card { opacity:0; animation: scaleIn .35s ease forwards; }
 .fun-stat-card:nth-child(1){animation-delay:.03s}.fun-stat-card:nth-child(2){animation-delay:.06s}.fun-stat-card:nth-child(3){animation-delay:.09s}.fun-stat-card:nth-child(4){animation-delay:.12s}.fun-stat-card:nth-child(5){animation-delay:.15s}.fun-stat-card:nth-child(6){animation-delay:.18s}
 .panel { display:none; opacity:0; } .panel.active { display:block; animation: fadeIn .3s ease forwards; }
+
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ VISUAL POLISH v147 — marker: visual-polish-v147-full
+   Phases 1-5 from visual audit (abril 2026)
+   Design tokens, animations, hover states, mobile fixes
+   ═══════════════════════════════════════════════════════════════ */
+
+/* PHASE 2 — Design tokens */
+:root {
+  --br-xs: 4px; --br-sm: 8px; --br-md: 12px; --br-lg: 16px; --br-xl: 20px; --br-round: 999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.25);
+  --shadow-md: 0 4px 14px rgba(0,0,0,.35);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,.5);
+  --shadow-accent: 0 0 24px rgba(0,240,255,.18);
+  --shadow-accent-strong: 0 0 40px rgba(0,240,255,.35), 0 8px 28px rgba(0,0,0,.55);
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px;
+  --ease-smooth: cubic-bezier(.4,0,.2,1);
+  --ease-bounce: cubic-bezier(.34,1.56,.64,1);
+  --dur-fast: .18s; --dur-med: .28s; --dur-slow: .45s;
+}
+[data-theme="light"] {
+  --shadow-accent: 0 0 24px rgba(0,136,204,.14);
+  --shadow-accent-strong: 0 0 40px rgba(0,136,204,.25), 0 8px 28px rgba(0,0,0,.15);
+}
+
+/* Respect reduced motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  .bg-radial { animation: none !important; }
+}
+
+/* PHASE 1 — Quick wins: enhanced stat card hover lift + glow */
+@media (hover:hover) {
+  .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-accent-strong); border-color: rgba(0,240,255,.35); }
+}
+.stat-card { transition: transform var(--dur-med) var(--ease-smooth), box-shadow var(--dur-med) var(--ease-smooth), border-color var(--dur-med) var(--ease-smooth); }
+
+/* PHASE 3 — Stat card top-bar gradient accent (categoría) */
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity:0; transition: opacity var(--dur-med) var(--ease-smooth); }
+.stat-card:hover::before { opacity:1; }
+
+/* PHASE 1 — Shimmer ya existe, reforzar skeletons para que se vean */
+.skeleton-header, .skeleton-personality, .skeleton-card, .skeleton-wl, .skeleton-chart { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%); background-size: 800px 100%; animation: shimmer 1.6s ease-in-out infinite; }
+
+/* PHASE 1 — fadeInUp cascade para grids genéricos */
+.fade-cascade > * { opacity:0; animation: fadeInUp .5s var(--ease-smooth) forwards; }
+.fade-cascade > *:nth-child(1){animation-delay:.04s}
+.fade-cascade > *:nth-child(2){animation-delay:.08s}
+.fade-cascade > *:nth-child(3){animation-delay:.12s}
+.fade-cascade > *:nth-child(4){animation-delay:.16s}
+.fade-cascade > *:nth-child(5){animation-delay:.20s}
+.fade-cascade > *:nth-child(6){animation-delay:.24s}
+.fade-cascade > *:nth-child(7){animation-delay:.28s}
+.fade-cascade > *:nth-child(8){animation-delay:.32s}
+
+/* PHASE 1 — DNA bars animated fill via CSS custom property */
+.dna-bar-fill { transition: width 1.2s var(--ease-smooth); }
+.dna-bar-fill.animate-in { animation: dnaBarFill 1.2s var(--ease-smooth) forwards; }
+@keyframes dnaBarFill { from { width: 0 !important; } }
+
+/* PHASE 1 — Counter number flash on update */
+.counter-flash { animation: counterFlash .45s var(--ease-smooth); }
+@keyframes counterFlash { 0% { color: var(--accent); text-shadow: 0 0 16px rgba(0,240,255,.55); } 100% { color: inherit; text-shadow: none; } }
+
+/* PHASE 3 — Shine sweep for rank badge / bot badge / cl-badge */
+.shine-sweep { position: relative; overflow: hidden; }
+.shine-sweep::after { content:''; position:absolute; top:0; left:-120%; width:60%; height:100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,.22), transparent); transform: skewX(-20deg); pointer-events:none; animation: shineSweep 3.6s ease-in-out infinite; }
+@keyframes shineSweep { 0%,55% { left:-120%; } 80%,100% { left:160%; } }
+
+/* PHASE 3 — Button gradient + lift for action buttons */
+.btn-lift { transition: transform var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth), filter var(--dur-fast) var(--ease-smooth); }
+@media (hover:hover) {
+  .btn-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,240,255,.22); filter: brightness(1.08); }
+  .btn-lift:active { transform: translateY(0); }
+}
+
+/* PHASE 3 — Enhance tab-btn with sliding indicator */
+.tab-btn { position: relative; transition: color .2s, background .2s, border-color .2s; }
+.tab-btn::after { content:''; position:absolute; bottom:-1px; left:50%; width:0; height:2px; background: var(--accent); border-radius:2px; transform: translateX(-50%); transition: width .3s var(--ease-bounce); box-shadow: 0 0 8px rgba(0,240,255,.45); }
+.tab-btn.active::after { width: 60%; }
+@media (hover:hover) {
+  .tab-btn:hover { border-color: rgba(0,240,255,.25); color: var(--text-primary); }
+}
+
+/* PHASE 3 — Action/search/auth/streamer CTA buttons get gradient lift automatically */
+.search-btn, .auth-submit, .streamer-cta, .auth-discord-btn { transition: transform var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth), filter var(--dur-fast) var(--ease-smooth); }
+@media (hover:hover) {
+  .search-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,240,255,.28); filter: brightness(1.08); }
+  .auth-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,240,255,.25); }
+  .streamer-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255,107,0,.35); filter: brightness(1.08); }
+}
+
+/* PHASE 3 — Loading overlay subtle shimmer background */
+.loading-overlay { background-size: 200% 200%; animation: overlayDrift 14s ease-in-out infinite; }
+@keyframes overlayDrift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+/* PHASE 3 — Enhanced player-avatar animated frame */
+.player-avatar { position: relative; }
+.player-avatar::before { content:''; position:absolute; inset:-3px; border-radius: 18px; background: linear-gradient(135deg, rgba(0,240,255,.6), transparent 40%, transparent 60%, rgba(0,240,255,.6)); opacity: 0; transition: opacity .4s; animation: avatarRotate 6s linear infinite; z-index:-1; }
+.player-header.visible .player-avatar::before { opacity: .55; }
+@keyframes avatarRotate { to { transform: rotate(360deg); } }
+
+/* PHASE 5 — Live pulsing dot */
+.live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background: var(--accent-red); box-shadow: 0 0 0 0 rgba(255,51,85,.6); animation: livePulse 1.8s ease-out infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(255,51,85,.7); } 70% { box-shadow: 0 0 0 10px rgba(255,51,85,0); } 100% { box-shadow: 0 0 0 0 rgba(255,51,85,0); } }
+
+/* PHASE 5 — Popups get scaleIn entrance */
+.match-detail-popup.active > *, .telem-popup.active > *, .card-modal.active > *, .auth-popup.active .auth-box { animation: scaleIn .35s var(--ease-bounce); }
+
+/* PHASE 5 — Podium colors in leaderboard (top 3) */
+.lb-row:nth-child(1) .lb-rank, .lb-item:nth-child(1) .lb-rank { color: #ffd700 !important; text-shadow: 0 0 12px rgba(255,215,0,.55); }
+.lb-row:nth-child(2) .lb-rank, .lb-item:nth-child(2) .lb-rank { color: #c0c0c0 !important; text-shadow: 0 0 12px rgba(192,192,192,.5); }
+.lb-row:nth-child(3) .lb-rank, .lb-item:nth-child(3) .lb-rank { color: #cd7f32 !important; text-shadow: 0 0 12px rgba(205,127,50,.5); }
+
+/* PHASE 4 — Mobile polish */
+@media (max-width: 720px) {
+  .bg-radial { width: 100vw; height: 400px; top: -100px; }
+  .logo-text { font-size: 1.05rem; letter-spacing: 1.2px; }
+  .logo-sub { display: none; }
+  .logo-area img, .logo-fallback { height: 36px; width: 36px; }
+  /* Ensure main-nav scrolls properly when not mobile-open (fallback for top nav) */
+  nav { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  nav::-webkit-scrollbar { display: none; }
+  /* Stat card touch friendly */
+  .stat-card { padding: 16px 12px; }
+  /* Reduce shadow weight for perf */
+  .stat-card:hover { box-shadow: var(--shadow-accent); }
+}
+@media (max-width: 480px) {
+  .search-hero h1 { font-size: 2.1rem; letter-spacing: 2px; }
+  .search-hero { padding: 60px 1rem 32px; }
+  .search-hero .search-input { padding: 18px 16px; font-size: 1rem; }
+  .search-hero .search-btn { padding: 18px 20px; font-size: .85rem; }
+}
+
+/* PHASE 5 — Empty states template (apply class .empty-state) */
+.empty-state { text-align: center; padding: 48px 24px; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; }
+.empty-state-icon { font-size: 2.4rem; opacity: .4; margin-bottom: 8px; animation: emptyFloat 4s ease-in-out infinite; }
+.empty-state-title { font-size: 1rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.empty-state-desc { font-size: .8rem; }
+@keyframes emptyFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+/* PHASE 3 — Match item glow on hover (enhancement) */
+@media (hover:hover) {
+  .match-item:hover { box-shadow: 0 8px 24px rgba(0,240,255,.14), var(--shadow-sm); }
+}
+
+/* ═══ END VISUAL POLISH v147 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -8000,6 +8150,93 @@ function renderLeaderboardDemo(){
 }
 // PWA: Register Service Worker
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.log('SW registration failed:',e));}
+
+/* ═══ V4NZ VISUAL POLISH v147 — JS hooks — marker: visual-polish-v147-full ═══ */
+(function(){
+  if (window.__v4nzVisualV147) return; window.__v4nzVisualV147 = true;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 1) Counter animation — wrap numbers that appear inside .quick-stat .value or .stat-card .stat-value
+  function animateNumber(el, target, dur){
+    try{
+      if (reduce) { el.textContent = String(target); return; }
+      const start = 0; const t0 = performance.now();
+      const isFloat = String(target).indexOf('.') >= 0;
+      const dec = isFloat ? 2 : 0;
+      const step = (now)=>{
+        const p = Math.min(1, (now - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const v = start + (target - start) * eased;
+        el.textContent = isFloat ? v.toFixed(dec) : Math.round(v).toLocaleString('es-ES');
+        if (p < 1) requestAnimationFrame(step);
+        else { el.textContent = isFloat ? target.toFixed(dec) : target.toLocaleString('es-ES'); el.classList.add('counter-flash'); setTimeout(()=>el.classList.remove('counter-flash'),500); }
+      };
+      requestAnimationFrame(step);
+    }catch(_){}
+  }
+  function parseTargetNumber(txt){
+    if (!txt) return null;
+    const clean = String(txt).replace(/[^\d.,-]/g,'').replace(/\.(?=\d{3}\b)/g,'').replace(',','.');
+    const n = parseFloat(clean);
+    return isFinite(n) ? n : null;
+  }
+  function triggerCounterScan(root){
+    try{
+      (root||document).querySelectorAll('.quick-stat .value, .stat-card .stat-value').forEach(el=>{
+        if (el.dataset.animated) return;
+        const target = parseTargetNumber(el.textContent);
+        if (target === null || target === 0) return;
+        el.dataset.animated = '1';
+        animateNumber(el, target, 900);
+      });
+    }catch(_){}
+  }
+
+  // 2) DNA bar animation via IntersectionObserver — any .dna-bar-fill
+  try{
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if (e.isIntersecting) { e.target.classList.add('animate-in'); io.unobserve(e.target); }
+        });
+      }, { threshold: .3 });
+      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.animate-in)').forEach(el=>io.observe(el));
+      const mo = new MutationObserver(()=>{ scanBars(); triggerCounterScan(); });
+      mo.observe(document.body, { childList:true, subtree:true });
+      scanBars(); triggerCounterScan();
+    }
+  }catch(_){}
+
+  // 3) Hook counter scan when player header becomes visible
+  try{
+    const ph = document.querySelector('.player-header');
+    if (ph){
+      const phObs = new MutationObserver(()=>{ if (ph.classList.contains('visible')) setTimeout(()=>triggerCounterScan(ph.closest('main')||document), 60); });
+      phObs.observe(ph, { attributes:true, attributeFilter:['class'] });
+    }
+  }catch(_){}
+
+  // 4) Auto-apply .shine-sweep to rank/bot badges when they appear
+  try{
+    const autoShine = ()=>{
+      document.querySelectorAll('.bot-badge:not(.shine-sweep), .cl-badge:not(.shine-sweep)').forEach(el=>el.classList.add('shine-sweep'));
+    };
+    autoShine();
+    const shineObs = new MutationObserver(autoShine);
+    shineObs.observe(document.body, { childList:true, subtree:true });
+  }catch(_){}
+
+  // 5) Auto fade-cascade grid containers
+  try{
+    const gridSel = '.stats-grid, .fun-stats-grid, .weapons-grid, .cmp-grid, .clan-grid';
+    document.querySelectorAll(gridSel).forEach(g=>g.classList.add('fade-cascade'));
+    const gridObs = new MutationObserver(()=>{
+      document.querySelectorAll(gridSel).forEach(g=>{ if(!g.classList.contains('fade-cascade')) g.classList.add('fade-cascade'); });
+    });
+    gridObs.observe(document.body, { childList:true, subtree:true });
+  }catch(_){}
+})();
+/* ═══ END V4NZ VISUAL POLISH v147 JS ═══ */
 </script>
 </body>
 </html>
