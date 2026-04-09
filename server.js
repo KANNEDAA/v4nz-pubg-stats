@@ -2061,6 +2061,220 @@ Genera el análisis JSON:
   }
 });
 
+// ============ AI Deep Analysis (Pro) — usuario logueado con historial (v154) ============
+app.get('/api/ai-deep-analysis', requireAuth, async (req, res) => {
+  try {
+    if (!pool) return res.status(503).json({ error: 'DB not available' });
+    const userId = req.user.id;
+    const { stats: statsParam } = req.query;
+    let currentStats;
+    try { currentStats = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { currentStats = null; }
+    if (!currentStats || !currentStats.kd) return res.status(400).json({ error: 'Missing current stats' });
+
+    // Get user's linked gamertag
+    const u = await pool.query('SELECT gamertag, platform, display_name FROM users WHERE id = $1', [userId]);
+    if (!u.rows.length || !u.rows[0].gamertag) return res.status(400).json({ error: 'No gamertag vinculado' });
+    const gamertag = u.rows[0].gamertag;
+    const platform = u.rows[0].platform || 'psn';
+
+    const cacheKey = `ai-deep:${userId}:${gamertag.toLowerCase()}:${platform}`;
+
+    // Check cache
+    try {
+      const cached = await pool.query(
+        `SELECT data FROM api_cache WHERE cache_key = $1 AND created_at + (ttl_seconds || ' seconds')::interval > NOW()`,
+        [cacheKey]
+      );
+      if (cached.rows.length > 0) return res.json(cached.rows[0].data);
+    } catch (e) { console.error('Deep analysis cache check error:', e); }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'AI analysis not available' });
+    }
+
+    // Fetch historical snapshots (last 90 days) for the linked gamertag across modes
+    const snapsQ = await pool.query(
+      `SELECT squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill, created_at
+       FROM player_snapshots
+       WHERE player_name = $1 AND platform = $2 AND created_at > NOW() - INTERVAL '90 days'
+       ORDER BY created_at ASC`,
+      [gamertag, platform]
+    );
+    const allSnaps = snapsQ.rows;
+
+    // Pick main mode (squad tpp if available, else most frequent)
+    const modeCount = {};
+    allSnaps.forEach(s => { const k = `${s.squad_mode}:${s.game_mode}`; modeCount[k] = (modeCount[k]||0)+1; });
+    let mainMode = 'squad:tpp';
+    if (!modeCount[mainMode]) {
+      const sorted = Object.entries(modeCount).sort((a,b)=>b[1]-a[1]);
+      if (sorted.length) mainMode = sorted[0][0];
+    }
+    const [msq, mgm] = mainMode.split(':');
+    const modeSnaps = allSnaps.filter(s => s.squad_mode === msq && s.game_mode === mgm);
+
+    // Compute trends: last vs ~7d, ~30d, ~90d ago
+    function findSnapNDaysAgo(snaps, days) {
+      if (!snaps.length) return null;
+      const target = Date.now() - days * 86400000;
+      let best = snaps[0], bestDiff = Math.abs(new Date(snaps[0].created_at).getTime() - target);
+      for (const s of snaps) {
+        const d = Math.abs(new Date(s.created_at).getTime() - target);
+        if (d < bestDiff) { bestDiff = d; best = s; }
+      }
+      return best;
+    }
+    function delta(curr, prev, key) {
+      if (!curr || !prev) return null;
+      const a = parseFloat(curr[key]) || 0, b = parseFloat(prev[key]) || 0;
+      if (b === 0) return null;
+      return ((a - b) / b * 100).toFixed(1);
+    }
+    const latest = modeSnaps.length ? modeSnaps[modeSnaps.length-1] : null;
+    const s7 = findSnapNDaysAgo(modeSnaps, 7);
+    const s30 = findSnapNDaysAgo(modeSnaps, 30);
+    const s90 = findSnapNDaysAgo(modeSnaps, 90);
+    const trends = {
+      kd_7d: delta(latest, s7, 'kd'), kd_30d: delta(latest, s30, 'kd'), kd_90d: delta(latest, s90, 'kd'),
+      adr_7d: delta(latest, s7, 'avg_damage'), adr_30d: delta(latest, s30, 'avg_damage'), adr_90d: delta(latest, s90, 'avg_damage'),
+      wr_30d: delta(latest, s30, 'win_rate'), wr_90d: delta(latest, s90, 'win_rate'),
+      hs_30d: delta(latest, s30, 'hs_rate'), hs_90d: delta(latest, s90, 'hs_rate')
+    };
+    // Days active (snapshots with rounds delta > 0 vs previous)
+    let daysActive = 0;
+    for (let i = 1; i < modeSnaps.length; i++) {
+      if ((modeSnaps[i].rounds || 0) > (modeSnaps[i-1].rounds || 0)) daysActive++;
+    }
+
+    let AnthropicSDK;
+    try { AnthropicSDK = await import('@anthropic-ai/sdk'); }
+    catch (e) { return res.status(503).json({ error: 'AI service unavailable' }); }
+    const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const systemPrompt = `Eres V4NZ AI Pro, el analista DEFINITIVO de jugadores PUBG consola (PSN/Xbox) de v4nz.com. Este es un análisis PROFUNDO y PRIVADO para un usuario registrado que ha vinculado su gamertag y tiene datos históricos.
+
+═══ BENCHMARKS PSN/XBOX CONSOLA (Temporada 40+) ═══
+K/D: Top 1% 5.0+ | Top 5% 4-5 | Top 10% 3-4 | Top 25% 2-3 | Media 1-1.5 | Bajo <1
+ADR: Top 1% 350+ | Top 5% 250-350 | Top 10% 180-250 | Media 100-150 | Bajo <80
+HS%: Top 1% 25%+ | Bueno 18-25% | Normal 12-18% | Bajo <12%
+Win Rate: Top 1% 20%+ | Bueno 10-20% | Normal 3-8% | Bajo <3%
+
+═══ META DE CONSOLA — LOADOUTS RECOMENDADOS ═══
+• Agresivo CQC: Beryl M762 + sight red dot + angled grip + compensador (meta actual)
+• Equilibrado mid-range: Beryl/M416 + 2x/3x + angled grip + flash hider
+• Precisión larga distancia: SLR o Mini14 + 4x/6x + cheekpad + compensador
+• Support defensivo: SLR + 4x o QBU + scope + shotgun secundaria
+
+═══ TENDENCIAS — CÓMO INTERPRETARLAS ═══
+• Delta K/D 30d +10%+ = progresión real, el jugador está en racha
+• Delta K/D 30d -10%- = estancamiento o regresión, investigar causa
+• Delta ADR subiendo mientras K/D baja = jugador más agresivo pero muriendo antes
+• Delta WR subiendo con K/D estable = mejor gestión de círculo y posicionamiento
+• Días activos <10 en 90d = jugador esporádico, las stats son menos fiables
+
+═══ REGLAS ESTRICTAS ═══
+- Este es un análisis PRIVADO PRO, puede ser más directo y técnico que el AI DNA público
+- USA las tendencias históricas para detectar progresión, estancamiento o regresión
+- Da un plan de entrenamiento CONCRETO con 4-5 pasos accionables
+- Recomienda un loadout específico basado en el estilo detectado
+- Propón un objetivo SMART realista para los próximos 30 días
+- Habla al jugador usando "tú" y su nombre
+- Responde SOLO con JSON válido, sin markdown`;
+
+    const userPrompt = `Análisis PRO privado para ${u.rows[0].display_name} (gamertag: ${gamertag}, ${platform}, modo principal: ${msq}/${mgm}).
+
+═══ STATS ACTUALES (temporada) ═══
+• K/D: ${currentStats.kd} | ADR: ${currentStats.avgDamage} | HS%: ${currentStats.hsRate}%
+• Win Rate: ${currentStats.winRate}% | Top 10%: ${currentStats.top10Rate}%
+• Kills: ${currentStats.kills} | Wins: ${currentStats.wins} | Partidas: ${currentStats.rounds}
+• Longest Kill: ${currentStats.longestKill}m | Revives/ronda: ${currentStats.revivesPerRound || 0}
+
+═══ HISTORIAL (últimos 90 días) ═══
+• Snapshots disponibles: ${modeSnaps.length}
+• Días activos (partidas jugadas): ${daysActive}
+• Delta K/D 7d: ${trends.kd_7d || 'N/A'}% | 30d: ${trends.kd_30d || 'N/A'}% | 90d: ${trends.kd_90d || 'N/A'}%
+• Delta ADR 7d: ${trends.adr_7d || 'N/A'}% | 30d: ${trends.adr_30d || 'N/A'}% | 90d: ${trends.adr_90d || 'N/A'}%
+• Delta WR 30d: ${trends.wr_30d || 'N/A'}% | 90d: ${trends.wr_90d || 'N/A'}%
+• Delta HS% 30d: ${trends.hs_30d || 'N/A'}% | 90d: ${trends.hs_90d || 'N/A'}%
+
+Genera el análisis JSON:
+{
+  "profile": "2-3 frases describiendo el perfil técnico del jugador con percentiles reales",
+  "trendSummary": "1-2 frases interpretando la dirección global (progresando/estancado/regresando) con datos",
+  "trends": {
+    "kd": {"direction":"subiendo"|"estancado"|"bajando","note":"breve nota con delta %"},
+    "adr": {"direction":"subiendo"|"estancado"|"bajando","note":"breve nota con delta %"},
+    "winRate": {"direction":"subiendo"|"estancado"|"bajando","note":"breve nota"},
+    "headshots": {"direction":"subiendo"|"estancado"|"bajando","note":"breve nota"}
+  },
+  "strengths": ["3 fortalezas concretas con datos"],
+  "weaknesses": ["3 debilidades concretas con datos"],
+  "loadout": {
+    "style": "etiqueta del estilo detectado",
+    "primary": "arma primaria + 2-3 accesorios",
+    "secondary": "arma secundaria recomendada",
+    "rationale": "1 frase explicando por qué este loadout encaja con su estilo"
+  },
+  "trainingPlan": ["4-5 pasos concretos y accionables para los próximos 30 días"],
+  "next30DaysGoal": "1 objetivo SMART específico y medible (ej: subir ADR de 145 a 170)"
+}`;
+
+    let response, lastErr;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        response = await client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 2000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        });
+        break;
+      } catch (apiErr) {
+        lastErr = apiErr;
+        console.error(`AI deep analysis attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
+        if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        throw apiErr;
+      }
+    }
+    if (!response) throw lastErr || new Error('AI API failed after retries');
+
+    const text = response.content[0]?.text || '';
+    let aiResult;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      aiResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    } catch (e) {
+      console.error('AI deep analysis parse error, raw:', text.substring(0, 500));
+      return res.status(500).json({ error: 'Failed to parse AI response' });
+    }
+    if (!aiResult.profile || !aiResult.trainingPlan || !aiResult.loadout) {
+      return res.status(500).json({ error: 'Incomplete AI response' });
+    }
+
+    aiResult.generatedAt = new Date().toISOString();
+    aiResult.gamertag = gamertag;
+    aiResult.platform = platform;
+    aiResult.snapshotsAnalyzed = modeSnaps.length;
+    aiResult.daysActive = daysActive;
+
+    try {
+      await pool.query(
+        `INSERT INTO api_cache (cache_key, data, ttl_seconds) VALUES ($1, $2, $3) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW(), ttl_seconds = $3`,
+        [cacheKey, JSON.stringify(aiResult), 604800]
+      );
+    } catch (e) { console.error('AI deep analysis cache save error:', e); }
+
+    res.json(aiResult);
+  } catch (e) {
+    console.error('AI deep analysis error:', e.status || '', e.message || e);
+    res.status(500).json({ error: 'AI deep analysis failed', detail: e.message || 'Unknown error' });
+  }
+});
+
 // ============ AI Compare Clans (MUST be before the PUBG API catch-all proxy) ============
 app.get('/api/ai-compare-clans', async (req, res) => {
   try {
