@@ -1276,6 +1276,99 @@ footer a { color: var(--accent); text-decoration: none; }
 
 /* ═══ END VISUAL POLISH v147 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ VISUAL POLISH v148 — marker: visual-polish-v148-consolidate
+   Consolidation pass: token rollout, hooks fixes, category colors,
+   category top-bars, clan/fav hovers, radar anim, light mode shadows
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1) BORDER-RADIUS CONSOLIDATION — override with tokens */
+.stat-card, .weapon-card, .fun-stat-card, .clan-card, .cr-row, .lb-row, .match-item, .auth-box, .streamer-card, .player-header, .card-modal, .telem-popup, .empty-state { border-radius: var(--br-lg); }
+.tab-btn, .platform-btn, .clan-mode-tab, .cc-tab, .lb-btn, .search-box, .fav-card, .clan-header-item, .auth-input, .loader-timer, .cl-badge, .bot-badge, .platform-badge, .player-clan-badge, .recent-tag, .fav-tag { border-radius: var(--br-sm); }
+.auth-btn, .auth-submit, .auth-discord-btn, .streamer-cta, .search-btn, .theme-toggle, .pubg-report-btn, .banner-discord-cta, .fav-star, .fav-header-btn { border-radius: var(--br-sm); }
+.footer-social, .player-avatar, .streamer-avatar { border-radius: var(--br-round); }
+
+/* 2) CONSOLIDATED SHADOWS — apply token shadows to common cards */
+.stat-card, .weapon-card, .fun-stat-card, .player-header, .clan-card { box-shadow: var(--shadow-sm); }
+@media (hover:hover) {
+  .stat-card:hover, .weapon-card:hover, .fun-stat-card:hover, .clan-card:hover { box-shadow: var(--shadow-lg), var(--shadow-accent); }
+}
+
+/* 3) HIDE HOME SKELETONS when no player loaded (prevents shimmer on idle home) */
+body:not(.has-player-loaded) .panel:not(.active) .skeleton,
+body:not(.has-player-loaded) .skeleton-charts,
+body:not(.has-player-loaded) .skeleton-personality { display: none !important; }
+
+/* 4) CLAN CARD / CR-ROW / FAV CARD hover lift */
+.clan-card, .cr-row, .fav-card, .clan-header-item, .lb-row, .lb-item { transition: transform var(--dur-med) var(--ease-smooth), box-shadow var(--dur-med) var(--ease-smooth), border-color var(--dur-med) var(--ease-smooth); will-change: transform; }
+@media (hover:hover) {
+  .clan-card:hover, .cr-row:hover, .fav-card:hover, .clan-header-item:hover, .lb-row:hover, .lb-item:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,240,255,.14); border-color: rgba(0,240,255,.28); }
+}
+
+/* 5) STAT CARD CATEGORY TOP-BAR — colorea la barra superior según posición en la grid */
+.stats-grid .stat-card:nth-child(1)::before { background: linear-gradient(90deg, transparent, var(--accent-red), transparent); }    /* K/D */
+.stats-grid .stat-card:nth-child(2)::before { background: linear-gradient(90deg, transparent, var(--accent-yellow), transparent); } /* Win Rate */
+.stats-grid .stat-card:nth-child(3)::before { background: linear-gradient(90deg, transparent, var(--accent-orange), transparent); } /* ADR */
+.stats-grid .stat-card:nth-child(4)::before { background: linear-gradient(90deg, transparent, var(--accent-purple), transparent); } /* HS% */
+.stats-grid .stat-card:nth-child(5)::before { background: linear-gradient(90deg, transparent, var(--accent-green), transparent); }  /* Top10 */
+.stats-grid .stat-card:nth-child(6)::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); }        /* Kills */
+.stats-grid .stat-card:nth-child(7)::before { background: linear-gradient(90deg, transparent, #22d3ee, transparent); }              /* Rounds */
+.stats-grid .stat-card:nth-child(8)::before { background: linear-gradient(90deg, transparent, #ff6b00, transparent); }              /* Avg Dmg */
+.stats-grid .stat-card::before { opacity: .3 !important; }
+.stats-grid .stat-card:hover::before { opacity: 1 !important; }
+
+/* Corresponding subtle background tint on hover */
+.stats-grid .stat-card:nth-child(1):hover { border-color: rgba(255,51,85,.3); box-shadow: 0 12px 32px rgba(255,51,85,.12), var(--shadow-sm); }
+.stats-grid .stat-card:nth-child(2):hover { border-color: rgba(255,215,0,.3); box-shadow: 0 12px 32px rgba(255,215,0,.12), var(--shadow-sm); }
+.stats-grid .stat-card:nth-child(3):hover { border-color: rgba(255,107,0,.3); box-shadow: 0 12px 32px rgba(255,107,0,.12), var(--shadow-sm); }
+.stats-grid .stat-card:nth-child(4):hover { border-color: rgba(168,85,247,.3); box-shadow: 0 12px 32px rgba(168,85,247,.12), var(--shadow-sm); }
+.stats-grid .stat-card:nth-child(5):hover { border-color: rgba(0,255,136,.3); box-shadow: 0 12px 32px rgba(0,255,136,.12), var(--shadow-sm); }
+
+/* 6) PLAYER AVATAR ANIMATED FRAME — overflow:visible fix */
+.player-avatar { overflow: visible; }
+.player-avatar::before { border-radius: var(--br-round); inset:-4px; }
+
+/* 7) TAB SLIDING INDICATOR — extend to clan-mode-tab and cc-tab */
+.clan-mode-tab, .cc-tab { position: relative; transition: color .2s, background .2s, border-color .2s; }
+.clan-mode-tab::after, .cc-tab::after { content:''; position:absolute; bottom:-1px; left:50%; width:0; height:2px; background: var(--accent); border-radius:2px; transform: translateX(-50%); transition: width .3s var(--ease-bounce); box-shadow: 0 0 8px rgba(0,240,255,.45); }
+.clan-mode-tab.active::after, .cc-tab.active::after { width: 60%; }
+
+/* 8) BIG NUMBER GRADIENT SHIMMER — for key stat values */
+.stats-grid .stat-card .stat-value, .quick-stat .value { background-size: 200% auto; }
+.stats-grid .stat-card:hover .stat-value { background: linear-gradient(90deg, var(--accent), #0080ff, var(--accent)); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: bigNumShimmer 2.2s linear infinite; }
+@keyframes bigNumShimmer { to { background-position: 200% center; } }
+
+/* 9) POPUP BACKDROP SCALEIN + FADE */
+.match-detail-popup, .telem-popup, .card-modal, .auth-popup { transition: opacity .28s var(--ease-smooth); }
+.match-detail-popup.active, .telem-popup.active, .card-modal.active, .auth-popup.active { animation: popupFadeBg .28s var(--ease-smooth); }
+@keyframes popupFadeBg { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(12px); } }
+
+/* 10) LIGHT MODE SHADOW TOKEN OVERRIDES */
+[data-theme="light"] {
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 14px rgba(0,0,0,.1);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,.14);
+}
+[data-theme="light"] .stats-grid .stat-card:nth-child(n):hover { box-shadow: 0 12px 32px rgba(0,136,204,.12), var(--shadow-sm); }
+
+/* 11) RADAR CANVAS — wrap with entrance scale/fade */
+canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance .9s var(--ease-smooth); transform-origin: center; }
+@keyframes radarEntrance { from { opacity: 0; transform: scale(.85) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
+
+/* 12) MATCH DETAIL — consolidate hover (defeat previous bg-glow override) */
+@media (hover:hover) {
+  .match-item:hover { transform: translateY(-3px) !important; box-shadow: 0 10px 26px rgba(0,240,255,.16) !important; border-color: rgba(0,240,255,.3) !important; }
+}
+
+/* 13) HERO H1 gradient animation — subtle breathing */
+.search-hero h1 span { background-size: 200% auto; animation: heroGradBreathe 6s ease-in-out infinite; }
+@keyframes heroGradBreathe { 0%,100% { background-position: 0% center; } 50% { background-position: 100% center; } }
+
+/* 14) RANK BADGE / PLATFORM BADGE shine (applied via .shine-sweep by JS) — ensure overflow hidden */
+.platform-badge, .bot-badge, .cl-badge, .player-clan-badge { overflow: hidden; position: relative; }
+
+/* ═══ END VISUAL POLISH v148 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -8237,6 +8330,87 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
   }catch(_){}
 })();
 /* ═══ END V4NZ VISUAL POLISH v147 JS ═══ */
+
+/* ═══ V4NZ VISUAL POLISH v148 JS — marker: visual-polish-v148-consolidate ═══ */
+(function(){
+  if (window.__v4nzVisualV148) return; window.__v4nzVisualV148 = true;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // A) Aggressive shine-sweep auto-apply — runs every 1s for 30s after load + on visibility
+  const shineSelector = '.bot-badge:not(.shine-sweep), .cl-badge:not(.shine-sweep), .platform-badge:not(.shine-sweep), .player-clan-badge:not(.shine-sweep)';
+  const applyShine = ()=>{ try{ document.querySelectorAll(shineSelector).forEach(el=>el.classList.add('shine-sweep')); }catch(_){} };
+  applyShine();
+  let shineN = 0;
+  const shineIv = setInterval(()=>{ applyShine(); if (++shineN > 30) clearInterval(shineIv); }, 1000);
+
+  // B) Hook header visibility → re-scan shine + counters
+  try{
+    const ph = document.querySelector('.player-header');
+    if (ph){
+      const phObs = new MutationObserver(()=>{ if (ph.classList.contains('visible')) { applyShine(); } });
+      phObs.observe(ph, { attributes:true, attributeFilter:['class'] });
+    }
+  }catch(_){}
+
+  // C) Confetti on chicken dinner — scans match items for "WINNER" / place #1 indicator
+  window.v4nzConfetti = function(x, y){
+    if (reduce) return;
+    try{
+      const colors = ['#ffd700','#00f0ff','#ff6b00','#00ff88','#a855f7','#ff3355'];
+      const N = 80;
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2000;overflow:hidden;';
+      document.body.appendChild(wrap);
+      for (let i=0;i<N;i++){
+        const p = document.createElement('div');
+        const size = 6 + Math.random()*8;
+        const color = colors[Math.floor(Math.random()*colors.length)];
+        const dx = (Math.random()-.5) * 600;
+        const dy = -200 - Math.random()*400;
+        const rot = (Math.random()-.5) * 720;
+        const dur = 1200 + Math.random()*900;
+        p.style.cssText = 'position:absolute;left:'+(x||window.innerWidth/2)+'px;top:'+(y||window.innerHeight/2)+'px;width:'+size+'px;height:'+size+'px;background:'+color+';border-radius:2px;opacity:1;transform:translate(-50%,-50%);transition:transform '+dur+'ms cubic-bezier(.2,.7,.3,1), opacity '+dur+'ms ease-out;';
+        wrap.appendChild(p);
+        requestAnimationFrame(()=>{ p.style.transform = 'translate(calc(-50% + '+dx+'px), calc(-50% + '+(dy+600)+'px)) rotate('+rot+'deg)'; p.style.opacity = '0'; });
+      }
+      setTimeout(()=>wrap.remove(), 2500);
+    }catch(_){}
+  };
+
+  // D) Auto-trigger confetti when match detail popup opens for a win
+  try{
+    const popup = document.querySelector('.match-detail-popup');
+    if (popup){
+      let lastActive = false;
+      const popObs = new MutationObserver(()=>{
+        const nowActive = popup.classList.contains('active');
+        if (nowActive && !lastActive) {
+          const txt = (popup.textContent||'').toLowerCase();
+          if (txt.includes('#1') || txt.includes('winner winner') || txt.includes('chicken dinner') || txt.includes('victoria') || /posición[^0-9]*1\b/.test(txt)) {
+            setTimeout(()=>window.v4nzConfetti(), 250);
+          }
+        }
+        lastActive = nowActive;
+      });
+      popObs.observe(popup, { attributes:true, attributeFilter:['class'] });
+    }
+  }catch(_){}
+
+  // E) Live dots — add to "ACTIVO" labels or feed items marked as recent
+  try{
+    const liveLabels = ['en directo','live','recién','hace unos'];
+    setTimeout(()=>{
+      document.querySelectorAll('.feed-item, .match-recent-tag').forEach(el=>{
+        const t = (el.textContent||'').toLowerCase();
+        if (liveLabels.some(l=>t.includes(l)) && !el.querySelector('.live-dot')) {
+          const d = document.createElement('span'); d.className = 'live-dot';
+          el.insertBefore(d, el.firstChild);
+        }
+      });
+    }, 1500);
+  }catch(_){}
+})();
+/* ═══ END V4NZ VISUAL POLISH v148 JS ═══ */
 </script>
 </body>
 </html>
