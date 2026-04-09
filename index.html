@@ -1294,6 +1294,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ v150 — fix DNA bars invisibles (keyframe dnaBarFill roto) — marker: dna-bars-fix-v150
    V4NZ v151 — Historial del jugador (ex Mi Evolucion) — 9 metricas + modo delta + filtro temporal + export CSV — marker: historial-v151
    V4NZ v152 — Comparar Jugadores con IA — endpoint /api/ai-compare-players + card veredicto + categorias + tip + cache 7d — marker: ai-compare-v152
+   V4NZ v153 — Comparar Clanes con IA — endpoint /api/ai-compare-clans + card veredicto + 4 dimensiones (potencia/calidad/profundidad/actividad) + identidad + tip + cache 7d — marker: ai-compare-clans-v153
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -8154,10 +8155,90 @@ async function compareClans(){
       h+='</div>';
     }
     h+='</div>';
+    // v153 — Comparar Clanes con IA: solo si tenemos datos DB reales de ambos clanes
+    if(hasDB){
+      const tk1x=parseInt(c1.total_kills)||0,tk2x=parseInt(c2.total_kills)||0;
+      const tw1x=parseInt(c1.total_wins)||0,tw2x=parseInt(c2.total_wins)||0;
+      const kd1x=parseFloat(c1.avg_kd)||0,kd2x=parseFloat(c2.avg_kd)||0;
+      const wr1x=parseFloat(c1.win_rate)||0,wr2x=parseFloat(c2.win_rate)||0;
+      const ad1x=parseFloat(c1.avg_damage)||0,ad2x=parseFloat(c2.avg_damage)||0;
+      const tr1x=parseInt(c1.total_rounds)||0,tr2x=parseInt(c2.total_rounds)||0;
+      const ac1x=parseInt(c1.active_members)||0,ac2x=parseInt(c2.active_members)||0;
+      lastClanCompareData={
+        tag1:tag1,tag2:tag2,name1:name1,name2:name2,
+        c1:{members:mc1,active:ac1x,level:lv1,totalKills:tk1x,totalWins:tw1x,avgKD:kd1x.toFixed(2),avgDamage:Math.round(ad1x),winRate:wr1x.toFixed(2),totalRounds:tr1x,killsPerMember:ac1x>0?Math.round(tk1x/ac1x):0,winsPerMember:ac1x>0?(tw1x/ac1x).toFixed(1):0},
+        c2:{members:mc2,active:ac2x,level:lv2,totalKills:tk2x,totalWins:tw2x,avgKD:kd2x.toFixed(2),avgDamage:Math.round(ad2x),winRate:wr2x.toFixed(2),totalRounds:tr2x,killsPerMember:ac2x>0?Math.round(tk2x/ac2x):0,winsPerMember:ac2x>0?(tw2x/ac2x).toFixed(1):0}
+      };
+      h+='<div id="compareClansAIWrap" style="margin-top:20px;text-align:center;"><button class="search-btn" id="compareClansAIBtn" style="border-radius:8px;background:linear-gradient(135deg,#a855f7,#ff6b00);" onclick="compareClansWithAI()">&#x1F916; Comparar Clanes con IA</button></div>';
+      h+='<div id="compareClansAIResult" style="margin-top:20px;"></div>';
+    }else{
+      lastClanCompareData=null;
+    }
     cr.innerHTML=h;
   }catch(e){
     cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(friendlyErr(e))+'</p>';
   }finally{showLoading(false);}
+}
+
+/* ═══ COMPARAR CLANES CON IA (v153) ═══ */
+let lastClanCompareData=null;
+async function compareClansWithAI(){
+  if(!lastClanCompareData){alert('Primero compara dos clanes con stats completos');return;}
+  const d=lastClanCompareData;
+  const btn=document.getElementById('compareClansAIBtn');
+  const resDiv=document.getElementById('compareClansAIResult');
+  if(btn){btn.disabled=true;btn.innerHTML='&#x23F3; Analizando clanes...';}
+  resDiv.innerHTML='<div style="text-align:center;color:var(--text-secondary);padding:20px;">La IA esta evaluando potencia, calidad, profundidad y actividad de ambos clanes...</div>';
+  try{
+    const payload={c1:d.c1,c2:d.c2,name1:d.name1,name2:d.name2};
+    const url='/api/ai-compare-clans?tag1='+encodeURIComponent(d.tag1)+'&tag2='+encodeURIComponent(d.tag2)+'&stats='+encodeURIComponent(JSON.stringify(payload));
+    const r=await fetch(url);
+    if(!r.ok){const er=await r.json().catch(()=>({error:'Error'}));throw new Error(er.error||'Error IA');}
+    const ai=await r.json();
+    renderCompareClansAI(ai,d);
+    if(btn){btn.disabled=false;btn.innerHTML='&#x1F916; Regenerar analisis IA';}
+  }catch(e){
+    console.error('compareClansWithAI error',e);
+    resDiv.innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:16px;">No se pudo generar el analisis IA: '+esc(e.message||'Error')+'</div>';
+    if(btn){btn.disabled=false;btn.innerHTML='&#x1F916; Reintentar IA';}
+  }
+}
+function renderCompareClansAI(ai,d){
+  const resDiv=document.getElementById('compareClansAIResult');
+  const t1=d.tag1,t2=d.tag2,n1=d.name1,n2=d.name2;
+  const co='var(--accent-orange)',ca='var(--accent)';
+  const winColor=ai.winner===t1?co:ai.winner===t2?ca:'var(--accent-yellow)';
+  const winLabel=ai.winner==='EMPATE'?'EMPATE TECNICO':'['+ai.winner+'] '+(ai.winner===t1?n1:n2)+' GANA';
+  const dimIcon={potencia:'&#x1F4A5;',calidad:'&#x1F48E;',profundidad:'&#x1F3AF;',actividad:'&#x1F525;'};
+  const dimLabel={potencia:'Potencia',calidad:'Calidad',profundidad:'Profundidad',actividad:'Actividad'};
+  function dimRow(key){
+    const dim=ai.dimensions&&ai.dimensions[key];if(!dim)return'';
+    const col=dim.winner===t1?co:dim.winner===t2?ca:'var(--accent-yellow)';
+    const lbl=dim.winner==='EMPATE'?'Empate':'['+dim.winner+']';
+    return'<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;"><div style="font-size:1.2rem;">'+dimIcon[key]+'</div><div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;"><span style="font-family:Orbitron,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);">'+dimLabel[key]+'</span><span style="font-weight:700;font-size:.8rem;color:'+col+';">'+esc(lbl)+'</span></div><div style="font-size:.78rem;color:var(--text-secondary);margin-top:3px;line-height:1.4;">'+esc(dim.note||'')+'</div></div></div>';
+  }
+  let h='<div style="background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(255,107,0,0.05));border:1px solid rgba(168,85,247,0.3);border-radius:14px;padding:20px;">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;"><div style="font-size:1.1rem;">&#x1F916;</div><div style="font-family:Orbitron,sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:#a855f7;font-weight:700;">Analisis IA de Clanes V4NZ</div></div>';
+  h+='<div style="text-align:center;padding:14px;background:var(--bg-card);border-radius:10px;margin-bottom:14px;">';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:6px;">Veredicto IA</div>';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:1.15rem;font-weight:800;color:'+winColor+';">'+esc(winLabel)+'</div>';
+  if(ai.winnerReason)h+='<div style="font-size:.8rem;color:var(--text-secondary);margin-top:6px;font-style:italic;">'+esc(ai.winnerReason)+'</div>';
+  h+='</div>';
+  if(ai.identityC1||ai.identityC2){
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">';
+    h+='<div style="padding:10px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:8px;text-align:center;"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:3px;">['+esc(t1)+']</div><div style="font-weight:700;color:'+co+';font-size:.85rem;">'+esc(ai.identityC1||'-')+'</div></div>';
+    h+='<div style="padding:10px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.2);border-radius:8px;text-align:center;"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:3px;">['+esc(t2)+']</div><div style="font-weight:700;color:'+ca+';font-size:.85rem;">'+esc(ai.identityC2||'-')+'</div></div>';
+    h+='</div>';
+  }
+  h+='<div style="margin-bottom:14px;">';
+  ['potencia','calidad','profundidad','actividad'].forEach(k=>{h+=dimRow(k);});
+  h+='</div>';
+  if(ai.sizeWarning)h+='<div style="padding:10px 12px;background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.25);border-radius:8px;font-size:.78rem;color:var(--accent-yellow);margin-bottom:12px;">&#x26A0;&#xFE0F; '+esc(ai.sizeWarning)+'</div>';
+  if(ai.verdict)h+='<div style="padding:12px;background:var(--bg-card);border-left:3px solid #a855f7;border-radius:6px;font-size:.82rem;line-height:1.5;color:var(--text-secondary);margin-bottom:12px;">'+esc(ai.verdict)+'</div>';
+  if(ai.tipLoser)h+='<div style="padding:12px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:8px;font-size:.8rem;color:var(--text-primary);"><span style="font-weight:700;color:'+co+';">&#x1F4A1; Consejo estrategico:</span> '+esc(ai.tipLoser)+'</div>';
+  h+='<div style="margin-top:12px;text-align:right;font-size:.65rem;color:var(--text-dim);">Generado por V4NZ AI &bull; cache 7 dias</div>';
+  h+='</div>';
+  resDiv.innerHTML=h;
 }
 
 function setLBPlatform(p,btn){lbPlatform=p;document.querySelectorAll('#lbPlatBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
