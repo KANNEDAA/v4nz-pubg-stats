@@ -1295,6 +1295,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ v151 — Historial del jugador (ex Mi Evolucion) — 9 metricas + modo delta + filtro temporal + export CSV — marker: historial-v151
    V4NZ v152 — Comparar Jugadores con IA — endpoint /api/ai-compare-players + card veredicto + categorias + tip + cache 7d — marker: ai-compare-v152
    V4NZ v153 — Comparar Clanes con IA — endpoint /api/ai-compare-clans + card veredicto + 4 dimensiones (potencia/calidad/profundidad/actividad) + identidad + tip + cache 7d — marker: ai-compare-clans-v153
+   V4NZ v154 — Analisis IA Pro (privado) — endpoint /api/ai-deep-analysis con requireAuth + historial 90d snapshots + panel usuario logueado + tendencias/loadout/plan entrenamiento + cache 7d — marker: ai-deep-v154
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -2262,6 +2263,16 @@ body.telem-open { overflow:hidden; }
               <div class="auth-error" id="profileError" style="display:none;margin-top:8px;"></div>
             </div>
           </div>
+          <!-- v154 — Analisis IA Pro (solo si gamertag vinculado) -->
+          <div id="deepAnalysisSection" style="display:none;background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(0,240,255,0.05));border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:14px;margin-bottom:14px;text-align:left;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:1.1rem;">&#x1F916;</span>
+              <div style="font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:1.5px;">Mi Analisis IA Pro</div>
+            </div>
+            <div style="font-size:.72rem;color:var(--text-secondary);margin-bottom:10px;line-height:1.4;">Analisis profundo privado con tu historial de 90 dias. Detecta tendencias, da loadout y plan de entrenamiento.</div>
+            <button class="auth-submit" id="deepAnalysisBtn" onclick="loadDeepAnalysis()" style="background:linear-gradient(135deg,#a855f7,#00f0ff);font-size:.72rem;padding:9px;">&#x1F916; GENERAR ANALISIS PRO</button>
+            <div id="deepAnalysisResult" style="margin-top:10px;"></div>
+          </div>
           <label id="profileNewsOptIn" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:.72rem;color:var(--text-secondary);justify-content:center;">
             <input type="checkbox" id="profileNewsCheck" onchange="toggleNewsOptIn()" style="accent-color:var(--accent);width:16px;height:16px;cursor:pointer;">
             Recibir novedades de V4NZ
@@ -2343,10 +2354,12 @@ function updateProfileGT(){
     document.getElementById('profileGTName').textContent=currentUser.gamertag;
     document.getElementById('profileGTPlatBadge').textContent=currentUser.platform||'psn';
     profilePlat=currentUser.platform||'psn';
+    const das=document.getElementById('deepAnalysisSection');if(das)das.style.display='';
   }else{
     linked.style.display='none';edit.style.display='';
     profilePlat=currentUser?(currentUser.platform||'psn'):'psn';
     profileUpdatePlatBtns();
+    const das=document.getElementById('deepAnalysisSection');if(das)das.style.display='none';
   }
 }
 function profileSelectPlat(p){profilePlat=p;profileUpdatePlatBtns();}
@@ -6015,6 +6028,111 @@ function renderAiDna(data) {
   drawDnaRadar('dnaRadarCanvasAi', scores, roleColor);
   // Scroll to result after render so fadeInUp animation is visible
   setTimeout(function(){ sect.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+}
+
+// ═══ v154 — ANALISIS IA PRO (privado, usuario logueado) ═══
+function _deepToast(msg, isErr){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:'+(isErr?'#ff3355':'var(--accent)')+';color:'+(isErr?'#fff':'#000')+';padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:99999;pointer-events:none;opacity:0;transition:opacity .3s;';
+  t.textContent=msg;document.body.appendChild(t);
+  requestAnimationFrame(()=>{t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3000);});
+}
+async function loadDeepAnalysis(){
+  if(!currentUser||!currentUser.gamertag){ _deepToast('Vincula tu gamertag primero',true); return; }
+  if(!authToken){ _deepToast('Sesion expirada, vuelve a entrar',true); return; }
+  const btn=document.getElementById('deepAnalysisBtn');
+  const out=document.getElementById('deepAnalysisResult');
+  if(!out||!btn)return;
+  // Necesitamos stats actuales del jugador linked
+  const linkedName=(currentUser.gamertag||'').toLowerCase();
+  const curName=(currentPlayerData&&currentPlayerData.attributes&&currentPlayerData.attributes.name||'').toLowerCase();
+  let s=null;
+  if(curName===linkedName){ s=getActiveStats(); }
+  if(!s||!s.roundsPlayed){
+    _deepToast('Cargando tus stats primero...',false);
+    closeAuthPopup();
+    setPlatform(currentUser.platform||'psn');
+    document.getElementById('searchInput').value=currentUser.gamertag;
+    try{ await searchPlayer(); }catch(e){}
+    setTimeout(()=>{ openAuthPopup(); loadDeepAnalysis(); },1200);
+    return;
+  }
+  const kd=parseFloat(calcKD(s));
+  const avgDamage=parseFloat(calcAvgDmg(s));
+  const hsRate=parseFloat(calcHSRate(s));
+  const winRate=parseFloat(calcWinRate(s));
+  const top10Rate=parseFloat(calcTop10Rate(s));
+  const killsPerRound=s.roundsPlayed?(s.kills||0)/s.roundsPlayed:0;
+  const statsObj={
+    kd:kd.toFixed(2), avgDamage:avgDamage.toFixed(1), hsRate:hsRate.toFixed(1),
+    winRate:winRate.toFixed(1), top10Rate:top10Rate.toFixed(1),
+    killsPerRound:killsPerRound.toFixed(2),
+    longestKill:s.longestKill||0, roundsPlayed:s.roundsPlayed,
+    kills:s.kills||0, wins:s.wins||0
+  };
+  btn.disabled=true;btn.style.opacity='0.6';btn.style.pointerEvents='none';
+  btn.innerHTML='&#x23F3; ANALIZANDO HISTORIAL...';
+  out.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:.78rem;font-family:Rajdhani,sans-serif;"><div style="display:inline-block;width:24px;height:24px;border:2px solid rgba(168,85,247,0.3);border-top-color:#a855f7;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:10px;"></div><div>V4NZ AI revisando tus ultimos 90 dias...</div></div>';
+  try{
+    const qp=new URLSearchParams({stats:JSON.stringify(statsObj)});
+    const r=await fetch('/api/ai-deep-analysis?'+qp.toString(),{
+      headers:{'Authorization':'Bearer '+authToken},
+      credentials:'include',
+      cache:'no-store'
+    });
+    if(!r.ok){
+      const ed=await r.json().catch(()=>({}));
+      throw new Error(ed.error||('Error '+r.status));
+    }
+    const data=await r.json();
+    renderDeepAnalysis(data);
+  }catch(e){
+    console.error('Deep analysis error:',e);
+    out.innerHTML='<div style="text-align:center;padding:14px;color:#ff6b00;font-size:.75rem;font-family:Rajdhani,sans-serif;">Error: '+(e.message||'desconocido')+'</div>';
+    btn.disabled=false;btn.style.opacity='1';btn.style.pointerEvents='auto';
+    btn.innerHTML='&#x1F916; GENERAR ANALISIS PRO';
+  }
+}
+function renderDeepAnalysis(ai){
+  const out=document.getElementById('deepAnalysisResult');
+  const btn=document.getElementById('deepAnalysisBtn');
+  if(!out)return;
+  const dirIcon=d=>d==='up'?'<span style="color:#00ff88;">&#x25B2;</span>':d==='down'?'<span style="color:#ff3355;">&#x25BC;</span>':'<span style="color:#999;">&#x25CF;</span>';
+  const trendRow=(label,t)=>{
+    if(!t)return '';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.06);"><span style="font-size:.7rem;color:var(--text-dim);min-width:70px;">'+label+'</span><span style="font-size:.68rem;color:var(--text-secondary);flex:1;text-align:right;">'+(t.note||'')+' '+dirIcon(t.direction)+'</span></div>';
+  };
+  const trends=ai.trends||{};
+  const strengths=(ai.strengths||[]).map(x=>'<li style="margin-bottom:4px;color:#00ff88;"><span style="color:var(--text-secondary);">'+esc(x)+'</span></li>').join('');
+  const weaknesses=(ai.weaknesses||[]).map(x=>'<li style="margin-bottom:4px;color:#ff6b00;"><span style="color:var(--text-secondary);">'+esc(x)+'</span></li>').join('');
+  const plan=(ai.trainingPlan||[]).map((x,i)=>'<li style="margin-bottom:6px;color:var(--text-secondary);"><strong style="color:#a855f7;">'+(i+1)+'.</strong> '+esc(x)+'</li>').join('');
+  const lo=ai.loadout||{};
+  let h='<div style="background:var(--bg-card);border:1px solid rgba(168,85,247,0.25);border-radius:10px;padding:14px;animation:fadeInUp .4s ease;">';
+  h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;"><span style="display:inline-block;padding:3px 8px;background:linear-gradient(135deg,#a855f7,#00f0ff);color:#000;font-family:Orbitron,sans-serif;font-weight:800;font-size:.55rem;border-radius:4px;letter-spacing:1px;">IA PRO</span><span style="font-size:.62rem;color:var(--text-dim);">Privado &middot; solo tu</span></div>';
+  if(ai.profile)h+='<div style="font-size:.78rem;color:var(--text-secondary);line-height:1.55;margin-bottom:12px;">'+esc(ai.profile)+'</div>';
+  if(ai.trendSummary)h+='<div style="background:rgba(168,85,247,0.08);border-left:3px solid #a855f7;padding:8px 10px;margin-bottom:12px;font-size:.74rem;color:var(--text-secondary);line-height:1.5;"><strong style="color:#a855f7;">Tendencia: </strong>'+esc(ai.trendSummary)+'</div>';
+  h+='<div style="margin-bottom:12px;">'+trendRow('K/D',trends.kd)+trendRow('ADR',trends.adr)+trendRow('Win Rate',trends.winRate)+trendRow('Headshots',trends.headshots)+'</div>';
+  if(strengths)h+='<div style="margin-bottom:10px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#00ff88;letter-spacing:1px;margin-bottom:5px;">&#x2605; FORTALEZAS</div><ul style="margin:0;padding-left:16px;font-size:.72rem;">'+strengths+'</ul></div>';
+  if(weaknesses)h+='<div style="margin-bottom:10px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#ff6b00;letter-spacing:1px;margin-bottom:5px;">&#x26A0; A MEJORAR</div><ul style="margin:0;padding-left:16px;font-size:.72rem;">'+weaknesses+'</ul></div>';
+  if(lo.primary||lo.style){
+    h+='<div style="background:linear-gradient(135deg,rgba(0,240,255,0.06),rgba(168,85,247,0.06));border:1px solid rgba(0,240,255,0.2);border-radius:8px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#00f0ff;letter-spacing:1px;margin-bottom:6px;">&#x1F52B; LOADOUT RECOMENDADO</div>';
+    if(lo.style)h+='<div style="font-size:.72rem;color:var(--accent);font-weight:700;margin-bottom:4px;">'+esc(lo.style)+'</div>';
+    if(lo.primary)h+='<div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:2px;"><strong>Principal:</strong> '+esc(lo.primary)+'</div>';
+    if(lo.secondary)h+='<div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:4px;"><strong>Secundaria:</strong> '+esc(lo.secondary)+'</div>';
+    if(lo.rationale)h+='<div style="font-size:.66rem;color:var(--text-dim);font-style:italic;line-height:1.4;">'+esc(lo.rationale)+'</div>';
+    h+='</div>';
+  }
+  if(plan)h+='<div style="margin-bottom:10px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#a855f7;letter-spacing:1px;margin-bottom:5px;">&#x1F3AF; PLAN DE ENTRENAMIENTO</div><ol style="margin:0;padding-left:4px;list-style:none;font-size:.72rem;line-height:1.5;">'+plan+'</ol></div>';
+  if(ai.next30DaysGoal)h+='<div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:8px;padding:10px;margin-bottom:8px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#00ff88;letter-spacing:1px;margin-bottom:4px;">OBJETIVO 30 DIAS</div><div style="font-size:.74rem;color:var(--text-secondary);line-height:1.5;">'+esc(ai.next30DaysGoal)+'</div></div>';
+  const meta=[];
+  if(ai.snapshotsAnalyzed!=null)meta.push(ai.snapshotsAnalyzed+' snapshots');
+  if(ai.daysActive!=null)meta.push(ai.daysActive+' dias activos');
+  meta.push('cache 7d');
+  h+='<div style="font-size:.58rem;color:var(--text-dim);text-align:center;margin-top:8px;font-family:Rajdhani,sans-serif;letter-spacing:.5px;">&#x26A1; '+meta.join(' &middot; ')+'</div>';
+  h+='</div>';
+  out.innerHTML=h;
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.pointerEvents='auto';btn.innerHTML='&#x1F504; REGENERAR ANALISIS';}
 }
 
 // === AI Clan DNA Feature ===
