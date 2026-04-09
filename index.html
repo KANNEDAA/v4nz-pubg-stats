@@ -1282,11 +1282,12 @@ footer a { color: var(--accent); text-decoration: none; }
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
 
-/* 1) BORDER-RADIUS CONSOLIDATION — override with tokens */
-.stat-card, .weapon-card, .fun-stat-card, .clan-card, .cr-row, .lb-row, .match-item, .auth-box, .streamer-card, .player-header, .card-modal, .telem-popup, .empty-state { border-radius: var(--br-lg); }
-.tab-btn, .platform-btn, .clan-mode-tab, .cc-tab, .lb-btn, .search-box, .fav-card, .clan-header-item, .auth-input, .loader-timer, .cl-badge, .bot-badge, .platform-badge, .player-clan-badge, .recent-tag, .fav-tag { border-radius: var(--br-sm); }
+/* 1) BORDER-RADIUS CONSOLIDATION — override with tokens (v148.1 hotfix) */
+.stat-card, .weapon-card, .fun-stat-card, .clan-card, .cr-row, .lb-row, .match-item, .auth-box, .streamer-card, .streamer-banner, .player-header, .card-modal, .telem-popup, .empty-state, .search-box { border-radius: var(--br-lg); }
+.tab-btn, .platform-btn, .clan-mode-tab, .cc-tab, .lb-btn, .fav-card, .clan-header-item, .auth-input, .loader-timer, .cl-badge, .bot-badge { border-radius: var(--br-sm); }
 .auth-btn, .auth-submit, .auth-discord-btn, .streamer-cta, .search-btn, .theme-toggle, .pubg-report-btn, .banner-discord-cta, .fav-star, .fav-header-btn { border-radius: var(--br-sm); }
-.footer-social, .player-avatar, .streamer-avatar { border-radius: var(--br-round); }
+.recent-tag, .fav-tag, .platform-badge, .player-clan-badge, .quick-stat { border-radius: var(--br-round); }
+.footer-social, .player-avatar, .streamer-avatar { border-radius: 50%; }
 
 /* 2) CONSOLIDATED SHADOWS — apply token shadows to common cards */
 .stat-card, .weapon-card, .fun-stat-card, .player-header, .clan-card { box-shadow: var(--shadow-sm); }
