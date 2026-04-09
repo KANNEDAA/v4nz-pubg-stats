@@ -2061,6 +2061,160 @@ Genera el análisis JSON:
   }
 });
 
+// ============ AI Compare Clans (MUST be before the PUBG API catch-all proxy) ============
+app.get('/api/ai-compare-clans', async (req, res) => {
+  try {
+    const { tag1, tag2, stats: statsParam } = req.query;
+    let payload;
+    try { payload = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { payload = null; }
+    if (!tag1 || !tag2 || !payload || !payload.c1 || !payload.c2) return res.status(400).json({ error: 'Missing clans or stats' });
+
+    const [a, b] = [tag1.toUpperCase(), tag2.toUpperCase()].sort();
+    const cacheKey = `ai-compare-clans:${a}:${b}`;
+
+    if (pool) {
+      try {
+        const cached = await pool.query(
+          `SELECT data FROM api_cache WHERE cache_key = $1 AND created_at + (ttl_seconds || ' seconds')::interval > NOW()`,
+          [cacheKey]
+        );
+        if (cached.rows.length > 0) {
+          return res.json(cached.rows[0].data);
+        }
+      } catch (e) { console.error('AI compare clans cache check error:', e); }
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'AI analysis not available' });
+    }
+
+    let AnthropicSDK;
+    try {
+      AnthropicSDK = await import('@anthropic-ai/sdk');
+    } catch (e) {
+      console.error('Failed to import Anthropic SDK:', e);
+      return res.status(503).json({ error: 'AI service unavailable' });
+    }
+    const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const systemPrompt = `Eres V4NZ AI, el analista experto de clanes PUBG consola (PSN/Xbox) de v4nz.com. Comparas DOS clanes de forma técnica, justa y con criterio competitivo.
+
+═══ BENCHMARKS CLANES CONSOLA (Temporada 40+) ═══
+K/D medio clan: Elite 2.0+ | Bueno 1.5-2.0 | Normal 1.0-1.5 | Bajo <1.0
+Win Rate clan: Elite 10%+ | Bueno 6-10% | Normal 3-6% | Bajo <3%
+ADR medio clan: Elite 200+ | Bueno 150-200 | Normal 100-150 | Bajo <100
+Actividad (% miembros con rounds>0): Sano 70%+ | Medio 40-70% | Fantasma <40%
+
+═══ DIMENSIONES DE ANÁLISIS DE CLAN ═══
+1. POTENCIA — kills totales, wins totales (volumen bruto del clan).
+2. CALIDAD — K/D medio + ADR + Win Rate (nivel de skill individual medio).
+3. PROFUNDIDAD — kills/miembro + wins/miembro (qué pasa si normalizas por tamaño).
+4. ACTIVIDAD — % activos sobre total (salud del clan, fantasmas vs activos).
+5. TAMAÑO — miembros totales y nivel del clan.
+
+═══ REGLAS ESTRICTAS ═══
+- Un clan grande con K/D bajo NO es mejor que uno pequeño con K/D alto — explícalo.
+- Si un clan tiene muchísimos más miembros (>2x) pero menos kills/miembro, menciónalo: es un clan inflado.
+- Si un clan tiene <40% de activos, es un clan fantasma aunque tenga buenos números medios.
+- El veredicto debe considerar CALIDAD sobre VOLUMEN cuando los tamaños son muy distintos.
+- Sé justo y técnico, sin insultos. Tono de analista pro.
+- Responde SOLO con JSON válido, sin markdown.`;
+
+    const c1 = payload.c1, c2 = payload.c2;
+    const userPrompt = `Compara estos dos clanes de PUBG consola:
+
+═══ CLAN 1: [${tag1}] ${payload.name1 || tag1} ═══
+• Miembros totales: ${c1.members} | Activos: ${c1.active} (${c1.members ? Math.round(c1.active/c1.members*100) : 0}%)
+• Nivel clan: ${c1.level}
+• Total Kills: ${c1.totalKills} | Total Wins: ${c1.totalWins}
+• K/D medio: ${c1.avgKD} | ADR medio: ${c1.avgDamage}
+• Win Rate: ${c1.winRate}% | Partidas totales: ${c1.totalRounds}
+• Kills/miembro activo: ${c1.killsPerMember} | Wins/miembro activo: ${c1.winsPerMember}
+
+═══ CLAN 2: [${tag2}] ${payload.name2 || tag2} ═══
+• Miembros totales: ${c2.members} | Activos: ${c2.active} (${c2.members ? Math.round(c2.active/c2.members*100) : 0}%)
+• Nivel clan: ${c2.level}
+• Total Kills: ${c2.totalKills} | Total Wins: ${c2.totalWins}
+• K/D medio: ${c2.avgKD} | ADR medio: ${c2.avgDamage}
+• Win Rate: ${c2.winRate}% | Partidas totales: ${c2.totalRounds}
+• Kills/miembro activo: ${c2.killsPerMember} | Wins/miembro activo: ${c2.winsPerMember}
+
+Genera el análisis JSON:
+{
+  "winner": "${tag1}" | "${tag2}" | "EMPATE",
+  "winnerReason": "1 frase explicando por qué gana considerando calidad vs volumen",
+  "dimensions": {
+    "potencia": {"winner":"${tag1}"|"${tag2}"|"EMPATE","note":"breve nota sobre kills+wins totales"},
+    "calidad": {"winner":"${tag1}"|"${tag2}"|"EMPATE","note":"breve nota sobre K/D+ADR+WR medios"},
+    "profundidad": {"winner":"${tag1}"|"${tag2}"|"EMPATE","note":"breve nota sobre kills/miembro"},
+    "actividad": {"winner":"${tag1}"|"${tag2}"|"EMPATE","note":"breve nota sobre % activos"}
+  },
+  "identityC1": "2-4 palabras que describan la identidad del clan 1 (ej: Elite compacto, Mastodonte activo, Fantasma inflado, Cantera en alza)",
+  "identityC2": "2-4 palabras que describan la identidad del clan 2",
+  "sizeWarning": "si un clan tiene >2x miembros que el otro, comentarlo aquí. Si no, null",
+  "verdict": "3-4 frases de análisis comparativo final de los dos clanes",
+  "tipLoser": "1 consejo estratégico para el clan perdedor (o el más flojo si empate)"
+}`;
+
+    let response, lastErr;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        response = await client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1500,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        });
+        break;
+      } catch (apiErr) {
+        lastErr = apiErr;
+        console.error(`AI compare clans API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
+        if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        throw apiErr;
+      }
+    }
+    if (!response) throw lastErr || new Error('AI API failed after retries');
+
+    const text = response.content[0]?.text || '';
+    let aiResult;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      aiResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    } catch (e) {
+      console.error('AI compare clans parse error, raw text:', text.substring(0, 500));
+      return res.status(500).json({ error: 'Failed to parse AI response' });
+    }
+
+    if (!aiResult.winner || !aiResult.verdict || !aiResult.dimensions) {
+      console.error('AI compare clans incomplete response, keys:', Object.keys(aiResult));
+      return res.status(500).json({ error: 'Incomplete AI response' });
+    }
+
+    aiResult.generatedAt = new Date().toISOString();
+    aiResult.tag1 = tag1;
+    aiResult.tag2 = tag2;
+
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO api_cache (cache_key, data, ttl_seconds) VALUES ($1, $2, $3) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW(), ttl_seconds = $3`,
+          [cacheKey, JSON.stringify(aiResult), 604800]
+        );
+      } catch (e) { console.error('AI compare clans cache save error:', e); }
+    }
+
+    res.json(aiResult);
+
+  } catch (e) {
+    console.error('AI compare clans error:', e.status || e.code || '', e.message || e);
+    res.status(500).json({ error: 'AI compare clans failed', detail: e.message || 'Unknown error' });
+  }
+});
+
 // ============ Telemetry Audit (MUST be before the PUBG API catch-all proxy) ============
 
 // Specific rate limit for telemetry: 3 requests per minute per IP
