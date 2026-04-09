@@ -1,7 +1,7 @@
-﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  V4NZ PUBG Stats â€” Server + Clan API
+// ═══════════════════════════════════════════════
+//  V4NZ PUBG Stats — Server + Clan API
 //  Proxy PUBG API + PostgreSQL clan system
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 
 const express = require('express');
 const cors = require('cors');
@@ -13,7 +13,7 @@ const jwt = require('jsonwebtoken');
 const compression = require('compression');
 const crypto = require('crypto');
 let sharp;
-try { sharp = require('sharp'); } catch(e) { console.warn('âš ï¸  sharp not installed â€” OG images will serve as SVG fallback'); }
+try { sharp = require('sharp'); } catch(e) { console.warn('⚠️  sharp not installed — OG images will serve as SVG fallback'); }
 
 // Single dynamic import for node-fetch (ESM)
 const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
@@ -45,24 +45,24 @@ const pool = process.env.DATABASE_URL ? new Pool({
   connectionTimeoutMillis: 5000   // Fail fast if can't connect in 5s
 }) : null;
 
-// â•â•â• PERFORMANCE: Fetch with timeout helper â•â•â•
+// ═══ PERFORMANCE: Fetch with timeout helper ═══
 function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 10000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   return fetchFn(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
-// â•â•â• PERFORMANCE: Gzip compression â•â•â•
+// ═══ PERFORMANCE: Gzip compression ═══
 app.use(compression());
 
-// â•â•â• SECURITY: CORS restricted to v4nz.com only â•â•â•
+// ═══ SECURITY: CORS restricted to v4nz.com only ═══
 app.use(cors({
   origin: ['https://v4nz.com', 'https://www.v4nz.com', 'http://localhost:3000'],
   credentials: true
 }));
 app.use(express.json());
 
-// â•â•â• SECURITY HEADERS + CSP â•â•â•
+// ═══ SECURITY HEADERS + CSP ═══
 app.use((req, res, next) => {
   // Basic security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -89,7 +89,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// â•â•â• COOKIE HELPER â•â•â•
+// ═══ COOKIE HELPER ═══
 function parseCookies(req) {
   const cookies = {};
   (req.headers.cookie || '').split(';').forEach(c => {
@@ -121,9 +121,9 @@ app.use(express.static(path.join(__dirname), {
   }
 }));
 
-// â•â•â• AUTO-CREATE TABLES â•â•â•
+// ═══ AUTO-CREATE TABLES ═══
 async function initDB() {
-  if (!pool) { console.log('âš  No DATABASE_URL â€” clan API disabled (localStorage mode)'); return; }
+  if (!pool) { console.log('⚠ No DATABASE_URL — clan API disabled (localStorage mode)'); return; }
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clans (
@@ -286,13 +286,13 @@ async function initDB() {
     `).catch(() => {}); // Ignore if already correct type
     // Add pubg_clan_id column for auto-refresh (safe to run multiple times)
     await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS pubg_clan_id VARCHAR(100)`).catch(() => {});
-    console.log('âœ“ Database tables ready');
+    console.log('✓ Database tables ready');
   } catch (e) { console.error('DB init error:', e.message); }
 }
 
-// â•â•â• CLAN API ENDPOINTS â•â•â•
+// ═══ CLAN API ENDPOINTS ═══
 
-// GET /clans/leaderboard â€” Top clans ranked
+// GET /clans/leaderboard — Top clans ranked
 app.get('/clans/leaderboard', async (req, res) => {
   if (!pool) return res.json({ clans: [], mode: 'local' });
   try {
@@ -318,7 +318,7 @@ app.get('/clans/leaderboard', async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// GET /clans/requests/pending â€” Admin: list pending requests (MUST be before :tag wildcard)
+// GET /clans/requests/pending — Admin: list pending requests (MUST be before :tag wildcard)
 app.get('/clans/requests/pending', requireAdmin, async (req, res) => {
   if (!pool) return res.json({ requests: [] });
   try {
@@ -330,7 +330,7 @@ app.get('/clans/requests/pending', requireAdmin, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// GET /clans/search/:query â€” Search clans by name or tag (MUST be before :tag wildcard)
+// GET /clans/search/:query — Search clans by name or tag (MUST be before :tag wildcard)
 app.get('/clans/search/:query', async (req, res) => {
   if (!pool) return res.json({ clans: [] });
   try {
@@ -344,7 +344,7 @@ app.get('/clans/search/:query', async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// GET /clans/evolution/:tag â€” Clan stats evolution over time
+// GET /clans/evolution/:tag — Clan stats evolution over time
 app.get('/clans/evolution/:tag', async (req, res) => {
   if (!pool) return res.json({ snapshots: [] });
   const tag = req.params.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '');
@@ -357,7 +357,7 @@ app.get('/clans/evolution/:tag', async (req, res) => {
   } catch (e) { console.error('[clan-evolution]', e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// GET /clans/transfers/:tag â€” Player transfers in/out of clan
+// GET /clans/transfers/:tag — Player transfers in/out of clan
 app.get('/clans/transfers/:tag', async (req, res) => {
   if (!pool) return res.json({ transfers: [] });
   const tag = req.params.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '');
@@ -371,7 +371,7 @@ app.get('/clans/transfers/:tag', async (req, res) => {
   } catch (e) { console.error('[clan-transfers]', e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// GET /clans/:tag â€” Get clan detail with members
+// GET /clans/:tag — Get clan detail with members
 app.get('/clans/:tag', async (req, res) => {
   if (!pool) return res.status(404).json({ error: 'No database' });
   try {
@@ -386,7 +386,7 @@ app.get('/clans/:tag', async (req, res) => {
     const c = clan.rows[0];
     const statsAge = c.stats_updated_at ? (Date.now() - new Date(c.stats_updated_at).getTime()) : Infinity;
     if (statsAge > 24 * 60 * 60 * 1000 && c.pubg_clan_id) {
-      // Fire and forget â€” don't block the response
+      // Fire and forget — don't block the response
       importClanByPubgId(c.pubg_clan_id).then(r => {
         console.log(`[auto-refresh] Updated [${tag}] in background (was ${Math.round(statsAge/3600000)}h old)`);
       }).catch(e => {
@@ -397,7 +397,7 @@ app.get('/clans/:tag', async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// POST /clans/register â€” Register or update a clan with member stats
+// POST /clans/register — Register or update a clan with member stats
 app.post('/clans/register', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
   try {
@@ -458,8 +458,8 @@ app.post('/clans/register', rateLimit, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// â•â•â• MEMBER REQUEST SYSTEM â•â•â•
-// POST /clans/request-member â€” Auto-add if player exists in PUBG API, otherwise queue for admin
+// ═══ MEMBER REQUEST SYSTEM ═══
+// POST /clans/request-member — Auto-add if player exists in PUBG API, otherwise queue for admin
 app.post('/clans/request-member', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
 
@@ -493,7 +493,7 @@ app.post('/clans/request-member', rateLimit, async (req, res) => {
       } catch (e) { /* try next platform */ }
     }
     if (verified) {
-      // Auto-add player directly â€” they exist in PUBG API
+      // Auto-add player directly — they exist in PUBG API
       await pool.query(`
         INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
         VALUES ($1, $2, 0, 0, 0, 0, 0, true, $3)
@@ -511,14 +511,19 @@ app.post('/clans/request-member', rateLimit, async (req, res) => {
       console.log(`[request] Auto-added verified player: ${realName} -> [${cleanTag}]`);
       res.json({ ok: true, message: 'Jugador verificado y anadido al clan!', autoAdded: true, playerName: realName });
     } else {
-        // Player not found in PUBG API - reject immediately (flujo automatico, sin cola admin)
-        console.log(`[request] Rejected (not verified in PUBG): ${cleanName} -> [${cleanTag}]`);
-        return res.status(404).json({ ok: false, error: 'Jugador no encontrado en PUBG. Verifica el gamertag (distingue mayusculas y minusculas) y que haya jugado al menos una partida en la temporada actual.' });
-      }
+      // Player not found in PUBG API — queue for manual review
+      await pool.query(`
+        INSERT INTO member_requests (clan_tag, player_name, requested_by)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (clan_tag, player_name, status) DO NOTHING
+      `, [cleanTag, cleanName, requestedBy || 'web_user']);
+      console.log(`[request] Queued for review (not verified): ${cleanName} -> [${cleanTag}]`);
+      res.json({ ok: true, message: 'Jugador no encontrado en PUBG — solicitud enviada para revision manual', autoAdded: false });
+    }
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// POST /clans/requests/:id/approve â€” Admin: approve a member request
+// POST /clans/requests/:id/approve — Admin: approve a member request
 app.post('/clans/requests/:id/approve', requireAdmin, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   try {
@@ -542,7 +547,7 @@ app.post('/clans/requests/:id/approve', requireAdmin, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// POST /clans/requests/:id/reject â€” Admin: reject a member request
+// POST /clans/requests/:id/reject — Admin: reject a member request
 app.post('/clans/requests/:id/reject', requireAdmin, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   try {
@@ -551,27 +556,25 @@ app.post('/clans/requests/:id/reject', requireAdmin, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// â•â•â• IMPORT CLAN FROM PUBGCLANS.NET â•â•â•
+// ═══ IMPORT CLAN FROM PUBGCLANS.NET ═══
 
-// Reusable import function â€” used by endpoint, refresh, auto-refresh, and cron
+// Reusable import function — used by endpoint, refresh, auto-refresh, and cron
 async function importClanByPubgId(clanId) {
   if (!pool) throw new Error('No database configured');
   if (!clanId) throw new Error('clanId required');
 
   const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
 
-  // Step 1: Fetch clan metadata from PUBG API (try xbox first, then psn, then steam)
-  // NOTE: Console clans are cross-platform (PSN + Xbox share the same clan), so we
-  // store 'console' regardless of which shard responded. Only 'steam' stays as-is.
+  // Step 1: Fetch clan metadata from PUBG API (try xbox first, then psn)
   let clanMeta = null;
-  let detectedPlatform = 'console';
+  let detectedPlatform = 'xbox';
   for (const shard of ['xbox', 'psn', 'steam']) {
     try {
       const clanResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers }, 8000);
       if (clanResp.ok) {
         const clanData = await clanResp.json();
         clanMeta = clanData.data?.attributes;
-        detectedPlatform = (shard === 'steam') ? 'steam' : 'console';
+        detectedPlatform = shard;
         break;
       }
     } catch (e) { /* try next shard */ }
@@ -579,7 +582,7 @@ async function importClanByPubgId(clanId) {
   if (!clanMeta) throw new Error('Clan not found on any platform');
   console.log(`[import] Found clan: [${clanMeta.clanTag}] ${clanMeta.clanName} (${detectedPlatform}, level ${clanMeta.clanLevel}, ${clanMeta.clanMemberCount} members)`);
 
-  // Step 2: Fetch member stats from pubgclans.net â€” try ALL game modes and merge
+  // Step 2: Fetch member stats from pubgclans.net — try ALL game modes and merge
   const gameModes = ['squad', 'squad-fpp', 'solo', 'solo-fpp', 'duo', 'duo-fpp'];
   const mergedPlayers = {};
   for (const gm of gameModes) {
@@ -606,7 +609,7 @@ async function importClanByPubgId(clanId) {
           mergedPlayers[name] = { kills, wins, rounds, damage };
         }
       });
-    } catch (e) { console.log(`[import] pubgclans.net ${gm}: error â€” ${e.message}`); }
+    } catch (e) { console.log(`[import] pubgclans.net ${gm}: error — ${e.message}`); }
   }
 
   // Deduplicate by lowercase name
@@ -715,7 +718,7 @@ async function importClanByPubgId(clanId) {
   };
 }
 
-// POST /clans/import-pubgclans â€” Import a clan using pubgclans.net data + PUBG API metadata
+// POST /clans/import-pubgclans — Import a clan using pubgclans.net data + PUBG API metadata
 app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
   const { clanId } = req.body;
@@ -729,7 +732,7 @@ app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
   }
 });
 
-// POST /clans/refresh-stats/:tag â€” Manual refresh of clan stats (rate limited, any user)
+// POST /clans/refresh-stats/:tag — Manual refresh of clan stats (rate limited, any user)
 app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
   try {
@@ -742,13 +745,13 @@ app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
       pubgClanId = clan.rows[0].pubg_clan_id;
       platform = clan.rows[0].platform || 'psn';
     } catch (colErr) {
-      // pubg_clan_id column may not exist yet â€” fallback to platform only
+      // pubg_clan_id column may not exist yet — fallback to platform only
       const clan = await pool.query('SELECT platform FROM clans WHERE tag = $1', [tag]);
       if (!clan.rows.length) return res.status(404).json({ error: 'Clan not found' });
       platform = clan.rows[0].platform || 'psn';
     }
     if (!pubgClanId) {
-      // Fallback: try to find clanId via PUBG API using first member â€” try ALL shards
+      // Fallback: try to find clanId via PUBG API using first member — try ALL shards
       const firstMember = await pool.query('SELECT player_name FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC LIMIT 1', [tag]);
       if (!firstMember.rows.length) return res.status(400).json({ error: 'No se puede actualizar: sin miembros ni ID del clan' });
       const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
@@ -769,7 +772,7 @@ app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
           console.log(`[refresh] Shard ${shard} failed for ${firstMember.rows[0].player_name}: ${shardErr.message}`);
         }
       }
-      if (!foundClanId) return res.status(400).json({ error: 'No se encontrÃ³ clan del jugador en ninguna plataforma' });
+      if (!foundClanId) return res.status(400).json({ error: 'No se encontró clan del jugador en ninguna plataforma' });
       // Save clanId + correct platform for future refreshes
       try { await pool.query('UPDATE clans SET pubg_clan_id = $1, platform = $2 WHERE tag = $3', [foundClanId, foundShard, tag]); } catch(e) {}
       const result = await importClanByPubgId(foundClanId);
@@ -783,8 +786,8 @@ app.post('/clans/refresh-stats/:tag', rateLimit, async (req, res) => {
   }
 });
 
-// â•â•â• AUTO-DISCOVER CLAN MEMBERS FROM MATCHES â•â•â•
-// POST /clans/discover-members â€” Given one gamertag, find frequent teammates
+// ═══ AUTO-DISCOVER CLAN MEMBERS FROM MATCHES ═══
+// POST /clans/discover-members — Given one gamertag, find frequent teammates
 app.post('/clans/discover-members', requireAdmin, async (req, res) => {
 
   const { gamertag, platform } = req.body;
@@ -944,7 +947,7 @@ app.post('/clans/discover-members', requireAdmin, async (req, res) => {
   }
 });
 
-// â•â•â• CLAN FEED â€” Recent activity of clan members â•â•â•
+// ═══ CLAN FEED — Recent activity of clan members ═══
 app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
   if (!pool || !SERVER_API_KEY) return res.status(503).json({ error: 'Servicio no disponible' });
   const tag = req.params.tag.toUpperCase().replace(/[^A-Z0-9_]/g, '');
@@ -1044,7 +1047,7 @@ app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
   }
 });
 
-// â•â•â• USAGE METRICS (in-memory) â•â•â•
+// ═══ USAGE METRICS (in-memory) ═══
 const metrics = {
   startedAt: Date.now(),
   totalRequests: 0,
@@ -1093,7 +1096,7 @@ setInterval(() => {
   }
 }, 3600000);
 
-// â•â•â• RATE LIMITER (in-memory, no deps) â•â•â•
+// ═══ RATE LIMITER (in-memory, no deps) ═══
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const RATE_LIMIT_MAX = 30; // max 30 requests per minute per IP
@@ -1121,9 +1124,9 @@ setInterval(() => {
   }
 }, 300000);
 
-// â•â•â• AUTH SYSTEM â•â•â•
+// ═══ AUTH SYSTEM ═══
 
-// JWT middleware â€” extracts user from token (optional, doesn't block)
+// JWT middleware — extracts user from token (optional, doesn't block)
 function authMiddleware(req, res, next) {
   const token = getTokenFromRequest(req);
   if (token) {
@@ -1133,7 +1136,7 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-// Require auth â€” blocks if no valid token
+// Require auth — blocks if no valid token
 function getTokenFromRequest(req) {
   // 1. HttpOnly cookie (preferred, secure)
   const cookies = parseCookies(req);
@@ -1151,7 +1154,7 @@ function requireAuth(req, res, next) {
   catch (e) { return res.status(401).json({ error: 'Token invalido' }); }
 }
 
-// Require admin â€” blocks if no valid admin token
+// Require admin — blocks if no valid admin token
 function requireAdmin(req, res, next) {
   const token = getTokenFromRequest(req);
   if (!token) return res.status(401).json({ error: 'No autorizado' });
@@ -1167,7 +1170,7 @@ function generateToken(user) {
   return jwt.sign({ id: user.id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '7d' });
 }
 
-// POST /auth/register â€” Email + password registration
+// POST /auth/register — Email + password registration
 app.post('/auth/register', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password, displayName, gamertag, platform, newsOptIn } = req.body;
@@ -1189,7 +1192,7 @@ app.post('/auth/register', rateLimit, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// POST /auth/login â€” Email + password login
+// POST /auth/login — Email + password login
 app.post('/auth/login', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password } = req.body;
@@ -1208,13 +1211,13 @@ app.post('/auth/login', rateLimit, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// POST /auth/logout â€” Clear cookie
+// POST /auth/logout — Clear cookie
 app.post('/auth/logout', (req, res) => {
   clearAuthCookie(res);
   res.json({ ok: true });
 });
 
-// GET /auth/discord â€” Redirect to Discord OAuth (with state for CSRF protection)
+// GET /auth/discord — Redirect to Discord OAuth (with state for CSRF protection)
 app.get('/auth/discord', (req, res) => {
   if (!DISCORD_CLIENT_ID) return res.status(503).json({ error: 'Discord OAuth no configurado' });
   const state = crypto.randomBytes(16).toString('hex');
@@ -1230,7 +1233,7 @@ app.get('/auth/discord', (req, res) => {
   res.redirect('https://discord.com/api/oauth2/authorize?' + params.toString());
 });
 
-// GET /auth/discord/callback â€” Discord OAuth callback (with state verification)
+// GET /auth/discord/callback — Discord OAuth callback (with state verification)
 app.get('/auth/discord/callback', async (req, res) => {
   if (!pool) return res.redirect('/#auth_error=db_unavailable');
 
@@ -1239,7 +1242,7 @@ app.get('/auth/discord/callback', async (req, res) => {
   // Verify OAuth state to prevent CSRF
   const cookies = parseCookies(req);
   if (!state || !cookies.oauth_state || state !== cookies.oauth_state) {
-    console.warn('Discord OAuth state mismatch â€” possible CSRF attempt');
+    console.warn('Discord OAuth state mismatch — possible CSRF attempt');
     return res.redirect('/#auth_error=invalid_state');
   }
   // Clear the state cookie
@@ -1291,7 +1294,7 @@ app.get('/auth/discord/callback', async (req, res) => {
   }
 });
 
-// GET /auth/me â€” Get current user info
+// GET /auth/me — Get current user info
 app.get('/auth/me', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
@@ -1301,7 +1304,7 @@ app.get('/auth/me', requireAuth, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// PUT /auth/profile â€” Update gamertag + platform + news opt-in
+// PUT /auth/profile — Update gamertag + platform + news opt-in
 app.put('/auth/profile', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { gamertag, platform, newsOptIn } = req.body;
@@ -1326,9 +1329,9 @@ app.put('/auth/profile', requireAuth, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// â•â•â• FAVORITES SYNC â•â•â•
+// ═══ FAVORITES SYNC ═══
 
-// GET /favorites â€” Get user's favorites
+// GET /favorites — Get user's favorites
 app.get('/favorites', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
@@ -1337,7 +1340,7 @@ app.get('/favorites', requireAuth, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// POST /favorites â€” Add a favorite
+// POST /favorites — Add a favorite
 app.post('/favorites', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { name, platform, type, group } = req.body;
@@ -1351,7 +1354,7 @@ app.post('/favorites', requireAuth, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// DELETE /favorites/:name â€” Remove a favorite
+// DELETE /favorites/:name — Remove a favorite
 app.delete('/favorites/:name', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   try {
@@ -1361,7 +1364,7 @@ app.delete('/favorites/:name', requireAuth, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// POST /favorites/sync â€” Full sync (replace all favorites)
+// POST /favorites/sync — Full sync (replace all favorites)
 app.post('/favorites/sync', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { favorites: favs } = req.body;
@@ -1378,15 +1381,15 @@ app.post('/favorites/sync', requireAuth, async (req, res) => {
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
-// â•â•â• PUBG API PROXY WITH CACHE â•â•â•
+// ═══ PUBG API PROXY WITH CACHE ═══
 // Cache TTL in minutes per endpoint type
 const CACHE_TTL = {
-  seasons: 60,       // Seasons change rarely â€” cache 1 hour
-  players: 10,       // Player search â€” cache 10 min
-  'players/.*seasons': 10,  // Season stats â€” cache 10 min
-  'players/.*matches': 5,   // Match list â€” cache 5 min
-  leaderboards: 120, // Leaderboards â€” cache 2 hours (PUBG updates infrequently)
-  default: 10        // Everything else â€” 10 min
+  seasons: 60,       // Seasons change rarely — cache 1 hour
+  players: 10,       // Player search — cache 10 min
+  'players/.*seasons': 10,  // Season stats — cache 10 min
+  'players/.*matches': 5,   // Match list — cache 5 min
+  leaderboards: 120, // Leaderboards — cache 2 hours (PUBG updates infrequently)
+  default: 10        // Everything else — 10 min
 };
 
 function getCacheTTL(pubgPath) {
@@ -1398,7 +1401,7 @@ function getCacheTTL(pubgPath) {
   return CACHE_TTL.default;
 }
 
-// â•â•â• LEADERBOARD SERVER-SIDE ENDPOINT â•â•â•
+// ═══ LEADERBOARD SERVER-SIDE ENDPOINT ═══
 // Dedicated endpoint that caches leaderboard data and returns cache age
 // This avoids client-side API calls and enables pre-warming
 app.get('/api/leaderboard', async (req, res) => {
@@ -1517,14 +1520,14 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-// â•â•â• BOT INDEX â€” Telemetry-based bot detection â•â•â•
+// ═══ BOT INDEX — Telemetry-based bot detection ═══
 // MUST be before app.all('/api/*') to avoid being captured by the proxy
 app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
   const { platform, playerName } = req.params;
   const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
   const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
 
-  // Check cache (6 hours) â€” skip stale entries with botKills=0 (old buggy data)
+  // Check cache (6 hours) — skip stale entries with botKills=0 (old buggy data)
   if (pool) {
     try {
       const cached = await pool.query(
@@ -1534,7 +1537,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
       if (cached.rows.length) {
         try {
           const cData = JSON.parse(cached.rows[0].response_data);
-          // Skip cache if it has the old bug (0 botKills but had kills â€” clearly wrong)
+          // Skip cache if it has the old bug (0 botKills but had kills — clearly wrong)
           if (cData.totalKills > 0 && cData.botKills === 0) { /* recalculate */ }
           else return res.json(cData);
         } catch(e) {}
@@ -1559,7 +1562,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
 
     for (const matchId of matchIds) {
       try {
-        // 2. Get match â†’ telemetry URL
+        // 2. Get match → telemetry URL
         let matchData;
         const mKey = `match_${shard}_${matchId}`;
         const mCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [mKey]);
@@ -1579,7 +1582,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
         const telUrl = asset?.attributes?.URL;
         if (!telUrl) continue;
 
-        // 3. Get telemetry (cache 30 days â€” immutable)
+        // 3. Get telemetry (cache 30 days — immutable)
         let telemetry;
         const tKey = `telemetry_${matchId}`;
         const tCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [tKey]);
@@ -1633,7 +1636,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
   }
 });
 
-// â•â•â• PUBG Report Proxy (evita CORS) â•â•â•
+// ═══ PUBG Report Proxy (evita CORS) ═══
 app.get('/api/pubg-report/:accountId', async (req, res) => {
   const accountId = req.params.accountId;
   try {
@@ -1667,7 +1670,7 @@ app.get('/api/pubg-report/:accountId', async (req, res) => {
   }
 });
 
-// â•â•â• Player Snapshots (Mi EvoluciÃ³n) â•â•â•
+// ═══ Player Snapshots (Mi Evolución) ═══
 app.post('/api/snapshots', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   const { player_name, platform, squad_mode, game_mode, kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill } = req.body;
@@ -1715,110 +1718,6 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
     );
     res.json({ snapshots: rows });
   } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
-});
-
-// ============ Who is playing now (favoritos online) ============
-// POST /api/who-is-playing  body: { players: [{name, platform}, ...] }
-// Devuelve last match createdAt + mapa + modo para cada jugador
-// Cachea per-player 5min para no quemar rate limit
-app.post('/api/who-is-playing', async (req, res) => {
-  if (!SERVER_API_KEY) return res.status(503).json({ error: 'API key not configured' });
-  const players = Array.isArray(req.body && req.body.players) ? req.body.players.slice(0, 30) : [];
-  if (!players.length) return res.json({ players: [] });
-  const TTL_MIN = 5;
-  const result = [];
-  const cacheMisses = { psn: [], xbox: [] };
-
-  // 1) Check cache per player
-  if (pool) {
-    for (const p of players) {
-      const plat = (p.platform || 'psn').toLowerCase();
-      if (plat !== 'psn' && plat !== 'xbox') continue;
-      const key = `last-played:${plat}:${p.name.toLowerCase()}`;
-      try {
-        const c = await pool.query(
-          "SELECT response_data FROM api_cache WHERE cache_key=$1 AND created_at > NOW() - INTERVAL '1 minute' * $2",
-          [key, TTL_MIN]
-        );
-        if (c.rows.length) { result.push(JSON.parse(c.rows[0].response_data)); continue; }
-      } catch (e) { /* miss */ }
-      cacheMisses[plat].push(p.name);
-    }
-  } else {
-    for (const p of players) {
-      const plat = (p.platform || 'psn').toLowerCase();
-      if (plat === 'psn' || plat === 'xbox') cacheMisses[plat].push(p.name);
-    }
-  }
-
-  // 2) For cache misses: bulk fetch players via PUBG API (max 10 names per request)
-  const lbHeaders = { Authorization: 'Bearer ' + SERVER_API_KEY, Accept: 'application/vnd.api+json' };
-  const matchIdToPlayers = {}; // matchId -> [{name, platform}]
-  const playerLastMatch = {};  // "platform:name" -> matchId
-
-  for (const platform of ['psn', 'xbox']) {
-    const names = cacheMisses[platform];
-    if (!names.length) continue;
-    // Chunk into groups of 10
-    for (let i = 0; i < names.length; i += 10) {
-      const chunk = names.slice(i, i + 10);
-      try {
-        const url = `https://api.pubg.com/shards/${platform}/players?filter[playerNames]=${encodeURIComponent(chunk.join(','))}`;
-        const r = await fetchWithTimeout(fetch, url, { headers: lbHeaders }, 10000);
-        if (!r.ok) continue;
-        const j = await r.json();
-        (j.data || []).forEach(pl => {
-          const name = pl.attributes && pl.attributes.name;
-          const matches = pl.relationships && pl.relationships.matches && pl.relationships.matches.data;
-          if (!name || !matches || !matches.length) return;
-          const firstMatchId = matches[0].id;
-          playerLastMatch[`${platform}:${name.toLowerCase()}`] = { matchId: firstMatchId, name, platform };
-          if (!matchIdToPlayers[firstMatchId]) matchIdToPlayers[firstMatchId] = [];
-          matchIdToPlayers[firstMatchId].push({ name, platform });
-        });
-      } catch (e) { console.error('[who-playing] player fetch err:', e.message); }
-    }
-  }
-
-  // 3) Fetch match details for unique matchIds (limit concurrency to 4)
-  const uniqueMatchIds = Object.keys(matchIdToPlayers);
-  const matchDetails = {}; // matchId -> {createdAt, mapName, gameMode, platform}
-  const fetchMatch = async (matchId, platform) => {
-    try {
-      const url = `https://api.pubg.com/shards/${platform}/matches/${matchId}`;
-      const r = await fetchWithTimeout(fetch, url, { headers: lbHeaders }, 10000);
-      if (!r.ok) return;
-      const j = await r.json();
-      const a = j.data && j.data.attributes;
-      if (!a) return;
-      matchDetails[matchId] = { createdAt: a.createdAt, mapName: a.mapName, gameMode: a.gameMode, platform };
-    } catch (e) { /* ignore */ }
-  };
-  // Run with concurrency 4
-  const tasks = uniqueMatchIds.map(mid => () => fetchMatch(mid, matchIdToPlayers[mid][0].platform));
-  for (let i = 0; i < tasks.length; i += 4) {
-    await Promise.all(tasks.slice(i, i + 4).map(t => t()));
-  }
-
-  // 4) Build entries for cache misses + cache them
-  for (const key of Object.keys(playerLastMatch)) {
-    const { matchId, name, platform } = playerLastMatch[key];
-    const det = matchDetails[matchId];
-    if (!det) continue;
-    const entry = { name, platform, lastPlayedAt: det.createdAt, mapName: det.mapName, gameMode: det.gameMode };
-    result.push(entry);
-    if (pool) {
-      const ck = `last-played:${platform}:${name.toLowerCase()}`;
-      try {
-        await pool.query(
-          'INSERT INTO api_cache(cache_key, response_data) VALUES($1, $2) ON CONFLICT (cache_key) DO UPDATE SET response_data=$2, created_at=NOW()',
-          [ck, JSON.stringify(entry)]
-        );
-      } catch (e) { /* ignore cache write error */ }
-    }
-  }
-
-  res.json({ players: result, cachedAt: new Date().toISOString() });
 });
 
 // ============ Clear AI DNA cache for a player (admin use) ============
@@ -1869,92 +1768,92 @@ app.get('/api/ai-dna', async (req, res) => {
     const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const systemPrompt = `Eres V4NZ AI, el analista experto de PUBG para consola (PlayStation/Xbox) de v4nz.com. Analizas estadÃ­sticas de jugadores y generas perfiles de personalidad ÃšNICOS, detallados y tÃ©cnicamente precisos.
+    const systemPrompt = `Eres V4NZ AI, el analista experto de PUBG para consola (PlayStation/Xbox) de v4nz.com. Analizas estadísticas de jugadores y generas perfiles de personalidad ÚNICOS, detallados y técnicamente precisos.
 
-â•â•â• BENCHMARKS REALES PSN/XBOX CONSOLA (Temporada 40+) â•â•â•
+═══ BENCHMARKS REALES PSN/XBOX CONSOLA (Temporada 40+) ═══
 K/D: Top 1% = 5.0+ | Top 5% = 4.0-5.0 | Top 10% = 3.0-4.0 | Top 25% = 2.0-3.0 | Media = 1.0-1.5 | Bajo = <1.0
 ADR: Top 1% = 350+ | Top 5% = 250-350 | Top 10% = 180-250 | Media = 100-150 | Bajo = <80
 HS%: Top 1% = 25%+ | Bueno = 18-25% | Normal consola = 12-18% | Bajo = <12%
 Win Rate: Top 1% = 20%+ | Bueno = 10-20% | Normal = 3-8% | Bajo = <3%
 Top10 Rate: Bueno = >40% | Normal = 25-40% | Bajo = <20%
 
-â•â•â• PATRONES DE DIAGNÃ“STICO (CRUCES DE STATS) â•â•â•
-SIEMPRE cruza al menos 3 stats. Una stat aislada puede engaÃ±ar.
+═══ PATRONES DE DIAGNÓSTICO (CRUCES DE STATS) ═══
+SIEMPRE cruza al menos 3 stats. Una stat aislada puede engañar.
 
-â€¢ K/D alto + ADR alto = Jugador REALMENTE bueno, hace daÃ±o y remata
-â€¢ K/D alto + ADR bajo (<150) = Probable bot farmer o muy pasivo, espera kills fÃ¡ciles
-â€¢ K/D alto + HS% alto = Jugador tÃ©cnico, excelente control del arma
-â€¢ K/D alto + HS% bajo = Posible problema de mando o solo farmea bots de cerca
-â€¢ K/D alto + Win Rate bajo = Bueno en combate pero no sabe cerrar partidas/gestionar cÃ­rculo
-â€¢ ADR alto + K/D bajo = Support del squad â€” hace el daÃ±o, el equipo remata (NO es malo)
-â€¢ Revives altos = Pilar del equipo, NUNCA decirle que suba K/D
-â€¢ Assists/Kill ratio >0.5 = Jugador de equipo, comparte daÃ±o
-â€¢ Longest Kill >300m = Usa snipers regularmente con confianza
-â€¢ Longest Kill <200m = Raramente usa larga distancia, jugador CQC/mid range
-â€¢ Walk dist alta + Ride dist baja = Jugador tÃ¡ctico, evita ruido de vehÃ­culo
-â€¢ Walk dist baja + Ride dist alta = "Road warrior", mucho vehÃ­culo
-â€¢ Survival Time >28min = Muy pasivo/rat | 20-28min = Equilibrado | <15min = Muy agresivo
+• K/D alto + ADR alto = Jugador REALMENTE bueno, hace daño y remata
+• K/D alto + ADR bajo (<150) = Probable bot farmer o muy pasivo, espera kills fáciles
+• K/D alto + HS% alto = Jugador técnico, excelente control del arma
+• K/D alto + HS% bajo = Posible problema de mando o solo farmea bots de cerca
+• K/D alto + Win Rate bajo = Bueno en combate pero no sabe cerrar partidas/gestionar círculo
+• ADR alto + K/D bajo = Support del squad — hace el daño, el equipo remata (NO es malo)
+• Revives altos = Pilar del equipo, NUNCA decirle que suba K/D
+• Assists/Kill ratio >0.5 = Jugador de equipo, comparte daño
+• Longest Kill >300m = Usa snipers regularmente con confianza
+• Longest Kill <200m = Raramente usa larga distancia, jugador CQC/mid range
+• Walk dist alta + Ride dist baja = Jugador táctico, evita ruido de vehículo
+• Walk dist baja + Ride dist alta = "Road warrior", mucho vehículo
+• Survival Time >28min = Muy pasivo/rat | 20-28min = Equilibrado | <15min = Muy agresivo
 
-â•â•â• BOT RATIO â€” CLAVE PARA HONESTIDAD â•â•â•
-â€¢ Bot ratio <15%: K/D es fiable, stats reales
-â€¢ Bot ratio 15-30%: K/D algo inflado, el "real" contra humanos es ~10-15% menor
-â€¢ Bot ratio 30-50%: K/D significativamente inflado, mencionar con tacto
-â€¢ Bot ratio >50%: Stats apenas analizables, ser honesto pero constructivo
-FÃ³rmula: Si K/D > 3.5 Y ADR < 200 Y Longest Kill < 200m â†’ MUY probable bot farming
+═══ BOT RATIO — CLAVE PARA HONESTIDAD ═══
+• Bot ratio <15%: K/D es fiable, stats reales
+• Bot ratio 15-30%: K/D algo inflado, el "real" contra humanos es ~10-15% menor
+• Bot ratio 30-50%: K/D significativamente inflado, mencionar con tacto
+• Bot ratio >50%: Stats apenas analizables, ser honesto pero constructivo
+Fórmula: Si K/D > 3.5 Y ADR < 200 Y Longest Kill < 200m → MUY probable bot farming
 
-â•â•â• ARQUETIPOS DE JUGADOR â•â•â•
-â€¢ DEPREDADOR: K/D >3, ADR >250, agresivo, busca pelea, survival time bajo
-â€¢ RATA/SUPERVIVIENTE: K/D >1.5, ADR <150, survival time >25min, Win Rate alto, pocos kills
-â€¢ FRANCOTIRADOR: HS% >20%, Longest Kill >400m, ADR moderado, kills a distancia
-â€¢ SUPPORT: Revives altos, assists altos, ADR puede ser alto pero K/D moderado
-â€¢ TÃ‰CNICO: HS% >22%, ADR >200, balance entre agresividad y supervivencia
-â€¢ BOT FARMER: K/D >3 con ADR <200 y bot ratio >40%, stats infladas
+═══ ARQUETIPOS DE JUGADOR ═══
+• DEPREDADOR: K/D >3, ADR >250, agresivo, busca pelea, survival time bajo
+• RATA/SUPERVIVIENTE: K/D >1.5, ADR <150, survival time >25min, Win Rate alto, pocos kills
+• FRANCOTIRADOR: HS% >20%, Longest Kill >400m, ADR moderado, kills a distancia
+• SUPPORT: Revives altos, assists altos, ADR puede ser alto pero K/D moderado
+• TÉCNICO: HS% >22%, ADR >200, balance entre agresividad y supervivencia
+• BOT FARMER: K/D >3 con ADR <200 y bot ratio >40%, stats infladas
 
-â•â•â• REGLAS ESTRICTAS â•â•â•
-- El rol SIEMPRE debe ser 2 palabras creativas en espaÃ±ol, NUNCA una sola palabra
-- Los insights deben ser MUY ESPECÃFICOS a los nÃºmeros del jugador, NUNCA genÃ©ricos
+═══ REGLAS ESTRICTAS ═══
+- El rol SIEMPRE debe ser 2 palabras creativas en español, NUNCA una sola palabra
+- Los insights deben ser MUY ESPECÍFICOS a los números del jugador, NUNCA genéricos
 - SIEMPRE menciona el percentil real basado en los benchmarks de arriba
-- Si bot ratio >30%, DEBES mencionarlo en la descripciÃ³n con tacto constructivo
-- Habla directamente al jugador usando "tÃº"
-- El ADR es mÃ¡s honesto que el K/D â€” dale mÃ¡s peso en tu anÃ¡lisis
-- Responde SOLO con JSON vÃ¡lido, sin markdown ni explicaciones
-- Los scores pueden diferir de los heurÃ­sticos si tu anÃ¡lisis lo justifica`;
+- Si bot ratio >30%, DEBES mencionarlo en la descripción con tacto constructivo
+- Habla directamente al jugador usando "tú"
+- El ADR es más honesto que el K/D — dale más peso en tu análisis
+- Responde SOLO con JSON válido, sin markdown ni explicaciones
+- Los scores pueden diferir de los heurísticos si tu análisis lo justifica`;
 
     const userPrompt = `Analiza este jugador de PUBG consola:
 
 Nombre: ${playerName} (${platform || 'psn'})
 
 STATS PRINCIPALES:
-â€¢ K/D: ${stats.kd} | ADR (DaÃ±o medio/partida): ${stats.avgDamage}
-â€¢ Headshot%: ${stats.hsRate}% | Win Rate: ${stats.winRate}% | Top 10: ${stats.top10Rate}%
-â€¢ Kills/partida: ${stats.killsPerRound} | Longest Kill: ${stats.longestKill}m
+• K/D: ${stats.kd} | ADR (Daño medio/partida): ${stats.avgDamage}
+• Headshot%: ${stats.hsRate}% | Win Rate: ${stats.winRate}% | Top 10: ${stats.top10Rate}%
+• Kills/partida: ${stats.killsPerRound} | Longest Kill: ${stats.longestKill}m
 
 MOVIMIENTO Y ESTILO:
-â€¢ Distancia a pie/partida: ${stats.walkDistPerRound}m | En vehÃ­culo/partida: ${stats.rideDistPerRound}m
+• Distancia a pie/partida: ${stats.walkDistPerRound}m | En vehículo/partida: ${stats.rideDistPerRound}m
 
 EQUIPO (squad):
-â€¢ Revives/partida: ${stats.revivesPerRound} | Asistencias/partida: ${stats.assistsPerRound}
-â€¢ Curas/partida: ${stats.healsPerRound}
+• Revives/partida: ${stats.revivesPerRound} | Asistencias/partida: ${stats.assistsPerRound}
+• Curas/partida: ${stats.healsPerRound}
 
 CONTEXTO:
-â€¢ Total partidas: ${stats.roundsPlayed}
-${stats.botRatio != null ? `â€¢ Bot ratio estimado: ${stats.botRatio}%` : 'â€¢ Bot ratio: no disponible'}
-â€¢ Rol heurÃ­stico actual: ${stats.role}
-â€¢ Scores heurÃ­sticos: AGR ${stats.dnaScores?.agresividad || '?'}, PRE ${stats.dnaScores?.precision || '?'}, SUP ${stats.dnaScores?.supervivencia || '?'}, MOV ${stats.dnaScores?.movilidad || '?'}, SOP ${stats.dnaScores?.soporte || '?'}
+• Total partidas: ${stats.roundsPlayed}
+${stats.botRatio != null ? `• Bot ratio estimado: ${stats.botRatio}%` : '• Bot ratio: no disponible'}
+• Rol heurístico actual: ${stats.role}
+• Scores heurísticos: AGR ${stats.dnaScores?.agresividad || '?'}, PRE ${stats.dnaScores?.precision || '?'}, SUP ${stats.dnaScores?.supervivencia || '?'}, MOV ${stats.dnaScores?.movilidad || '?'}, SOP ${stats.dnaScores?.soporte || '?'}
 
 INSTRUCCIONES:
-1. Cruza las stats usando los patrones de diagnÃ³stico del system prompt
+1. Cruza las stats usando los patrones de diagnóstico del system prompt
 2. Identifica el arquetipo real del jugador
-3. Si bot ratio >30%, ajusta tu evaluaciÃ³n siendo honesto pero constructivo
+3. Si bot ratio >30%, ajusta tu evaluación siendo honesto pero constructivo
 4. Usa los benchmarks reales para dar percentiles PRECISOS
 
-Genera el anÃ¡lisis JSON:
+Genera el análisis JSON:
 {
-  "role": "DOS PALABRAS CREATIVAS EN MAYÃšSCULAS",
-  "roleColor": "#hexcolor (#ff3355=agresivo, #a855f7=tÃ©cnico, #ffd700=Ã©lite, #00ff88=superviviente, #ff6b00=caÃ³tico, #00f0ff=tÃ¡ctico)",
-  "description": "2-3 frases personalizadas con diagnÃ³stico cruzado real. Menciona percentiles. Si bot ratio alto, menciÃ³nalo con tacto.",
-  "insights": ["1 FORTALEZA principal del jugador con datos", "1 DEBILIDAD o Ã¡rea de mejora con datos", "1 dato SORPRENDENTE o curioso del cruce de stats"],
-  "tip": "1 consejo accionable y especÃ­fico basado en la debilidad detectada",
+  "role": "DOS PALABRAS CREATIVAS EN MAYÚSCULAS",
+  "roleColor": "#hexcolor (#ff3355=agresivo, #a855f7=técnico, #ffd700=élite, #00ff88=superviviente, #ff6b00=caótico, #00f0ff=táctico)",
+  "description": "2-3 frases personalizadas con diagnóstico cruzado real. Menciona percentiles. Si bot ratio alto, menciónalo con tacto.",
+  "insights": ["1 FORTALEZA principal del jugador con datos", "1 DEBILIDAD o área de mejora con datos", "1 dato SORPRENDENTE o curioso del cruce de stats"],
+  "tip": "1 consejo accionable y específico basado en la debilidad detectada",
   "scores": {"agresividad": 0-100, "precision": 0-100, "supervivencia": 0-100, "movilidad": 0-100, "soporte": 0-100}
 }`;
 
@@ -2016,124 +1915,92 @@ Genera el anÃ¡lisis JSON:
   }
 });
 
-// ============ AI CLAN ANALYSIS (Sesion 30 â€” analisis IA de un clan completo) ============
-app.get('/api/ai-clan-dna', async (req, res) => {
+// ============ AI Compare Players (MUST be before the PUBG API catch-all proxy) ============
+app.get('/api/ai-compare-players', async (req, res) => {
   try {
-    const tagRaw = (req.query.tag || '').toString().toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
-    if (!tagRaw) return res.status(400).json({ error: 'Missing tag' });
-    if (!pool) return res.status(503).json({ error: 'DB not available' });
+    const { p1, p2, platform, mode, stats: statsParam } = req.query;
+    let payload;
+    try { payload = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { payload = null; }
+    if (!p1 || !p2 || !payload || !payload.s1 || !payload.s2) return res.status(400).json({ error: 'Missing players or stats' });
 
-    const cacheKey = `ai-clan-dna:${tagRaw}`;
-    // Cache check (TTL 7 days using response_data column)
-    try {
-      const cached = await pool.query(
-        "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '7 days'",
-        [cacheKey]
-      );
-      if (cached.rows.length > 0) {
-        return res.json(JSON.parse(cached.rows[0].response_data));
-      }
-    } catch (e) { console.error('AI clan cache check error:', e.message); }
+    // Normalise cache key: order players alphabetically so A-vs-B and B-vs-A share cache
+    const [a, b] = [p1.toLowerCase(), p2.toLowerCase()].sort();
+    const cacheKey = `ai-compare:${a}:${b}:${platform || 'psn'}:${mode || 'squad'}`;
 
-    if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'AI analysis not available' });
+    // Check cache
+    if (pool) {
+      try {
+        const cached = await pool.query(
+          `SELECT data FROM api_cache WHERE cache_key = $1 AND created_at + (ttl_seconds || ' seconds')::interval > NOW()`,
+          [cacheKey]
+        );
+        if (cached.rows.length > 0) {
+          return res.json(cached.rows[0].data);
+        }
+      } catch (e) { console.error('AI compare cache check error:', e); }
+    }
 
-    // Fetch clan data + top members
-    const clanRow = await pool.query('SELECT tag, name, member_count, level, platform, total_kills, total_wins, avg_kd, avg_damage, total_rounds, win_rate, active_members FROM clans WHERE tag = $1', [tagRaw]);
-    if (!clanRow.rows.length) return res.status(404).json({ error: 'Clan not found' });
-    const clan = clanRow.rows[0];
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'AI analysis not available' });
+    }
 
-    const membersRow = await pool.query('SELECT player_name, kills, wins, kd, damage, rounds FROM clan_members WHERE clan_tag = $1 AND rounds > 0 ORDER BY kills DESC LIMIT 15', [tagRaw]);
-    const members = membersRow.rows;
-    if (!members.length) return res.status(400).json({ error: 'Clan sin miembros activos' });
-
-    // Compute aggregate metrics
-    const topKiller = members[0];
-    const sortedByKD = [...members].sort((a, b) => parseFloat(b.kd || 0) - parseFloat(a.kd || 0));
-    const bestKD = sortedByKD[0];
-    const sortedByDmg = [...members].sort((a, b) => parseFloat(b.damage || 0) - parseFloat(a.damage || 0));
-    const topDmg = sortedByDmg[0];
-
-    // Dynamic import Anthropic SDK
     let AnthropicSDK;
-    try { AnthropicSDK = await import('@anthropic-ai/sdk'); }
-    catch (e) { return res.status(503).json({ error: 'AI service unavailable' }); }
+    try {
+      AnthropicSDK = await import('@anthropic-ai/sdk');
+    } catch (e) {
+      console.error('Failed to import Anthropic SDK:', e);
+      return res.status(503).json({ error: 'AI service unavailable' });
+    }
     const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const systemPrompt = `Eres V4NZ AI, el analista experto de PUBG consola de v4nz.com. Analizas CLANES completos basÃ¡ndote en stats agregadas y miembros individuales. Generas perfiles Ãºnicos de identidad de clan en espaÃ±ol.
+    const systemPrompt = `Eres V4NZ AI, el analista experto de PUBG consola (PSN/Xbox) de v4nz.com. Comparas DOS jugadores de forma justa, técnica y con tacto competitivo.
 
-â•â•â• BENCHMARKS DE CLANES PUBG CONSOLA â•â•â•
-K/D medio del clan: Ã‰lite >2.5 | Bueno 1.8-2.5 | Medio 1.2-1.8 | Bajo <1.2
-ADR medio: Ã‰lite >220 | Bueno 160-220 | Medio 110-160 | Bajo <110
-Win Rate: Ã‰lite >12% | Bueno 6-12% | Medio 3-6% | Bajo <3%
-Miembros activos: Saludable >60% | Decente 40-60% | Bajo <40%
+═══ BENCHMARKS PSN/XBOX CONSOLA (Temporada 40+) ═══
+K/D: Top 1% 5.0+ | Top 5% 4-5 | Top 10% 3-4 | Top 25% 2-3 | Media 1-1.5 | Bajo <1
+ADR: Top 1% 350+ | Top 5% 250-350 | Top 10% 180-250 | Media 100-150 | Bajo <80
+HS%: Top 1% 25%+ | Bueno 18-25% | Normal 12-18% | Bajo <12%
+Win Rate: Top 1% 20%+ | Bueno 10-20% | Normal 3-8% | Bajo <3%
 
-â•â•â• PATRONES DE DIAGNÃ“STICO DE CLAN â•â•â•
-â€¢ K/D medio alto + ADR alto = Clan competitivo real, hay nivel
-â€¢ K/D medio alto + ADR bajo = Probable clan de bot farmers o muy pasivos
-â€¢ K/D variado entre miembros (max-min >3) = Clan desigual, mezcla de pros y casuals
-â€¢ K/D similares entre miembros = Clan homogÃ©neo, juegan parecido
-â€¢ Pocos miembros activos = Clan en declive o de "amigos" no jugones
-â€¢ 1-2 miembros con stats muy superiores = Clan con "carry" / hard MVP
-â€¢ Win Rate alto + K/D moderado = Clan tÃ¡ctico que sabe ganar partidas
-â€¢ Total kills muy alto pero K/D medio bajo = Clan de cantidad sobre calidad
+═══ REGLAS DE COMPARACIÓN ═══
+- Cruza stats. El ADR es más honesto que el K/D.
+- Si un jugador tiene muchas menos partidas (<30% del otro) menciónalo: su stat puede ser menos fiable.
+- Identifica CATEGORÍAS donde cada uno domina: Combate (K/D+ADR), Precisión (HS%+Longest), Supervivencia (WinRate+Top10+TimeSurvived), Soporte (revives+assists).
+- El veredicto NO es solo "quién tiene más K/D". Valora el conjunto, el rol, y la fiabilidad muestral.
+- Sé justo: si hay empate técnico dilo. Evita sesgos.
+- Habla en español, tono directo pero respetuoso, nada de insultos.
+- Responde SOLO con JSON válido, sin markdown.`;
 
-â•â•â• ARQUETIPOS DE CLAN â•â•â•
-â€¢ Ã‰LITE COMPETITIVA: K/D>2.2, ADR>200, members activos altos, equilibrio
-â€¢ CASUAL FRIENDS: K/D~1.0-1.5, mucho jugado, pocos miembros activos
-â€¢ CARRY DEPENDENCIA: 1-2 monstruos + resto medio, max-min KD muy grande
-â€¢ BOT FARM CLUB: K/D inflado pero ADR bajo, sospechoso
-â€¢ MÃQUINAS DE GUERRA: K/D y ADR ambos top, agresivos
-â€¢ SUPERVIVIENTES: Win Rate alto sin K/D estratosfÃ©rico, juegan a ganar
+    const s1 = payload.s1, s2 = payload.s2;
+    const userPrompt = `Compara estos dos jugadores de PUBG consola (${platform || 'psn'}, modo ${mode || 'squad'}):
 
-â•â•â• REGLAS ESTRICTAS â•â•â•
-- El nombre del arquetipo debe ser 2-3 palabras creativas en MAYÃšSCULAS
-- Menciona nÃºmeros especÃ­ficos del clan, NUNCA genÃ©rico
-- Si hay un MVP claro, nÃ³mbralo
-- Si el clan tiene sÃ­ntomas de bot farming, menciÃ³nalo con tacto
-- Habla en plural ("vosotros", "el clan")
-- Responde SOLO con JSON vÃ¡lido sin markdown`;
+═══ JUGADOR 1: ${p1} ═══
+• K/D: ${s1.kd} | ADR: ${s1.avgDamage} | HS%: ${s1.hsRate}%
+• Win Rate: ${s1.winRate}% | Top10%: ${s1.top10Rate}%
+• Kills: ${s1.kills} | Wins: ${s1.wins} | Partidas: ${s1.rounds}
+• Longest Kill: ${s1.longestKill}m | Revives: ${s1.revives} | Assists: ${s1.assists}
 
-    const memberSummary = members.slice(0, 10).map((m, i) => `${i + 1}. ${m.player_name}: ${m.kills}K | KD ${parseFloat(m.kd).toFixed(2)} | ADR ${Math.round(parseFloat(m.damage || 0) / Math.max(1, parseInt(m.rounds || 1)))} | ${m.rounds}p`).join('\n');
+═══ JUGADOR 2: ${p2} ═══
+• K/D: ${s2.kd} | ADR: ${s2.avgDamage} | HS%: ${s2.hsRate}%
+• Win Rate: ${s2.winRate}% | Top10%: ${s2.top10Rate}%
+• Kills: ${s2.kills} | Wins: ${s2.wins} | Partidas: ${s2.rounds}
+• Longest Kill: ${s2.longestKill}m | Revives: ${s2.revives} | Assists: ${s2.assists}
 
-    const userPrompt = `Analiza este clan PUBG consola:
-
-CLAN: [${clan.tag}] ${clan.name || ''}
-Plataforma: ${clan.platform || 'consola'} | Nivel: ${clan.level || '?'} | Miembros: ${clan.member_count || members.length}
-
-STATS AGREGADAS:
-â€¢ Total Kills: ${clan.total_kills} | Total Wins: ${clan.total_wins}
-â€¢ K/D medio: ${parseFloat(clan.avg_kd || 0).toFixed(2)}
-â€¢ DaÃ±o medio/partida: ${Math.round(parseFloat(clan.avg_damage || 0))}
-â€¢ Win Rate medio: ${parseFloat(clan.win_rate || 0).toFixed(1)}%
-â€¢ Total partidas jugadas: ${clan.total_rounds}
-â€¢ Miembros activos: ${clan.active_members} de ${clan.member_count} (${clan.member_count > 0 ? Math.round(clan.active_members / clan.member_count * 100) : 0}%)
-
-TOP 10 MIEMBROS:
-${memberSummary}
-
-DESTACADOS:
-â€¢ Top killer: ${topKiller.player_name} (${topKiller.kills} kills)
-â€¢ Mejor K/D: ${bestKD.player_name} (${parseFloat(bestKD.kd).toFixed(2)})
-â€¢ MÃ¡s daÃ±o: ${topDmg.player_name} (${Math.round(parseFloat(topDmg.damage || 0))})
-
-INSTRUCCIONES:
-1. Identifica el arquetipo real del clan usando los patrones
-2. Detecta si hay carry dependence o equilibrio
-3. Comenta el % de miembros activos (salud del clan)
-4. Si hay sospecha de bot farming, menciÃ³nalo con tacto
-5. Da un consejo especÃ­fico al colectivo
-
-Genera anÃ¡lisis JSON:
+Genera el análisis JSON:
 {
-  "archetype": "DOS O TRES PALABRAS EN MAYÃšSCULAS",
-  "archetypeColor": "#hexcolor (#ff3355=agresivo, #ffd700=elite, #00ff88=tactico, #00f0ff=tecnico, #ff6b00=caotico)",
-  "description": "2-3 frases con diagnÃ³stico real, mencionando nÃºmeros del clan",
-  "strengths": ["1 fortaleza colectiva especÃ­fica", "1 segunda fortaleza"],
-  "weaknesses": ["1 debilidad colectiva especÃ­fica", "1 segunda debilidad"],
-  "mvp": "Nombre del MVP del clan si destaca claramente, o null",
-  "tip": "1 consejo accionable para el clan en su conjunto",
-  "scores": {"competitividad": 0-100, "cohesion": 0-100, "agresividad": 0-100, "consistencia": 0-100, "actividad": 0-100}
+  "winner": "${p1}" | "${p2}" | "EMPATE",
+  "winnerReason": "1 frase explicando por qué gana (o por qué es empate técnico)",
+  "categories": {
+    "combate": {"winner":"${p1}"|"${p2}"|"EMPATE","note":"breve nota cruzando K/D y ADR"},
+    "precision": {"winner":"${p1}"|"${p2}"|"EMPATE","note":"breve nota con HS% y longest kill"},
+    "supervivencia": {"winner":"${p1}"|"${p2}"|"EMPATE","note":"breve nota con WR y Top10"},
+    "soporte": {"winner":"${p1}"|"${p2}"|"EMPATE","note":"breve nota con revives y assists"}
+  },
+  "sampleWarning": "si uno tiene muchas menos partidas menciónalo aquí, si no null",
+  "styleP1": "2-4 palabras que describan el estilo del jugador 1",
+  "styleP2": "2-4 palabras que describan el estilo del jugador 2",
+  "verdict": "2-3 frases de análisis final comparando a ambos jugadores",
+  "tipLoser": "1 consejo accionable para el jugador que pierde (o el más flojo en caso de empate)"
 }`;
 
     let response, lastErr;
@@ -2148,44 +2015,49 @@ Genera anÃ¡lisis JSON:
         break;
       } catch (apiErr) {
         lastErr = apiErr;
-        console.error(`AI Clan API attempt ${attempt + 1}:`, apiErr.status || apiErr.message);
-        if (attempt === 0 && [500, 502, 503, 529].includes(apiErr.status)) {
+        console.error(`AI compare API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
+        if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
           await new Promise(r => setTimeout(r, 2000));
           continue;
         }
         throw apiErr;
       }
     }
-    if (!response) throw lastErr || new Error('AI API failed');
+    if (!response) throw lastErr || new Error('AI API failed after retries');
 
     const text = response.content[0]?.text || '';
     let aiResult;
     try {
-      const m = text.match(/\{[\s\S]*\}/);
-      aiResult = JSON.parse(m ? m[0] : text);
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      aiResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
     } catch (e) {
-      console.error('AI Clan parse error, raw:', text.substring(0, 500));
+      console.error('AI compare parse error, raw text:', text.substring(0, 500));
       return res.status(500).json({ error: 'Failed to parse AI response' });
     }
-    if (!aiResult.archetype || !aiResult.description) {
+
+    if (!aiResult.winner || !aiResult.verdict || !aiResult.categories) {
+      console.error('AI compare incomplete response, keys:', Object.keys(aiResult));
       return res.status(500).json({ error: 'Incomplete AI response' });
     }
-    aiResult.generatedAt = new Date().toISOString();
-    aiResult.tag = clan.tag;
-    aiResult.clanName = clan.name;
 
-    // Cache 7 days
-    try {
-      await pool.query(
-        'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
-        [cacheKey, JSON.stringify(aiResult)]
-      );
-    } catch (e) { console.error('AI Clan cache save error:', e.message); }
+    aiResult.generatedAt = new Date().toISOString();
+    aiResult.p1 = p1;
+    aiResult.p2 = p2;
+
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO api_cache (cache_key, data, ttl_seconds) VALUES ($1, $2, $3) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW(), ttl_seconds = $3`,
+          [cacheKey, JSON.stringify(aiResult), 604800]
+        );
+      } catch (e) { console.error('AI compare cache save error:', e); }
+    }
 
     res.json(aiResult);
+
   } catch (e) {
-    console.error('AI Clan error:', e.status || e.code || '', e.message || e);
-    res.status(500).json({ error: 'AI clan analysis failed', detail: e.message || 'Unknown error' });
+    console.error('AI compare error:', e.status || e.code || '', e.message || e);
+    res.status(500).json({ error: 'AI compare failed', detail: e.message || 'Unknown error' });
   }
 });
 
@@ -2204,7 +2076,7 @@ function telemetryRateLimit(req, res, next) {
     entry.count++;
   }
   if (entry.count > 3) {
-    return res.status(429).json({ error: 'MÃ¡ximo 3 auditorÃ­as por minuto. Espera un momento.' });
+    return res.status(429).json({ error: 'Máximo 3 auditorías por minuto. Espera un momento.' });
   }
   next();
 }
@@ -2400,59 +2272,59 @@ app.get('/api/telemetry-audit', telemetryRateLimit, async (req, res) => {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const systemPrompt = `Eres V4NZ Auditor, un analista experto de partidas de PUBG para consola.
-EvalÃºas la telemetrÃ­a de UNA partida individual y das un informe detallado y constructivo.
+Evalúas la telemetría de UNA partida individual y das un informe detallado y constructivo.
 
 SISTEMA DE SCORING (0-10):
 - Combate (25%): Trade ratio, kills por fase, calidad de kills (humanos vs bots)
-- Supervivencia (20%): GestiÃ³n del cÃ­rculo, tiempo vivo, muertes evitables
-- RotaciÃ³n (15%): PosiciÃ³n vs cÃ­rculo, timing de movimientos, daÃ±o de zona recibido
-- Decisiones (15%): SelecciÃ³n de arma por distancia, cuÃ¡ndo pelear vs escapar
-- PrecisiÃ³n (15%): Hit rate por arma, headshot rate
+- Supervivencia (20%): Gestión del círculo, tiempo vivo, muertes evitables
+- Rotación (15%): Posición vs círculo, timing de movimientos, daño de zona recibido
+- Decisiones (15%): Selección de arma por distancia, cuándo pelear vs escapar
+- Precisión (15%): Hit rate por arma, headshot rate
 - Inventario (10%): Uso de consumibles, granadas, boost en end game
 
 ESCALA:
-S (9-10) = Ã‰lite | A (7.5-8.9) = Excelente | B (6-7.4) = Bueno
-C (4.5-5.9) = Normal | D (3-4.4) = Mejorable | F (0-2.9) = CrÃ­tico
+S (9-10) = Élite | A (7.5-8.9) = Excelente | B (6-7.4) = Bueno
+C (4.5-5.9) = Normal | D (3-4.4) = Mejorable | F (0-2.9) = Crítico
 
 REGLAS:
-- Tono constructivo, habla al jugador con "tÃº"
-- SÃ© especÃ­fico: menciona armas concretas, momentos concretos, distancias
-- Si hay muchos bots en las kills, menciÃ³nalo
-- Responde SOLO con JSON vÃ¡lido, sin markdown ni explicaciones`;
+- Tono constructivo, habla al jugador con "tú"
+- Sé específico: menciona armas concretas, momentos concretos, distancias
+- Si hay muchos bots en las kills, menciónalo
+- Responde SOLO con JSON válido, sin markdown ni explicaciones`;
 
     const userPrompt = `Audita esta partida de PUBG:
 
 MATCH INFO:
 - Mapa: ${mapName}
 - Modo: ${gameMode}
-- DuraciÃ³n: ${Math.round(duration / 60)} min
+- Duración: ${Math.round(duration / 60)} min
 - Jugador: ${playerName} (${shard})
-- PosiciÃ³n final: #${playerPlacement || '?'}
+- Posición final: #${playerPlacement || '?'}
 ${playerStats ? `- Kills: ${playerStats.kills} | Damage: ${Math.round(playerStats.damageDealt)} | Headshots: ${playerStats.headshotKills}` : ''}
 ${playerStats ? `- Walk distance: ${Math.round(playerStats.walkDistance)}m | Ride distance: ${Math.round(playerStats.rideDistance)}m` : ''}
 ${playerStats ? `- Heals: ${playerStats.heals} | Boosts: ${playerStats.boosts} | Revives: ${playerStats.revives}` : ''}
-${isCustomMatch ? '- âš ï¸ Partida personalizada' : ''}
+${isCustomMatch ? '- ⚠️ Partida personalizada' : ''}
 
 TELEMETRY EVENTS (${filteredEvents.length} eventos filtrados del jugador):
 ${eventsJson}
 
-Genera el anÃ¡lisis JSON con este formato exacto:
+Genera el análisis JSON con este formato exacto:
 {
   "score_total": 7.2,
   "grade": "B",
   "grade_label": "Bueno",
   "scores": {
-    "combate": { "score": 7.5, "detalle": "breve explicaciÃ³n" },
-    "supervivencia": { "score": 8.0, "detalle": "breve explicaciÃ³n" },
-    "rotacion": { "score": 6.5, "detalle": "breve explicaciÃ³n" },
-    "decisiones": { "score": 7.0, "detalle": "breve explicaciÃ³n" },
-    "precision": { "score": 6.8, "detalle": "breve explicaciÃ³n" },
-    "inventario": { "score": 7.0, "detalle": "breve explicaciÃ³n" }
+    "combate": { "score": 7.5, "detalle": "breve explicación" },
+    "supervivencia": { "score": 8.0, "detalle": "breve explicación" },
+    "rotacion": { "score": 6.5, "detalle": "breve explicación" },
+    "decisiones": { "score": 7.0, "detalle": "breve explicación" },
+    "precision": { "score": 6.8, "detalle": "breve explicación" },
+    "inventario": { "score": 7.0, "detalle": "breve explicación" }
   },
-  "lo_que_hiciste_bien": ["punto 1 especÃ­fico", "punto 2 especÃ­fico"],
-  "lo_que_puedes_mejorar": ["punto 1 especÃ­fico", "punto 2 especÃ­fico"],
-  "momento_clave": "descripciÃ³n del momento mÃ¡s importante de la partida",
-  "consejo": "1 consejo accionable basado en el error mÃ¡s frecuente",
+  "lo_que_hiciste_bien": ["punto 1 específico", "punto 2 específico"],
+  "lo_que_puedes_mejorar": ["punto 1 específico", "punto 2 específico"],
+  "momento_clave": "descripción del momento más importante de la partida",
+  "consejo": "1 consejo accionable basado en el error más frecuente",
   "resumen": "2-3 frases resumen de la partida"
 }`;
 
@@ -2508,7 +2380,7 @@ Genera el anÃ¡lisis JSON con este formato exacto:
   }
 });
 
-// â•â•â• PUBG API PROXY (generic catch-all â€” MUST be after ALL /api/* specific routes) â•â•â•
+// ═══ PUBG API PROXY (generic catch-all — MUST be after ALL /api/* specific routes) ═══
 app.all('/api/*', rateLimit, async (req, res) => {
   trackMetric(req, 'api');
   const originalQuery = req.originalUrl.split('?')[1] || '';
@@ -2552,7 +2424,7 @@ app.all('/api/*', rateLimit, async (req, res) => {
       pool.query(
         "INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, status_code = $3, created_at = NOW()",
         [cacheKey, data, response.status]
-      ).catch(() => {}); // Fire and forget â€” don't block response
+      ).catch(() => {}); // Fire and forget — don't block response
     }
 
     trackMetric(req, 'cache-miss');
@@ -2590,12 +2462,12 @@ setInterval(async () => {
   catch (e) { /* silent */ }
 }, 1800000);
 
-// Admin verification endpoint â€” password never exposed in frontend
+// Admin verification endpoint — password never exposed in frontend
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 app.post('/auth/admin', rateLimit, (req, res) => {
   if (!ADMIN_PASSWORD) return res.status(503).json({ error: 'Admin no configurado' });
   const { password } = req.body;
-  if (!password || typeof password !== 'string') return res.status(401).json({ error: 'ContraseÃ±a incorrecta' });
+  if (!password || typeof password !== 'string') return res.status(401).json({ error: 'Contraseña incorrecta' });
   // Timing-safe comparison to prevent timing attacks
   const a = Buffer.from(password.padEnd(64, '\0'));
   const b = Buffer.from(ADMIN_PASSWORD.padEnd(64, '\0'));
@@ -2605,11 +2477,11 @@ app.post('/auth/admin', rateLimit, (req, res) => {
     res.json({ ok: true, token });
   } else {
     console.warn('[admin] Intento fallido desde', req.ip);
-    res.status(401).json({ error: 'ContraseÃ±a incorrecta' });
+    res.status(401).json({ error: 'Contraseña incorrecta' });
   }
 });
 
-// â•â•â• METRICS ENDPOINT (admin only) â•â•â•
+// ═══ METRICS ENDPOINT (admin only) ═══
 app.get('/admin/metrics', (req, res) => {
   // Verify admin token
   const token = req.headers.authorization?.replace('Bearer ', '') || '';
@@ -2621,7 +2493,7 @@ app.get('/admin/metrics', (req, res) => {
   }
   const uptimeMs = Date.now() - metrics.startedAt;
   const uptimeH = Math.round(uptimeMs / 3600000 * 10) / 10;
-  // Build hourly data (serializable â€” convert Sets to counts)
+  // Build hourly data (serializable — convert Sets to counts)
   const hourly = {};
   const sortedHours = Object.keys(metrics.hourly).sort().slice(-48);
   for (const h of sortedHours) {
@@ -2664,7 +2536,7 @@ app.get('/admin/metrics', (req, res) => {
   });
 });
 
-// Sitemap for SEO â€” dynamic with clan URLs + popular players
+// Sitemap for SEO — dynamic with clan URLs + popular players
 app.get('/sitemap.xml', async (req, res) => {
   res.set('Content-Type', 'application/xml');
   const today = new Date().toISOString().split('T')[0];
@@ -2712,7 +2584,7 @@ app.get('/robots.txt', (req, res) => {
   res.send('User-agent: *\nAllow: /\nSitemap: https://v4nz.com/sitemap.xml');
 });
 
-// â•â•â• Dynamic OG Image (SVG â†’ PNG via sharp) â•â•â•
+// ═══ Dynamic OG Image (SVG → PNG via sharp) ═══
 function escXml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
 
 function buildPlayerSvg(player, platform, stats) {
@@ -2746,9 +2618,9 @@ function buildPlayerSvg(player, platform, stats) {
     <text x="945" y="355" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#a855f7" text-anchor="middle">${escXml(hsRate)}%</text>
     <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#888" text-anchor="middle" letter-spacing="2">HEADSHOT</text>
 
-    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#555" letter-spacing="1">${escXml(String(kills))} kills Â· ${escXml(String(rounds))} partidas Â· ${platIcon}</text>
+    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="#555" letter-spacing="1">${escXml(String(kills))} kills · ${escXml(String(rounds))} partidas · ${platIcon}</text>
   ` : `
-    <text x="80" y="380" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">STATS EN TIEMPO REAL Â· K/D Â· WIN RATE Â· ADN PUBG</text>
+    <text x="80" y="380" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">STATS EN TIEMPO REAL · K/D · WIN RATE · ADN PUBG</text>
     <text x="80" y="420" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#888" letter-spacing="3">${platIcon}</text>
   `;
 
@@ -2762,7 +2634,7 @@ function buildPlayerSvg(player, platform, stats) {
     <text x="80" y="80" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" fill="#00f0ff" letter-spacing="6">V4NZ</text>
     <text x="190" y="80" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555" letter-spacing="3">PUBG CONSOLE STATS</text>
     <text x="80" y="200" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="2">${escXml(player)}</text>
-    <text x="80" y="260" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#888" letter-spacing="3">${platIcon} Â· Squad TPP</text>
+    <text x="80" y="260" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#888" letter-spacing="3">${platIcon} · Squad TPP</text>
     ${statsSection}
     <text x="80" y="560" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#00f0ff" letter-spacing="1">v4nz.com/stats/${escXml(platform.toLowerCase())}/${escXml(player)}</text>
     <rect x="80" y="580" width="1040" height="2" fill="url(#accent)" opacity="0.3"/>
@@ -2774,7 +2646,7 @@ function buildClanSvg(tag, clan) {
   const hasClan = clan && clan.tag;
   const name = hasClan ? (clan.name || tag) : tag;
   const statsSection = hasClan ? `
-    <text x="80" y="280" font-family="Arial,Helvetica,sans-serif" font-size="22" fill="#888" letter-spacing="2">${escXml(name)} Â· ${escXml((clan.platform || 'PSN').toUpperCase())} Â· Nivel ${clan.level || '?'}</text>
+    <text x="80" y="280" font-family="Arial,Helvetica,sans-serif" font-size="22" fill="#888" letter-spacing="2">${escXml(name)} · ${escXml((clan.platform || 'PSN').toUpperCase())} · Nivel ${clan.level || '?'}</text>
     <rect x="80" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#00f0ff" stroke-opacity="0.15"/>
     <text x="195" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#00f0ff" text-anchor="middle">${clan.total_kills || 0}</text>
     <text x="195" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">TOTAL KILLS</text>
@@ -2787,9 +2659,9 @@ function buildClanSvg(tag, clan) {
     <rect x="830" y="320" width="230" height="90" rx="12" fill="#ffffff" fill-opacity="0.04" stroke="#ff6b00" stroke-opacity="0.15"/>
     <text x="945" y="360" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#ff6b00" text-anchor="middle">${clan.active_members || 0}</text>
     <text x="945" y="390" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#888" text-anchor="middle" letter-spacing="2">ACTIVOS</text>
-    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555">${clan.member_count || 0} miembros Â· Win Rate ${(parseFloat(clan.win_rate) || 0).toFixed(1)}% Â· Dano medio ${(parseFloat(clan.avg_damage) || 0).toFixed(0)}</text>
+    <text x="80" y="470" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#555">${clan.member_count || 0} miembros · Win Rate ${(parseFloat(clan.win_rate) || 0).toFixed(1)}% · Dano medio ${(parseFloat(clan.avg_damage) || 0).toFixed(0)}</text>
   ` : `
-    <text x="80" y="400" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">MIEMBROS Â· KILLS Â· K/D Â· RANKING</text>
+    <text x="80" y="400" font-family="Arial,Helvetica,sans-serif" font-size="20" fill="#555" letter-spacing="2">MIEMBROS · KILLS · K/D · RANKING</text>
   `;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
     <defs>
@@ -2814,7 +2686,7 @@ async function svgToPng(svgStr) {
   return sharp(Buffer.from(svgStr)).png().toBuffer();
 }
 
-// Player OG image â€” with real stats from PUBG API
+// Player OG image — with real stats from PUBG API
 app.get('/og-image/stats/:platform/:player.png', async (req, res) => {
   try {
     const platform = req.params.platform.toUpperCase();
@@ -2876,7 +2748,7 @@ app.get('/og-image/stats/:platform/:player.png', async (req, res) => {
   }
 });
 
-// Clan OG image â€” with real stats from DB
+// Clan OG image — with real stats from DB
 app.get('/og-image/clan/:tag.png', async (req, res) => {
   try {
     const tag = decodeURIComponent(req.params.tag).toUpperCase().replace(/[^A-Z0-9_]/g, '');
@@ -2911,7 +2783,7 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
-// PWA Icons (generated SVG â€” no external files needed)
+// PWA Icons (generated SVG — no external files needed)
 const V4NZ_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="96" fill="#0b0b12"/>
   <rect x="24" y="24" width="464" height="464" rx="80" fill="none" stroke="#00f0ff" stroke-width="4" opacity=".3"/>
@@ -2931,7 +2803,7 @@ app.get('/icon-maskable.svg', (req, res) => {
 
 // OG Image (static SVG served as image for social sharing previews)
 app.get('/og-image.png', (req, res) => {
-  // Serve an SVG with .png extension â€” most crawlers accept this
+  // Serve an SVG with .png extension — most crawlers accept this
   // For pixel-perfect PNG, install 'canvas' or 'sharp' npm packages
   res.set('Content-Type', 'image/svg+xml');
   res.send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
@@ -2940,14 +2812,14 @@ app.get('/og-image.png', (req, res) => {
     <rect x="16" y="16" width="1168" height="598" rx="24" fill="none" stroke="#00f0ff" stroke-width="2" opacity=".2"/>
     <text x="600" y="260" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="140" fill="#00f0ff">V4NZ</text>
     <text x="600" y="360" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="42" fill="#eaeaf2">PUBG Console Stats Tracker</text>
-    <text x="600" y="430" text-anchor="middle" font-family="sans-serif" font-weight="400" font-size="28" fill="#9e9eb8">PlayStation &amp; Xbox â€” Estadisticas en Tiempo Real</text>
+    <text x="600" y="430" text-anchor="middle" font-family="sans-serif" font-weight="400" font-size="28" fill="#9e9eb8">PlayStation &amp; Xbox — Estadisticas en Tiempo Real</text>
     <text x="600" y="560" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="24" fill="#ff6b00">v4nz.com</text>
   </svg>`);
 });
 
-// â•â•â• PLAYER NAME HISTORY â•â•â•
+// ═══ PLAYER NAME HISTORY ═══
 
-// POST /players/track-name â€” Track accountId â†” gamertag, detect name changes
+// POST /players/track-name — Track accountId ↔ gamertag, detect name changes
 app.post('/players/track-name', async (req, res) => {
   if (!pool) return res.json({ ok: true });
   try {
@@ -2963,7 +2835,7 @@ app.post('/players/track-name', async (req, res) => {
           'INSERT INTO player_name_history (account_id, old_name, new_name, platform) VALUES ($1, $2, $3, $4)',
           [accountId, oldName, playerName, platform || 'psn']
         );
-        console.log(`[name-change] Detected: "${oldName}" â†’ "${playerName}" (${accountId})`);
+        console.log(`[name-change] Detected: "${oldName}" → "${playerName}" (${accountId})`);
         // Update clan_members if this player is in any clan
         await pool.query('UPDATE clan_members SET player_name = $1 WHERE player_name = $2', [playerName, oldName]).catch(() => {});
       }
@@ -2982,7 +2854,7 @@ app.post('/players/track-name', async (req, res) => {
   }
 });
 
-// GET /players/:name/aliases â€” Get all known names for a player
+// GET /players/:name/aliases — Get all known names for a player
 app.get('/players/:name/aliases', async (req, res) => {
   if (!pool) return res.json({ aliases: [] });
   try {
@@ -3010,7 +2882,7 @@ app.get('/players/:name/aliases', async (req, res) => {
   }
 });
 
-// GET /clans/:tag/aliases â€” Get name changes for all members of a clan
+// GET /clans/:tag/aliases — Get name changes for all members of a clan
 app.get('/clans/:tag/member-aliases', async (req, res) => {
   if (!pool) return res.json({ aliases: {} });
   try {
@@ -3051,7 +2923,7 @@ app.get('/clans/:tag/member-aliases', async (req, res) => {
 // HTML attribute escaping for dynamic meta tags
 function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-// â•â•â• MAP IMAGE PROXY (GitHub LFS workaround) â•â•â•
+// ═══ MAP IMAGE PROXY (GitHub LFS workaround) ═══
 const MAP_IMG_CACHE = {};  // In-memory cache: { mapKey: { buffer, contentType, fetchedAt } }
 const MAP_IMG_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days cache
 const MAP_IMG_NAMES = {
@@ -3109,7 +2981,7 @@ app.get('/maps/:name.png', async (req, res) => {
 });
 
 
-// â•â•â• DYNAMIC SITEMAP â•â•â•
+// ═══ DYNAMIC SITEMAP ═══
 app.get('/sitemap.xml', async (req, res) => {
   const staticPages = [
     { loc: '/', priority: '1.0', changefreq: 'daily' },
@@ -3148,61 +3020,6 @@ ${urls.map(u => `  <url>
   res.send(xml);
 });
 
-// â•â•â• CRON DEBUG â•â•â•
-// Public runtime status of the clan-refresh cron. Read from the browser
-// to verify the scheduler is alive without SSHing into Railway logs.
-// IMPORTANTE: debe ir ANTES del catch-all app.get('*') o Express lo intercepta.
-app.get('/debug/cron', async (req, res) => {
-  const s = global._cronState || null;
-  const stats = {};
-  if (pool) {
-    try {
-      const q = await pool.query(`
-        SELECT
-          COUNT(*)::int AS total_clans,
-          COUNT(*) FILTER (WHERE pubg_clan_id IS NOT NULL)::int AS with_pubg_id,
-          COUNT(*) FILTER (WHERE pubg_clan_id IS NULL)::int AS without_pubg_id,
-          COUNT(*) FILTER (WHERE stats_updated_at IS NULL)::int AS never_updated,
-          COUNT(*) FILTER (WHERE stats_updated_at < NOW() - INTERVAL '24 hours')::int AS stale_24h_all,
-          COUNT(*) FILTER (WHERE stats_updated_at < NOW() - INTERVAL '7 days')::int AS stale_7d_all,
-          COUNT(*) FILTER (WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours'))::int AS cron_eligible,
-          MIN(stats_updated_at) AS oldest_update,
-          MAX(stats_updated_at) AS newest_update
-        FROM clans
-      `);
-      Object.assign(stats, q.rows[0]);
-      // Top 5 clanes mÃ¡s viejos que el cron ignora por no tener pubg_clan_id
-      const orphans = await pool.query(`
-        SELECT tag, name, stats_updated_at
-        FROM clans
-        WHERE pubg_clan_id IS NULL
-        ORDER BY stats_updated_at ASC NULLS FIRST
-        LIMIT 5
-      `);
-      stats.orphan_samples = orphans.rows;
-    } catch (e) { stats.error = e.message; }
-  }
-  res.json({
-    serverTime: new Date().toISOString(),
-    uptime: process.uptime(),
-    cron: s,
-    dbStats: stats,
-    dbConnected: !!pool
-  });
-});
-
-// â•â•â• HEALTH CHECK â•â•â•
-// IMPORTANTE: debe ir ANTES del catch-all app.get('*') o Express lo intercepta.
-app.get('/health', async (req, res) => {
-  const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
-  if (pool) {
-    try { await pool.query('SELECT 1'); health.database = 'connected'; }
-    catch (e) { health.database = 'error'; health.status = 'degraded'; }
-  } else { health.database = 'not configured'; }
-  health.apiKey = SERVER_API_KEY ? 'configured' : 'missing';
-  res.status(health.status === 'ok' ? 200 : 503).json(health);
-});
-
 // Fallback: serve index.html for SPA routes with dynamic meta tags
 app.get('*', (req, res) => {
   const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
@@ -3210,12 +3027,12 @@ app.get('*', (req, res) => {
 
   // Map SPA paths to SEO titles/descriptions for crawlers
   const spaPages = {
-    '/clanes': { title: 'Clanes PUBG Consola â€” Busca y Compara | V4NZ', desc: 'Busca clanes de PUBG en PlayStation y Xbox. Compara estadÃ­sticas, miembros, kills y ranking entre clanes.' },
-    '/clans': { title: 'Clanes PUBG Consola â€” Busca y Compara | V4NZ', desc: 'Busca clanes de PUBG en PlayStation y Xbox. Compara estadÃ­sticas, miembros, kills y ranking entre clanes.' },
-    '/ranking': { title: 'Ranking de Clanes PUBG â€” Top Clanes Consola | V4NZ', desc: 'Ranking de los mejores clanes de PUBG en consola. ClasificaciÃ³n por kills, K/D, victorias y mÃ¡s.' },
-    '/top500': { title: 'Top 500 PUBG Consola â€” Leaderboard Oficial | V4NZ', desc: 'Top 500 jugadores de PUBG en PlayStation y Xbox. Leaderboard oficial con stats en tiempo real.' },
-    '/comparar': { title: 'Comparar Jugadores PUBG â€” Stats vs Stats | V4NZ', desc: 'Compara estadÃ­sticas de dos jugadores de PUBG en consola. K/D, victorias, daÃ±o, headshots y mÃ¡s cara a cara.' },
-    '/compare': { title: 'Comparar Jugadores PUBG â€” Stats vs Stats | V4NZ', desc: 'Compara estadÃ­sticas de dos jugadores de PUBG en consola. K/D, victorias, daÃ±o, headshots y mÃ¡s cara a cara.' }
+    '/clanes': { title: 'Clanes PUBG Consola — Busca y Compara | V4NZ', desc: 'Busca clanes de PUBG en PlayStation y Xbox. Compara estadísticas, miembros, kills y ranking entre clanes.' },
+    '/clans': { title: 'Clanes PUBG Consola — Busca y Compara | V4NZ', desc: 'Busca clanes de PUBG en PlayStation y Xbox. Compara estadísticas, miembros, kills y ranking entre clanes.' },
+    '/ranking': { title: 'Ranking de Clanes PUBG — Top Clanes Consola | V4NZ', desc: 'Ranking de los mejores clanes de PUBG en consola. Clasificación por kills, K/D, victorias y más.' },
+    '/top500': { title: 'Top 500 PUBG Consola — Leaderboard Oficial | V4NZ', desc: 'Top 500 jugadores de PUBG en PlayStation y Xbox. Leaderboard oficial con stats en tiempo real.' },
+    '/comparar': { title: 'Comparar Jugadores PUBG — Stats vs Stats | V4NZ', desc: 'Compara estadísticas de dos jugadores de PUBG en consola. K/D, victorias, daño, headshots y más cara a cara.' },
+    '/compare': { title: 'Comparar Jugadores PUBG — Stats vs Stats | V4NZ', desc: 'Compara estadísticas de dos jugadores de PUBG en consola. K/D, victorias, daño, headshots y más cara a cara.' }
   };
 
   try {
@@ -3225,14 +3042,14 @@ app.get('*', (req, res) => {
     if (statsMatch) {
       const platform = statsMatch[1].toUpperCase();
       const playerName = decodeURIComponent(statsMatch[2]);
-      title = `${playerName} â€” Stats PUBG ${platform} | V4NZ`;
-      desc = `EstadÃ­sticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daÃ±o y mÃ¡s. Datos en tiempo real via PUBG API.`;
+      title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
+      desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
       canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
       ogImage = `https://v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
     } else if (clanMatch) {
       const clanTag = decodeURIComponent(clanMatch[1]).toUpperCase();
-      title = `Clan [${clanTag}] â€” PUBG Stats Consola | V4NZ`;
-      desc = `EstadÃ­sticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
+      title = `Clan [${clanTag}] — PUBG Stats Consola | V4NZ`;
+      desc = `Estadísticas del clan ${clanTag} en PUBG consola. Miembros, kills, K/D medio, victorias y ranking.`;
       canonicalUrl = `https://v4nz.com/clan/${encodeURIComponent(clanTag)}`;
       ogImage = `https://v4nz.com/og-image/clan/${encodeURIComponent(clanTag)}.png`;
     } else if (spaPages[req.path]) {
@@ -3269,7 +3086,7 @@ app.get('*', (req, res) => {
   }
 });
 
-// â•â•â• LEADERBOARD PRE-WARM â•â•â•
+// ═══ LEADERBOARD PRE-WARM ═══
 // Pre-warm the most popular leaderboard combos on startup + every 2 hours
 async function prewarmLeaderboards() {
   if (!SERVER_API_KEY || !pool) return;
@@ -3286,7 +3103,18 @@ async function prewarmLeaderboards() {
   }
 }
 
-// â•â•â• GRACEFUL SHUTDOWN â•â•â•
+// ═══ HEALTH CHECK ═══
+app.get('/health', async (req, res) => {
+  const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
+  if (pool) {
+    try { await pool.query('SELECT 1'); health.database = 'connected'; }
+    catch (e) { health.database = 'error'; health.status = 'degraded'; }
+  } else { health.database = 'not configured'; }
+  health.apiKey = SERVER_API_KEY ? 'configured' : 'missing';
+  res.status(health.status === 'ok' ? 200 : 503).json(health);
+});
+
+// ═══ GRACEFUL SHUTDOWN ═══
 function gracefulShutdown(signal) {
   console.log(`\n[${signal}] Shutting down gracefully...`);
   if (_server) {
@@ -3303,176 +3131,48 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('uncaughtException', (err) => { console.error('[FATAL] Uncaught exception:', err); gracefulShutdown('uncaughtException'); });
 process.on('unhandledRejection', (reason) => { console.error('[FATAL] Unhandled rejection:', reason); });
 
-// â•â•â• START â•â•â•
+// ═══ START ═══
 let _server;
 initDB().then(() => {
   _server = app.listen(PORT, () => {
     console.log(`
-â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
-â•‘  V4NZ PUBG Stats Server v2.0                 â•‘
-â•‘  http://localhost:${PORT}                        â•‘
-â•‘                                               â•‘
-â•‘  API Key: ${SERVER_API_KEY ? 'CONFIGURADA âœ“' : 'NO CONFIGURADA âœ—'}
-â•‘  Database: ${pool ? 'CONECTADA âœ“' : 'NO CONFIGURADA (localStorage)'}
-â•‘  Clan API: ${pool ? '/clans/* ACTIVO' : 'DESACTIVADO'}
-â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+╔═══════════════════════════════════════════════╗
+║  V4NZ PUBG Stats Server v2.0                 ║
+║  http://localhost:${PORT}                        ║
+║                                               ║
+║  API Key: ${SERVER_API_KEY ? 'CONFIGURADA ✓' : 'NO CONFIGURADA ✗'}
+║  Database: ${pool ? 'CONECTADA ✓' : 'NO CONFIGURADA (localStorage)'}
+║  Clan API: ${pool ? '/clans/* ACTIVO' : 'DESACTIVADO'}
+╚═══════════════════════════════════════════════╝
     `);
     // Pre-warm leaderboards 5s after startup, then every 2 hours
     setTimeout(prewarmLeaderboards, 5000);
     setInterval(prewarmLeaderboards, 2 * 60 * 60 * 1000);
 
-    // â•â•â• CRON: Auto-refresh stale clans (>24h old) â•â•â•
-    // NOTE: Runs every hour instead of every 24h. Railway restarts the process
-    // frequently (deploys, env changes, auto-restarts), so a 24h setInterval
-    // rarely fires. The SQL filter already restricts to clans with
-    // stats_updated_at older than 24h, so running hourly is safe â€” it just
-    // catches up faster after restarts and is self-healing.
-    // Shared cron state (exposed via GET /debug/cron for runtime diagnostics)
-    global._cronState = {
-      armedAt: new Date().toISOString(),
-      tickCount: 0,
-      running: false,
-      runningSince: null,
-      lastRunTs: null,
-      lastDurationMs: null,
-      lastResult: null,   // {staleCount, updated, failed, message}
-      lastError: null,    // {ts, message}
-      nextRunAt: null,
-      intervalMs: 15 * 60 * 1000
-    };
-    const _cron = global._cronState;
-    // Helper: resolve a clan's pubg_clan_id via its first member across shards.
-    // Mirrors the fallback logic in POST /clans/refresh-stats/:tag.
-    async function resolveOrphanClanId(tag, platform) {
-      if (!SERVER_API_KEY) return null;
-      const firstMember = await pool.query(
-        'SELECT player_name FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC LIMIT 1',
-        [tag]
-      );
-      if (!firstMember.rows.length) return null;
-      const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
-      const shardsToTry = [platform || 'psn', 'xbox', 'psn', 'steam'].filter((v, i, a) => a.indexOf(v) === i);
-      for (const shard of shardsToTry) {
-        try {
-          const playerResp = await fetchWithTimeout(fetch,
-            `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(firstMember.rows[0].player_name)}`,
-            { headers }, 8000);
-          if (playerResp.ok) {
-            const playerData = await playerResp.json();
-            const cId = playerData.data?.[0]?.attributes?.clanId;
-            if (cId) return { foundClanId: cId, foundShard: shard };
-          }
-        } catch (e) {
-          console.log(`[cron] resolve ${tag} shard ${shard} failed: ${e.message}`);
-        }
-      }
-      return null;
-    }
-    async function cronResolveOrphans() {
-      // Query clans with NULL pubg_clan_id that are stale (or never updated)
-      const orphans = await pool.query(
-        "SELECT tag, platform FROM clans WHERE pubg_clan_id IS NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 10"
-      );
-      if (!orphans.rows.length) return { tried: 0, resolved: 0 };
-      console.log(`[cron] resolving ${orphans.rows.length} orphan clans (no pubg_clan_id)...`);
-      let resolved = 0;
-      for (const o of orphans.rows) {
-        try {
-          const r = await resolveOrphanClanId(o.tag, o.platform);
-          if (r) {
-            await pool.query('UPDATE clans SET pubg_clan_id = $1, platform = $2 WHERE tag = $3', [r.foundClanId, r.foundShard, o.tag]);
-            console.log(`[cron] âœ“ resolved orphan [${o.tag}] â†’ ${r.foundClanId} (${r.foundShard})`);
-            resolved++;
-          } else {
-            console.log(`[cron] âœ— could not resolve orphan [${o.tag}]`);
-          }
-          await new Promise(r => setTimeout(r, 2000));
-        } catch (e) {
-          console.error(`[cron] orphan resolution error [${o.tag}]:`, e.message);
-        }
-      }
-      return { tried: orphans.rows.length, resolved };
-    }
+    // ═══ CRON: Auto-refresh all clans every 24h ═══
     async function cronRefreshAllClans() {
-      _cron.tickCount++;
-      const startMs = Date.now();
-      const ts = new Date().toISOString();
-      _cron.nextRunAt = new Date(startMs + _cron.intervalMs).toISOString();
-      // Heartbeat ALWAYS â€” so we can confirm in Railway logs that the cron is alive
-      console.log(`[cron] heartbeat #${_cron.tickCount} @ ${ts}`);
-      if (!pool) {
-        _cron.lastResult = { staleCount: 0, updated: 0, failed: 0, message: 'no DB pool' };
-        _cron.lastRunTs = ts;
-        console.log('[cron] skipped â€” no DB pool');
-        return;
-      }
-      // Watchdog: if previous run has been "running" for >30 min, assume it's stuck and reset
-      if (_cron.running && _cron.runningSince) {
-        const stuckMin = (startMs - new Date(_cron.runningSince).getTime()) / 60000;
-        if (stuckMin > 30) {
-          console.warn(`[cron] watchdog: previous run stuck for ${stuckMin.toFixed(1)}min â€” resetting flag`);
-          _cron.running = false;
-          _cron.lastError = { ts, message: `watchdog reset after ${stuckMin.toFixed(1)}min stuck` };
-        }
-      }
-      if (_cron.running) {
-        console.log('[cron] skipped â€” previous run still in progress');
-        return;
-      }
-      _cron.running = true;
-      _cron.runningSince = ts;
-      let updated = 0, failed = 0, staleCount = 0;
-      let orphansResolved = { tried: 0, resolved: 0 };
+      if (!pool) return;
       try {
-        // Step 1: resolve orphan clans (no pubg_clan_id) so they become eligible below
-        try {
-          orphansResolved = await cronResolveOrphans();
-          if (orphansResolved.tried) {
-            console.log(`[cron] orphans: tried ${orphansResolved.tried}, resolved ${orphansResolved.resolved}`);
-          }
-        } catch (oe) {
-          console.error('[cron] orphan phase error:', oe.message);
-        }
         const staleClans = await pool.query(
           "SELECT tag, pubg_clan_id FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 20"
         );
-        staleCount = staleClans.rows.length;
-        if (!staleCount) {
-          console.log('[cron] all clans up to date (0 stale)');
-          _cron.lastResult = { staleCount: 0, updated: 0, failed: 0, orphansResolved, message: 'all up to date' };
-          return;
-        }
-        console.log(`[cron] refreshing ${staleCount} stale clans...`);
+        if (!staleClans.rows.length) { console.log('[cron] All clans up to date'); return; }
+        console.log(`[cron] Refreshing ${staleClans.rows.length} stale clans...`);
         for (const clan of staleClans.rows) {
           try {
             await importClanByPubgId(clan.pubg_clan_id);
-            updated++;
-            console.log(`[cron] âœ“ updated [${clan.tag}]`);
+            console.log(`[cron] ✓ Updated [${clan.tag}]`);
             // Small delay between imports to respect PUBG API rate limits
             await new Promise(r => setTimeout(r, 3000));
           } catch (e) {
-            failed++;
-            console.error(`[cron] âœ— failed [${clan.tag}]:`, e.message);
+            console.error(`[cron] ✗ Failed [${clan.tag}]:`, e.message);
           }
         }
-        console.log(`[cron] clan refresh cycle complete â€” ${updated} updated, ${failed} failed`);
-        _cron.lastResult = { staleCount, updated, failed, orphansResolved, message: 'refresh complete' };
-      } catch (e) {
-        console.error('[cron] error:', e.message);
-        _cron.lastError = { ts: new Date().toISOString(), message: e.message };
-        _cron.lastResult = { staleCount, updated, failed, message: 'error: ' + e.message };
-      } finally {
-        _cron.running = false;
-        _cron.runningSince = null;
-        _cron.lastRunTs = new Date().toISOString();
-        _cron.lastDurationMs = Date.now() - startMs;
-      }
+        console.log('[cron] Clan refresh cycle complete');
+      } catch (e) { console.error('[cron] Error:', e.message); }
     }
-    // Run 20s after startup, then every 15 min. SQL guard makes it cheap.
-    // 15min keeps the heartbeat visible and self-heals fast after Railway restarts.
-    setTimeout(cronRefreshAllClans, 20000);
-    setInterval(cronRefreshAllClans, _cron.intervalMs);
-    _cron.nextRunAt = new Date(Date.now() + 20000).toISOString();
-    console.log('[cron] scheduler armed: first run in 20s, then every 15min');
+    // Run 30s after startup, then every 24 hours
+    setTimeout(cronRefreshAllClans, 30000);
+    setInterval(cronRefreshAllClans, 24 * 60 * 60 * 1000);
   });
 });
