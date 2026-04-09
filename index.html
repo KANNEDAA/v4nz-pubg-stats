@@ -1278,6 +1278,8 @@ footer a { color: var(--accent); text-decoration: none; }
 
 /* ═══════════════════════════════════════════════════════════════
    V4NZ VISUAL POLISH v148 — marker: visual-polish-v148-consolidate
+   V4NZ v149 — admin panel removed (todo es automatico) — marker: admin-removed-v149
+   V4NZ v149 — empty states para WL grid + match history (14 dias retencion) — marker: empty-state-14d-v149
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -1655,15 +1657,7 @@ body.telem-open { overflow:hidden; }
 <div class="bg-radial"></div>
 
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text" id="mainLoaderStep">Buscando jugador...</div><div class="loader-timer" id="mainLoaderTimer" style="display:none;">0.0s</div></div>
-<div id="adminModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
-<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
-<div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:16px;color:var(--accent);">ADMIN</div>
-<input type="password" id="adminPwdInput" placeholder="Contraseña" style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:1rem;margin-bottom:12px;outline:none;box-sizing:border-box;">
-<div style="display:flex;gap:8px;justify-content:center;">
-<button id="adminPwdOk" style="padding:10px 24px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer;">ENTRAR</button>
-<button id="adminPwdCancel" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;">Cancelar</button>
-</div>
-</div></div>
+<!-- admin panel removed v149 — todo es automatico -->
 
 <header>
   <div class="header-inner">
@@ -1923,33 +1917,7 @@ body.telem-open { overflow:hidden; }
         <a href="https://discord.com/invite/Kw4NA3b8p8" target="_blank" class="banner-discord-cta">Entrar en Discord</a>
       </div>
       <div id="clanHistorySection"></div>
-      <!-- Admin panel (hidden by default, requires /admin route + password) -->
-      <div id="clanAdminPanel" style="display:none;margin-top:20px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:14px;padding:20px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <span style="font-size:1rem;">&#x1F6E0;</span>
-          <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent-orange);">Admin &mdash; Herramientas de Clan</div>
-        </div>
-        <div style="margin-bottom:12px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
-          <div style="font-size:.75rem;font-weight:600;color:var(--accent-orange);margin-bottom:6px;">&#x1F4E5; Importar desde pubgclans.net</div>
-          <p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Pega la URL o el clanId de pubgclans.net:</p>
-          <div style="display:flex;gap:8px;"><input id="pubgclansIdInput" class="clan-input" style="flex:1;" placeholder="URL de pubgclans.net o clan.xxxxxxxx..." onkeydown="if(event.key==='Enter')importFromPubgclans()"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent-orange);color:var(--bg-primary);" onclick="importFromPubgclans()">IMPORTAR</button></div>
-          <div id="importStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>
-        </div>
-        <div style="padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
-          <div style="font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:6px;">&#x1F50D; Auto-descubrir por partidas</div>
-          <p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">Gamertag de un miembro para analizar sus partidas:</p>
-          <div style="display:flex;gap:8px;"><input id="adminDiscoverInput" class="clan-input" style="flex:1;" placeholder="Gamertag..." onkeydown="if(event.key==='Enter')adminDiscoverMembers()"/><button class="search-btn" style="border-radius:8px;padding:10px 20px;background:var(--accent);color:var(--bg-primary);" onclick="adminDiscoverMembers()">DESCUBRIR</button></div>
-          <div id="adminDiscoverStatus" style="margin-top:8px;font-size:.68rem;color:var(--text-dim);"></div>
-        </div>
-        <div id="adminPendingRequests" style="margin-top:12px;"></div>
-        <div style="margin-top:12px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div style="font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:0;">&#x1F4CA; Metricas de Uso</div>
-            <button onclick="loadAdminMetrics()" style="background:transparent;border:1px solid rgba(0,240,255,0.3);color:var(--accent);font-family:Rajdhani;font-size:.65rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;">&#x1F504; Actualizar</button>
-          </div>
-          <div id="adminMetricsContent" style="font-size:.7rem;color:var(--text-secondary);">Pulsa Actualizar para cargar metricas.</div>
-        </div>
-      </div>
+      <!-- admin panel removed v149 — todo es automatico -->
     </div>
     <div id="clanCompareMode" style="display:none;">
       <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;margin-bottom:16px;">
@@ -3727,49 +3695,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     else{location.reload();}
   });
-  // Admin panel: check if admin is stored in sessionStorage from /admin route
-  if(sessionStorage.getItem('adminMode')==='true'){
-    const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
-    loadPendingRequests();
-  }
-  // Check if on /admin route and show admin login modal (verified server-side)
-  if(location.pathname==='/admin'){
-    const modal=document.getElementById('adminModal');modal.style.display='flex';
-    const inp=document.getElementById('adminPwdInput');setTimeout(()=>inp.focus(),100);
-    function doAdminLogin(){
-      const pwd=inp.value;if(!pwd){inp.focus();return;}
-      const okBtn=document.getElementById('adminPwdOk');
-      if(okBtn){okBtn.disabled=true;okBtn.textContent='...';}
-      fetch('/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({password:pwd})})
-      .then(async r=>{
-        let d=null;try{d=await r.json();}catch(e){}
-        if(okBtn){okBtn.disabled=false;okBtn.textContent='OK';}
-        if(r.ok&&d&&d.ok&&d.token){
-          sessionStorage.setItem('adminMode','true');
-          sessionStorage.setItem('adminToken',d.token);
-          const ap=document.getElementById('clanAdminPanel');if(ap)ap.style.display='block';
-          loadPendingRequests();
-          modal.style.display='none';history.replaceState(null,'','/');
-        }else{
-          // Mostrar el error real en lugar de cerrar silenciosamente
-          inp.value='';
-          const errMsg=(d&&d.error)?d.error:('Error '+r.status+' — intenta de nuevo');
-          inp.placeholder=errMsg;
-          inp.focus();
-          console.warn('[admin] Login fallido:',r.status,d);
-        }
-      }).catch(err=>{
-        if(okBtn){okBtn.disabled=false;okBtn.textContent='OK';}
-        inp.value='';
-        inp.placeholder='Sin conexión con el servidor';
-        inp.focus();
-        console.error('[admin] Network error:',err);
-      });
-    }
-    document.getElementById('adminPwdOk').onclick=doAdminLogin;
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin();});
-    document.getElementById('adminPwdCancel').onclick=()=>{modal.style.display='none';history.replaceState(null,'','/');};
-  }
+  // Admin panel removed v149 — todo es automatico
+  // Limpiar restos de sesiones anteriores que pudieran tener admin guardado
+  try{sessionStorage.removeItem('adminMode');sessionStorage.removeItem('adminToken');}catch(e){}
+  // /admin redirige a la home (compatibilidad con enlaces antiguos)
+  if(location.pathname==='/admin'){history.replaceState(null,'','/');}
 });
 
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
@@ -4440,7 +4370,7 @@ function renderOverviewStats(){
 }
 
 function renderMatchHistoryDemo(){let h='';DEMO_DATA.matches.forEach(m=>{const pc=m.place===1?'win':m.place<=10?'top10':'normal';h+='<div class="match-item animate-in"><div class="match-place '+pc+'">'+(m.place===1?'&#x1F3C6; #1':'#'+m.place)+'</div><div class="match-mode">'+m.mode+'<span class="map-name">'+m.map+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+m.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+m.damage+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(m.time)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+m.ago+'</div></div>';});document.getElementById('matchList').innerHTML=h;}
-function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}if(!currentMatchData.length){document.getElementById('matchList').innerHTML='<div class="empty-state"><p>No hay partidas recientes</p></div>';return;}const pn=currentPlayerData.attributes.name;
+function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}if(!currentMatchData.length){document.getElementById('matchList').innerHTML='<div class="empty-state" style="padding:32px 20px;text-align:center;"><div style="font-size:2rem;margin-bottom:10px;">&#x1F570;&#xFE0F;</div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);margin-bottom:8px;">Sin partidas en los ultimos 14 dias</div><p style="font-size:.8rem;color:var(--text-dim);line-height:1.5;max-width:460px;margin:0 auto;">La PUBG API borra el historial de partidas pasados 14 dias. Juega una partida en PSN/Xbox y vuelve a buscarte para ver el historial completo con mapas, kills, dano y telemetria.</p></div>';return;}const pn=currentPlayerData.attributes.name;
   // Build rivals set for badge detection
   window._matchRivalsSet=new Set();
   const _rc={};currentMatchData.forEach(match=>{const seen=new Set();(match.included||[]).filter(i=>i.type==='participant').forEach(p=>{const nmL=p.attributes.stats.name.toLowerCase();if(nmL===pn.toLowerCase()||seen.has(nmL))return;seen.add(nmL);_rc[nmL]=(_rc[nmL]||0)+1;});});Object.entries(_rc).forEach(([k,v])=>{if(v>=3)window._matchRivalsSet.add(k);});
@@ -6541,7 +6471,10 @@ function renderRankBadge(){
 /* === W/L GRID (Last matches) === */
 function renderWLGrid(){
   const c=document.getElementById('wlGridContainer');
-  if(!currentMatchData||!currentMatchData.length){c.innerHTML='';return;}
+  if(!currentMatchData||!currentMatchData.length){
+    c.innerHTML='<div class="empty-state" style="margin-top:16px;padding:24px 20px;text-align:center;background:var(--bg-card);border:1px dashed var(--border);border-radius:14px;"><div style="font-size:1.6rem;margin-bottom:8px;">&#x1F3AE;</div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.95rem;color:var(--text-primary);margin-bottom:6px;">Sin partidas recientes</div><div style="font-size:.78rem;color:var(--text-dim);line-height:1.5;max-width:440px;margin:0 auto;">La API de PUBG solo guarda las partidas de los <strong>ultimos 14 dias</strong>. Si no has jugado recientemente, el historial, la parrilla W/L y las graficas de kills/dano aparecen vacios. Juega una partida y vuelve a buscarte para ver los datos.</div></div>';
+    return;
+  }
   const pn=currentPlayerData?.attributes?.name||'';
   let cells=[],wins=0,top10s=0,deaths=0;
   currentMatchData.forEach(match=>{
@@ -7750,121 +7683,7 @@ async function refreshClanStats(clanTag,btn){
     setTimeout(()=>{btn.innerHTML=origText;btn.disabled=false;btn.style.opacity='1';btn.style.color='';},3000);
   }
 }
-// Admin: Load pending member requests
-async function loadPendingRequests(){
-  const container=document.getElementById('adminPendingRequests');
-  if(!container)return;
-  try{
-    const adminTk=sessionStorage.getItem('adminToken');
-    if(!adminTk){container.innerHTML='<div style="font-size:.72rem;color:#ff4444;text-align:center;padding:8px;">No hay token admin. Vuelve a /admin</div>';return;}
-    const r=await fetch('/clans/requests/pending',{headers:{'Authorization':'Bearer '+adminTk}});
-    if(!r.ok){
-      container.innerHTML='<div style="font-size:.72rem;color:#ff4444;text-align:center;padding:8px;">Error '+r.status+(r.status===401?' — token expirado, vuelve a /admin':'')+'</div>';
-      console.warn('[admin] /clans/requests/pending →',r.status);
-      return;
-    }
-    const d=await r.json();
-    if(!d.requests||!d.requests.length){
-      container.innerHTML='<div style="font-size:.72rem;color:var(--text-dim);text-align:center;padding:8px;">No hay solicitudes pendientes</div>';
-      return;
-    }
-    let h='<div style="font-size:.75rem;font-weight:600;color:var(--accent-yellow);margin-bottom:8px;">&#x1F4CB; Solicitudes pendientes ('+d.requests.length+')</div>';
-    d.requests.forEach(req=>{
-      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;font-size:.72rem;">';
-      h+='<span style="color:var(--text-primary);font-weight:600;">'+req.player_name+'</span>';
-      h+='<span style="color:var(--text-dim);">&#x2192; ['+req.clan_tag+']</span>';
-      h+='<span style="color:var(--text-dim);font-size:.6rem;margin-left:auto;">'+new Date(req.created_at).toLocaleDateString('es-ES')+'</span>';
-      h+='<button style="background:var(--accent-green);color:#000;border:none;padding:4px 10px;border-radius:4px;font-size:.65rem;font-weight:700;cursor:pointer;" onclick="approveRequest('+req.id+',this)">OK</button>';
-      h+='<button style="background:var(--accent-red);color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:.65rem;font-weight:700;cursor:pointer;" onclick="rejectRequest('+req.id+',this)">NO</button>';
-      h+='</div>';
-    });
-    container.innerHTML=h;
-  }catch(e){
-    container.innerHTML='<div style="font-size:.72rem;color:#ff4444;text-align:center;padding:8px;">Error de red al cargar solicitudes</div>';
-    console.error('[admin] loadPendingRequests:',e);
-  }
-}
-async function approveRequest(id,btn){
-  btn.disabled=true;btn.textContent='...';
-  try{
-    await fetch('/clans/requests/'+id+'/approve',{method:'POST',headers:{'Authorization':'Bearer '+(sessionStorage.getItem('adminToken')||'')}});
-    btn.parentElement.style.opacity='0.3';btn.parentElement.innerHTML+='<span style="color:var(--accent-green);font-size:.65rem;margin-left:8px;">Aprobado</span>';
-  }catch(e){btn.textContent='ERR';}
-}
-async function rejectRequest(id,btn){
-  btn.disabled=true;btn.textContent='...';
-  try{
-    await fetch('/clans/requests/'+id+'/reject',{method:'POST',headers:{'Authorization':'Bearer '+(sessionStorage.getItem('adminToken')||'')}});
-    btn.parentElement.style.opacity='0.3';btn.parentElement.innerHTML+='<span style="color:var(--accent-red);font-size:.65rem;margin-left:8px;">Rechazado</span>';
-  }catch(e){btn.textContent='ERR';}
-}
-// Admin metrics
-async function loadAdminMetrics(){
-  const el=document.getElementById('adminMetricsContent');
-  if(!el)return;
-  const tk=sessionStorage.getItem('adminToken');
-  if(!tk){el.innerHTML='<span style="color:#ff4444;">No hay token admin. Navega a /admin primero.</span>';return;}
-  el.innerHTML='<div class="spinner" style="width:16px;height:16px;margin:8px auto;"></div>';
-  try{
-    const r=await fetch('/admin/metrics',{headers:{'Authorization':'Bearer '+tk}});
-    if(!r.ok)throw new Error('Error '+r.status);
-    const d=await r.json();
-    let h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:12px;">';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:var(--accent);">'+d.activeNow+'</div><div style="font-size:.6rem;color:var(--text-dim);">ACTIVOS AHORA</div></div>';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:var(--accent-green);">'+d.uniqueIPsTotal+'</div><div style="font-size:.6rem;color:var(--text-dim);">IPs UNICAS</div></div>';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;">'+d.totalRequests+'</div><div style="font-size:.6rem;color:var(--text-dim);">PETICIONES TOTAL</div></div>';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:var(--accent-yellow);">'+d.apiRequests+'</div><div style="font-size:.6rem;color:var(--text-dim);">API PUBG</div></div>';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:'+(d.rateLimited>0?'#ff4444':'var(--accent-green)')+';">'+d.rateLimited+'</div><div style="font-size:.6rem;color:var(--text-dim);">RATE LIMITED</div></div>';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;color:'+(d.pubgRateLimited>0?'#ff4444':'var(--accent-green)')+';">'+d.pubgRateLimited+'</div><div style="font-size:.6rem;color:var(--text-dim);">PUBG 429</div></div>';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:1.1rem;font-weight:700;">'+d.cache.rate+'</div><div style="font-size:.6rem;color:var(--text-dim);">CACHE HIT</div></div>';
-    h+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Orbitron;font-size:.9rem;font-weight:700;">'+d.uptime+'</div><div style="font-size:.6rem;color:var(--text-dim);">UPTIME</div></div>';
-    h+='</div>';
-    // Hourly chart (last 12 hours as bars)
-    const hours=Object.entries(d.hourly||{}).slice(-12);
-    if(hours.length){
-      const maxReq=Math.max(...hours.map(([,v])=>v.requests),1);
-      h+='<div style="font-size:.65rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;">ULTIMAS 12 HORAS</div>';
-      h+='<div style="display:flex;gap:2px;align-items:flex-end;height:60px;margin-bottom:8px;">';
-      hours.forEach(([hr,v])=>{
-        const pct=Math.max(3,Math.round(v.requests/maxReq*100));
-        const color=v.rateLimited>0?'#ff4444':'var(--accent)';
-        h+='<div title="'+hr.slice(11)+':00 — '+v.requests+' req, '+v.uniqueIPs+' IPs'+(v.rateLimited?' ('+v.rateLimited+' rate limited)':'')+'" style="flex:1;background:'+color+';border-radius:3px 3px 0 0;height:'+pct+'%;min-height:2px;cursor:help;"></div>';
-      });
-      h+='</div>';
-      h+='<div style="display:flex;justify-content:space-between;font-size:.5rem;color:var(--text-dim);">';
-      if(hours.length>0)h+='<span>'+hours[0][0].slice(11)+'h</span>';
-      if(hours.length>1)h+='<span>'+hours[hours.length-1][0].slice(11)+'h</span>';
-      h+='</div>';
-    }
-    // Top IPs
-    if(d.topIPs&&d.topIPs.length){
-      h+='<div style="font-size:.65rem;font-weight:600;color:var(--text-dim);margin-top:10px;margin-bottom:4px;">TOP IPs</div>';
-      h+='<div style="display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:.6rem;">';
-      d.topIPs.slice(0,10).forEach(ip=>{
-        h+='<span style="color:var(--text-secondary);font-family:monospace;">'+ip.ip+'</span><span style="color:var(--accent);font-weight:600;">'+ip.count+'</span>';
-      });
-      h+='</div>';
-    }
-    el.innerHTML=h;
-  }catch(e){el.innerHTML='<span style="color:#ff4444;">Error: '+e.message+'</span>';}
-}
-// Admin-only discover function
-function adminDiscoverMembers(){
-  const seed=document.getElementById('adminDiscoverInput')?.value?.trim();
-  if(!seed)return;
-  // Reuse existing discover logic but with admin status element
-  document.getElementById('clanSeedInput_admin_shim')?.remove();
-  const shim=document.createElement('input');shim.id='clanSeedInput';shim.value=seed;shim.style.display='none';
-  document.body.appendChild(shim);
-  const origStatus=document.getElementById('discoverStatus');
-  const adminStatus=document.getElementById('adminDiscoverStatus');
-  // Redirect status output
-  if(adminStatus){
-    adminStatus.id='discoverStatus';
-    discoverClanMembers('Admin','ADMIN',0,0);
-    setTimeout(()=>{adminStatus.id='adminDiscoverStatus';},100);
-  }
-}
+// Admin functions removed v149 — todo es automatico (loadPendingRequests, approveRequest, rejectRequest, loadAdminMetrics, adminDiscoverMembers)
 async function discoverClanMembers(clanName,clanTag,memberCount,level){
   const seed=document.getElementById('clanSeedInput')?.value?.trim();
   if(!seed){alert('Escribe el gamertag de un miembro del clan');return;}
@@ -7873,7 +7692,7 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
   try{
     const resp=await fetch('/clans/discover-members',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sessionStorage.getItem('adminToken')||'')},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({gamertag:seed,platform:clanPlatform})
     });
     const data=await resp.json();
@@ -7932,34 +7751,7 @@ async function discoverClanMembers(clanName,clanTag,memberCount,level){
   }
 }
 
-async function importFromPubgclans(){
-  let cid=document.getElementById('pubgclansIdInput')?.value?.trim();
-  if(!cid){alert('Pega el clanId de pubgclans.net');return;}
-  // Accept full URL or just the clanId
-  const urlMatch=cid.match(/clanId=([^&]+)/);
-  if(urlMatch)cid=urlMatch[1];
-  if(!cid.startsWith('clan.'))cid='clan.'+cid;
-  const statusEl=document.getElementById('importStatus');
-  if(statusEl)statusEl.innerHTML='<div class="api-loader" style="justify-content:flex-start;"><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div><div class="loader-text" style="font-size:.7rem;">Importando clan desde pubgclans.net + PUBG API...</div></div>';
-  try{
-    const resp=await fetch('/clans/import-pubgclans',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({clanId:cid,gameMode:'squad'})
-    });
-    const data=await resp.json();
-    if(!resp.ok)throw new Error(data.error||'Error al importar');
-    if(statusEl){
-      statusEl.innerHTML='<div style="color:var(--accent-green);font-size:.75rem;font-weight:600;">&#x2705; Clan ['+esc(data.tag)+'] '+esc(data.name)+' importado!</div>'+
-        '<div style="font-size:.7rem;color:var(--text-secondary);margin-top:4px;">'+data.members+' miembros ('+data.activeMembers+' activos) · '+data.totalKills+' kills · K/D '+data.avgKd+' · Win Rate '+data.winRate+'%</div>'+
-        '<div style="margin-top:8px;"><a href="/clan/'+data.tag+'" style="color:var(--accent);font-size:.75rem;font-weight:600;text-decoration:none;" onclick="event.preventDefault();history.pushState(null,\'\',\'/clan/'+data.tag+'\');loadClanPage(\''+data.tag+'\');">&#x27A1; VER CLAN EN EL RANKING</a></div>';
-    }
-    // Refresh leaderboard
-    loadClanRanking();
-  }catch(e){
-    if(statusEl)statusEl.innerHTML='<span style="color:var(--accent-orange);">'+esc(friendlyErr(e))+'</span>';
-  }
-}
+// importFromPubgclans removed v149 — el import ahora es automatico desde la busqueda de usuario
 
 function confirmDiscoveredMembers(clanName,clanTag,memberCount,level){
   const checks=document.querySelectorAll('#discoverCheckboxes .dc-check:checked');
