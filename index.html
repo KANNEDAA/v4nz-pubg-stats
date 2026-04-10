@@ -168,9 +168,15 @@
 .auth-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,10,.92); backdrop-filter:blur(12px); z-index:1003; justify-content:center; align-items:center; }
 .auth-popup.active { display:flex; }
 [data-theme="light"] .auth-popup { background:rgba(240,242,245,.94); }
-.auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:380px; width:92%; position:relative; box-shadow:var(--shadow-card); }
+.auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:380px; width:92%; position:relative; box-shadow:var(--shadow-card); max-height:92vh; overflow-y:auto; overscroll-behavior:contain; }
 .auth-box .close-btn { position:absolute; top:10px; right:10px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1rem; cursor:pointer; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
 .auth-box .close-btn:hover { color:var(--accent); border-color:var(--accent); }
+/* profilePopupClose — mobile fixed close button, always visible regardless of box scroll */
+.auth-popup-mobile-close { display:none; }
+@media (max-width:600px) {
+  .auth-popup-mobile-close { display:flex; align-items:center; justify-content:center; position:fixed; top:12px; right:12px; width:38px; height:38px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); font-size:1.4rem; border-radius:8px; cursor:pointer; z-index:1010; line-height:1; }
+  .auth-popup-mobile-close:active { background:var(--accent); color:#000; }
+}
 .auth-input { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); padding:10px 14px; border-radius:8px; font-size:.8rem; font-family:'Inter',sans-serif; margin-bottom:10px; outline:none; transition:border-color .2s; box-sizing:border-box; }
 .auth-input:focus { border-color:var(--accent); }
 .auth-submit { background:var(--gradient-main); color:#fff; border:none; padding:11px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; width:100%; transition:all .2s; margin-top:4px; }
@@ -2185,6 +2191,7 @@ body.telem-open { overflow:hidden; }
 
 <!-- AUTH POPUP -->
 <div class="auth-popup" id="authPopup" onclick="if(event.target===this)closeAuthPopup();">
+  <button class="auth-popup-mobile-close" id="profilePopupClose" onclick="closeAuthPopup();" aria-label="Cerrar">&times;</button>
   <div class="auth-box">
     <button class="close-btn" onclick="closeAuthPopup();">&times;</button>
     <div id="authContent">
@@ -3658,7 +3665,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderClanHistoryUI();
   loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();if(document.getElementById('authPopup').classList.contains('active'))closeAuthPopup();}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','top500','compare'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{requestAnimationFrame(()=>{if(t==='overview'&&currentPlayerData){const ph=document.getElementById('playerHeader');if(ph){const py=ph.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:py,behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}}else if(t==='clans'){const cp=document.getElementById('panel-clans');if(cp){const cy=cp.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:cy,behavior:'smooth'});}}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER, /clan/TAG, /ranking, /top500, /comparar, /clanes
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
