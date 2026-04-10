@@ -168,7 +168,9 @@
 .auth-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,10,.92); backdrop-filter:blur(12px); z-index:1003; justify-content:center; align-items:center; }
 .auth-popup.active { display:flex; }
 [data-theme="light"] .auth-popup { background:rgba(240,242,245,.94); }
-.auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:380px; width:92%; position:relative; box-shadow:var(--shadow-card); }
+.auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:380px; width:92%; position:relative; box-shadow:var(--shadow-card); max-height:92vh; overflow-y:auto; transition:max-width .3s ease; }
+.auth-box.auth-box-wide { max-width:700px; }
+@media(max-width:768px){ .auth-box.auth-box-wide { max-width:95%; } }
 .auth-box .close-btn { position:absolute; top:10px; right:10px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1rem; cursor:pointer; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
 .auth-box .close-btn:hover { color:var(--accent); border-color:var(--accent); }
 .auth-input { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); padding:10px 14px; border-radius:8px; font-size:.8rem; font-family:'Inter',sans-serif; margin-bottom:10px; outline:none; transition:border-color .2s; box-sizing:border-box; }
@@ -1296,6 +1298,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ v152 — Comparar Jugadores con IA — endpoint /api/ai-compare-players + card veredicto + categorias + tip + cache 7d — marker: ai-compare-v152
    V4NZ v153 — Comparar Clanes con IA — endpoint /api/ai-compare-clans + card veredicto + 4 dimensiones (potencia/calidad/profundidad/actividad) + identidad + tip + cache 7d — marker: ai-compare-clans-v153
    V4NZ v154 — Analisis IA Pro (privado) — endpoint /api/ai-deep-analysis con requireAuth + historial 90d snapshots + panel usuario logueado + tendencias/loadout/plan entrenamiento + cache 7d — marker: ai-deep-v154
+   V4NZ v155 — auth-box wide mode para IA Pro — popup se expande a 700px al mostrar analisis + scroll + responsive — marker: auth-wide-v155
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -2312,11 +2315,11 @@ let currentUser=null;
 let authToken=localStorage.getItem('v4nz_token')||null;
 
 function openAuthPopup(){
-  if(currentUser){showAuthView('logged');}
+  if(currentUser){showAuthView('logged');const dr=document.getElementById('deepAnalysisResult');if(dr&&dr.innerHTML.length>100){const ab=document.querySelector('.auth-box');if(ab)ab.classList.add('auth-box-wide');}}
   else{showAuthView('login');}
   document.getElementById('authPopup').classList.add('active');
 }
-function closeAuthPopup(){document.getElementById('authPopup').classList.remove('active');}
+function closeAuthPopup(){document.getElementById('authPopup').classList.remove('active');const ab=document.querySelector('.auth-box');if(ab)ab.classList.remove('auth-box-wide');}
 function showAuthView(view){
   document.getElementById('authLoginView').style.display=view==='login'?'':'none';
   document.getElementById('authRegisterView').style.display=view==='register'?'':'none';
@@ -6132,6 +6135,7 @@ function renderDeepAnalysis(ai){
   h+='<div style="font-size:.58rem;color:var(--text-dim);text-align:center;margin-top:8px;font-family:Rajdhani,sans-serif;letter-spacing:.5px;">&#x26A1; '+meta.join(' &middot; ')+'</div>';
   h+='</div>';
   out.innerHTML=h;
+  const authBox=out.closest('.auth-box');if(authBox)authBox.classList.add('auth-box-wide');
   if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.pointerEvents='auto';btn.innerHTML='&#x1F504; REGENERAR ANALISIS';}
 }
 
