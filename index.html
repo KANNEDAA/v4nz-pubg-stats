@@ -168,15 +168,11 @@
 .auth-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,10,.92); backdrop-filter:blur(12px); z-index:1003; justify-content:center; align-items:center; }
 .auth-popup.active { display:flex; }
 [data-theme="light"] .auth-popup { background:rgba(240,242,245,.94); }
-.auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:380px; width:92%; position:relative; box-shadow:var(--shadow-card); max-height:92vh; overflow-y:auto; overscroll-behavior:contain; }
+.auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:380px; width:92%; position:relative; box-shadow:var(--shadow-card); max-height:92vh; overflow-y:auto; transition:max-width .3s ease; }
+.auth-box.auth-box-wide { max-width:700px; }
+@media(max-width:768px){ .auth-box.auth-box-wide { max-width:95%; } }
 .auth-box .close-btn { position:absolute; top:10px; right:10px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1rem; cursor:pointer; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
 .auth-box .close-btn:hover { color:var(--accent); border-color:var(--accent); }
-/* profilePopupClose — mobile fixed close button, always visible regardless of box scroll */
-.auth-popup-mobile-close { display:none; }
-@media (max-width:600px) {
-  .auth-popup-mobile-close { display:flex; align-items:center; justify-content:center; position:fixed; top:12px; right:12px; width:38px; height:38px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); font-size:1.4rem; border-radius:8px; cursor:pointer; z-index:1010; line-height:1; }
-  .auth-popup-mobile-close:active { background:var(--accent); color:#000; }
-}
 .auth-input { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); padding:10px 14px; border-radius:8px; font-size:.8rem; font-family:'Inter',sans-serif; margin-bottom:10px; outline:none; transition:border-color .2s; box-sizing:border-box; }
 .auth-input:focus { border-color:var(--accent); }
 .auth-submit { background:var(--gradient-main); color:#fff; border:none; padding:11px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; width:100%; transition:all .2s; margin-top:4px; }
@@ -491,6 +487,16 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .evo-toggle { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); cursor:pointer; transition:all .2s; }
 .evo-toggle:hover { border-color:var(--tc,var(--accent)); color:var(--tc,var(--accent)); }
 .evo-toggle.active { background:var(--tc,var(--accent)); color:#000; border-color:var(--tc,var(--accent)); }
+/* v151 — Historial del jugador: controles extra */
+.evo-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+.evo-ctrl-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.evo-ctrl-label { font-size:.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-right:2px; }
+.evo-pill { background:var(--bg-secondary); border:1px solid var(--border); border-radius:999px; padding:5px 12px; font-family:'Rajdhani',sans-serif; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); cursor:pointer; transition:all .2s; }
+.evo-pill:hover { border-color:var(--accent); color:var(--accent); }
+.evo-pill.active { background:var(--accent); color:#000; border-color:var(--accent); }
+.evo-export { background:transparent; border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-family:'Rajdhani',sans-serif; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-secondary); cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
+.evo-export:hover { border-color:var(--accent-green); color:var(--accent-green); }
+.evo-mode-hint { font-size:.62rem; color:var(--text-dim); font-style:italic; text-align:center; padding:6px 10px; background:var(--bg-secondary); border-radius:8px; margin-top:10px; }
 /* HOMEPAGE CONTENT */
 .home-counters { display:flex; justify-content:center; gap:40px; margin:30px 0 28px; flex-wrap:wrap; }
 .home-counter { text-align:center; }
@@ -558,17 +564,11 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .dna-bar-track { flex: 1; height: 6px; background: var(--bg-card-hover); border-radius: 3px; overflow: hidden; }
 .dna-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
 .dna-bar-val { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 700; width: 32px; }
-@media(max-width:768px){
+@media(max-width:700px){
   .dna-layout { flex-direction: column; align-items:center; }
   .dna-info { text-align: center; max-width: 100%; }
   .dna-bar-label { width: 75px; font-size: 0.65rem; }
   .dna-radar-wrap canvas { max-width:180px; max-height:180px; }
-  .ai-dna-insights { flex-wrap: wrap; }
-  /* AI DNA collapsible en mobile */
-  .ai-dna-collapsible { max-height: 260px; overflow: hidden; position: relative; transition: max-height 0.4s ease; }
-  .ai-dna-collapsible.expanded { max-height: 3000px; }
-  .ai-dna-collapsible:not(.expanded)::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 64px; background: linear-gradient(transparent, var(--bg-card)); pointer-events: none; }
-  .ai-dna-toggle-btn { display: flex !important; align-items: center; justify-content: center; gap: 6px; margin: 10px auto 0; padding: 9px 20px; background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.22); border-radius: 20px; color: #00f0ff; font-family: 'Rajdhani',sans-serif; font-size: .82rem; font-weight: 700; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; width: 100%; box-sizing: border-box; }
 }
 
 /* AI DNA FEATURE */
@@ -592,7 +592,6 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .ai-dna-teaser { text-align: center; margin: 14px 0 0; padding: 14px; background: var(--bg-secondary); border: 1px dashed var(--border); border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-size: 0.8rem; color: var(--text-dim); }
 .ai-dna-teaser a { color: var(--accent); text-decoration: none; font-weight: 700; }
 .ai-dna-powered { text-align: center; font-family: 'Rajdhani', sans-serif; font-size: 0.6rem; color: var(--text-dim); margin-top: 12px; letter-spacing: 0.5px; }
-.ai-dna-toggle-btn { display: none; }
 
 /* AI CLAN ANALYSIS */
 .ai-clan-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 26px; background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(0,240,255,0.12)); border:1px solid rgba(168,85,247,0.35); border-radius:10px; color:#d4a8ff; font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; cursor:pointer; transition:all .3s; text-transform:uppercase; letter-spacing:1px; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
@@ -1195,10 +1194,11 @@ footer a { color: var(--accent); text-decoration: none; }
 .fade-cascade > *:nth-child(7){animation-delay:.28s}
 .fade-cascade > *:nth-child(8){animation-delay:.32s}
 
-/* PHASE 1 — DNA bars animated fill via CSS custom property */
+/* PHASE 1 — DNA bars animated fill — v150 marker: dna-bars-fix-v150
+   El keyframe anterior solo definia "from" con !important y "forwards",
+   lo que dejaba las barras a width:0 al terminar en algunos navegadores.
+   Ahora usamos solo transition sobre el width inline, sin animation. */
 .dna-bar-fill { transition: width 1.2s var(--ease-smooth); }
-.dna-bar-fill.animate-in { animation: dnaBarFill 1.2s var(--ease-smooth) forwards; }
-@keyframes dnaBarFill { from { width: 0 !important; } }
 
 /* PHASE 1 — Counter number flash on update */
 .counter-flash { animation: counterFlash .45s var(--ease-smooth); }
@@ -1293,6 +1293,13 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ VISUAL POLISH v148 — marker: visual-polish-v148-consolidate
    V4NZ v149 — admin panel removed (todo es automatico) — marker: admin-removed-v149
    V4NZ v149 — empty states para WL grid + match history (14 dias retencion) — marker: empty-state-14d-v149
+   V4NZ v150 — fix DNA bars invisibles (keyframe dnaBarFill roto) — marker: dna-bars-fix-v150
+   V4NZ v151 — Historial del jugador (ex Mi Evolucion) — 9 metricas + modo delta + filtro temporal + export CSV — marker: historial-v151
+   V4NZ v152 — Comparar Jugadores con IA — endpoint /api/ai-compare-players + card veredicto + categorias + tip + cache 7d — marker: ai-compare-v152
+   V4NZ v153 — Comparar Clanes con IA — endpoint /api/ai-compare-clans + card veredicto + 4 dimensiones (potencia/calidad/profundidad/actividad) + identidad + tip + cache 7d — marker: ai-compare-clans-v153
+   V4NZ v154 — Analisis IA Pro (privado) — endpoint /api/ai-deep-analysis con requireAuth + historial 90d snapshots + panel usuario logueado + tendencias/loadout/plan entrenamiento + cache 7d — marker: ai-deep-v154
+   V4NZ v155 — auth-box wide mode para IA Pro — popup se expande a 700px al mostrar analisis + scroll + responsive — marker: auth-wide-v155
+   V4NZ v156 — Top 500 cleanup: quitar AS (sin datos), DUO y DUO FPP (sin datos) — quedan EU/NA con Squad/Squad FPP/Solo/Solo FPP — marker: top500-cleanup-v156
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -2000,11 +2007,11 @@ body.telem-open { overflow:hidden; }
   <div class="panel" id="panel-top500">
     <div class="section-title">Top 500 &mdash; Leaderboard Consola</div>
     <div class="leaderboard-controls">
-      <span id="lbPlatBtns"><button class="lb-btn active" onclick="setLBPlatform('console',this)">Consolas</button></span>
+      <span id="lbPlatBtns"><button class="lb-btn active" onclick="setLBPlatform('console',this)">Consolas</button><button class="lb-btn" onclick="setLBPlatform('psn',this)">PlayStation</button><button class="lb-btn" onclick="setLBPlatform('xbox',this)">Xbox</button></span>
       <span style="width:8px;display:inline-block;"></span>
-      <span id="lbRegionBtns"><button class="lb-btn active" onclick="setLBRegion('eu',this)">EU</button><button class="lb-btn" onclick="setLBRegion('na',this)">NA</button><button class="lb-btn" onclick="setLBRegion('as',this)">AS</button></span>
+      <span id="lbRegionBtns"><button class="lb-btn active" onclick="setLBRegion('eu',this)">EU</button><button class="lb-btn" onclick="setLBRegion('na',this)">NA</button></span>
       <span style="width:8px;display:inline-block;"></span>
-      <span id="lbModeBtns"><button class="lb-btn active" onclick="setLBMode('squad',this)">Squad</button><button class="lb-btn" onclick="setLBMode('squad-fpp',this)">Squad FPP</button><button class="lb-btn" onclick="setLBMode('duo',this)">Duo</button><button class="lb-btn" onclick="setLBMode('duo-fpp',this)">Duo FPP</button><button class="lb-btn" onclick="setLBMode('solo',this)">Solo</button><button class="lb-btn" onclick="setLBMode('solo-fpp',this)">Solo FPP</button></span>
+      <span id="lbModeBtns"><button class="lb-btn active" onclick="setLBMode('squad',this)">Squad</button><button class="lb-btn" onclick="setLBMode('squad-fpp',this)">Squad FPP</button><button class="lb-btn" onclick="setLBMode('solo',this)">Solo</button><button class="lb-btn" onclick="setLBMode('solo-fpp',this)">Solo FPP</button></span>
     </div>
     <div id="leaderboardContent"><div class="empty-state"><p>Selecciona plataforma y modo</p></div></div>
   </div>
@@ -2039,6 +2046,8 @@ body.telem-open { overflow:hidden; }
       <div id="compareRadarWrap" style="display:none;margin-top:24px;text-align:center;"><canvas id="compareRadarCanvas" width="500" height="500" style="max-width:100%;"></canvas></div>
       <div id="compareVerdict" style="display:none;margin-top:16px;"></div>
       <div id="compareBarChart" style="margin-top:20px;"></div>
+      <div id="compareAIWrap" style="display:none;margin-top:20px;text-align:center;"><button class="search-btn" id="compareAIBtn" style="border-radius:8px;background:linear-gradient(135deg,#a855f7,#00f0ff);" onclick="compareWithAI()">&#x1F916; Comparar con IA</button></div>
+      <div id="compareAIResult" style="margin-top:20px;"></div>
     </div>
 
     <!-- SQUAD MODE -->
@@ -2191,7 +2200,6 @@ body.telem-open { overflow:hidden; }
 
 <!-- AUTH POPUP -->
 <div class="auth-popup" id="authPopup" onclick="if(event.target===this)closeAuthPopup();">
-  <button class="auth-popup-mobile-close" id="profilePopupClose" onclick="closeAuthPopup();" aria-label="Cerrar">&times;</button>
   <div class="auth-box">
     <button class="close-btn" onclick="closeAuthPopup();">&times;</button>
     <div id="authContent">
@@ -2259,6 +2267,16 @@ body.telem-open { overflow:hidden; }
               <div class="auth-error" id="profileError" style="display:none;margin-top:8px;"></div>
             </div>
           </div>
+          <!-- v154 — Analisis IA Pro (solo si gamertag vinculado) -->
+          <div id="deepAnalysisSection" style="display:none;background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(0,240,255,0.05));border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:14px;margin-bottom:14px;text-align:left;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:1.1rem;">&#x1F916;</span>
+              <div style="font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:1.5px;">Mi Analisis IA Pro</div>
+            </div>
+            <div style="font-size:.72rem;color:var(--text-secondary);margin-bottom:10px;line-height:1.4;">Analisis profundo privado con tu historial de 90 dias. Detecta tendencias, da loadout y plan de entrenamiento.</div>
+            <button class="auth-submit" id="deepAnalysisBtn" onclick="loadDeepAnalysis()" style="background:linear-gradient(135deg,#a855f7,#00f0ff);font-size:.72rem;padding:9px;">&#x1F916; GENERAR ANALISIS PRO</button>
+            <div id="deepAnalysisResult" style="margin-top:10px;"></div>
+          </div>
           <label id="profileNewsOptIn" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:.72rem;color:var(--text-secondary);justify-content:center;">
             <input type="checkbox" id="profileNewsCheck" onchange="toggleNewsOptIn()" style="accent-color:var(--accent);width:16px;height:16px;cursor:pointer;">
             Recibir novedades de V4NZ
@@ -2298,11 +2316,11 @@ let currentUser=null;
 let authToken=localStorage.getItem('v4nz_token')||null;
 
 function openAuthPopup(){
-  if(currentUser){showAuthView('logged');}
+  if(currentUser){showAuthView('logged');const dr=document.getElementById('deepAnalysisResult');if(dr&&dr.innerHTML.length>100){const ab=document.querySelector('.auth-box');if(ab)ab.classList.add('auth-box-wide');}}
   else{showAuthView('login');}
   document.getElementById('authPopup').classList.add('active');
 }
-function closeAuthPopup(){document.getElementById('authPopup').classList.remove('active');}
+function closeAuthPopup(){document.getElementById('authPopup').classList.remove('active');const ab=document.querySelector('.auth-box');if(ab)ab.classList.remove('auth-box-wide');}
 function showAuthView(view){
   document.getElementById('authLoginView').style.display=view==='login'?'':'none';
   document.getElementById('authRegisterView').style.display=view==='register'?'':'none';
@@ -2340,10 +2358,12 @@ function updateProfileGT(){
     document.getElementById('profileGTName').textContent=currentUser.gamertag;
     document.getElementById('profileGTPlatBadge').textContent=currentUser.platform||'psn';
     profilePlat=currentUser.platform||'psn';
+    const das=document.getElementById('deepAnalysisSection');if(das)das.style.display='';
   }else{
     linked.style.display='none';edit.style.display='';
     profilePlat=currentUser?(currentUser.platform||'psn'):'psn';
     profileUpdatePlatBtns();
+    const das=document.getElementById('deepAnalysisSection');if(das)das.style.display='none';
   }
 }
 function profileSelectPlat(p){profilePlat=p;profileUpdatePlatBtns();}
@@ -3665,7 +3685,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderClanHistoryUI();
   loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();if(document.getElementById('authPopup').classList.contains('active'))closeAuthPopup();}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','top500','compare'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{requestAnimationFrame(()=>{if(t==='overview'&&currentPlayerData){const ph=document.getElementById('playerHeader');if(ph){const py=ph.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:py,behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}}else if(t==='clans'){const cp=document.getElementById('panel-clans');if(cp){const cy=cp.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:cy,behavior:'smooth'});}}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // Friendly URLs: /stats/psn/PLAYER, /clan/TAG, /ranking, /top500, /comparar, /clanes
   const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
@@ -6007,19 +6027,117 @@ function renderAiDna(data) {
   const rounds = s.roundsPlayed || 0;
 
   const sect = document.getElementById('personalitySection');
-  sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvasAi" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + data.role + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-collapsible" id="aiDnaCollapsible"><div class="ai-dna-desc">' + data.description + '</div><div class="ai-dna-insights">' + insightsHtml + '</div>' + tipHtml + '<div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + (data.role || '').replace(/'/g, "\\'") + '\')">🔗 COMPARTIR ENLACE</button></div></div><button class="ai-dna-toggle-btn" id="aiDnaToggleBtn" onclick="toggleAiDnaCollapsible()">&#9660; VER AN&#193;LISIS COMPLETO</button><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
+  sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvasAi" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + data.role + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-desc">' + data.description + '</div><div class="ai-dna-insights">' + insightsHtml + '</div>' + tipHtml + '<div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + (data.role || '').replace(/'/g, "\\'") + '\')">🔗 COMPARTIR ENLACE</button></div><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
   sect.classList.add('visible');
   drawDnaRadar('dnaRadarCanvasAi', scores, roleColor);
   // Scroll to result after render so fadeInUp animation is visible
   setTimeout(function(){ sect.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
 }
 
-function toggleAiDnaCollapsible() {
-  const col = document.getElementById('aiDnaCollapsible');
-  const btn = document.getElementById('aiDnaToggleBtn');
-  if (!col || !btn) return;
-  const expanded = col.classList.toggle('expanded');
-  btn.innerHTML = expanded ? '&#9650; VER MENOS' : '&#9660; VER AN&#193;LISIS COMPLETO';
+// ═══ v154 — ANALISIS IA PRO (privado, usuario logueado) ═══
+function _deepToast(msg, isErr){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:'+(isErr?'#ff3355':'var(--accent)')+';color:'+(isErr?'#fff':'#000')+';padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:99999;pointer-events:none;opacity:0;transition:opacity .3s;';
+  t.textContent=msg;document.body.appendChild(t);
+  requestAnimationFrame(()=>{t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3000);});
+}
+async function loadDeepAnalysis(){
+  if(!currentUser||!currentUser.gamertag){ _deepToast('Vincula tu gamertag primero',true); return; }
+  if(!authToken){ _deepToast('Sesion expirada, vuelve a entrar',true); return; }
+  const btn=document.getElementById('deepAnalysisBtn');
+  const out=document.getElementById('deepAnalysisResult');
+  if(!out||!btn)return;
+  // Necesitamos stats actuales del jugador linked
+  const linkedName=(currentUser.gamertag||'').toLowerCase();
+  const curName=(currentPlayerData&&currentPlayerData.attributes&&currentPlayerData.attributes.name||'').toLowerCase();
+  let s=null;
+  if(curName===linkedName){ s=getActiveStats(); }
+  if(!s||!s.roundsPlayed){
+    _deepToast('Cargando tus stats primero...',false);
+    closeAuthPopup();
+    setPlatform(currentUser.platform||'psn');
+    document.getElementById('searchInput').value=currentUser.gamertag;
+    try{ await searchPlayer(); }catch(e){}
+    setTimeout(()=>{ openAuthPopup(); loadDeepAnalysis(); },1200);
+    return;
+  }
+  const kd=parseFloat(calcKD(s));
+  const avgDamage=parseFloat(calcAvgDmg(s));
+  const hsRate=parseFloat(calcHSRate(s));
+  const winRate=parseFloat(calcWinRate(s));
+  const top10Rate=parseFloat(calcTop10Rate(s));
+  const killsPerRound=s.roundsPlayed?(s.kills||0)/s.roundsPlayed:0;
+  const statsObj={
+    kd:kd.toFixed(2), avgDamage:avgDamage.toFixed(1), hsRate:hsRate.toFixed(1),
+    winRate:winRate.toFixed(1), top10Rate:top10Rate.toFixed(1),
+    killsPerRound:killsPerRound.toFixed(2),
+    longestKill:s.longestKill||0, rounds:s.roundsPlayed, roundsPlayed:s.roundsPlayed,
+    kills:s.kills||0, wins:s.wins||0
+  };
+  btn.disabled=true;btn.style.opacity='0.6';btn.style.pointerEvents='none';
+  btn.innerHTML='&#x23F3; ANALIZANDO HISTORIAL...';
+  out.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:.78rem;font-family:Rajdhani,sans-serif;"><div style="display:inline-block;width:24px;height:24px;border:2px solid rgba(168,85,247,0.3);border-top-color:#a855f7;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:10px;"></div><div>V4NZ AI revisando tus ultimos 90 dias...</div></div>';
+  try{
+    const qp=new URLSearchParams({stats:JSON.stringify(statsObj)});
+    const r=await fetch('/api/ai-deep-analysis?'+qp.toString(),{
+      headers:{'Authorization':'Bearer '+authToken},
+      credentials:'include',
+      cache:'no-store'
+    });
+    if(!r.ok){
+      const ed=await r.json().catch(()=>({}));
+      throw new Error(ed.error||('Error '+r.status));
+    }
+    const data=await r.json();
+    renderDeepAnalysis(data);
+  }catch(e){
+    console.error('Deep analysis error:',e);
+    out.innerHTML='<div style="text-align:center;padding:14px;color:#ff6b00;font-size:.75rem;font-family:Rajdhani,sans-serif;">Error: '+(e.message||'desconocido')+'</div>';
+    btn.disabled=false;btn.style.opacity='1';btn.style.pointerEvents='auto';
+    btn.innerHTML='&#x1F916; GENERAR ANALISIS PRO';
+  }
+}
+function renderDeepAnalysis(ai){
+  const out=document.getElementById('deepAnalysisResult');
+  const btn=document.getElementById('deepAnalysisBtn');
+  if(!out)return;
+  const dirIcon=d=>d==='up'?'<span style="color:#00ff88;">&#x25B2;</span>':d==='down'?'<span style="color:#ff3355;">&#x25BC;</span>':'<span style="color:#999;">&#x25CF;</span>';
+  const trendRow=(label,t)=>{
+    if(!t)return '';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.06);"><span style="font-size:.7rem;color:var(--text-dim);min-width:70px;">'+label+'</span><span style="font-size:.68rem;color:var(--text-secondary);flex:1;text-align:right;">'+(t.note||'')+' '+dirIcon(t.direction)+'</span></div>';
+  };
+  const trends=ai.trends||{};
+  const strengths=(ai.strengths||[]).map(x=>'<li style="margin-bottom:4px;color:#00ff88;"><span style="color:var(--text-secondary);">'+esc(x)+'</span></li>').join('');
+  const weaknesses=(ai.weaknesses||[]).map(x=>'<li style="margin-bottom:4px;color:#ff6b00;"><span style="color:var(--text-secondary);">'+esc(x)+'</span></li>').join('');
+  const plan=(ai.trainingPlan||[]).map((x,i)=>'<li style="margin-bottom:6px;color:var(--text-secondary);"><strong style="color:#a855f7;">'+(i+1)+'.</strong> '+esc(x)+'</li>').join('');
+  const lo=ai.loadout||{};
+  let h='<div style="background:var(--bg-card);border:1px solid rgba(168,85,247,0.25);border-radius:10px;padding:14px;animation:fadeInUp .4s ease;">';
+  h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;"><span style="display:inline-block;padding:3px 8px;background:linear-gradient(135deg,#a855f7,#00f0ff);color:#000;font-family:Orbitron,sans-serif;font-weight:800;font-size:.55rem;border-radius:4px;letter-spacing:1px;">IA PRO</span><span style="font-size:.62rem;color:var(--text-dim);">Privado &middot; solo tu</span></div>';
+  if(ai.profile)h+='<div style="font-size:.78rem;color:var(--text-secondary);line-height:1.55;margin-bottom:12px;">'+esc(ai.profile)+'</div>';
+  if(ai.trendSummary)h+='<div style="background:rgba(168,85,247,0.08);border-left:3px solid #a855f7;padding:8px 10px;margin-bottom:12px;font-size:.74rem;color:var(--text-secondary);line-height:1.5;"><strong style="color:#a855f7;">Tendencia: </strong>'+esc(ai.trendSummary)+'</div>';
+  h+='<div style="margin-bottom:12px;">'+trendRow('K/D',trends.kd)+trendRow('ADR',trends.adr)+trendRow('Win Rate',trends.winRate)+trendRow('Headshots',trends.headshots)+'</div>';
+  if(strengths)h+='<div style="margin-bottom:10px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#00ff88;letter-spacing:1px;margin-bottom:5px;">&#x2605; FORTALEZAS</div><ul style="margin:0;padding-left:16px;font-size:.72rem;">'+strengths+'</ul></div>';
+  if(weaknesses)h+='<div style="margin-bottom:10px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#ff6b00;letter-spacing:1px;margin-bottom:5px;">&#x26A0; A MEJORAR</div><ul style="margin:0;padding-left:16px;font-size:.72rem;">'+weaknesses+'</ul></div>';
+  if(lo.primary||lo.style){
+    h+='<div style="background:linear-gradient(135deg,rgba(0,240,255,0.06),rgba(168,85,247,0.06));border:1px solid rgba(0,240,255,0.2);border-radius:8px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#00f0ff;letter-spacing:1px;margin-bottom:6px;">&#x1F52B; LOADOUT RECOMENDADO</div>';
+    if(lo.style)h+='<div style="font-size:.72rem;color:var(--accent);font-weight:700;margin-bottom:4px;">'+esc(lo.style)+'</div>';
+    if(lo.primary)h+='<div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:2px;"><strong>Principal:</strong> '+esc(lo.primary)+'</div>';
+    if(lo.secondary)h+='<div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:4px;"><strong>Secundaria:</strong> '+esc(lo.secondary)+'</div>';
+    if(lo.rationale)h+='<div style="font-size:.66rem;color:var(--text-dim);font-style:italic;line-height:1.4;">'+esc(lo.rationale)+'</div>';
+    h+='</div>';
+  }
+  if(plan)h+='<div style="margin-bottom:10px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#a855f7;letter-spacing:1px;margin-bottom:5px;">&#x1F3AF; PLAN DE ENTRENAMIENTO</div><ol style="margin:0;padding-left:4px;list-style:none;font-size:.72rem;line-height:1.5;">'+plan+'</ol></div>';
+  if(ai.next30DaysGoal)h+='<div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:8px;padding:10px;margin-bottom:8px;"><div style="font-family:Orbitron,sans-serif;font-size:.6rem;color:#00ff88;letter-spacing:1px;margin-bottom:4px;">OBJETIVO 30 DIAS</div><div style="font-size:.74rem;color:var(--text-secondary);line-height:1.5;">'+esc(ai.next30DaysGoal)+'</div></div>';
+  const meta=[];
+  if(ai.snapshotsAnalyzed!=null)meta.push(ai.snapshotsAnalyzed+' snapshots');
+  if(ai.daysActive!=null)meta.push(ai.daysActive+' dias activos');
+  meta.push('cache 7d');
+  h+='<div style="font-size:.58rem;color:var(--text-dim);text-align:center;margin-top:8px;font-family:Rajdhani,sans-serif;letter-spacing:.5px;">&#x26A1; '+meta.join(' &middot; ')+'</div>';
+  h+='</div>';
+  out.innerHTML=h;
+  const authBox=out.closest('.auth-box');if(authBox)authBox.classList.add('auth-box-wide');
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.pointerEvents='auto';btn.innerHTML='&#x1F504; REGENERAR ANALISIS';}
 }
 
 // === AI Clan DNA Feature ===
@@ -6098,8 +6216,23 @@ async function savePlayerSnapshot(){
   try{await fetch('/api/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
   catch(e){console.log('Snapshot save failed:',e.message);}
 }
-let _evoData=null; // stored for toggle redraws
-let _evoMetric='kd'; // current selected metric
+/* ═══ v151 — HISTORIAL DEL JUGADOR (ex Mi Evolucion) ═══
+   9 metricas togglables + modo Acumulado/Delta + filtro temporal + export CSV */
+let _evoData=null;          // { snaps: [...] } raw data
+let _evoMetric='kd';        // current selected metric
+let _evoMode='total';       // 'total' (acumulado) | 'delta' (cambios)
+let _evoRange='all';        // '7' | '30' | '90' | 'all'
+const EVO_METRICS={
+  kd:         {color:'#00f0ff',label:'K/D',       dec:2,suffix:'', int:false},
+  win_rate:   {color:'#ffd700',label:'Win Rate',  dec:1,suffix:'%',int:false},
+  avg_damage: {color:'#ff6b00',label:'Avg DMG',   dec:0,suffix:'', int:false},
+  hs_rate:    {color:'#a855f7',label:'HS%',       dec:1,suffix:'%',int:false},
+  kills:      {color:'#ff3355',label:'Kills',     dec:0,suffix:'', int:true },
+  wins:       {color:'#00ff88',label:'Wins',      dec:0,suffix:'', int:true },
+  rounds:     {color:'#8888a0',label:'Partidas',  dec:0,suffix:'', int:true },
+  top10_rate: {color:'#00e5ff',label:'Top 10%',   dec:1,suffix:'%',int:false},
+  longest_kill:{color:'#ffa500',label:'Longest',  dec:0,suffix:'m',int:false}
+};
 async function loadEvolutionChart(){
   const sec=document.getElementById('evolutionSection');if(!sec)return;
   const name=currentPlayerData?.attributes?.name;if(!name){sec.style.display='none';return;}
@@ -6112,64 +6245,149 @@ async function loadEvolutionChart(){
       sec.style.display='block';
       if(snaps.length===1){
         const s1=snaps[0];
-        let h='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div>';
+        let h='<div class="evo-section"><div class="evo-title">&#x1F4C8; Historial del jugador</div>';
         h+='<div class="evo-metrics">';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent);">'+(parseFloat(s1.kd)||0).toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+(parseFloat(s1.win_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(parseFloat(s1.avg_damage)||0)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='<div class="evo-metric"><div class="evo-metric-val" style="color:var(--accent-purple);">'+(parseFloat(s1.hs_rate)||0).toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta evo-delta-same">Registro 1</div></div>';
         h+='</div>';
-        h+='<div style="text-align:center;padding:16px 12px;margin-top:8px;background:var(--bg-secondary);border-radius:10px;font-size:.78rem;color:var(--text-secondary);">&#x2705; Stats guardadas hoy. Vuelve manana para ver tu evolucion en la grafica.</div>';
+        h+='<div style="text-align:center;padding:16px 12px;margin-top:8px;background:var(--bg-secondary);border-radius:10px;font-size:.78rem;color:var(--text-secondary);">&#x2705; Stats guardadas hoy. Vuelve manana para ver la evolucion en la grafica.</div>';
         h+='</div>';
         sec.innerHTML=h;
       }else{
-        sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Mi Evolucion</div><div class="evo-empty">Busca tu perfil para empezar a registrar tu evolucion.</div></div>';
+        sec.innerHTML='<div class="evo-section"><div class="evo-title">&#x1F4C8; Historial del jugador</div><div class="evo-empty">Busca un perfil para empezar a registrar su historial.</div></div>';
       }
       return;
     }
-    _evoData={snaps};_evoMetric='kd';
-    const latest=snaps[snaps.length-1];const prev=snaps[snaps.length-2];
-    function delta(curr,old){const d=curr-old;return d>0?'+'+d.toFixed(2):d<0?d.toFixed(2):'='}
-    function deltaClass(curr,old){return curr>old?'evo-delta-up':curr<old?'evo-delta-down':'evo-delta-same';}
-    const kdNow=parseFloat(latest.kd)||0,kdPrev=parseFloat(prev.kd)||0;
-    const wrNow=parseFloat(latest.win_rate)||0,wrPrev=parseFloat(prev.win_rate)||0;
-    const dmgNow=parseFloat(latest.avg_damage)||0,dmgPrev=parseFloat(prev.avg_damage)||0;
-    const hsNow=parseFloat(latest.hs_rate)||0,hsPrev=parseFloat(prev.hs_rate)||0;
-    let h='<div class="evo-section">';
-    h+='<div class="evo-title">&#x1F4C8; Mi Evolucion <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+snaps.length+' registros</span></div>';
-    // Metric toggle buttons
-    h+='<div class="evo-toggles">';
-    h+='<button class="evo-toggle active" data-metric="kd" onclick="switchEvoMetric(\'kd\',this)" style="--tc:var(--accent);">K/D</button>';
-    h+='<button class="evo-toggle" data-metric="win_rate" onclick="switchEvoMetric(\'win_rate\',this)" style="--tc:var(--accent-yellow);">Win Rate</button>';
-    h+='<button class="evo-toggle" data-metric="avg_damage" onclick="switchEvoMetric(\'avg_damage\',this)" style="--tc:var(--accent-orange);">Avg DMG</button>';
-    h+='<button class="evo-toggle" data-metric="hs_rate" onclick="switchEvoMetric(\'hs_rate\',this)" style="--tc:var(--accent-purple);">HS%</button>';
-    h+='</div>';
-    h+='<div class="evo-chart"><canvas id="evoCanvas"></canvas></div>';
-    // Delta metrics
-    h+='<div class="evo-metrics">';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'kd\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent);">'+kdNow.toFixed(2)+'</div><div class="evo-metric-lbl">K/D</div><div class="evo-metric-delta '+deltaClass(kdNow,kdPrev)+'">'+delta(kdNow,kdPrev)+'</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'win_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-yellow);">'+wrNow.toFixed(1)+'%</div><div class="evo-metric-lbl">Win Rate</div><div class="evo-metric-delta '+deltaClass(wrNow,wrPrev)+'">'+delta(wrNow,wrPrev)+'%</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'avg_damage\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-orange);">'+Math.round(dmgNow)+'</div><div class="evo-metric-lbl">Avg DMG</div><div class="evo-metric-delta '+deltaClass(dmgNow,dmgPrev)+'">'+delta(dmgNow,dmgPrev)+'</div></div>';
-    h+='<div class="evo-metric" onclick="switchEvoMetric(\'hs_rate\')" style="cursor:pointer;"><div class="evo-metric-val" style="color:var(--accent-purple);">'+hsNow.toFixed(1)+'%</div><div class="evo-metric-lbl">HS%</div><div class="evo-metric-delta '+deltaClass(hsNow,hsPrev)+'">'+delta(hsNow,hsPrev)+'%</div></div>';
-    h+='</div></div>';
-    sec.innerHTML=h;sec.style.display='block';
-    drawEvoChart();
+    _evoData={snaps};_evoMetric='kd';_evoMode='total';_evoRange='all';
+    sec.style.display='block';
+    renderEvoSection();
   }catch(e){console.error('Evolution chart error:',e);sec.style.display='none';}
+}
+function getFilteredEvoSnaps(){
+  if(!_evoData)return [];
+  let snaps=_evoData.snaps.slice();
+  if(_evoRange!=='all'){
+    const days=parseInt(_evoRange,10);
+    const cutoff=Date.now()-days*86400000;
+    snaps=snaps.filter(s=>new Date(s.created_at).getTime()>=cutoff);
+  }
+  return snaps;
+}
+function renderEvoSection(){
+  const sec=document.getElementById('evolutionSection');if(!sec||!_evoData)return;
+  const snaps=getFilteredEvoSnaps();
+  const totalCount=_evoData.snaps.length;
+  let h='<div class="evo-section">';
+  h+='<div class="evo-title">&#x1F4C8; Historial del jugador <span style="font-size:.65rem;font-weight:400;color:var(--text-dim);margin-left:auto;">'+totalCount+' registros</span></div>';
+  // --- Controles: modo + filtro temporal + export ---
+  h+='<div class="evo-controls">';
+  h+='<div class="evo-ctrl-group"><span class="evo-ctrl-label">Modo</span>';
+  h+='<button class="evo-pill'+(_evoMode==='total'?' active':'')+'" onclick="switchEvoMode(\'total\')">Acumulado</button>';
+  h+='<button class="evo-pill'+(_evoMode==='delta'?' active':'')+'" onclick="switchEvoMode(\'delta\')">Solo cambios</button>';
+  h+='</div>';
+  h+='<div class="evo-ctrl-group"><span class="evo-ctrl-label">Rango</span>';
+  ['7','30','90','all'].forEach(r=>{const lbl=r==='all'?'Todo':r+'d';h+='<button class="evo-pill'+(_evoRange===r?' active':'')+'" onclick="switchEvoRange(\''+r+'\')">'+lbl+'</button>';});
+  h+='</div>';
+  h+='<button class="evo-export" onclick="exportEvoCSV()" title="Descargar historial en CSV">&#x2B07; CSV</button>';
+  h+='</div>';
+  if(snaps.length<2){
+    h+='<div class="evo-empty">Sin suficientes datos para este rango. Prueba con un rango mayor.</div></div>';
+    sec.innerHTML=h;return;
+  }
+  // --- Botones de metrica (9) ---
+  h+='<div class="evo-toggles">';
+  Object.keys(EVO_METRICS).forEach(k=>{
+    const m=EVO_METRICS[k];
+    h+='<button class="evo-toggle'+(_evoMetric===k?' active':'')+'" data-metric="'+k+'" onclick="switchEvoMetric(\''+k+'\',this)" style="--tc:'+m.color+';">'+m.label+'</button>';
+  });
+  h+='</div>';
+  h+='<div class="evo-chart"><canvas id="evoCanvas"></canvas></div>';
+  // --- Hint explicativo del modo ---
+  if(_evoMode==='delta'){
+    h+='<div class="evo-mode-hint">&#x1F4CA; Mostrando cambios entre snapshots consecutivos (util para ver actividad real dia a dia)</div>';
+  }
+  // --- Metricas con delta (comparado al primer snapshot del rango) ---
+  const first=snaps[0];const latest=snaps[snaps.length-1];
+  const dClass=(a,b)=>a>b?'evo-delta-up':a<b?'evo-delta-down':'evo-delta-same';
+  const dFmt=(a,b,dec,suffix,isInt)=>{const d=a-b;if(d===0)return'=';const sign=d>0?'+':'';return sign+(isInt?Math.round(d):d.toFixed(dec))+suffix;};
+  h+='<div class="evo-metrics">';
+  ['kd','win_rate','avg_damage','hs_rate','kills','wins','rounds','top10_rate','longest_kill'].forEach(k=>{
+    const m=EVO_METRICS[k];
+    const now=parseFloat(latest[k])||0,old=parseFloat(first[k])||0;
+    const valStr=m.int?Math.round(now):now.toFixed(m.dec);
+    h+='<div class="evo-metric" onclick="switchEvoMetric(\''+k+'\')" style="cursor:pointer;">';
+    h+='<div class="evo-metric-val" style="color:'+m.color+';">'+valStr+m.suffix+'</div>';
+    h+='<div class="evo-metric-lbl">'+m.label+'</div>';
+    h+='<div class="evo-metric-delta '+dClass(now,old)+'">'+dFmt(now,old,m.dec,m.suffix,m.int)+'</div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+  sec.innerHTML=h;
+  drawEvoChart();
 }
 function switchEvoMetric(metric,btn){
   _evoMetric=metric;
   document.querySelectorAll('.evo-toggle').forEach(b=>{b.classList.remove('active');if(b.dataset.metric===metric)b.classList.add('active');});
   drawEvoChart();
 }
-function drawEvoChart(){
+function switchEvoMode(mode){_evoMode=mode;renderEvoSection();}
+function switchEvoRange(range){_evoRange=range;renderEvoSection();}
+function exportEvoCSV(){
   if(!_evoData)return;
   const snaps=_evoData.snaps;
-  const metricMap={kd:{color:'#00f0ff',label:'K/D',dec:2},win_rate:{color:'#ffd700',label:'Win%',dec:1},avg_damage:{color:'#ff6b00',label:'DMG',dec:0},hs_rate:{color:'#a855f7',label:'HS%',dec:1}};
-  const m=metricMap[_evoMetric]||metricMap.kd;
-  const arr=snaps.map(s=>parseFloat(s[_evoMetric])||0);
-  const dates=snaps.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
+  const name=currentPlayerData?.attributes?.name||'player';
+  const cols=['created_at','squad_mode','game_mode','kd','win_rate','avg_damage','hs_rate','kills','wins','rounds','top10_rate','longest_kill'];
+  const lines=[cols.join(',')];
+  snaps.forEach(s=>{
+    const row=cols.map(c=>{
+      let v=s[c];if(v==null)v='';
+      if(c==='created_at')v=new Date(v).toISOString().slice(0,10);
+      if(c==='squad_mode')v=currentSquadMode;
+      if(c==='game_mode')v=currentGameMode;
+      return String(v).replace(/,/g,';');
+    });
+    lines.push(row.join(','));
+  });
+  const csv=lines.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='v4nz_'+name+'_'+currentSquadMode+'_'+currentGameMode+'_historial.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function drawEvoChart(){
+  if(!_evoData)return;
+  const snapsAll=getFilteredEvoSnaps();
+  if(snapsAll.length<2)return;
+  const m=EVO_METRICS[_evoMetric]||EVO_METRICS.kd;
+  // En modo delta: cada punto es la diferencia con el anterior (snaps[i] - snaps[i-1])
+  // En modo total: valores absolutos directos
+  let arr,dates;
+  if(_evoMode==='delta'){
+    arr=[];dates=[];
+    for(let i=1;i<snapsAll.length;i++){
+      const curr=parseFloat(snapsAll[i][_evoMetric])||0;
+      const prev=parseFloat(snapsAll[i-1][_evoMetric])||0;
+      arr.push(curr-prev);
+      const d=new Date(snapsAll[i].created_at);dates.push(d.getDate()+'/'+(d.getMonth()+1));
+    }
+    if(arr.length<1)return;
+  }else{
+    arr=snapsAll.map(s=>parseFloat(s[_evoMetric])||0);
+    dates=snapsAll.map(s=>{const d=new Date(s.created_at);return d.getDate()+'/'+(d.getMonth()+1);});
+  }
   const cvs=document.getElementById('evoCanvas');
-  if(!cvs||arr.length<2)return;
+  if(!cvs||arr.length<1)return;
+  if(arr.length<2){
+    // Dibujar un solo punto como fallback
+    const ctx=cvs.getContext('2d');ctx.clearRect(0,0,cvs.width,cvs.height);
+    ctx.fillStyle='#666';ctx.font='12px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Solo 1 punto en este rango',cvs.width/2,cvs.height/2);
+    return;
+  }
   const dpr=window.devicePixelRatio||1;
   const W=cvs.parentElement.clientWidth;const H=200;
   cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
@@ -6184,7 +6402,7 @@ function drawEvoChart(){
     const y=pad.t+(cH/4)*i;const val=max-((i/4)*range);
     ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
     ctx.fillStyle='#555';ctx.font='10px Rajdhani,sans-serif';ctx.textAlign='right';
-    ctx.fillText(val.toFixed(m.dec),pad.l-6,y+4);
+    ctx.fillText(m.int?Math.round(val):val.toFixed(m.dec),pad.l-6,y+4);
   }
   // Fill gradient under line
   ctx.beginPath();
@@ -6205,7 +6423,7 @@ function drawEvoChart(){
   // Last value label
   const lastY=pad.t+cH-(((arr[arr.length-1]-min)/range)*cH);
   ctx.font='bold 12px Orbitron,sans-serif';ctx.fillStyle=m.color;ctx.textAlign='left';
-  ctx.fillText(arr[arr.length-1].toFixed(m.dec),pad.l+cW+8,lastY+4);
+  ctx.fillText((m.int?Math.round(arr[arr.length-1]):arr[arr.length-1].toFixed(m.dec))+m.suffix,pad.l+cW+8,lastY+4);
   // X-axis dates
   ctx.font='10px Rajdhani,sans-serif';ctx.fillStyle='#555';ctx.textAlign='center';
   const step=Math.max(1,Math.floor(dates.length/7));
@@ -6666,7 +6884,13 @@ async function comparePlayers(){
   }
   finally{showLoading(false);}
 }
+let lastCompareData=null;
 function renderCompareCards(n1,s1,n2,s2){
+  lastCompareData={n1:n1,s1:s1,n2:n2,s2:s2,platform:cmpPlatform,mode:cmpMode};
+  // Reveal "Comparar con IA" button, reset any previous AI result
+  const aiWrap=document.getElementById('compareAIWrap');if(aiWrap)aiWrap.style.display='block';
+  const aiRes=document.getElementById('compareAIResult');if(aiRes)aiRes.innerHTML='';
+  const aiBtn=document.getElementById('compareAIBtn');if(aiBtn){aiBtn.disabled=false;aiBtn.innerHTML='&#x1F916; Comparar con IA';}
   const stats=[{l:'K/D',v1:calcKD(s1),v2:calcKD(s2),u:''},{l:'Kills',v1:s1.kills||0,v2:s2.kills||0,u:''},{l:'Partidas',v1:s1.roundsPlayed||0,v2:s2.roundsPlayed||0,u:''},{l:'Victorias',v1:s1.wins||0,v2:s2.wins||0,u:''},{l:'Win Rate',v1:calcWinRate(s1),v2:calcWinRate(s2),u:'%'},{l:'Dano Medio',v1:calcAvgDmg(s1),v2:calcAvgDmg(s2),u:''},{l:'Top 10',v1:s1.top10s||0,v2:s2.top10s||0,u:''},{l:'Headshot %',v1:calcHSRate(s1),v2:calcHSRate(s2),u:'%'},{l:'Kill Lejano',v1:Math.round(s1.longestKill||0),v2:Math.round(s2.longestKill||0),u:'m'},{l:'Revives',v1:s1.revives||0,v2:s2.revives||0,u:''},{l:'Assists',v1:s1.assists||0,v2:s2.assists||0,u:''},{l:'Top 10 %',v1:calcTop10Rate(s1),v2:calcTop10Rate(s2),u:'%'}];
   function card(name,side){return'<div style="font-family:\'Orbitron\',sans-serif;font-weight:700;font-size:1rem;margin-bottom:14px;text-align:center;color:'+(side===1?'var(--accent)':'var(--accent-orange)')+';">'+name+'</div>'+stats.map(s=>{const v=side===1?s.v1:s.v2;const vo=side===1?s.v2:s.v1;const nv=parseFloat(v);const nvo=parseFloat(vo);const w=nv>nvo?'winner':nv<nvo?'loser':'';return'<div class="compare-stat-row"><span class="compare-stat-name">'+s.l+'</span><span class="compare-stat-val '+w+'">'+v+s.u+'</span></div>';}).join('');}
   document.getElementById('compareCard1').innerHTML=card(n1,1);document.getElementById('compareCard2').innerHTML=card(n2,2);
@@ -6736,6 +6960,73 @@ function renderCompareCards(n1,s1,n2,s2){
   let bh='';
   stats.forEach(s=>{const nv1=parseFloat(s.v1),nv2=parseFloat(s.v2);const mx=Math.max(nv1,nv2,1);const p1=Math.round((nv1/mx)*100),p2=Math.round((nv2/mx)*100);const c1=nv1>=nv2?'var(--accent)':'var(--text-dim)',c2=nv2>=nv1?'var(--accent-orange)':'var(--text-dim)';bh+='<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-secondary);margin-bottom:3px;"><span>'+s.v1+s.u+'</span><span style="font-weight:600;text-transform:uppercase;letter-spacing:1px;">'+s.l+'</span><span>'+s.v2+s.u+'</span></div><div style="display:flex;gap:4px;height:6px;"><div style="flex:1;display:flex;justify-content:flex-end;"><div style="width:'+p1+'%;background:'+c1+';border-radius:3px 0 0 3px;transition:width .5s;"></div></div><div style="flex:1;"><div style="width:'+p2+'%;background:'+c2+';border-radius:0 3px 3px 0;transition:width .5s;"></div></div></div></div>';});
   document.getElementById('compareBarChart').innerHTML=bh;
+}
+
+/* ═══ COMPARAR JUGADORES CON IA (v152) ═══ */
+async function compareWithAI(){
+  if(!lastCompareData){alert('Primero compara dos jugadores');return;}
+  const {n1,s1,n2,s2,platform,mode}=lastCompareData;
+  const btn=document.getElementById('compareAIBtn');
+  const resDiv=document.getElementById('compareAIResult');
+  if(btn){btn.disabled=true;btn.innerHTML='&#x23F3; Analizando...';}
+  resDiv.innerHTML='<div style="text-align:center;color:var(--text-secondary);padding:20px;">La IA esta comparando a los dos jugadores...</div>';
+  try{
+    const payload={
+      s1:{kd:calcKD(s1),avgDamage:calcAvgDmg(s1),hsRate:calcHSRate(s1),winRate:calcWinRate(s1),top10Rate:calcTop10Rate(s1),kills:s1.kills||0,wins:s1.wins||0,rounds:s1.roundsPlayed||0,longestKill:Math.round(s1.longestKill||0),revives:s1.revives||0,assists:s1.assists||0},
+      s2:{kd:calcKD(s2),avgDamage:calcAvgDmg(s2),hsRate:calcHSRate(s2),winRate:calcWinRate(s2),top10Rate:calcTop10Rate(s2),kills:s2.kills||0,wins:s2.wins||0,rounds:s2.roundsPlayed||0,longestKill:Math.round(s2.longestKill||0),revives:s2.revives||0,assists:s2.assists||0}
+    };
+    const url='/api/ai-compare-players?p1='+encodeURIComponent(n1)+'&p2='+encodeURIComponent(n2)+'&platform='+encodeURIComponent(platform)+'&mode='+encodeURIComponent(mode)+'&stats='+encodeURIComponent(JSON.stringify(payload));
+    const r=await fetch(url);
+    if(!r.ok){const er=await r.json().catch(()=>({error:'Error'}));throw new Error(er.error||'Error IA');}
+    const ai=await r.json();
+    renderCompareAI(ai,n1,n2);
+    if(btn){btn.disabled=false;btn.innerHTML='&#x1F916; Regenerar analisis IA';}
+  }catch(e){
+    console.error('compareWithAI error',e);
+    resDiv.innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:16px;">No se pudo generar el analisis IA: '+esc(e.message||'Error')+'</div>';
+    if(btn){btn.disabled=false;btn.innerHTML='&#x1F916; Reintentar IA';}
+  }
+}
+function renderCompareAI(ai,n1,n2){
+  const resDiv=document.getElementById('compareAIResult');
+  const winColor=ai.winner===n1?'var(--accent)':ai.winner===n2?'var(--accent-orange)':'var(--accent-yellow)';
+  const winLabel=ai.winner==='EMPATE'?'EMPATE TECNICO':ai.winner+' GANA';
+  const catIcon={combate:'&#x2694;&#xFE0F;',precision:'&#x1F3AF;',supervivencia:'&#x1F6E1;&#xFE0F;',soporte:'&#x1F91D;'};
+  const catLabel={combate:'Combate',precision:'Precision',supervivencia:'Supervivencia',soporte:'Soporte'};
+  function catRow(key){
+    const c=ai.categories&&ai.categories[key];if(!c)return'';
+    const col=c.winner===n1?'var(--accent)':c.winner===n2?'var(--accent-orange)':'var(--accent-yellow)';
+    const lbl=c.winner==='EMPATE'?'Empate':c.winner;
+    return'<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;"><div style="font-size:1.2rem;">'+catIcon[key]+'</div><div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;"><span style="font-family:Orbitron,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);">'+catLabel[key]+'</span><span style="font-weight:700;font-size:.8rem;color:'+col+';">'+esc(lbl)+'</span></div><div style="font-size:.78rem;color:var(--text-secondary);margin-top:3px;line-height:1.4;">'+esc(c.note||'')+'</div></div></div>';
+  }
+  let h='<div style="background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(0,240,255,0.05));border:1px solid rgba(168,85,247,0.3);border-radius:14px;padding:20px;">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;"><div style="font-size:1.1rem;">&#x1F916;</div><div style="font-family:Orbitron,sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:#a855f7;font-weight:700;">Analisis IA V4NZ</div></div>';
+  // Verdict box
+  h+='<div style="text-align:center;padding:14px;background:var(--bg-card);border-radius:10px;margin-bottom:14px;">';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:6px;">Veredicto IA</div>';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:800;color:'+winColor+';">'+esc(winLabel)+'</div>';
+  if(ai.winnerReason)h+='<div style="font-size:.8rem;color:var(--text-secondary);margin-top:6px;font-style:italic;">'+esc(ai.winnerReason)+'</div>';
+  h+='</div>';
+  // Styles side by side
+  if(ai.styleP1||ai.styleP2){
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">';
+    h+='<div style="padding:10px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.2);border-radius:8px;text-align:center;"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:3px;">'+esc(n1)+'</div><div style="font-weight:700;color:var(--accent);font-size:.85rem;">'+esc(ai.styleP1||'-')+'</div></div>';
+    h+='<div style="padding:10px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:8px;text-align:center;"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:3px;">'+esc(n2)+'</div><div style="font-weight:700;color:var(--accent-orange);font-size:.85rem;">'+esc(ai.styleP2||'-')+'</div></div>';
+    h+='</div>';
+  }
+  // Categories
+  h+='<div style="margin-bottom:14px;">';
+  ['combate','precision','supervivencia','soporte'].forEach(k=>{h+=catRow(k);});
+  h+='</div>';
+  // Sample warning
+  if(ai.sampleWarning)h+='<div style="padding:10px 12px;background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.25);border-radius:8px;font-size:.78rem;color:var(--accent-yellow);margin-bottom:12px;">&#x26A0;&#xFE0F; '+esc(ai.sampleWarning)+'</div>';
+  // Verdict paragraph
+  if(ai.verdict)h+='<div style="padding:12px;background:var(--bg-card);border-left:3px solid #a855f7;border-radius:6px;font-size:.82rem;line-height:1.5;color:var(--text-secondary);margin-bottom:12px;">'+esc(ai.verdict)+'</div>';
+  // Tip
+  if(ai.tipLoser)h+='<div style="padding:12px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.2);border-radius:8px;font-size:.8rem;color:var(--text-primary);"><span style="font-weight:700;color:var(--accent);">&#x1F4A1; Consejo:</span> '+esc(ai.tipLoser)+'</div>';
+  h+='<div style="margin-top:12px;text-align:right;font-size:.65rem;color:var(--text-dim);">Generado por V4NZ AI &bull; cache 7 dias</div>';
+  h+='</div>';
+  resDiv.innerHTML=h;
 }
 
 /* ═══ SQUAD ANALYZER ═══ */
@@ -7987,10 +8278,90 @@ async function compareClans(){
       h+='</div>';
     }
     h+='</div>';
+    // v153 — Comparar Clanes con IA: solo si tenemos datos DB reales de ambos clanes
+    if(hasDB){
+      const tk1x=parseInt(c1.total_kills)||0,tk2x=parseInt(c2.total_kills)||0;
+      const tw1x=parseInt(c1.total_wins)||0,tw2x=parseInt(c2.total_wins)||0;
+      const kd1x=parseFloat(c1.avg_kd)||0,kd2x=parseFloat(c2.avg_kd)||0;
+      const wr1x=parseFloat(c1.win_rate)||0,wr2x=parseFloat(c2.win_rate)||0;
+      const ad1x=parseFloat(c1.avg_damage)||0,ad2x=parseFloat(c2.avg_damage)||0;
+      const tr1x=parseInt(c1.total_rounds)||0,tr2x=parseInt(c2.total_rounds)||0;
+      const ac1x=parseInt(c1.active_members)||0,ac2x=parseInt(c2.active_members)||0;
+      lastClanCompareData={
+        tag1:tag1,tag2:tag2,name1:name1,name2:name2,
+        c1:{members:mc1,active:ac1x,level:lv1,totalKills:tk1x,totalWins:tw1x,avgKD:kd1x.toFixed(2),avgDamage:Math.round(ad1x),winRate:wr1x.toFixed(2),totalRounds:tr1x,killsPerMember:ac1x>0?Math.round(tk1x/ac1x):0,winsPerMember:ac1x>0?(tw1x/ac1x).toFixed(1):0},
+        c2:{members:mc2,active:ac2x,level:lv2,totalKills:tk2x,totalWins:tw2x,avgKD:kd2x.toFixed(2),avgDamage:Math.round(ad2x),winRate:wr2x.toFixed(2),totalRounds:tr2x,killsPerMember:ac2x>0?Math.round(tk2x/ac2x):0,winsPerMember:ac2x>0?(tw2x/ac2x).toFixed(1):0}
+      };
+      h+='<div id="compareClansAIWrap" style="margin-top:20px;text-align:center;"><button class="search-btn" id="compareClansAIBtn" style="border-radius:8px;background:linear-gradient(135deg,#a855f7,#ff6b00);" onclick="compareClansWithAI()">&#x1F916; Comparar Clanes con IA</button></div>';
+      h+='<div id="compareClansAIResult" style="margin-top:20px;"></div>';
+    }else{
+      lastClanCompareData=null;
+    }
     cr.innerHTML=h;
   }catch(e){
     cr.innerHTML='<p style="color:var(--accent-orange);font-size:.85rem;">'+esc(friendlyErr(e))+'</p>';
   }finally{showLoading(false);}
+}
+
+/* ═══ COMPARAR CLANES CON IA (v153) ═══ */
+let lastClanCompareData=null;
+async function compareClansWithAI(){
+  if(!lastClanCompareData){alert('Primero compara dos clanes con stats completos');return;}
+  const d=lastClanCompareData;
+  const btn=document.getElementById('compareClansAIBtn');
+  const resDiv=document.getElementById('compareClansAIResult');
+  if(btn){btn.disabled=true;btn.innerHTML='&#x23F3; Analizando clanes...';}
+  resDiv.innerHTML='<div style="text-align:center;color:var(--text-secondary);padding:20px;">La IA esta evaluando potencia, calidad, profundidad y actividad de ambos clanes...</div>';
+  try{
+    const payload={c1:d.c1,c2:d.c2,name1:d.name1,name2:d.name2};
+    const url='/api/ai-compare-clans?tag1='+encodeURIComponent(d.tag1)+'&tag2='+encodeURIComponent(d.tag2)+'&stats='+encodeURIComponent(JSON.stringify(payload));
+    const r=await fetch(url);
+    if(!r.ok){const er=await r.json().catch(()=>({error:'Error'}));throw new Error(er.error||'Error IA');}
+    const ai=await r.json();
+    renderCompareClansAI(ai,d);
+    if(btn){btn.disabled=false;btn.innerHTML='&#x1F916; Regenerar analisis IA';}
+  }catch(e){
+    console.error('compareClansWithAI error',e);
+    resDiv.innerHTML='<div style="text-align:center;color:var(--accent-orange);padding:16px;">No se pudo generar el analisis IA: '+esc(e.message||'Error')+'</div>';
+    if(btn){btn.disabled=false;btn.innerHTML='&#x1F916; Reintentar IA';}
+  }
+}
+function renderCompareClansAI(ai,d){
+  const resDiv=document.getElementById('compareClansAIResult');
+  const t1=d.tag1,t2=d.tag2,n1=d.name1,n2=d.name2;
+  const co='var(--accent-orange)',ca='var(--accent)';
+  const winColor=ai.winner===t1?co:ai.winner===t2?ca:'var(--accent-yellow)';
+  const winLabel=ai.winner==='EMPATE'?'EMPATE TECNICO':'['+ai.winner+'] '+(ai.winner===t1?n1:n2)+' GANA';
+  const dimIcon={potencia:'&#x1F4A5;',calidad:'&#x1F48E;',profundidad:'&#x1F3AF;',actividad:'&#x1F525;'};
+  const dimLabel={potencia:'Potencia',calidad:'Calidad',profundidad:'Profundidad',actividad:'Actividad'};
+  function dimRow(key){
+    const dim=ai.dimensions&&ai.dimensions[key];if(!dim)return'';
+    const col=dim.winner===t1?co:dim.winner===t2?ca:'var(--accent-yellow)';
+    const lbl=dim.winner==='EMPATE'?'Empate':'['+dim.winner+']';
+    return'<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;"><div style="font-size:1.2rem;">'+dimIcon[key]+'</div><div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;"><span style="font-family:Orbitron,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);">'+dimLabel[key]+'</span><span style="font-weight:700;font-size:.8rem;color:'+col+';">'+esc(lbl)+'</span></div><div style="font-size:.78rem;color:var(--text-secondary);margin-top:3px;line-height:1.4;">'+esc(dim.note||'')+'</div></div></div>';
+  }
+  let h='<div style="background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(255,107,0,0.05));border:1px solid rgba(168,85,247,0.3);border-radius:14px;padding:20px;">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;"><div style="font-size:1.1rem;">&#x1F916;</div><div style="font-family:Orbitron,sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:#a855f7;font-weight:700;">Analisis IA de Clanes V4NZ</div></div>';
+  h+='<div style="text-align:center;padding:14px;background:var(--bg-card);border-radius:10px;margin-bottom:14px;">';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:6px;">Veredicto IA</div>';
+  h+='<div style="font-family:Orbitron,sans-serif;font-size:1.15rem;font-weight:800;color:'+winColor+';">'+esc(winLabel)+'</div>';
+  if(ai.winnerReason)h+='<div style="font-size:.8rem;color:var(--text-secondary);margin-top:6px;font-style:italic;">'+esc(ai.winnerReason)+'</div>';
+  h+='</div>';
+  if(ai.identityC1||ai.identityC2){
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">';
+    h+='<div style="padding:10px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:8px;text-align:center;"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:3px;">['+esc(t1)+']</div><div style="font-weight:700;color:'+co+';font-size:.85rem;">'+esc(ai.identityC1||'-')+'</div></div>';
+    h+='<div style="padding:10px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.2);border-radius:8px;text-align:center;"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:3px;">['+esc(t2)+']</div><div style="font-weight:700;color:'+ca+';font-size:.85rem;">'+esc(ai.identityC2||'-')+'</div></div>';
+    h+='</div>';
+  }
+  h+='<div style="margin-bottom:14px;">';
+  ['potencia','calidad','profundidad','actividad'].forEach(k=>{h+=dimRow(k);});
+  h+='</div>';
+  if(ai.sizeWarning)h+='<div style="padding:10px 12px;background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.25);border-radius:8px;font-size:.78rem;color:var(--accent-yellow);margin-bottom:12px;">&#x26A0;&#xFE0F; '+esc(ai.sizeWarning)+'</div>';
+  if(ai.verdict)h+='<div style="padding:12px;background:var(--bg-card);border-left:3px solid #a855f7;border-radius:6px;font-size:.82rem;line-height:1.5;color:var(--text-secondary);margin-bottom:12px;">'+esc(ai.verdict)+'</div>';
+  if(ai.tipLoser)h+='<div style="padding:12px;background:rgba(255,107,0,0.05);border:1px solid rgba(255,107,0,0.2);border-radius:8px;font-size:.8rem;color:var(--text-primary);"><span style="font-weight:700;color:'+co+';">&#x1F4A1; Consejo estrategico:</span> '+esc(ai.tipLoser)+'</div>';
+  h+='<div style="margin-top:12px;text-align:right;font-size:.65rem;color:var(--text-dim);">Generado por V4NZ AI &bull; cache 7 dias</div>';
+  h+='</div>';
+  resDiv.innerHTML=h;
 }
 
 function setLBPlatform(p,btn){lbPlatform=p;document.querySelectorAll('#lbPlatBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
@@ -8005,7 +8376,6 @@ function timeAgo(dateStr){
   if(hrs<24)return 'hace '+hrs+'h '+(mins%60)+'min';
   return 'hace '+Math.floor(hrs/24)+' dias';
 }
-/* top500-full-v147 — renders all 500 players from API, no frontend limit */
 async function renderLeaderboard(){
   if(lbAbort){try{lbAbort.abort();}catch(e){}}
   const reqMode=lbMode,reqPlatform=lbPlatform,reqRegion=lbRegion;
