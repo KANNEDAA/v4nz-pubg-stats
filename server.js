@@ -1470,9 +1470,11 @@ app.get('/api/leaderboard', async (req, res) => {
             playerMap[name] = { name, stats: { kills: 0, wins: 0, roundsPlayed: 0, averageDamage: 0 }, platforms: [] };
           }
           const entry = playerMap[name];
-          entry.stats.kills += (stats.kills || 0);
-          entry.stats.wins += (stats.wins || 0);
-          entry.stats.roundsPlayed += (stats.roundsPlayed || stats.games || 0);
+          // Use Math.max (not +=) because psn-eu and xbox-eu return the same cross-platform data.
+          // Summing would double every player's stats.
+          entry.stats.kills = Math.max(entry.stats.kills, stats.kills || 0);
+          entry.stats.wins = Math.max(entry.stats.wins, stats.wins || 0);
+          entry.stats.roundsPlayed = Math.max(entry.stats.roundsPlayed, stats.roundsPlayed || stats.games || 0);
           entry.stats.averageDamage = Math.max(entry.stats.averageDamage, stats.averageDamage || 0);
           entry.platforms.push(plat);
         });
