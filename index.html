@@ -1300,7 +1300,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ v154 — Analisis IA Pro (privado) — endpoint /api/ai-deep-analysis con requireAuth + historial 90d snapshots + panel usuario logueado + tendencias/loadout/plan entrenamiento + cache 7d — marker: ai-deep-v154
    V4NZ v155 — auth-box wide mode para IA Pro — popup se expande a 700px al mostrar analisis + scroll + responsive — marker: auth-wide-v155
    V4NZ v156 — Top 500 cleanup: quitar AS (sin datos), DUO y DUO FPP (sin datos) — quedan EU/NA con Squad/Squad FPP/Solo/Solo FPP — marker: top500-cleanup-v156
-   V4NZ v157 — Top 500 mensaje dinamico: cuando API devuelve 0 jugadores muestra aviso en vez de demo falsa — marker: top500-nodata-v157
+   V4NZ v157 — Top 500 dinamico: auto-hide botones sin datos + mensaje aviso cuando 0 jugadores + cache por sesion — marker: top500-nodata-v157
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -4026,7 +4026,7 @@ function switchTab(t){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
-  if(t==='top500')renderLeaderboard();
+  if(t==='top500'){refreshLBModeButtons();renderLeaderboard();}
   if(t==='ranking')loadClanRanking();
   if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
   // Standalone tabs: hide search hero and empty state (they have their own content)
@@ -8365,9 +8365,32 @@ function renderCompareClansAI(ai,d){
   resDiv.innerHTML=h;
 }
 
-function setLBPlatform(p,btn){lbPlatform=p;document.querySelectorAll('#lbPlatBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
-function setLBRegion(r,btn){lbRegion=r;document.querySelectorAll('#lbRegionBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
+function setLBPlatform(p,btn){lbPlatform=p;document.querySelectorAll('#lbPlatBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');refreshLBModeButtons();renderLeaderboard();}
+function setLBRegion(r,btn){lbRegion=r;document.querySelectorAll('#lbRegionBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');refreshLBModeButtons();renderLeaderboard();}
 function setLBMode(m,btn){lbMode=m;document.querySelectorAll('#lbModeBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
+/* v157 — auto-hide mode buttons sin datos esta temporada */
+let _lbModeCache={};
+async function refreshLBModeButtons(){
+  const modes=['squad','squad-fpp','solo','solo-fpp'];
+  const cacheKey=lbPlatform+'_'+lbRegion;
+  if(!_lbModeCache[cacheKey]){
+    const avail={};
+    await Promise.all(modes.map(async m=>{
+      try{const r=await fetch('/api/leaderboard?platform='+lbPlatform+'&region='+lbRegion+'&mode='+m);const j=await r.json();avail[m]=(j.players&&j.players.length>0);}catch(e){avail[m]=false;}
+    }));
+    _lbModeCache[cacheKey]=avail;
+  }
+  const avail=_lbModeCache[cacheKey];
+  let anyHidden=false,activeHidden=false;
+  document.querySelectorAll('#lbModeBtns .lb-btn').forEach(btn=>{
+    const modeMatch=btn.getAttribute('onclick').match(/setLBMode\('([^']+)'/);
+    if(!modeMatch)return;
+    const m=modeMatch[1];
+    if(avail[m]===false){btn.style.display='none';anyHidden=true;if(btn.classList.contains('active'))activeHidden=true;}
+    else{btn.style.display='';}
+  });
+  if(activeHidden){const first=document.querySelector('#lbModeBtns .lb-btn[style=""]')||document.querySelector('#lbModeBtns .lb-btn:not([style*="display:none"])');if(first){first.click();}}
+}
 function timeAgo(dateStr){
   const diff=Date.now()-new Date(dateStr).getTime();
   const mins=Math.floor(diff/60000);
