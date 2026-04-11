@@ -1300,6 +1300,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ v154 — Analisis IA Pro (privado) — endpoint /api/ai-deep-analysis con requireAuth + historial 90d snapshots + panel usuario logueado + tendencias/loadout/plan entrenamiento + cache 7d — marker: ai-deep-v154
    V4NZ v155 — auth-box wide mode para IA Pro — popup se expande a 700px al mostrar analisis + scroll + responsive — marker: auth-wide-v155
    V4NZ v156 — Top 500 cleanup: quitar AS (sin datos), DUO y DUO FPP (sin datos) — quedan EU/NA con Squad/Squad FPP/Solo/Solo FPP — marker: top500-cleanup-v156
+   V4NZ v157 — Top 500 mensaje dinamico: cuando API devuelve 0 jugadores muestra aviso en vez de demo falsa — marker: top500-nodata-v157
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -8390,7 +8391,7 @@ async function renderLeaderboard(){
     if(lbMode!==reqMode||lbPlatform!==reqPlatform||lbRegion!==reqRegion)return;
     if(!resp.ok){renderLeaderboardDemo();return;}
     const data=await resp.json();
-    if(!data.players||data.players.length===0){renderLeaderboardDemo();return;}
+    if(!data.players||data.players.length===0){lbContent.innerHTML='<div style="text-align:center;padding:60px 20px;"><div style="font-size:2rem;margin-bottom:12px;">&#x1F6AB;</div><div style="color:var(--text-secondary);font-size:.95rem;font-weight:600;margin-bottom:6px;">Sin datos para '+reqMode.toUpperCase().replace('-',' ')+' '+reqRegion.toUpperCase()+'</div><div style="color:var(--text-dim);font-size:.8rem;">PUBG no tiene leaderboard activo para este modo/region esta temporada.</div></div>';return;}
     const isConsole=reqPlatform==='console';
     const showPlat=isConsole;
     const modeLabel=reqMode.toUpperCase().replace('-',' ');
