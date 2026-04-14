@@ -1302,6 +1302,7 @@ footer a { color: var(--accent); text-decoration: none; }
    V4NZ v156 — Top 500 cleanup: quitar AS (sin datos), DUO y DUO FPP (sin datos) — quedan EU/NA con Squad/Squad FPP/Solo/Solo FPP — marker: top500-cleanup-v156
    V4NZ v157 — Top 500 dinamico: mensaje aviso cuando 0 jugadores — marker: top500-nodata-v157
    V4NZ v158 — Top 500 simplificado: quitar botones modo y plataforma (PUBG S40 usa leaderboard unico cross-platform), dejar solo EU/NA — marker: top500-simple-v158
+   V4NZ v159 — Fix: click en Mi Clan/Favoritos/Recientes abre la pagina completa del clan (loadClanPage) en vez de la vista inline basica — marker: clan-fav-page-v159
    Consolidation pass: token rollout, hooks fixes, category colors,
    category top-bars, clan/fav hovers, radar anim, light mode shadows
    ═══════════════════════════════════════════════════════════════ */
@@ -2696,7 +2697,8 @@ function renderClanHistoryUI(){
   // Mi Clan banner
   if(myClan){
     const memberHintMC=myClan.members&&myClan.members.length?myClan.members.length+' miembros':'Nivel '+myClan.level+' &mdash; '+myClan.memberCount+' miembros';
-    banner.innerHTML='<div class="my-clan-banner" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+clanPlatLabel(myClan.platform)+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="loadClanFromHistory(\''+myClan.tag.replace(/'/g,"\\'")+'\');document.getElementById(\'clanResults\').scrollIntoView({behavior:\'smooth\',block:\'start\'});event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
+    const mct=myClan.tag.replace(/'/g,"\\'");
+    banner.innerHTML='<div class="my-clan-banner" onclick="history.pushState(null,\'\',\'/clan/\'+\''+mct+'\');loadClanPage(\''+mct+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+clanPlatLabel(myClan.platform)+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="history.pushState(null,\'\',\'/clan/\'+\''+mct+'\');loadClanPage(\''+mct+'\');event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
   }else{banner.innerHTML='';}
   // Clanes Favoritos
   const favSec=document.getElementById('clanFavoritesSection');
@@ -2705,7 +2707,7 @@ function renderClanHistoryUI(){
       let fh='<div class="clan-history-section" style="border:1px solid rgba(255,215,0,0.15);background:rgba(255,215,0,0.03);"><div class="clan-history-title" style="color:var(--accent-yellow);">&#9733; Clanes Favoritos</div>';
       clanFavorites.forEach(cf=>{
         const tagEsc=cf.tag.replace(/'/g,"\\'");
-        fh+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+tagEsc+'\')">';
+        fh+='<div class="clan-history-item" onclick="history.pushState(null,\'\',\'/clan/\'+\''+tagEsc+'\');loadClanPage(\''+tagEsc+'\')">';
         fh+='<div class="chi-icon" style="border-color:rgba(255,215,0,0.3);color:var(--accent-yellow);">'+cf.tag.charAt(0)+'</div>';
         fh+='<div class="chi-info"><div class="chi-name">['+esc(cf.tag)+'] '+esc(cf.name)+'</div>';
         fh+='<div class="chi-meta">'+clanPlatLabel(cf.platform)+(cf.group?' &mdash; <span style="color:var(--accent-yellow);">'+esc(cf.group)+'</span>':'')+'</div></div>';
@@ -2725,7 +2727,7 @@ function renderClanHistoryUI(){
     nonMyClan.forEach(c=>{
       const memberHint=c.members&&c.members.length?c.members.length+' miembros':'Nivel '+c.level+' &mdash; '+c.memberCount+' miembros';
       const ago=getTimeAgo(c.date);
-      h+='<div class="clan-history-item" onclick="loadClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+clanPlatLabel(c.platform)+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions">'+clanFavStar(c.tag,c.name,c.platform,'.85rem')+'<button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
+      h+='<div class="clan-history-item" onclick="history.pushState(null,\'\',\'/clan/\'+\''+c.tag.replace(/'/g,"\\'")+'\');loadClanPage(\''+c.tag.replace(/'/g,"\\'")+'\')">'+'<div class="chi-icon">'+c.tag.charAt(0)+'</div>'+'<div class="chi-info"><div class="chi-name">['+c.tag+'] '+c.name+'</div><div class="chi-meta">'+memberHint+' &mdash; '+clanPlatLabel(c.platform)+' &mdash; '+ago+'</div></div>'+'<div class="chi-actions">'+clanFavStar(c.tag,c.name,c.platform,'.85rem')+'<button class="chi-action-btn set-my-clan" onclick="setAsMyClan(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Fijar como Mi Clan">&#9733;</button><button class="chi-action-btn remove-clan" onclick="removeClanFromHistory(\''+c.tag.replace(/'/g,"\\'")+'\',event)" title="Quitar de recientes">&times;</button></div></div>';
     });
     h+='</div>';
     histSec.innerHTML=h;
