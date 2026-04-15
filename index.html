@@ -1481,6 +1481,34 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 .match-filter-empty { text-align: center; padding: 32px 20px; color: var(--text-dim); font-size: .85rem; }
 /* ═══ END CAPA 1 SPRINT 2 v170 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 1 SPRINT 3 — marker: capa-1-sprint-3-v171
+   Curiosidades destacadas: pollos, tiempo vivo, mapa favorito
+   ═══════════════════════════════════════════════════════════════ */
+.curio-highlights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 20px; }
+.curio-card { position: relative; background: linear-gradient(135deg, rgba(0,240,255,0.06), rgba(255,107,0,0.04)); border: 1px solid rgba(0,240,255,0.18); border-radius: 10px; padding: 14px 14px 12px; overflow: hidden; }
+.curio-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent); opacity: .8; }
+.curio-card.cc-chicken::before { background: var(--accent-orange); }
+.curio-card.cc-chicken { border-color: rgba(255,107,0,0.28); background: linear-gradient(135deg, rgba(255,107,0,0.08), rgba(255,51,85,0.04)); }
+.curio-card.cc-map::before { background: var(--accent-green); }
+.curio-card.cc-map { border-color: rgba(0,255,136,0.25); background: linear-gradient(135deg, rgba(0,255,136,0.06), rgba(0,240,255,0.04)); }
+.curio-card.cc-time::before { background: var(--accent-purple); }
+.curio-card.cc-time { border-color: rgba(168,85,247,0.28); background: linear-gradient(135deg, rgba(168,85,247,0.07), rgba(0,240,255,0.04)); }
+.curio-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.curio-icon { font-size: 1.35rem; line-height: 1; }
+.curio-title { font-family: 'Rajdhani', sans-serif; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.3px; color: var(--text-dim); }
+.curio-value { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-bottom: 4px; }
+.curio-detail { font-size: .75rem; color: var(--text-dim); line-height: 1.4; }
+.curio-detail strong { color: var(--text-primary); font-weight: 600; }
+.curio-pill { display: inline-block; font-family: 'Rajdhani', sans-serif; font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 2px 7px; border-radius: 8px; margin-top: 6px; }
+.curio-pill.pill-hot { background: rgba(0,255,136,0.15); color: var(--accent-green); }
+.curio-pill.pill-cold { background: rgba(255,51,85,0.15); color: var(--accent-red); }
+.curio-pill.pill-warn { background: rgba(255,107,0,0.15); color: var(--accent-orange); }
+.curio-submap { display: flex; align-items: center; gap: 6px; font-size: .68rem; color: var(--text-dim); margin-top: 4px; }
+.curio-submap .cs-cross { color: var(--accent-red); font-weight: 700; }
+@media (max-width: 720px) { .curio-highlights { grid-template-columns: 1fr; gap: 8px; } }
+/* ═══ END CAPA 1 SPRINT 3 v171 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -1980,7 +2008,7 @@ body.telem-open { overflow:hidden; }
   </div>
   <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchSummary" class="match-summary-grid" style="display:none;"></div><div id="matchFilters" class="match-filters" style="display:none;"></div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div class="match-list" id="matchList"></div><div id="matchStreaksSection" style="display:none;margin-top:20px;"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
-  <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
+  <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div id="curioHighlights" class="curio-highlights" style="display:none;"></div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
     <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Busca el clan de cualquier jugador. Si el clan ya esta registrado, veras a todos sus miembros con stats.</p>
@@ -5778,7 +5806,8 @@ async function openTelemMap(url,playerName,mapName,matchIdx){
 }
 
 function renderFunStats(){
-  const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('funStatsGrid').innerHTML='<div class="empty-state compact"><div class="empty-state-icon">&#x1F4ED;</div><p class="empty-state-desc">No hay datos para este modo</p></div>';return;}
+  const s=getActiveStats();const _ch=document.getElementById('curioHighlights');if(!s.roundsPlayed){document.getElementById('funStatsGrid').innerHTML='<div class="empty-state compact"><div class="empty-state-icon">&#x1F4ED;</div><p class="empty-state-desc">No hay datos para este modo</p></div>';if(_ch){_ch.style.display='none';_ch.innerHTML='';}return;}
+  try{renderCurioHighlights(s);}catch(e){console.error('Curio highlights error:',e);}
   const td=((s.walkDistance||0)+(s.rideDistance||0)+(s.swimDistance||0))/1000;
   const as=s.timeSurvived&&s.roundsPlayed?s.timeSurvived/s.roundsPlayed:0;
   const hpg=s.roundsPlayed?(s.heals||0)/s.roundsPlayed:0;
@@ -5804,6 +5833,100 @@ function renderFunStats(){
   const oldCot=document.querySelector('.cotilleo-section');if(oldCot)oldCot.remove();
   renderCotilleo(s);
 }
+// === V171 CAPA 1 SPRINT 3: CURIOSIDADES DESTACADAS ===
+function renderCurioHighlights(s){
+  const el=document.getElementById('curioHighlights');if(!el)return;
+  const wins=s.wins||0,rounds=s.roundsPlayed||0;
+  const cards=[];
+  // 1) POLLOS — 1 pollo cada N partidas + streak sin ganar (match history)
+  if(rounds>0){
+    const pollosIcon='&#x1F414;';
+    let val,detail,pill='';
+    if(wins===0){
+      val='0';
+      detail='Sin pollos aun en <strong>'+rounds+'</strong> partida'+(rounds>1?'s':'')+'. El primero llega.';
+      pill='<span class="curio-pill pill-warn">Buscando el primero</span>';
+    }else{
+      const perChicken=Math.round(rounds/wins);
+      val='1 / '+perChicken;
+      detail='<strong>'+wins+'</strong> pollo'+(wins>1?'s':'')+' en <strong>'+rounds+'</strong> partidas. Uno cada <strong>'+perChicken+'</strong>.';
+      // Calcular streak sin ganar desde match history
+      try{
+        const pn=(currentPlayerData?.attributes?.name||'').toLowerCase();
+        if(currentMatchData&&currentMatchData.length>0&&pn){
+          const sorted=[...currentMatchData].filter(m=>m&&m.data).sort((a,b)=>new Date(b.data.attributes.createdAt)-new Date(a.data.attributes.createdAt));
+          let streak=0,streakActive=true;
+          for(const match of sorted){
+            const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn);
+            if(!pp)continue;
+            if(pp.attributes.stats.winPlace===1){streakActive=false;break;}
+            streak++;
+          }
+          if(streakActive&&streak>=3)pill='<span class="curio-pill pill-cold">'+streak+' partidas sin pollo</span>';
+          else if(streak===0&&sorted.length>0)pill='<span class="curio-pill pill-hot">Pollo reciente</span>';
+          else if(streak>0)pill='<span class="curio-pill pill-warn">'+streak+' partidas sin ganar</span>';
+        }
+      }catch(e){}
+    }
+    cards.push({cls:'cc-chicken',icon:pollosIcon,title:'Pollos',val,detail,pill});
+  }
+  // 2) MAPA FAVORITO / KRYPTONITA — requiere match history (min 5 partidas agrupadas)
+  try{
+    const pn=(currentPlayerData?.attributes?.name||'').toLowerCase();
+    if(currentMatchData&&currentMatchData.length>=5&&pn){
+      const mapStats={};
+      currentMatchData.forEach(match=>{
+        if(!match||!match.data)return;
+        const mapName=match.data.attributes.mapName||'Unknown';
+        const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn);
+        if(!pp)return;
+        const ps=pp.attributes.stats;
+        if(!mapStats[mapName])mapStats[mapName]={total:0,wins:0,top10:0,kills:0};
+        mapStats[mapName].total++;
+        if(ps.winPlace===1)mapStats[mapName].wins++;
+        if(ps.winPlace<=10)mapStats[mapName].top10++;
+        mapStats[mapName].kills+=(ps.kills||0);
+      });
+      const mapLabels={Baltic_Main:'Erangel',Desert_Main:'Miramar',Savage_Main:'Sanhok',DihorOtok_Main:'Vikendi',Range_Main:'Campo',Summerland_Main:'Karakin',Chimera_Main:'Paramo',Heaven_Main:'Haven',Kiki_Main:'Deston',Tiger_Main:'Taego',Neon_Main:'Rondo'};
+      const entries=Object.entries(mapStats).filter(([,v])=>v.total>=2);
+      if(entries.length>=2){
+        // score = top10_rate * 2 + wins*5 + kills_per_match
+        entries.forEach(([,v])=>{v.score=(v.top10/v.total)*2+(v.wins/v.total)*5+(v.kills/v.total)*0.3;});
+        entries.sort((a,b)=>b[1].score-a[1].score);
+        const best=entries[0],worst=entries[entries.length-1];
+        const bestLabel=mapLabels[best[0]]||best[0];
+        const worstLabel=mapLabels[worst[0]]||worst[0];
+        const bestKpm=(best[1].kills/best[1].total).toFixed(1);
+        const worstKpm=(worst[1].kills/worst[1].total).toFixed(1);
+        let detail='<strong>'+bestLabel+'</strong> ('+best[1].total+' partidas, '+bestKpm+' kills/match)';
+        let pill='';
+        if(best[0]!==worst[0]){
+          detail+='<div class="curio-submap"><span class="cs-cross">&#x2716;</span> Kryptonita: <strong>'+worstLabel+'</strong> ('+worstKpm+' k/m)</div>';
+          pill='<span class="curio-pill pill-hot">'+Math.round((best[1].top10/best[1].total)*100)+'% top 10</span>';
+        }
+        cards.push({cls:'cc-map',icon:'&#x1F5FA;&#xFE0F;',title:'Mapa Favorito',val:bestLabel,detail,pill});
+      }
+    }
+  }catch(e){console.error('Map fav error:',e);}
+  // 3) TIEMPO VIVO TOTAL — acumulado de season stats
+  if(s.timeSurvived>0){
+    const totalSec=s.timeSurvived;
+    const h=Math.floor(totalSec/3600);
+    const m=Math.floor((totalSec%3600)/60);
+    const val=h>0?h+'h '+m+'m':m+'m';
+    const avg=rounds?Math.round(totalSec/rounds/60*10)/10:0;
+    let detail='En <strong>'+rounds+'</strong> partidas. Media <strong>'+avg+' min</strong>/partida.';
+    let pill='';
+    if(avg>=20)pill='<span class="curio-pill pill-hot">Superviviente</span>';
+    else if(avg>=15)pill='<span class="curio-pill pill-hot">Aguanta bien</span>';
+    else if(avg<8)pill='<span class="curio-pill pill-cold">Caes pronto</span>';
+    cards.push({cls:'cc-time',icon:'&#x23F3;',title:'Tiempo Vivo',val,detail,pill});
+  }
+  if(cards.length===0){el.style.display='none';el.innerHTML='';return;}
+  el.innerHTML=cards.map(c=>'<div class="curio-card '+c.cls+'"><div class="curio-head"><span class="curio-icon">'+c.icon+'</span><span class="curio-title">'+c.title+'</span></div><div class="curio-value">'+c.val+'</div><div class="curio-detail">'+c.detail+'</div>'+(c.pill||'')+'</div>').join('');
+  el.style.display='grid';
+}
+
 function renderCotilleo(s){
   const el=document.getElementById('funStatsGrid');if(!el)return;
   const pn=(currentPlayerData?.attributes?.name||'').toLowerCase();
