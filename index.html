@@ -8522,22 +8522,19 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
     }catch(_){}
   }
 
-  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v166
+  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v167
   // Usamos transform:scaleX() en vez de width (hardware-accel, interp bulletproof).
-  // CSS base pone scaleX(0). Observer aplica scaleX(dataW/100) al entrar en viewport.
+  // CSS base pone scaleX(0). Observer aplica scaleX(dataW/100) SYNC (rAF se throttlea en tabs no-focalizadas).
   try{
     const applyBarFill = (el)=>{
       if (el.classList.contains('dna-filled')) return;
       const w = el.getAttribute('data-w');
       if (!w || isNaN(parseFloat(w))) { el.classList.add('dna-filled'); return; }
-      el.classList.add('dna-filled');
       const scale = Math.max(0, Math.min(1, parseFloat(w)/100));
-      // Double rAF para garantizar layout inicial scaleX(0) antes de transicionar
-      requestAnimationFrame(()=>{
-        requestAnimationFrame(()=>{
-          el.style.transform = 'scaleX(' + scale + ')';
-        });
-      });
+      // Forzar reflow antes de cambiar transform (garantiza que transition dispare)
+      void el.offsetHeight;
+      el.style.transform = 'scaleX(' + scale + ')';
+      el.classList.add('dna-filled');
     };
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries)=>{
