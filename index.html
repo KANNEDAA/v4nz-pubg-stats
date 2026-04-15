@@ -576,7 +576,7 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .dna-bar-row { display: flex; align-items: center; gap: 10px; }
 .dna-bar-label { font-family: 'Rajdhani', sans-serif; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); width: 90px; text-align: right; }
 .dna-bar-track { flex: 1; height: 6px; background: var(--bg-card-hover); border-radius: 3px; overflow: hidden; }
-.dna-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.dna-bar-fill { height: 100%; width: 100%; border-radius: 3px; transform: scaleX(0); transform-origin: left center; transition: transform 1.2s cubic-bezier(.4,0,.2,1); will-change: transform; }
 .dna-bar-val { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 700; width: 32px; }
 @media(max-width:700px){
   .dna-layout { flex-direction: column; align-items:center; }
@@ -1212,7 +1212,7 @@ footer a { color: var(--accent); text-decoration: none; }
    El keyframe anterior solo definia "from" con !important y "forwards",
    lo que dejaba las barras a width:0 al terminar en algunos navegadores.
    Ahora usamos solo transition sobre el width inline, sin animation. */
-.dna-bar-fill { transition: width 1.2s var(--ease-smooth); }
+/* dna-fill-v166: usamos transform:scaleX() en vez de width (hardware-accel, interp bulletproof) */
 
 /* PHASE 1 — Counter number flash on update */
 .counter-flash { animation: counterFlash .45s var(--ease-smooth); }
@@ -5854,8 +5854,8 @@ function renderPersonality(){
     {label:'Movilidad',val:dn.movilidad,col:'#ff6b00'},
     {label:'Soporte',val:dn.soporte,col:'#00f0ff'}
   ];
-  // dna-fill-v165: width:0% + data-w → observer aplica width al entrar en viewport (% → % para interp correcta)
-  const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="'+b.val+'" style="width:0%;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
+  // dna-fill-v166: transform:scaleX(0) inicial + data-w → observer aplica scaleX al entrar en viewport
+  const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="'+b.val+'" style="background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
   // Build combat stats line (previously in narrativeInsights)
   const _wr=parseFloat(calcWinRate(s)),_t10=parseFloat(calcTop10Rate(s)),_ad2=parseFloat(calcAvgDmg(s));
   // v146 — marker: skill-benchmarks-v146 — umbrales reales consola PSN EU T40 (pubg-analyst skill)
@@ -6070,8 +6070,8 @@ function renderAiDna(data) {
     { label: 'Movilidad', val: scores.movilidad, col: '#ff6b00' },
     { label: 'Soporte', val: scores.soporte, col: '#00f0ff' }
   ];
-  // dna-fill-v165: width:0% + data-w → observer aplica width al entrar en viewport (% → % para interp correcta)
-  const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="' + b.val + '" style="width:0%;background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
+  // dna-fill-v166: transform:scaleX(0) inicial + data-w → observer aplica scaleX al entrar en viewport
+  const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="' + b.val + '" style="background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
 
   const insightsHtml = (data.insights || []).map((ins, idx) => {
     const icon = idx === 0 ? '💪' : idx === 1 ? '⚠️' : '🔍';
@@ -8522,22 +8522,20 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
     }catch(_){}
   }
 
-  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v165
-  // NO usar .animate-in (colisiona con .animate-in global que pone opacity:0 + fadeInUp).
-  // Usar .dna-filled como flag dedicado. Render pone width:0 + data-w="X".
-  // CRITICAL: double rAF para forzar layout en width:0 ANTES de disparar transition.
-  // Sin doble rAF la transition queda stuck en currentTime:0 (bug detectado v163).
+  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v166
+  // Usamos transform:scaleX() en vez de width (hardware-accel, interp bulletproof).
+  // CSS base pone scaleX(0). Observer aplica scaleX(dataW/100) al entrar en viewport.
   try{
     const applyBarFill = (el)=>{
       if (el.classList.contains('dna-filled')) return;
       const w = el.getAttribute('data-w');
       if (!w || isNaN(parseFloat(w))) { el.classList.add('dna-filled'); return; }
       el.classList.add('dna-filled');
-      // Forzar reflow en width:0, luego rAF doble antes de animar
-      el.offsetHeight; // force layout sync
+      const scale = Math.max(0, Math.min(1, parseFloat(w)/100));
+      // Double rAF para garantizar layout inicial scaleX(0) antes de transicionar
       requestAnimationFrame(()=>{
         requestAnimationFrame(()=>{
-          el.style.width = w + '%';
+          el.style.transform = 'scaleX(' + scale + ')';
         });
       });
     };
