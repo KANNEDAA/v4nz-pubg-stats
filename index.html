@@ -8522,15 +8522,24 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
     }catch(_){}
   }
 
-  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v163
+  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v164
   // NO usar .animate-in (colisiona con .animate-in global que pone opacity:0 + fadeInUp).
   // Usar .dna-filled como flag dedicado. Render pone width:0 + data-w="X".
+  // CRITICAL: double rAF para forzar layout en width:0 ANTES de disparar transition.
+  // Sin doble rAF la transition queda stuck en currentTime:0 (bug detectado v163).
   try{
     const applyBarFill = (el)=>{
       if (el.classList.contains('dna-filled')) return;
       const w = el.getAttribute('data-w');
-      if (w && !isNaN(parseFloat(w))) el.style.width = w + '%';
+      if (!w || isNaN(parseFloat(w))) { el.classList.add('dna-filled'); return; }
       el.classList.add('dna-filled');
+      // Forzar reflow en width:0, luego rAF doble antes de animar
+      el.offsetHeight; // force layout sync
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          el.style.width = w + '%';
+        });
+      });
     };
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries)=>{
