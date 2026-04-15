@@ -2523,7 +2523,26 @@ let API_KEY=IS_PROXIED?'proxy':localStorage.getItem('pubg_api_key')||'';
 let currentPlatform='psn',currentGameMode='tpp',currentSquadMode='squad';
 let currentPlayerData=null,currentSeasonData=null,currentMatchData=[],currentWeaponData=null,currentSurvivalData=null;
 function updateHeroState(){try{if(currentPlayerData){document.body.classList.add('has-player-loaded');}else{document.body.classList.remove('has-player-loaded');}}catch(e){}}
-function goHome(){try{currentPlayerData=null;currentMatchData=[];currentSeasonData=null;currentWeaponData=null;currentSurvivalData=null;window._lastBotIndex=null;const inp=document.getElementById('searchInput');if(inp)inp.value='';history.pushState(null,'','/');updateHeroState();switchTab('overview');const e=document.getElementById('emptyState');if(e)e.style.display='none';window.scrollTo({top:0,behavior:'smooth'});}catch(err){location.href='/';}}
+// Limpia el estado del SPA y muestra la home. Usado por goHome() (push /) y por Router al navegar atrás hasta /.
+function resetHomeState(){
+  try{
+    currentPlayerData=null;currentMatchData=[];currentSeasonData=null;currentWeaponData=null;currentSurvivalData=null;window._lastBotIndex=null;
+    const inp=document.getElementById('searchInput');if(inp)inp.value='';
+    const ph=document.getElementById('playerHeader');if(ph)ph.classList.remove('visible');
+    const sb=document.getElementById('seasonBar');if(sb)sb.classList.remove('visible');
+    const tc=document.getElementById('tabsContainer');if(tc){tc.classList.remove('visible');tc.style.display='none';}
+    const ni=document.getElementById('narrativeInsights');if(ni)ni.classList.remove('visible');
+    const ps=document.getElementById('personalitySection');if(ps)ps.classList.remove('visible');
+    const es=document.getElementById('emptyState');if(es)es.style.display='block';
+    const bib=document.getElementById('botIndexBadge');if(bib){bib.style.display='none';bib.innerHTML='';}
+    const pcb=document.getElementById('playerClanBadge');if(pcb){pcb.style.display='none';pcb.innerHTML='';}
+    const ft=document.getElementById('frequentTeammates');if(ft)ft.style.display='none';
+    document.title='V4NZ — PUBG Stats Tracker';
+    updateHeroState();
+    switchTab('overview');
+  }catch(e){console.error('resetHomeState:',e);}
+}
+function goHome(){try{resetHomeState();history.pushState(null,'','/');window.scrollTo({top:0,behavior:'smooth'});}catch(err){location.href='/';}}
 function safeParse(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function escJs(s){if(!s)return'';return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');}
@@ -3680,6 +3699,54 @@ async function loadWhoIsPlaying(force){
 function hideHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='none';}
 function showHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='block';loadWhoIsPlaying();}
 
+// ═══ ROUTER v160 — marker: router-v160 ═══
+// Capa 0 del plan de diseño: centraliza parseo de URL, popstate y navegación.
+// Las rutas se evalúan en orden — primer match gana. El handler recibe el match array.
+// Preparado para sub-tabs de clan (/clan/V4NZ/radiografia) — Capa 3 amplía loadClanPage para aceptar subtab.
+const Router = {
+  routes: [
+    [/^\/$/, () => {
+      // Solo limpiar si venimos de una ruta con player/clan cargado (popstate desde /stats/* o /clan/*).
+      // En primer load no hay nada que limpiar — el DOM ya está virgen.
+      if (currentPlayerData || document.body.classList.contains('has-player-loaded')) resetHomeState();
+    }],
+    [/^\/stats\/(psn|xbox)\/(.+?)\/?$/i, (m) => {
+      document.body.classList.add('has-player-loaded');
+      setPlatform(m[1].toLowerCase());
+      const inp=document.getElementById('searchInput');
+      if(inp) inp.value=decodeURIComponent(m[2]);
+      searchPlayer();
+    }],
+    [/^\/clan\/([^\/]+)(?:\/([^\/]+))?\/?$/i, (m) => {
+      loadClanPage(decodeURIComponent(m[1]));
+      // m[2] = subtab (radiografia, rivalidades, ...) — reservado para Capa 3
+    }],
+    [/^\/(ranking|top500|compare|comparar|clans|clanes)\/?$/i, (m) => {
+      const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};
+      switchTab(tabMap[m[1].toLowerCase()]);
+    }],
+    [/^\/admin\/?$/, () => { history.replaceState(null,'','/'); }]
+  ],
+  // Navegar a una ruta. Por defecto pushState + dispatch. opts:
+  //   replace:true  → replaceState en vez de pushState (no añade entrada al historial)
+  //   silent:true   → solo actualiza URL, no dispara handler (útil cuando el caller ya renderiza)
+  navigate(path, opts){
+    opts=opts||{};
+    try{ history[opts.replace?'replaceState':'pushState'](null,'',path); }catch(e){}
+    if(!opts.silent) this.dispatch();
+  },
+  // Lee location.pathname y ejecuta el handler que coincida. Llamado en init y en popstate.
+  dispatch(){
+    const p=location.pathname||'/';
+    for(const [regex,handler] of this.routes){
+      const m=p.match(regex);
+      if(m){ try{ handler(m); }catch(e){ console.error('[Router] handler error:',e); } return; }
+    }
+    // 404 silencioso — usuario ve home
+  }
+};
+window.addEventListener('popstate',()=>Router.dispatch());
+
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
   renderClanHistoryUI();
@@ -3687,14 +3754,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
   document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','top500','compare'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{requestAnimationFrame(()=>{if(t==='overview'&&currentPlayerData){const ph=document.getElementById('playerHeader');if(ph){const py=ph.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:py,behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}}else if(t==='clans'){const cp=document.getElementById('panel-clans');if(cp){const cy=cp.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:cy,behavior:'smooth'});}}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
-  // Friendly URLs: /stats/psn/PLAYER, /clan/TAG, /ranking, /top500, /comparar, /clanes
-  const urlMatch=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
-  const clanMatch=location.pathname.match(/^\/clan\/(.+)$/i);
-  const sectionMatch=location.pathname.match(/^\/(ranking|top500|compare|comparar|clans|clanes)$/i);
-  if(urlMatch){document.body.classList.add('has-player-loaded');const plat=urlMatch[1].toLowerCase(),pname=decodeURIComponent(urlMatch[2]);setTimeout(()=>{setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();},100);}
-  else if(clanMatch){setTimeout(()=>loadClanPage(decodeURIComponent(clanMatch[1])),100);}
-  else if(sectionMatch){const sec=sectionMatch[1].toLowerCase();const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};setTimeout(()=>switchTab(tabMap[sec]||sec),100);}
-  else{/* Pagina de inicio limpia — el usuario busca su gamertag */}
+  // URL inicial → Router decide qué cargar (v160: centralizado en objeto Router)
+  // /stats/psn/PLAYER, /clan/TAG, /clan/TAG/subtab (reservado), /ranking, /top500, /comparar, /clanes, /admin
+  setTimeout(()=>Router.dispatch(),100);
   // Sticky tabs shadow effect
   const _tc=document.getElementById('tabsContainer');
   if(_tc){
@@ -3704,31 +3766,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     const _obs=new IntersectionObserver(([e])=>{_tc.classList.toggle('stuck',!e.isIntersecting);},{threshold:1});
     _obs.observe(_sentinel);
   }
-  // Back/forward browser navigation
-  window.addEventListener('popstate',()=>{
-    const statsM=location.pathname.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
-    const clanM=location.pathname.match(/^\/clan\/(.+)$/i);
-    const secM=location.pathname.match(/^\/(ranking|top500|compare|comparar|clans|clanes)$/i);
-    if(statsM){const plat=statsM[1].toLowerCase(),pname=decodeURIComponent(statsM[2]);setPlatform(plat);document.getElementById('searchInput').value=pname;searchPlayer();}
-    else if(clanM){loadClanPage(decodeURIComponent(clanM[1]));}
-    else if(secM){const sec=secM[1].toLowerCase();const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};switchTab(tabMap[sec]||sec);}
-    else if(location.pathname==='/'||location.pathname===''){
-      // Volver a home limpio
-      document.getElementById('searchInput').value='';
-      document.getElementById('playerHeader').classList.remove('visible');
-      document.getElementById('seasonBar').classList.remove('visible');
-      var tc=document.getElementById('tabsContainer');tc.classList.remove('visible');tc.style.display='none';
-      document.getElementById('narrativeInsights').classList.remove('visible');
-      document.getElementById('personalitySection').classList.remove('visible');
-      document.getElementById('emptyState').style.display='block';
-      const bib=document.getElementById('botIndexBadge');if(bib){bib.style.display='none';bib.innerHTML='';}
-      const pcb=document.getElementById('playerClanBadge');if(pcb){pcb.style.display='none';pcb.innerHTML='';}
-      document.getElementById('frequentTeammates').style.display='none';
-      document.title='V4NZ — PUBG Stats Tracker';
-      switchTab('overview');
-    }
-    else{location.reload();}
-  });
+  // Nota: el listener de popstate está registrado globalmente por el objeto Router (v160).
+  // Cuando el usuario pulsa ATRÁS en el navegador, Router.dispatch() lee location.pathname y ejecuta el handler.
   // Admin panel removed v149 — todo es automatico
   // Limpiar restos de sesiones anteriores que pudieran tener admin guardado
   try{sessionStorage.removeItem('adminMode');sessionStorage.removeItem('adminToken');}catch(e){}
