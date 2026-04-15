@@ -5854,8 +5854,8 @@ function renderPersonality(){
     {label:'Movilidad',val:dn.movilidad,col:'#ff6b00'},
     {label:'Soporte',val:dn.soporte,col:'#00f0ff'}
   ];
-  // dna-fill-v162: width:0 + data-w → observer aplica width al entrar en viewport
-  const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="'+b.val+'" style="width:0;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
+  // dna-fill-v165: width:0% + data-w → observer aplica width al entrar en viewport (% → % para interp correcta)
+  const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="'+b.val+'" style="width:0%;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
   // Build combat stats line (previously in narrativeInsights)
   const _wr=parseFloat(calcWinRate(s)),_t10=parseFloat(calcTop10Rate(s)),_ad2=parseFloat(calcAvgDmg(s));
   // v146 — marker: skill-benchmarks-v146 — umbrales reales consola PSN EU T40 (pubg-analyst skill)
@@ -6070,8 +6070,8 @@ function renderAiDna(data) {
     { label: 'Movilidad', val: scores.movilidad, col: '#ff6b00' },
     { label: 'Soporte', val: scores.soporte, col: '#00f0ff' }
   ];
-  // dna-fill-v162: width:0 + data-w → observer aplica width al entrar en viewport
-  const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="' + b.val + '" style="width:0;background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
+  // dna-fill-v165: width:0% + data-w → observer aplica width al entrar en viewport (% → % para interp correcta)
+  const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="' + b.val + '" style="width:0%;background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
 
   const insightsHtml = (data.insights || []).map((ins, idx) => {
     const icon = idx === 0 ? '💪' : idx === 1 ? '⚠️' : '🔍';
@@ -8522,7 +8522,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
     }catch(_){}
   }
 
-  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v164
+  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v165
   // NO usar .animate-in (colisiona con .animate-in global que pone opacity:0 + fadeInUp).
   // Usar .dna-filled como flag dedicado. Render pone width:0 + data-w="X".
   // CRITICAL: double rAF para forzar layout en width:0 ANTES de disparar transition.
