@@ -5854,7 +5854,8 @@ function renderPersonality(){
     {label:'Movilidad',val:dn.movilidad,col:'#ff6b00'},
     {label:'Soporte',val:dn.soporte,col:'#00f0ff'}
   ];
-  const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" style="width:'+b.val+'%;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
+  // dna-fill-v162: width:0 + data-w → observer aplica width al entrar en viewport
+  const barsHtml=bars.map(b=>'<div class="dna-bar-row"><span class="dna-bar-label">'+b.label+'</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="'+b.val+'" style="width:0;background:'+b.col+';"></div></div><span class="dna-bar-val" style="color:'+b.col+';">'+b.val+'</span></div>').join('');
   // Build combat stats line (previously in narrativeInsights)
   const _wr=parseFloat(calcWinRate(s)),_t10=parseFloat(calcTop10Rate(s)),_ad2=parseFloat(calcAvgDmg(s));
   // v146 — marker: skill-benchmarks-v146 — umbrales reales consola PSN EU T40 (pubg-analyst skill)
@@ -6069,7 +6070,8 @@ function renderAiDna(data) {
     { label: 'Movilidad', val: scores.movilidad, col: '#ff6b00' },
     { label: 'Soporte', val: scores.soporte, col: '#00f0ff' }
   ];
-  const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" style="width:' + b.val + '%;background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
+  // dna-fill-v162: width:0 + data-w → observer aplica width al entrar en viewport
+  const barsHtml = bars.map(b => '<div class="dna-bar-row"><span class="dna-bar-label">' + b.label + '</span><div class="dna-bar-track"><div class="dna-bar-fill" data-w="' + b.val + '" style="width:0;background:' + b.col + ';"></div></div><span class="dna-bar-val" style="color:' + b.col + ';">' + b.val + '</span></div>').join('');
 
   const insightsHtml = (data.insights || []).map((ins, idx) => {
     const icon = idx === 0 ? '💪' : idx === 1 ? '⚠️' : '🔍';
@@ -8520,15 +8522,33 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
     }catch(_){}
   }
 
-  // 2) DNA bar animation via IntersectionObserver — any .dna-bar-fill
+  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v162
+  // Render pone width:0 + data-w="X". Al entrar en viewport: style.width = data-w%.
+  // Fallback 500ms: si el observer no disparó (IO no soportado, off-screen), forzar width.
   try{
+    const applyBarFill = (el)=>{
+      if (el.classList.contains('animate-in')) return;
+      const w = el.getAttribute('data-w');
+      if (w && !isNaN(parseFloat(w))) el.style.width = w + '%';
+      el.classList.add('animate-in');
+    };
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries)=>{
         entries.forEach(e=>{
-          if (e.isIntersecting) { e.target.classList.add('animate-in'); io.unobserve(e.target); }
+          if (e.isIntersecting) { applyBarFill(e.target); io.unobserve(e.target); }
         });
       }, { threshold: .3 });
-      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.animate-in)').forEach(el=>io.observe(el));
+      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.animate-in)').forEach(el=>{
+        if (el.hasAttribute('data-w')) io.observe(el);
+        // Fallback: aplicar siempre a los 500ms aunque IO no dispare
+        setTimeout(()=>applyBarFill(el), 500);
+      });
+      const mo = new MutationObserver(()=>{ scanBars(); triggerCounterScan(); });
+      mo.observe(document.body, { childList:true, subtree:true });
+      scanBars(); triggerCounterScan();
+    } else {
+      // Sin IO: aplicar directo al detectar
+      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.animate-in)').forEach(applyBarFill);
       const mo = new MutationObserver(()=>{ scanBars(); triggerCounterScan(); });
       mo.observe(document.body, { childList:true, subtree:true });
       scanBars(); triggerCounterScan();
