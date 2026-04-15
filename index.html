@@ -8522,15 +8522,15 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
     }catch(_){}
   }
 
-  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v162
-  // Render pone width:0 + data-w="X". Al entrar en viewport: style.width = data-w%.
-  // Fallback 500ms: si el observer no disparó (IO no soportado, off-screen), forzar width.
+  // 2) DNA bar animation via IntersectionObserver — marker: dna-fill-v163
+  // NO usar .animate-in (colisiona con .animate-in global que pone opacity:0 + fadeInUp).
+  // Usar .dna-filled como flag dedicado. Render pone width:0 + data-w="X".
   try{
     const applyBarFill = (el)=>{
-      if (el.classList.contains('animate-in')) return;
+      if (el.classList.contains('dna-filled')) return;
       const w = el.getAttribute('data-w');
       if (w && !isNaN(parseFloat(w))) el.style.width = w + '%';
-      el.classList.add('animate-in');
+      el.classList.add('dna-filled');
     };
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries)=>{
@@ -8538,7 +8538,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
           if (e.isIntersecting) { applyBarFill(e.target); io.unobserve(e.target); }
         });
       }, { threshold: .3 });
-      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.animate-in)').forEach(el=>{
+      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.dna-filled)').forEach(el=>{
         if (el.hasAttribute('data-w')) io.observe(el);
         // Fallback: aplicar siempre a los 500ms aunque IO no dispare
         setTimeout(()=>applyBarFill(el), 500);
@@ -8548,7 +8548,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
       scanBars(); triggerCounterScan();
     } else {
       // Sin IO: aplicar directo al detectar
-      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.animate-in)').forEach(applyBarFill);
+      const scanBars = ()=>document.querySelectorAll('.dna-bar-fill:not(.dna-filled)').forEach(applyBarFill);
       const mo = new MutationObserver(()=>{ scanBars(); triggerCounterScan(); });
       mo.observe(document.body, { childList:true, subtree:true });
       scanBars(); triggerCounterScan();
