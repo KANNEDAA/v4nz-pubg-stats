@@ -9,7 +9,21 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-2Y426056EK');
+  // GA4 SPA tracking — marker: ga4-spa-v161
+  // send_page_view:false porque controlamos page_view manualmente desde Router.dispatch()
+  gtag('config', 'G-2Y426056EK', { send_page_view: false });
+  // Helper global — se llama desde Router.dispatch() en cada navegacion SPA
+  window.trackPageView = function(path, title){
+    try{
+      path = path || location.pathname + location.search;
+      title = title || document.title;
+      gtag('event', 'page_view', {
+        page_path: path,
+        page_title: title,
+        page_location: location.origin + path
+      });
+    }catch(e){ /* silently fail — nunca romper navegacion por analytics */ }
+  };
 </script>
 <title>V4NZ — PUBG Console Stats Tracker | Estadísticas PS5 y Xbox en Español</title>
 <meta name="description" content="De jugadores, para jugadores. El tracker de stats PUBG para PS5 y Xbox creado con +6000 horas de experiencia. Busca jugadores, compara stats, clanes y ranking en español.">
@@ -3738,6 +3752,9 @@ const Router = {
   // Lee location.pathname y ejecuta el handler que coincida. Llamado en init y en popstate.
   dispatch(){
     const p=location.pathname||'/';
+    // GA4 SPA page_view (marker: ga4-spa-v161) — se dispara en cada cambio de ruta SPA.
+    // setTimeout 0 para que handlers async (searchPlayer/loadClanPage) actualicen document.title antes.
+    try{ setTimeout(()=>{ if(window.trackPageView) window.trackPageView(p+location.search, document.title); }, 0); }catch(e){}
     for(const [regex,handler] of this.routes){
       const m=p.match(regex);
       if(m){ try{ handler(m); }catch(e){ console.error('[Router] handler error:',e); } return; }
