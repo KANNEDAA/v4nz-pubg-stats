@@ -1851,6 +1851,90 @@ body.has-player-loaded .hero-glow { display: none; }
    ═══════════════════════════════════════════════════════════════ */
 /* ═══ END CAPA 3 SPRINT 6 v184 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 3 SPRINT 7 — marker: capa-3-sprint-7-v185
+   ADN tab reestructurado: Nivel 1 dentro de panel + Badge highlight + Nivel 3 teaser
+   ═══════════════════════════════════════════════════════════════ */
+/* Badge highlight card (design ref: orange-accented card with emoji + title + quote) */
+.adn-badge-highlight {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,107,0,0.3);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.adn-badge-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-orange), var(--accent-yellow));
+}
+.adn-badge-highlight-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.adn-badge-highlight-icon { font-size: 1.4rem; flex-shrink: 0; }
+.adn-badge-highlight-text { flex: 1; min-width: 0; }
+.adn-badge-highlight-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.adn-badge-highlight-quote {
+  font-size: .72rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: 2px;
+}
+.adn-badge-highlight-tag {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(168,85,247,0.15);
+  color: var(--accent-purple);
+  border: 1px solid rgba(168,85,247,0.3);
+  flex-shrink: 0;
+}
+.adn-badge-highlight-share {
+  background: rgba(255,107,0,0.12);
+  border: 1px solid rgba(255,107,0,0.3);
+  color: var(--accent-orange);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .68rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.adn-badge-highlight-share:hover { background: rgba(255,107,0,0.22); }
+/* Nivel 3 teaser */
+.adn-level3-teaser {
+  background: var(--bg-secondary);
+  border: 1px solid rgba(0,240,255,0.12);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .72rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+@media (max-width: 600px) {
+  .adn-badge-highlight-inner { flex-wrap: wrap; }
+  .adn-badge-highlight-tag, .adn-badge-highlight-share { font-size: .58rem; }
+}
+/* ═══ END CAPA 3 SPRINT 7 v185 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -2324,7 +2408,6 @@ body.telem-open { overflow:hidden; }
     <div id="frequentTeammatesList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
   </div>
   <div id="narrativeInsights"></div>
-  <div class="personality-section" id="personalitySection"></div>
   <div id="evolutionSection" style="display:none;"></div>
   <div class="season-bar" id="seasonBar"><span class="season-name" id="seasonName"></span><select id="seasonSelect" onchange="switchSeason(this.value)" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Rajdhani,sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;margin-left:8px;display:none;"></select><span id="seasonDates" style="color:var(--text-dim);margin-left:8px;">Temporada actual</span></div>
   <div class="season-type-selector" id="seasonTypeSelector" style="display:none;margin-bottom:16px;"><button class="season-type-btn active" onclick="setSeasonType('season')">Temporada</button><button class="season-type-btn" onclick="setSeasonType('ranked')">Ranked</button><button class="season-type-btn" onclick="setSeasonType('lifetime')">Lifetime</button></div>
@@ -2358,7 +2441,13 @@ body.telem-open { overflow:hidden; }
   <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchSummary" class="match-summary-grid" style="display:none;"></div><div id="matchFilters" class="match-filters" style="display:none;"></div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div id="squadMatesSection" class="squadmates-section"><div class="squadmates-title">&#x1F91D; Compañeros Frecuentes</div><div class="squadmates-sub">Jugadores con los que más has compartido equipo en tus últimas partidas</div><div id="squadMatesList" class="squadmates-list"></div></div><div class="match-list" id="matchList"></div><div id="matchStreaksSection" style="display:none;margin-top:20px;"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
   <div class="panel" id="panel-funstats">
-    <!-- v183: Level 2 — Bloques colapsables (Level 1 = personalitySection, siempre visible arriba) -->
+    <!-- v185: Level 1 — Radar ADN + Rol + Scores (siempre visible, momento wow) -->
+    <div class="adn-level1">
+      <div class="personality-section" id="personalitySection"></div>
+      <!-- Badge highlight card (populated by JS) -->
+      <div id="adnBadgeHighlight" class="adn-badge-highlight" style="display:none;"></div>
+    </div>
+    <!-- v185: Level 2 — Bloques colapsables -->
     <div id="adnLevel2">
       <div class="dna-collapse open" id="adnCurio">
         <div class="dna-collapse-header" onclick="_adnToggle('adnCurio')">
@@ -2367,6 +2456,14 @@ body.telem-open { overflow:hidden; }
           <span class="dna-collapse-arrow">&#x25BC;</span>
         </div>
         <div class="dna-collapse-body"><div id="curioHighlights" class="curio-highlights" style="display:none;"></div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
+      </div>
+      <div class="dna-collapse" id="adnBadges">
+        <div class="dna-collapse-header" onclick="_adnToggle('adnBadges')">
+          <span class="dna-collapse-title">&#x1F3C6; Todos los badges</span>
+          <span class="dna-collapse-preview" id="adnBadgesPreview"></span>
+          <span class="dna-collapse-arrow">&#x25BC;</span>
+        </div>
+        <div class="dna-collapse-body"><div id="adnBadgesContent"><div style="font-size:.7rem;color:var(--text-dim);padding:8px 0;">Ver badges completos de la temporada</div></div></div>
       </div>
       <div class="dna-collapse" id="adnSquad">
         <div class="dna-collapse-header" onclick="_adnToggle('adnSquad')">
@@ -2378,15 +2475,19 @@ body.telem-open { overflow:hidden; }
       </div>
       <div class="dna-collapse" id="adnRivals">
         <div class="dna-collapse-header" onclick="_adnToggle('adnRivals')">
-          <span class="dna-collapse-title">&#x1F440; Rivales</span>
+          <span class="dna-collapse-title">&#x2694;&#xFE0F; Rivales habituales</span>
           <span class="dna-collapse-preview" id="adnRivalsPreview"></span>
           <span class="dna-collapse-arrow">&#x25BC;</span>
         </div>
         <div class="dna-collapse-body"><div id="adnRivalsContent"><div style="font-size:.7rem;color:var(--text-dim);padding:8px 0;">Cargando rivales...</div></div></div>
       </div>
     </div>
-    <!-- v183: Level 3 — Contenido exclusivo del propio jugador -->
-    <div id="adnLevel3"></div>
+    <!-- v185: Level 3 — Teaser contenido exclusivo -->
+    <div id="adnLevel3">
+      <div class="adn-level3-teaser">
+        <strong style="color:var(--accent);">Nivel 3:</strong> Squad completo + balance directo de rivales + badges privados — solo visible para el propio jugador logueado.
+      </div>
+    </div>
   </div>
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
@@ -2484,7 +2585,7 @@ body.telem-open { overflow:hidden; }
     </div>
     <div id="clanAnalysisMode" style="display:none;">
       <div class="section-title">&#x1F9E0; Analisis de Clanes</div>
-      <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Inteligencia completa de tus clanes favoritos. Carries, lastres, fantasmas y cotilleo.</p>
+      <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Inteligencia completa de tus clanes favoritos. Motores, pilares, fantasmas y cotilleo.</p>
       <div id="clanAnalysisContent"><div class="empty-state"><div class="empty-state-icon">&#x1F6E1;</div><div class="empty-state-title">Sin clanes guardados</div><p class="empty-state-desc">Busca un clan por tag o nombre en la pestaña Clanes y aparecerá aquí para análisis rápido.</p></div></div>
     </div>
   </div>
@@ -3479,20 +3580,21 @@ async function loadClanPage(tag,subtab){
       h+='<div id="aiClanResult" style="margin-top:14px;"></div>';
     }
     h+='</div>';
-    // v182: Sub-tabs de clan con paths propios
-    var _cst=subtab||'miembros';
+    // v185: Sub-tabs de clan (diseño: Radiografía / Rivalidades / IA Clan / Comparar)
+    var _cst=subtab||'radiografia';
     h+='<div class="clan-subtabs" id="clanSubtabs">';
-    h+='<button class="clan-stab'+(_cst==='miembros'?' active':'')+'" data-cstab="miembros" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'miembros\')">&#x1F465; Miembros</button>';
-    h+='<button class="clan-stab'+(_cst==='radiografia'?' active':'')+'" data-cstab="radiografia" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'radiografia\')">&#x1F9E0; Radiografia</button>';
-    h+='<button class="clan-stab'+(_cst==='actividad'?' active':'')+'" data-cstab="actividad" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'actividad\')">&#x1F4E1; Actividad</button>';
+    h+='<button class="clan-stab'+(_cst==='radiografia'?' active':'')+'" data-cstab="radiografia" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'radiografia\')">&#x1F9E0; Radiograf\u00eda</button>';
+    h+='<button class="clan-stab'+(_cst==='rivalidades'?' active':'')+'" data-cstab="rivalidades" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'rivalidades\')">&#x2694;&#xFE0F; Rivalidades</button>';
+    h+='<button class="clan-stab'+(_cst==='ia'?' active':'')+'" data-cstab="ia" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'ia\')">&#x1F916; IA Clan</button>';
+    h+='<button class="clan-stab'+(_cst==='comparar'?' active':'')+'" data-cstab="comparar" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'comparar\')">&#x1F4CA; Comparar</button>';
     h+='</div>';
-    // ═══ TAB: MIEMBROS ═══
-    h+='<div class="clan-tab-panel'+(_cst==='miembros'?' active':'')+'" id="clanTab-miembros">';
+    // ═══ TAB: RADIOGRAFÍA (includes member ranking + clan intelligence) ═══
+    h+='<div class="clan-tab-panel'+(_cst==='radiografia'?' active':'')+'" id="clanTab-radiografia">';
     // Member ranking
     if(members.length){
       const clanAvgKd=parseFloat(c.avg_kd)||0;
       h+='<div style="margin-top:16px;"><div class="section-title" style="font-size:.85rem;">Ranking de Miembros</div>';
-      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:.6rem;color:var(--text-dim);"><span>Carry/Lastre vs K/D medio del clan ('+clanAvgKd.toFixed(2)+'):</span><span style="color:#22d3ee;">&#x1F48E; Carry (+25%)</span><span style="color:var(--accent-green);">&#x2B06;&#xFE0F; Sobre media</span><span>&#x1F3AF; Media</span><span style="color:var(--accent-orange);">&#x2B07;&#xFE0F; Bajo media</span><span style="color:#ef4444;">&#x1FAA8; Lastre (-25%)</span></div>';
+      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:.6rem;color:var(--text-dim);"><span>Rol vs K/D medio del clan ('+clanAvgKd.toFixed(2)+'):</span><span style="color:#22d3ee;">&#x1F48E; Motor (+25%)</span><span style="color:var(--accent-green);">&#x2B06;&#xFE0F; Pilar</span><span>&#x1F3AF; Media</span><span style="color:var(--accent-orange);">&#x2B07;&#xFE0F; En progreso</span><span style="color:#ef4444;">&#x1F4A4; Descansando (-25%)</span></div>';
       members.forEach((m,i)=>{
         const medal=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':'';
         const maxKills=members[0]?.kills||1;
@@ -3503,11 +3605,11 @@ async function loadClanPage(tag,subtab){
         if(clanAvgKd>0&&mRounds>=10){
           const delta=((mKd-clanAvgKd)/clanAvgKd)*100;
           const dStr=(delta>=0?'+':'')+delta.toFixed(0)+'%';
-          if(delta>=25)clBadge='<span class="cl-badge cl-carry" title="K/D '+dStr+' vs media del clan">&#x1F48E; Carry '+dStr+'</span>';
-          else if(delta>=10)clBadge='<span class="cl-badge cl-above" title="K/D '+dStr+' vs media del clan">&#x2B06;&#xFE0F; '+dStr+'</span>';
+          if(delta>=25)clBadge='<span class="cl-badge cl-carry" title="K/D '+dStr+' vs media del clan">&#x1F48E; Motor '+dStr+'</span>';
+          else if(delta>=10)clBadge='<span class="cl-badge cl-above" title="K/D '+dStr+' vs media del clan">&#x2B06;&#xFE0F; Pilar '+dStr+'</span>';
           else if(delta>-10)clBadge='<span class="cl-badge cl-normal" title="K/D '+dStr+' vs media del clan">&#x1F3AF; '+dStr+'</span>';
-          else if(delta>-25)clBadge='<span class="cl-badge cl-below" title="K/D '+dStr+' vs media del clan">&#x2B07;&#xFE0F; '+dStr+'</span>';
-          else clBadge='<span class="cl-badge cl-lastre" title="K/D '+dStr+' vs media del clan">&#x1FAA8; Lastre '+dStr+'</span>';
+          else if(delta>-25)clBadge='<span class="cl-badge cl-below" title="K/D '+dStr+' vs media del clan">&#x2B07;&#xFE0F; En progreso '+dStr+'</span>';
+          else clBadge='<span class="cl-badge cl-lastre" title="K/D '+dStr+' vs media del clan">&#x1F4A4; Descansando '+dStr+'</span>';
         }
         h+='<div class="clan-member" style="position:relative;overflow:hidden;">';
         h+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:8px;"></div>';
@@ -3533,23 +3635,39 @@ async function loadClanPage(tag,subtab){
       h+='</div>';
       h+='</div>';
     }
-    h+='</div>'; // close clanTab-miembros
-    // ═══ TAB: RADIOGRAFÍA ═══
-    h+='<div class="clan-tab-panel'+(_cst==='radiografia'?' active':'')+'" id="clanTab-radiografia">';
-    // Clan Analytics
+    // Clan Analytics (inside radiografia)
     if(members.length>=3){h+=renderClanIntelligence(members,c);}
     // Clan Evolution + Transfers
     h+='<div id="clanEvoSection" style="margin-top:24px;"></div>';
     h+='<div id="clanTransfersSection" style="margin-top:16px;"></div>';
     h+='</div>'; // close clanTab-radiografia
-    // ═══ TAB: ACTIVIDAD ═══
-    h+='<div class="clan-tab-panel'+(_cst==='actividad'?' active':'')+'" id="clanTab-actividad">';
-    // Clan Feed placeholder
-    h+='<div id="clanFeedSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;display:none;">';
-    h+='<div class="section-title" style="font-size:.9rem;margin-bottom:14px;">&#x1F4E1; Actividad Reciente</div>';
-    h+='<div id="clanFeedContent"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Cargando actividad...</div></div></div>';
+    // ═══ TAB: RIVALIDADES ═══
+    h+='<div class="clan-tab-panel'+(_cst==='rivalidades'?' active':'')+'" id="clanTab-rivalidades">';
+    h+='<div style="text-align:center;padding:30px 16px;">';
+    h+='<div style="font-size:1.6rem;margin-bottom:8px;">&#x2694;&#xFE0F;</div>';
+    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Rivalidades entre clanes</div>';
+    h+='<div style="font-size:.72rem;color:var(--text-dim);line-height:1.5;">Vuestra n\u00e9mesis y vuestra presa — balance directo de kills entre clanes registrados en V4NZ.</div>';
+    h+='<div style="font-size:.65rem;color:var(--text-secondary);margin-top:12px;font-style:italic;">Pr\u00f3ximamente</div>';
     h+='</div>';
-    h+='</div>'; // close clanTab-actividad
+    h+='</div>'; // close clanTab-rivalidades
+    // ═══ TAB: IA CLAN ═══
+    h+='<div class="clan-tab-panel'+(_cst==='ia'?' active':'')+'" id="clanTab-ia">';
+    h+='<div style="text-align:center;padding:30px 16px;">';
+    h+='<div style="font-size:1.6rem;margin-bottom:8px;">&#x1F916;</div>';
+    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;">An\u00e1lisis IA del clan</div>';
+    h+='<div style="font-size:.72rem;color:var(--text-dim);line-height:1.5;">An\u00e1lisis completo con Claude: ofensiva, consistencia, equilibrio de roles y recomendaciones.</div>';
+    h+='<div style="font-size:.65rem;color:var(--text-secondary);margin-top:12px;font-style:italic;">Pr\u00f3ximamente</div>';
+    h+='</div>';
+    h+='</div>'; // close clanTab-ia
+    // ═══ TAB: COMPARAR ═══
+    h+='<div class="clan-tab-panel'+(_cst==='comparar'?' active':'')+'" id="clanTab-comparar">';
+    h+='<div style="text-align:center;padding:30px 16px;">';
+    h+='<div style="font-size:1.6rem;margin-bottom:8px;">&#x1F4CA;</div>';
+    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Comparar clanes</div>';
+    h+='<div style="font-size:.72rem;color:var(--text-dim);line-height:1.5;">Compara K/D, win rate, da\u00f1o medio y actividad entre dos clanes registrados.</div>';
+    h+='<div style="font-size:.65rem;color:var(--text-secondary);margin-top:12px;font-style:italic;">Pr\u00f3ximamente</div>';
+    h+='</div>';
+    h+='</div>'; // close clanTab-comparar
     cr.innerHTML=h;
     // Scroll to the rendered clan so user lands on it (esp. when arriving via /clan/TAG deep-link)
     requestAnimationFrame(()=>{
@@ -3779,7 +3897,7 @@ function renderClanIntelligence(members,clan){
   // Tabs
   h+='<div class="ci-tabs">';
   h+='<div class="ci-tab active" onclick="ciTab(\'overview\',this,\''+uid+'\')">&#x1F4CA; Overview</div>';
-  h+='<div class="ci-tab" onclick="ciTab(\'carries\',this,\''+uid+'\')">&#x1F4AA; Carry vs Lastre</div>';
+  h+='<div class="ci-tab" onclick="ciTab(\'carries\',this,\''+uid+'\')">&#x1F4AA; Motor vs Pilar</div>';
   h+='<div class="ci-tab" onclick="ciTab(\'ghosts\',this,\''+uid+'\')">&#x1F47B; Fantasmas</div>';
   h+='<div class="ci-tab" onclick="ciTab(\'cotilleo\',this,\''+uid+'\')">&#x1F575;&#xFE0F; Cotilleo</div>';
   h+='</div>';
@@ -3879,19 +3997,19 @@ function renderClanIntelligence(members,clan){
   const cPct=classified.length>0?Math.round(carries.length/classified.length*100):0;
   const lPct=classified.length>0?Math.round(lastres.length/classified.length*100):0;
   const nPct=100-cPct-lPct;
-  if(cPct>0)h+='<div style="width:'+cPct+'%;background:#39d98a;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#000;">'+carries.length+' CARRY</div>';
-  if(nPct>0)h+='<div style="width:'+nPct+'%;background:rgba(0,240,255,.3);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#fff;">'+normals.length+' NORMAL</div>';
-  if(lPct>0)h+='<div style="width:'+Math.max(lPct,8)+'%;background:#ff3355;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#fff;">'+lastres.length+' LASTRE</div>';
+  if(cPct>0)h+='<div style="width:'+cPct+'%;background:#39d98a;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#000;">'+carries.length+' MOTOR</div>';
+  if(nPct>0)h+='<div style="width:'+nPct+'%;background:rgba(0,240,255,.3);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#fff;">'+normals.length+' PILAR</div>';
+  if(lPct>0)h+='<div style="width:'+Math.max(lPct,8)+'%;background:#ff3355;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:Orbitron;font-weight:700;color:#fff;">'+lastres.length+' EN PROGRESO</div>';
   h+='</div>';
 
-  h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:12px;">Clasificacion basada en K/D individual vs media del clan ('+avgKD.toFixed(2)+'). Carry = +50% sobre la media. Lastre = -50% bajo la media. Minimo 10 partidas.</div>';
+  h+='<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:12px;">Clasificacion basada en K/D individual vs media del clan ('+avgKD.toFixed(2)+'). Motor = +50% sobre la media. En progreso = -50% bajo la media. Minimo 10 partidas.</div>';
 
   // Full member list
   h+='<div style="max-height:400px;overflow-y:auto;">';
   classified.forEach((m,i)=>{
     const barW=Math.max(5,Math.round(m.killPct));
     const badgeCls=m.role;
-    const badgeLabel=m.role==='carry'?'&#x1F4AA; CARRY':m.role==='lastre'?'&#x1F480; LASTRE':'&#x2696; NORMAL';
+    const badgeLabel=m.role==='carry'?'&#x1F4AA; MOTOR':m.role==='lastre'?'&#x1F4A4; EN PROGRESO':'&#x2696; PILAR';
     const deltaStr=m.delta>=0?'+'+m.delta.toFixed(0)+'%':m.delta.toFixed(0)+'%';
     const deltaColor=m.delta>=50?'#39d98a':m.delta>=-20?'var(--accent)':'#ff3355';
     h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();" style="position:relative;overflow:hidden;">';
@@ -3980,19 +4098,19 @@ function renderClanIntelligence(members,clan){
 
   const gossip=[];
 
-  // 1. Carry callout
+  // 1. Motor callout
   if(carries.length){
     const topC=carries[0];
-    gossip.push({icon:'&#x1F4AA;',text:'<strong>'+esc(topC.player_name)+'</strong> es el carry del clan con K/D '+topC.kd.toFixed(2)+' (+'+topC.delta.toFixed(0)+'% sobre la media). Aporta el '+topC.killPct+'% de todas las kills.',badge:'&#x1F451; CARRY OFICIAL',badgeColor:'#39d98a'});
+    gossip.push({icon:'&#x1F4AA;',text:'<strong>'+esc(topC.player_name)+'</strong> es el motor del clan con K/D '+topC.kd.toFixed(2)+' (+'+topC.delta.toFixed(0)+'% sobre la media). Aporta el '+topC.killPct+'% de todas las kills.',badge:'&#x1F451; MOTOR OFICIAL',badgeColor:'#39d98a'});
   }
 
-  // 2. Lastre callout
+  // 2. En progreso callout
   if(lastres.length){
     const worstL=lastres[lastres.length-1];
     if(lastres.length===1){
-      gossip.push({icon:'&#x1F480;',text:'<strong>'+esc(worstL.player_name)+'</strong> es el lastre oficial con K/D '+worstL.kd.toFixed(2)+' ('+worstL.delta.toFixed(0)+'% bajo la media). '+worstL.rounds+' partidas jugadas, no es por falta de intentarlo.',badge:'&#x1FA7C; LASTRE DEL MES',badgeColor:'#ff3355'});
+      gossip.push({icon:'&#x1F4A4;',text:'<strong>'+esc(worstL.player_name)+'</strong> esta en progreso con K/D '+worstL.kd.toFixed(2)+' ('+worstL.delta.toFixed(0)+'% bajo la media). '+worstL.rounds+' partidas jugadas, va mejorando.',badge:'&#x1F4A4; EN PROGRESO',badgeColor:'#ff6b00'});
     }else{
-      gossip.push({icon:'&#x1F480;',text:lastres.length+' miembros clasificados como lastre. El peor: <strong>'+esc(worstL.player_name)+'</strong> con K/D '+worstL.kd.toFixed(2)+'. Alguien tiene que darles la charla.',badge:'&#x1FA7C; ZONA DE LASTRES',badgeColor:'#ff3355'});
+      gossip.push({icon:'&#x1F4A4;',text:lastres.length+' miembros en progreso. El que mas margen de mejora tiene: <strong>'+esc(worstL.player_name)+'</strong> con K/D '+worstL.kd.toFixed(2)+'.',badge:'&#x1F4A4; ZONA DE PROGRESO',badgeColor:'#ff6b00'});
     }
   }
 
@@ -4615,7 +4733,6 @@ function switchTab(t){
   document.getElementById('seasonBar').style.display=isPlayerView?'':'none';
   document.getElementById('seasonTypeSelector').style.display=isPlayerView?'':'none';
   document.getElementById('playerHeader').style.display=playerTabs.includes(t)?'':'none';
-  document.getElementById('personalitySection').style.display=playerTabs.includes(t)?'':'none';
   document.getElementById('narrativeInsights').style.display=playerTabs.includes(t)?'':'none';
   // Bug #4 fix: evolutionSection and frequentTeammates have inline display:none in HTML
   // (no CSS hide rule). Setting display='' would expose them as empty block-level boxes
@@ -6873,6 +6990,41 @@ function renderPersonality(){
     aiContainer.innerHTML='<div class="ai-dna-teaser">🔒 Desbloquea tu ADN completo generado por IA — <a href="javascript:void(0)" onclick="openAuthPopup()">Regístrate gratis</a></div>';
   }
   document.getElementById('personalitySection').appendChild(aiContainer);
+  // v185: Populate badge highlight card (design ref: orange card with emoji + title + quote)
+  _renderBadgeHighlight(ti, s);
+}
+function _renderBadgeHighlight(role, stats) {
+  const el = document.getElementById('adnBadgeHighlight');
+  if (!el) return;
+  // Badge catalog — heuristic badges based on stats
+  const kd = parseFloat(calcKD(stats));
+  const ad = parseFloat(calcAvgDmg(stats));
+  const wr = parseFloat(calcWinRate(stats));
+  const rounds = stats.roundsPlayed || 0;
+  const kills = stats.kills || 0;
+  const hs = parseFloat(calcHSRate(stats));
+  let badge = null;
+  // Pick the most fun/relevant badge
+  if (kills > 0 && rounds > 10 && (kills / rounds) >= 2.5) badge = { icon: '🍳', title: 'El Cocinero', quote: 'Tu sartén ha visto más acción que tu rifle esta temporada.' };
+  else if (hs > 30) badge = { icon: '🎯', title: 'Cirujano', quote: 'Cada bala cuenta cuando tienes esa puntería.' };
+  else if (wr >= 20) badge = { icon: '👑', title: 'Rey de la Zona', quote: 'El pollo se siente atraído por ti.' };
+  else if (ad >= 300 && kd >= 2) badge = { icon: '💀', title: 'Máquina de Guerra', quote: 'Los lobbies tiemblan cuando entras.' };
+  else if (rounds >= 100) badge = { icon: '🏅', title: 'Veterano', quote: 'Has visto más zonas que un cartógrafo.' };
+  else if (rounds >= 20) badge = { icon: '🔥', title: 'En Racha', quote: 'No hay freno en tu camino.' };
+  else badge = { icon: '🌟', title: 'Nuevo Talento', quote: 'Cada leyenda empezó con su primera partida.' };
+  el.style.display = '';
+  // Also set the Badges collapse preview
+  var bp = document.getElementById('adnBadgesPreview');
+  if (bp) bp.textContent = badge.title + ' · activo esta temporada';
+  el.innerHTML = '<div class="adn-badge-highlight-inner">'
+    + '<span class="adn-badge-highlight-icon">' + badge.icon + '</span>'
+    + '<div class="adn-badge-highlight-text">'
+    + '<div class="adn-badge-highlight-title">' + badge.title + '</div>'
+    + '<div class="adn-badge-highlight-quote">"' + badge.quote + '"</div>'
+    + '</div>'
+    + '<span class="adn-badge-highlight-tag">Público</span>'
+    + '<button class="adn-badge-highlight-share" onclick="shareAdnImage()">Compartir</button>'
+    + '</div>';
 }
 function sharePersonality(t){const n=currentPlayerData?.attributes?.name||'Jugador';const url='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);const showToast=(msg)=>{const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;';toast.textContent=msg;document.body.appendChild(toast);requestAnimationFrame(()=>{toast.style.opacity='1';setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},2000);});};if(navigator.share){navigator.share({title:'Mi ADN PUBG: '+t,text:'Mi ADN PUBG es '+t+' — Descubre el tuyo en V4NZ',url:url}).catch(()=>{});}else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(()=>showToast('Enlace copiado al portapapeles'));}else{prompt('Copia este enlace:',url);}}
 async function shareAdnImage(){
@@ -9793,7 +9945,7 @@ function _rkSwitch(sub){
 function _clanSubtab(tag, sub){
   document.querySelectorAll('.clan-stab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-cstab')===sub);});
   document.querySelectorAll('.clan-tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='clanTab-'+sub);});
-  var path='/clan/'+encodeURIComponent(tag)+(sub&&sub!=='miembros'?'/'+sub:'');
+  var path='/clan/'+encodeURIComponent(tag)+(sub&&sub!=='radiografia'?'/'+sub:'');
   history.pushState(null,'',path);
 }
 // v183: ADN tab — collapsible toggle
