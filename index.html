@@ -1556,6 +1556,39 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 @media (max-width: 720px) { .squadmate-card { min-width: 140px; padding: 6px 10px; } .squadmate-avatar { width: 28px; height: 28px; font-size: .55rem; } }
 /* ═══ END CAPA 2 SPRINT 3 v175 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 2 SPRINT 4 — marker: capa-2-sprint-4-v176
+   Ranking V4NZ — Top jugadores de la comunidad
+   ═══════════════════════════════════════════════════════════════ */
+.v4nz-ranking { margin-top: 12px; }
+.v4nz-ranking-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.v4nz-ranking-tab { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-dim); font-family: 'Rajdhani', sans-serif; font-size: .72rem; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all .2s; text-transform: uppercase; letter-spacing: .8px; }
+.v4nz-ranking-tab.active { background: rgba(0,240,255,0.1); border-color: var(--accent); color: var(--accent); }
+.v4nz-ranking-tab:hover:not(.active) { background: rgba(255,255,255,0.08); }
+.v4nz-ranking-table { width: 100%; border-collapse: separate; border-spacing: 0 3px; }
+.v4nz-ranking-table th { font-family: 'Rajdhani', sans-serif; font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-dim); text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.v4nz-ranking-table th.num { text-align: center; width: 40px; }
+.v4nz-ranking-table td { font-family: 'Rajdhani', sans-serif; font-size: .78rem; padding: 8px 10px; color: var(--text-primary); }
+.v4nz-ranking-table td.num { text-align: center; font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700; color: var(--text-dim); }
+.v4nz-ranking-row { background: rgba(255,255,255,0.02); border-radius: 8px; cursor: pointer; transition: all .15s; }
+.v4nz-ranking-row:hover { background: rgba(0,240,255,0.06); }
+.v4nz-ranking-row.rank-top3 { background: rgba(255,215,0,0.06); }
+.v4nz-ranking-row.rank-me { background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); }
+.v4nz-ranking-row td:first-child { border-radius: 8px 0 0 8px; }
+.v4nz-ranking-row td:last-child { border-radius: 0 8px 8px 0; }
+.rank-medal { font-size: .9rem; }
+.rank-name { font-weight: 700; color: var(--text-primary); }
+.rank-name .rank-plat { font-size: .55rem; color: var(--text-dim); font-weight: 400; margin-left: 4px; text-transform: uppercase; }
+.rank-val { font-family: 'Orbitron', sans-serif; font-size: .7rem; font-weight: 700; }
+.rank-val.val-kd { color: var(--accent); }
+.rank-val.val-adr { color: var(--accent-orange); }
+.rank-val.val-wr { color: var(--accent-yellow); }
+.rank-val.val-hs { color: var(--accent-purple); }
+.v4nz-ranking-empty { text-align: center; padding: 30px 20px; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; }
+.v4nz-ranking-loading { text-align: center; padding: 24px; color: var(--text-dim); font-size: .8rem; }
+@media (max-width: 720px) { .v4nz-ranking-table td, .v4nz-ranking-table th { padding: 6px 6px; font-size: .68rem; } .rank-val { font-size: .6rem; } }
+/* ═══ END CAPA 2 SPRINT 4 v176 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -2169,11 +2202,23 @@ body.telem-open { overflow:hidden; }
     <div id="clanRankingContent"><div class="empty-state"><div class="empty-state-icon">&#x23F3;</div><div class="empty-state-title">Cargando ranking</div><p class="empty-state-desc">Obteniendo los clanes con mayor actividad en V4NZ…</p></div></div>
   </div>
   <div class="panel" id="panel-top500">
-    <div class="section-title">Top 500 &mdash; Leaderboard Consola</div>
-    <div class="leaderboard-controls">
-      <span id="lbRegionBtns"><button class="lb-btn active" onclick="setLBRegion('eu',this)">EU</button><button class="lb-btn" onclick="setLBRegion('na',this)">NA</button></span>
+    <div class="section-title">&#x1F31F; Ranking V4NZ &mdash; Top Jugadores de la Comunidad</div>
+    <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:12px;font-family:Rajdhani,sans-serif;">Los mejores jugadores que han pasado por V4NZ, ordenados por K/D. M&iacute;nimo 50 partidas en la temporada.</div>
+    <div class="v4nz-ranking">
+      <div class="v4nz-ranking-tabs" id="v4nzRankingTabs">
+        <button class="v4nz-ranking-tab active" onclick="loadV4NZRanking('all','squad','tpp',this)">Todos</button>
+        <button class="v4nz-ranking-tab" onclick="loadV4NZRanking('psn','squad','tpp',this)">PSN</button>
+        <button class="v4nz-ranking-tab" onclick="loadV4NZRanking('xbox','squad','tpp',this)">Xbox</button>
+      </div>
+      <div id="v4nzRankingContent"><div class="v4nz-ranking-loading">&#x23F3; Cargando ranking...</div></div>
     </div>
-    <div id="leaderboardContent"><div class="empty-state"><div class="empty-state-icon">&#x1F3C6;</div><div class="empty-state-title">Elige región y modo</div><p class="empty-state-desc">Selecciona EU o NA arriba para cargar el Top 500 oficial de PUBG.</p></div></div>
+    <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+      <div class="section-title">Top 500 &mdash; Leaderboard Oficial PUBG</div>
+      <div class="leaderboard-controls">
+        <span id="lbRegionBtns"><button class="lb-btn active" onclick="setLBRegion('eu',this)">EU</button><button class="lb-btn" onclick="setLBRegion('na',this)">NA</button></span>
+      </div>
+      <div id="leaderboardContent"><div class="empty-state"><div class="empty-state-icon">&#x1F3C6;</div><div class="empty-state-title">Elige regi&oacute;n y modo</div><p class="empty-state-desc">Selecciona EU o NA arriba para cargar el Top 500 oficial de PUBG.</p></div></div>
+    </div>
   </div>
   <div class="panel" id="panel-compare">
     <!-- COMPARE MODE TABS: 1v1 vs Mi Squad vs Clanes — v144 marker: cc-compare-move-v144 -->
@@ -4258,7 +4303,7 @@ function switchTab(t){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
-  if(t==='top500')renderLeaderboard();
+  if(t==='top500'){renderLeaderboard();if(!window._v4nzRankingLoaded){window._v4nzRankingLoaded=true;loadV4NZRanking('all','squad','tpp',null);}}
   if(t==='ranking')loadClanRanking();
   if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
   // Standalone tabs: hide search hero and empty state (they have their own content)
@@ -8948,6 +8993,46 @@ function renderCompareClansAI(ai,d){
   resDiv.innerHTML=h;
 }
 
+/* ===== v176 RANKING V4NZ ===== */
+window._v4nzRankingLoaded=false;
+async function loadV4NZRanking(platform,mode,gameMode,btn){
+  if(btn){document.querySelectorAll('#v4nzRankingTabs .v4nz-ranking-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  const el=document.getElementById('v4nzRankingContent');
+  if(!el)return;
+  el.innerHTML='<div class="v4nz-ranking-loading"><span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle;"></span> Cargando ranking...</div>';
+  try{
+    const resp=await fetch('/api/v4nz-leaderboard?platform='+(platform||'all')+'&mode='+(mode||'squad')+'&game_mode='+(gameMode||'tpp'));
+    const data=await resp.json();
+    if(!data.players||!data.players.length){
+      el.innerHTML='<div class="v4nz-ranking-empty"><div style="font-size:2rem;margin-bottom:8px;">&#x1F50D;</div><div style="font-weight:700;margin-bottom:4px;">Sin datos todav\u00eda</div><div style="font-size:.72rem;">Busca jugadores en V4NZ para que aparezcan en el ranking. M\u00ednimo 50 partidas en Squad TPP.</div></div>';
+      return;
+    }
+    const myName=currentPlayerData?currentPlayerData.attributes.name.toLowerCase():null;
+    let h='<table class="v4nz-ranking-table"><thead><tr><th class="num">#</th><th>Jugador</th><th>K/D</th><th>ADR</th><th>Win%</th><th>HS%</th><th>Partidas</th></tr></thead><tbody>';
+    data.players.forEach(p=>{
+      const isMe=myName&&p.player_name.toLowerCase()===myName;
+      const isTop3=p.rank<=3;
+      const medal=p.rank===1?'&#x1F947;':p.rank===2?'&#x1F948;':p.rank===3?'&#x1F949;':'';
+      const rowClass='v4nz-ranking-row'+(isTop3?' rank-top3':'')+(isMe?' rank-me':'');
+      const platIcon=p.platform==='psn'?'PS':'XB';
+      h+='<tr class="'+rowClass+'" onclick="goToPlayer(\''+escJs(p.player_name)+'\',\''+p.platform+'\')">';
+      h+='<td class="num">'+(medal||p.rank)+'</td>';
+      h+='<td><span class="rank-name">'+esc(p.player_name)+'<span class="rank-plat">'+platIcon+'</span></span>'+(isMe?' <span style="font-size:.55rem;background:var(--accent);color:var(--bg);padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px;">T\u00da</span>':'')+'</td>';
+      h+='<td><span class="rank-val val-kd">'+parseFloat(p.kd).toFixed(2)+'</span></td>';
+      h+='<td><span class="rank-val val-adr">'+Math.round(p.avg_damage)+'</span></td>';
+      h+='<td><span class="rank-val val-wr">'+parseFloat(p.win_rate).toFixed(1)+'%</span></td>';
+      h+='<td><span class="rank-val val-hs">'+parseFloat(p.hs_rate).toFixed(1)+'%</span></td>';
+      h+='<td style="color:var(--text-dim);font-size:.7rem;">'+p.rounds+'</td>';
+      h+='</tr>';
+    });
+    h+='</tbody></table>';
+    if(data.cacheHit&&data.cachedAt){h+='<div style="text-align:right;font-size:.55rem;color:var(--text-dim);margin-top:6px;font-family:Rajdhani,sans-serif;">Actualizado: '+timeAgo(data.cachedAt)+'</div>';}
+    el.innerHTML=h;
+  }catch(e){
+    console.error('V4NZ ranking error:',e);
+    el.innerHTML='<div class="v4nz-ranking-empty">Error al cargar el ranking. Int\u00e9ntalo de nuevo.</div>';
+  }
+}
 function setLBRegion(r,btn){lbRegion=r;document.querySelectorAll('#lbRegionBtns .lb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLeaderboard();}
 function timeAgo(dateStr){
   const diff=Date.now()-new Date(dateStr).getTime();
