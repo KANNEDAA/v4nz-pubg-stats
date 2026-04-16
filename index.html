@@ -1765,6 +1765,22 @@ body.has-player-loaded .hero-glow { display: none; }
 }
 /* ═══ END CAPA 3 SPRINT 1 v179 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 3 SPRINT 2 — marker: capa-3-sprint-2-v180
+   Consolidar Ranking + Top 500 en sección única
+   ═══════════════════════════════════════════════════════════════ */
+.ranking-subtabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.ranking-subtabs::-webkit-scrollbar { display: none; }
+.ranking-stab { flex: 0 0 auto; padding: 12px 20px; font-family: 'Rajdhani', sans-serif; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+.ranking-stab:hover { color: var(--text-secondary); }
+.ranking-stab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.ranking-panel { display: none; animation: fadeInUp .3s ease; }
+.ranking-panel.active { display: block; }
+@media (max-width: 600px) {
+  .ranking-stab { padding: 10px 14px; font-size: .72rem; letter-spacing: .5px; }
+}
+/* ═══ END CAPA 3 SPRINT 2 v180 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -2067,7 +2083,6 @@ body.telem-open { overflow:hidden; }
       <a href="#" class="active" data-tab="overview">Jugador</a>
       <a href="#" data-tab="clans">Clanes</a>
       <a href="#" data-tab="ranking">Ranking</a>
-      <a href="#" data-tab="top500">Top 500</a>
       <a href="#" data-tab="compare">Comparar / Squad</a>
     </nav>
     <div style="display:flex;align-items:center;gap:6px;">
@@ -2374,29 +2389,40 @@ body.telem-open { overflow:hidden; }
     </div>
   </div>
   <div class="panel" id="panel-ranking">
-    <div class="section-title">Ranking de Clanes</div>
-    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Los mejores clanes de consola clasificados por stats reales.</p>
-    <div class="leaderboard-controls">
-      <button class="lb-btn active" onclick="setCRSort('kills',this)">Kills</button>
-      <button class="lb-btn" onclick="setCRSort('kd',this)">K/D</button>
-      <button class="lb-btn" onclick="setCRSort('wins',this)">Victorias</button>
-      <button class="lb-btn" onclick="setCRSort('winrate',this)">Win Rate</button>
-      <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
+    <!-- v180: Ranking unificado con sub-tabs -->
+    <div class="ranking-subtabs" id="rankingSubtabs">
+      <button class="ranking-stab active" data-rstab="clanes" onclick="_rkSwitch('clanes')">&#x1F6E1; Clanes</button>
+      <button class="ranking-stab" data-rstab="jugadores" onclick="_rkSwitch('jugadores')">&#x1F31F; Jugadores V4NZ</button>
+      <button class="ranking-stab" data-rstab="top500" onclick="_rkSwitch('top500')">&#x1F3C6; Top 500 PUBG</button>
     </div>
-    <div id="clanRankingContent"><div class="empty-state"><div class="empty-state-icon">&#x23F3;</div><div class="empty-state-title">Cargando ranking</div><p class="empty-state-desc">Obteniendo los clanes con mayor actividad en V4NZ…</p></div></div>
-  </div>
-  <div class="panel" id="panel-top500">
-    <div class="section-title">&#x1F31F; Ranking V4NZ &mdash; Top Jugadores de la Comunidad</div>
-    <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:12px;font-family:Rajdhani,sans-serif;">Los mejores jugadores que han pasado por V4NZ, ordenados por K/D. M&iacute;nimo 50 partidas en la temporada.</div>
-    <div class="v4nz-ranking">
-      <div class="v4nz-ranking-tabs" id="v4nzRankingTabs">
-        <button class="v4nz-ranking-tab active" onclick="loadV4NZRanking('all','squad','tpp',this)">Todos</button>
-        <button class="v4nz-ranking-tab" onclick="loadV4NZRanking('psn','squad','tpp',this)">PSN</button>
-        <button class="v4nz-ranking-tab" onclick="loadV4NZRanking('xbox','squad','tpp',this)">Xbox</button>
+    <!-- Sub-tab: Clanes -->
+    <div class="ranking-panel active" id="rkPanel-clanes">
+      <div class="section-title">Ranking de Clanes</div>
+      <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Los mejores clanes de consola clasificados por stats reales.</p>
+      <div class="leaderboard-controls">
+        <button class="lb-btn active" onclick="setCRSort('kills',this)">Kills</button>
+        <button class="lb-btn" onclick="setCRSort('kd',this)">K/D</button>
+        <button class="lb-btn" onclick="setCRSort('wins',this)">Victorias</button>
+        <button class="lb-btn" onclick="setCRSort('winrate',this)">Win Rate</button>
+        <button class="lb-btn" onclick="setCRSort('members',this)">Miembros</button>
       </div>
-      <div id="v4nzRankingContent"><div class="v4nz-ranking-loading">&#x23F3; Cargando ranking...</div></div>
+      <div id="clanRankingContent"><div class="empty-state"><div class="empty-state-icon">&#x23F3;</div><div class="empty-state-title">Cargando ranking</div><p class="empty-state-desc">Obteniendo los clanes con mayor actividad en V4NZ…</p></div></div>
     </div>
-    <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+    <!-- Sub-tab: Jugadores V4NZ -->
+    <div class="ranking-panel" id="rkPanel-jugadores">
+      <div class="section-title">&#x1F31F; Ranking V4NZ &mdash; Top Jugadores de la Comunidad</div>
+      <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:12px;font-family:Rajdhani,sans-serif;">Los mejores jugadores que han pasado por V4NZ, ordenados por K/D. M&iacute;nimo 50 partidas en la temporada.</div>
+      <div class="v4nz-ranking">
+        <div class="v4nz-ranking-tabs" id="v4nzRankingTabs">
+          <button class="v4nz-ranking-tab active" onclick="loadV4NZRanking('all','squad','tpp',this)">Todos</button>
+          <button class="v4nz-ranking-tab" onclick="loadV4NZRanking('psn','squad','tpp',this)">PSN</button>
+          <button class="v4nz-ranking-tab" onclick="loadV4NZRanking('xbox','squad','tpp',this)">Xbox</button>
+        </div>
+        <div id="v4nzRankingContent"><div class="v4nz-ranking-loading">&#x23F3; Cargando ranking...</div></div>
+      </div>
+    </div>
+    <!-- Sub-tab: Top 500 PUBG -->
+    <div class="ranking-panel" id="rkPanel-top500">
       <div class="section-title">Top 500 &mdash; Leaderboard Oficial PUBG</div>
       <div class="leaderboard-controls">
         <span id="lbRegionBtns"><button class="lb-btn active" onclick="setLBRegion('eu',this)">EU</button><button class="lb-btn" onclick="setLBRegion('na',this)">NA</button></span>
@@ -4150,7 +4176,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
-  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','top500','compare'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{requestAnimationFrame(()=>{if(t==='overview'&&currentPlayerData){const ph=document.getElementById('playerHeader');if(ph){const py=ph.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:py,behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}}else if(t==='clans'){const cp=document.getElementById('panel-clans');if(cp){const cy=cp.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:cy,behavior:'smooth'});}}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','compare'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{requestAnimationFrame(()=>{if(t==='overview'&&currentPlayerData){const ph=document.getElementById('playerHeader');if(ph){const py=ph.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:py,behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}}else if(t==='clans'){const cp=document.getElementById('panel-clans');if(cp){const cy=cp.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:cy,behavior:'smooth'});}}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
   // URL inicial → Router decide qué cargar (v160: centralizado en objeto Router)
   // /stats/psn/PLAYER, /clan/TAG, /clan/TAG/subtab (reservado), /ranking, /top500, /comparar, /clanes, /admin
   setTimeout(()=>Router.dispatch(),100);
@@ -4439,10 +4465,12 @@ function switchTab(t){
   const seo=document.getElementById('seoContent');if(seo)seo.style.display='none';
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  // v180: redirect top500 → ranking with jugadores sub-tab
+  if(t==='top500'){t='ranking';setTimeout(function(){_rkSwitch('top500');},50);}
   // Player-related sub-tabs highlight "Jugador" in main nav
   const playerTabs=['overview','matches','weapons','funstats'];
   // Main nav sections (not player sub-tabs)
-  const mainSections=['clans','ranking','top500','compare'];
+  const mainSections=['clans','ranking','compare'];
   document.querySelectorAll('#mainNav a').forEach(a=>{
     const navTab=a.dataset.tab;
     if(navTab==='overview') a.classList.toggle('active',playerTabs.includes(t));
@@ -4478,7 +4506,7 @@ function switchTab(t){
     if(!(t==='clans'&&location.pathname.match(/^\/clan\//i))){
       history.pushState(null,'','/'+t);
     }
-    document.title={'clans':'Clanes — V4NZ','ranking':'Ranking Clanes — V4NZ','top500':'Top 500 — V4NZ','compare':'Comparar / Squad — V4NZ'}[t]||'V4NZ — PUBG Console Stats Tracker';
+    document.title={'clans':'Clanes — V4NZ','ranking':'Ranking — V4NZ','compare':'Comparar / Squad — V4NZ'}[t]||'V4NZ — PUBG Console Stats Tracker';
   } else if(playerTabs.includes(t)&&currentPlayerData){
     const pName=currentPlayerData.attributes?.name||currentPlayerData.id;
     history.pushState(null,'','/stats/'+currentPlatform+'/'+encodeURIComponent(pName));
@@ -4487,11 +4515,10 @@ function switchTab(t){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
   }
-  if(t==='top500'){renderLeaderboard();if(!window._v4nzRankingLoaded){window._v4nzRankingLoaded=true;loadV4NZRanking('all','squad','tpp',null);}}
-  if(t==='ranking')loadClanRanking();
+  if(t==='ranking'){loadClanRanking();renderLeaderboard();if(!window._v4nzRankingLoaded){window._v4nzRankingLoaded=true;loadV4NZRanking('all','squad','tpp',null);}}
   if(t==='compare'){try{renderQuickPick1v1();}catch(e){}}
   // Standalone tabs: hide search hero and empty state (they have their own content)
-  const standaloneTabs=['ranking','top500','compare'];
+  const standaloneTabs=['ranking','compare'];
   const hero=document.getElementById('searchHero');
   const emptyEl=document.getElementById('emptyState');
   if(standaloneTabs.includes(t)){
@@ -9609,6 +9636,11 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
   <button class="bottom-nav-item" data-bntab="more" onclick="_bnToggleMore()"><span class="bn-icon">&#x2026;</span>M&#225;s</button>
 </nav>
 <script>
+// v180: Ranking sub-tab switcher
+function _rkSwitch(sub){
+  document.querySelectorAll('.ranking-stab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-rstab')===sub);});
+  document.querySelectorAll('.ranking-panel').forEach(function(p){p.classList.toggle('active',p.id==='rkPanel-'+sub);});
+}
 // v179: Bottom nav logic
 function _bnSwitch(tab){
   // Close more menu if open
@@ -9634,7 +9666,6 @@ function _bnToggleMore(){
   panel.id='bnMorePanel';
   panel.style.cssText='position:fixed;bottom:56px;right:0;left:0;background:var(--bg-card);border-top:1px solid var(--border);z-index:111;padding:12px 16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.2);animation:fadeInUp .2s ease;';
   var items=[
-    {tab:'top500',icon:'&#x1F31F;',label:'Top 500'},
     {tab:'compare',icon:'&#x2694;&#xFE0F;',label:'Comparar'},
     {tab:'weapons',icon:'&#x1F52B;',label:'Armas'},
     {tab:'funstats',icon:'&#x1F50D;',label:'Curiosidades'}
