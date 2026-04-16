@@ -1537,6 +1537,25 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 .load-more-count { font-family: 'Rajdhani', sans-serif; font-size: .72rem; color: var(--text-dim); margin-top: 6px; }
 /* ═══ END CAPA 2 SPRINT 2 v173 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 2 SPRINT 3 — marker: capa-2-sprint-3-v175
+   Compañeros frecuentes (squad mates)
+   ═══════════════════════════════════════════════════════════════ */
+.squadmates-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 18px; box-shadow: var(--shadow-card); position: relative; overflow: hidden; display: none; }
+.squadmates-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent-green), var(--accent)); }
+.squadmates-title { font-family: 'Rajdhani', sans-serif; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 4px; }
+.squadmates-sub { font-size: .65rem; color: var(--text-dim); margin-bottom: 10px; }
+.squadmates-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.squadmate-card { display: flex; align-items: center; gap: 8px; background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.18); border-radius: 10px; padding: 8px 12px; cursor: pointer; transition: all .2s; min-width: 160px; }
+.squadmate-card:hover { background: rgba(0,255,136,0.12); border-color: rgba(0,255,136,0.35); transform: translateY(-1px); }
+.squadmate-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-green), var(--accent)); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700; color: var(--bg); flex-shrink: 0; }
+.squadmate-info { line-height: 1.3; }
+.squadmate-name { font-family: 'Rajdhani', sans-serif; font-size: .8rem; font-weight: 700; color: var(--text-primary); }
+.squadmate-stats { font-size: .6rem; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; }
+.squadmate-stats .sm-highlight { color: var(--accent-green); font-weight: 600; }
+@media (max-width: 720px) { .squadmate-card { min-width: 140px; padding: 6px 10px; } .squadmate-avatar { width: 28px; height: 28px; font-size: .55rem; } }
+/* ═══ END CAPA 2 SPRINT 3 v175 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -2034,7 +2053,7 @@ body.telem-open { overflow:hidden; }
     <div id="chartsContainer"></div>
     <div class="stats-grid" id="overviewStats"></div>
   </div>
-  <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchSummary" class="match-summary-grid" style="display:none;"></div><div id="matchFilters" class="match-filters" style="display:none;"></div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div class="match-list" id="matchList"></div><div id="matchStreaksSection" style="display:none;margin-top:20px;"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
+  <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchSummary" class="match-summary-grid" style="display:none;"></div><div id="matchFilters" class="match-filters" style="display:none;"></div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div id="squadMatesSection" class="squadmates-section"><div class="squadmates-title">&#x1F91D; Compañeros Frecuentes</div><div class="squadmates-sub">Jugadores con los que más has compartido equipo en tus últimas partidas</div><div id="squadMatesList" class="squadmates-list"></div></div><div class="match-list" id="matchList"></div><div id="matchStreaksSection" style="display:none;margin-top:20px;"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
   <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div id="curioHighlights" class="curio-highlights" style="display:none;"></div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
   <div class="panel" id="panel-clans">
@@ -4632,6 +4651,8 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}c
   h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span><span class="match-datetime" style="display:block;font-size:.6rem;font-weight:500;color:var(--text-dim);margin-top:3px;letter-spacing:.5px;">'+tabs+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div><div class="match-dmg-bar"><div class="match-dmg-fill" style="width:'+dmgPct+'%;"></div></div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="match-filter-empty">Ninguna partida cumple los filtros seleccionados. <button class="mf-reset" style="margin-left:8px;" onclick="resetMatchFilters()">Limpiar filtros</button></div>';
   // Render rivals section
   try{renderMatchRivals();}catch(e){console.error('Match rivals error:',e);}
+  // v175: Render squad mates
+  try{renderSquadMates();}catch(e){console.error('Squad mates error:',e);}
   // Render streaks & records
   try{renderMatchStreaks();}catch(e){console.error('Match streaks error:',e);}
   // v173: Load more button
@@ -5462,6 +5483,48 @@ function renderMatchRivals(){
   listEl.innerHTML=h;el.style.display='block';
 }
 
+/* ===== v175 COMPAÑEROS FRECUENTES ===== */
+function renderSquadMates(){
+  const el=document.getElementById('squadMatesSection');const listEl=document.getElementById('squadMatesList');
+  if(!el||!listEl||!currentMatchData.length||!currentPlayerData){if(el)el.style.display='none';return;}
+  const pn=currentPlayerData.attributes.name;const pnL=pn.toLowerCase();
+  const mates={};
+  currentMatchData.forEach(match=>{
+    const participants=(match.included||[]).filter(i=>i.type==='participant');
+    const rosters=(match.included||[]).filter(i=>i.type==='roster');
+    const myPart=participants.find(p=>p.attributes.stats.name.toLowerCase()===pnL);
+    if(!myPart)return;
+    const myRoster=rosters.find(r=>r.relationships&&r.relationships.participants&&r.relationships.participants.data.some(pp=>pp.id===myPart.id));
+    if(!myRoster)return;
+    const teamIds=new Set(myRoster.relationships.participants.data.map(pp=>pp.id));
+    participants.forEach(p=>{
+      if(p.id===myPart.id)return;
+      if(!teamIds.has(p.id))return;
+      const nm=p.attributes.stats.name;const nmL=nm.toLowerCase();
+      if(!mates[nmL])mates[nmL]={name:nm,games:0,wins:0,totalKills:0,totalDmg:0};
+      mates[nmL].games++;
+      const ps=p.attributes.stats;
+      if((ps.winPlace||99)===1)mates[nmL].wins++;
+      mates[nmL].totalKills+=(ps.kills||0);
+      mates[nmL].totalDmg+=(ps.damageDealt||0);
+    });
+  });
+  const sorted=Object.values(mates).sort((a,b)=>b.games-a.games).filter(m=>m.games>=2).slice(0,8);
+  if(!sorted.length){el.style.display='none';return;}
+  let h='';sorted.forEach(m=>{
+    const avgK=(m.totalKills/m.games).toFixed(1);
+    const avgD=Math.round(m.totalDmg/m.games);
+    const wr=m.games>0?Math.round((m.wins/m.games)*100):0;
+    const initial=m.name.charAt(0).toUpperCase();
+    h+='<div class="squadmate-card" onclick="event.stopPropagation();searchRival(\''+escJs(m.name)+'\');">';
+    h+='<div class="squadmate-avatar">'+initial+'</div>';
+    h+='<div class="squadmate-info">';
+    h+='<div class="squadmate-name">'+esc(m.name)+'</div>';
+    h+='<div class="squadmate-stats"><span class="sm-highlight">'+m.games+'</span> partidas · '+avgK+' kills · '+avgD+' dmg'+(wr>0?' · <span class="sm-highlight">'+wr+'%</span> win':'')+'</div>';
+    h+='</div></div>';
+  });
+  listEl.innerHTML=h;el.style.display='block';
+}
 /* ===== DETECTAR PARTIDAS SOSPECHOSAS / NOTABLES ===== */
 function getMatchBadges(match,pn){
   const badges=[];
