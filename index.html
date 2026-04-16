@@ -653,7 +653,7 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .discord-float { position:fixed; bottom:20px; right:20px; z-index:999; display:flex; align-items:center; gap:8px; background:#5865F2; color:#fff; padding:10px 18px; border-radius:50px; text-decoration:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; box-shadow:0 4px 16px rgba(88,101,242,.3); transition:all .3s ease; opacity:0.9; }
 .discord-float:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(88,101,242,.5); background:#4752C4; opacity:1; }
 .discord-float svg { width:20px; height:20px; fill:#fff; flex-shrink:0; }
-@media(max-width:768px){ .discord-float span { display:none; } .discord-float { padding:12px; border-radius:50%; bottom:16px; right:16px; opacity:0.85; } }
+@media(max-width:768px){ .discord-float span { display:none; } .discord-float { padding:12px; border-radius:50%; bottom:72px; right:16px; opacity:0.85; } }
 
 /* STATS CARD MODAL */
 .card-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,.92); backdrop-filter:blur(8px); z-index:1001; justify-content:center; align-items:center; flex-direction:column; gap:16px; }
@@ -1650,6 +1650,121 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 }
 /* ═══ END CAPA 2 SPRINT 6 v178 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 3 SPRINT 1 — marker: capa-3-sprint-1-v179
+   Bottom nav móvil + Hero search mejorado
+   ═══════════════════════════════════════════════════════════════ */
+/* ─── BOTTOM NAV MÓVIL ─── */
+.bottom-nav { display: none; }
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    z-index: 110;
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 20px rgba(0,0,0,.25);
+  }
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0 6px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: .58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    cursor: pointer;
+    transition: color .2s;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bottom-nav-item .bn-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+    margin-bottom: 2px;
+    transition: transform .2s;
+  }
+  .bottom-nav-item.active { color: var(--accent); }
+  .bottom-nav-item.active .bn-icon { transform: scale(1.15); }
+  .bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 25%; right: 25%;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 0 0 2px 2px;
+  }
+  /* Hide old hamburger + fullscreen nav when bottom nav active */
+  .hamburger { display: none !important; }
+  #mainNav { display: none !important; }
+  /* Add bottom padding to main content so nothing hides behind bottom nav */
+  main { padding-bottom: 64px !important; }
+  /* Adjust fixed popups to account for bottom nav */
+  .match-detail-popup.active { bottom: 0; }
+}
+[data-theme="light"] .bottom-nav { background: rgba(240,242,245,0.98); box-shadow: 0 -4px 20px rgba(0,0,0,.08); }
+/* ─── HERO SEARCH MEJORADO ─── */
+.search-hero h1 .hero-cursor {
+  display: inline-block;
+  width: 3px;
+  height: .85em;
+  background: var(--accent);
+  margin-left: 4px;
+  vertical-align: baseline;
+  animation: heroBlink 1s step-end infinite;
+}
+@keyframes heroBlink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+.hero-features {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.hero-feat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.hero-feat-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+body.has-player-loaded .hero-features { display: none; }
+.hero-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0,240,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+  animation: heroGlowPulse 4s ease-in-out infinite;
+}
+@keyframes heroGlowPulse { 0%,100% { opacity:.6; transform: translate(-50%,-50%) scale(1); } 50% { opacity:1; transform: translate(-50%,-50%) scale(1.15); } }
+body.has-player-loaded .hero-glow { display: none; }
+@media (max-width: 600px) {
+  .hero-features { gap: 12px; }
+  .hero-feat { font-size: .68rem; }
+  .hero-glow { width: 280px; height: 280px; }
+}
+/* ═══ END CAPA 3 SPRINT 1 v179 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -1965,6 +2080,7 @@ body.telem-open { overflow:hidden; }
 
 <main id="mainContent">
 <section class="search-hero" id="searchHero">
+  <div class="hero-glow"></div>
   <h1>El tracker <span>PUBG</span> para consola</h1>
   <p class="hero-tagline">Stats en tiempo real para PlayStation y Xbox &mdash; en espanol</p>
   <p class="hero-powered">Powered by <span>PUBG Official API</span> &mdash; Gratis, sin anuncios, hecho por jugadores</p>
@@ -1983,6 +2099,13 @@ body.telem-open { overflow:hidden; }
     </div>
     <input type="text" class="search-input" id="searchInput" placeholder="Escribe tu gamertag..." autocomplete="off" aria-label="Gamertag del jugador"/>
     <button class="search-btn" onclick="smartSearch()" aria-label="Buscar jugador">BUSCAR</button>
+  </div>
+  <div class="hero-features" id="heroFeatures">
+    <div class="hero-feat"><span class="hero-feat-icon">&#x1F4CA;</span>Stats detalladas</div>
+    <div class="hero-feat"><span class="hero-feat-icon">&#x1F916;</span>Auditoria IA</div>
+    <div class="hero-feat"><span class="hero-feat-icon">&#x1F6E1;</span>Clanes</div>
+    <div class="hero-feat"><span class="hero-feat-icon">&#x1F3C6;</span>Ranking V4NZ</div>
+    <div class="hero-feat"><span class="hero-feat-icon">&#x1F5FA;</span>Mapas</div>
   </div>
   <div id="searchClanResults" style="display:none;margin-top:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:700px;margin-left:auto;margin-right:auto;"></div>
   <div class="recent-searches" id="recentSearches"></div>
@@ -9476,6 +9599,67 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
   }catch(_){}
 })();
 /* ═══ END V4NZ VISUAL POLISH v148 JS ═══ */
+</script>
+<!-- v179: Bottom Nav Móvil -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" data-bntab="overview" onclick="_bnSwitch('overview')"><span class="bn-icon">&#x1F4CA;</span>Stats</button>
+  <button class="bottom-nav-item" data-bntab="matches" onclick="_bnSwitch('matches')"><span class="bn-icon">&#x1F3AE;</span>Partidas</button>
+  <button class="bottom-nav-item" data-bntab="clans" onclick="_bnSwitch('clans')"><span class="bn-icon">&#x1F6E1;</span>Clanes</button>
+  <button class="bottom-nav-item" data-bntab="ranking" onclick="_bnSwitch('ranking')"><span class="bn-icon">&#x1F3C6;</span>Ranking</button>
+  <button class="bottom-nav-item" data-bntab="more" onclick="_bnToggleMore()"><span class="bn-icon">&#x2026;</span>M&#225;s</button>
+</nav>
+<script>
+// v179: Bottom nav logic
+function _bnSwitch(tab){
+  // Close more menu if open
+  var morePanel=document.getElementById('bnMorePanel');if(morePanel)morePanel.remove();
+  // Map special tabs
+  if(tab==='overview'&&!currentPlayerData){switchTab('overview');}
+  else{switchTab(tab);}
+  _bnUpdateActive(tab);
+}
+function _bnUpdateActive(tab){
+  // Map tabs that don't have a direct bottom nav button to 'more'
+  var mapped=tab;
+  if(tab==='top500'||tab==='compare'||tab==='weapons'||tab==='funstats')mapped='more';
+  if(tab==='matches'||tab==='overview'||tab==='clans'||tab==='ranking')mapped=tab;
+  document.querySelectorAll('.bottom-nav-item').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-bntab')===mapped);
+  });
+}
+function _bnToggleMore(){
+  var existing=document.getElementById('bnMorePanel');
+  if(existing){existing.remove();return;}
+  var panel=document.createElement('div');
+  panel.id='bnMorePanel';
+  panel.style.cssText='position:fixed;bottom:56px;right:0;left:0;background:var(--bg-card);border-top:1px solid var(--border);z-index:111;padding:12px 16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.2);animation:fadeInUp .2s ease;';
+  var items=[
+    {tab:'top500',icon:'&#x1F31F;',label:'Top 500'},
+    {tab:'compare',icon:'&#x2694;&#xFE0F;',label:'Comparar'},
+    {tab:'weapons',icon:'&#x1F52B;',label:'Armas'},
+    {tab:'funstats',icon:'&#x1F50D;',label:'Curiosidades'}
+  ];
+  items.forEach(function(it){
+    var btn=document.createElement('button');
+    btn.style.cssText='flex:0 0 auto;padding:10px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;color:var(--text-secondary);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;';
+    btn.innerHTML=it.icon+' '+it.label;
+    btn.onclick=function(){panel.remove();switchTab(it.tab);_bnUpdateActive(it.tab);};
+    panel.appendChild(btn);
+  });
+  document.body.appendChild(panel);
+  // Close on tap outside
+  setTimeout(function(){
+    document.addEventListener('click',function _bnClose(e){
+      if(!panel.contains(e.target)&&!e.target.closest('[data-bntab="more"]')){panel.remove();document.removeEventListener('click',_bnClose);}
+    });
+  },10);
+}
+// Hook into switchTab to sync bottom nav
+var _origSwitchTab=switchTab;
+switchTab=function(t){
+  _origSwitchTab(t);
+  _bnUpdateActive(t);
+};
 </script>
 </body>
 </html>
