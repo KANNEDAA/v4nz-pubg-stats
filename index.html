@@ -1769,15 +1769,23 @@ body.has-player-loaded .hero-glow { display: none; }
    V4NZ CAPA 3 SPRINT 2 — marker: capa-3-sprint-2-v180
    Consolidar Ranking + Top 500 en sección única
    ═══════════════════════════════════════════════════════════════ */
-.ranking-subtabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.ranking-subtabs { display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; scrollbar-width: none; padding: 4px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; }
 .ranking-subtabs::-webkit-scrollbar { display: none; }
-.ranking-stab { flex: 0 0 auto; padding: 12px 20px; font-family: 'Rajdhani', sans-serif; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; transition: all .2s; white-space: nowrap; }
-.ranking-stab:hover { color: var(--text-secondary); }
-.ranking-stab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.ranking-stab { flex: 1; padding: 14px 20px; font-family: 'Rajdhani', sans-serif; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); background: transparent; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: all .25s; white-space: nowrap; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ranking-stab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+.ranking-stab.active[data-rstab="clanes"] { color: var(--accent); background: rgba(0,240,255,0.08); border-color: rgba(0,240,255,0.25); box-shadow: 0 0 16px rgba(0,240,255,0.08); }
+.ranking-stab.active[data-rstab="jugadores"] { color: var(--accent-orange); background: rgba(255,107,0,0.08); border-color: rgba(255,107,0,0.25); box-shadow: 0 0 16px rgba(255,107,0,0.08); }
+.ranking-stab.active[data-rstab="top500"] { color: var(--accent-yellow); background: rgba(255,215,0,0.08); border-color: rgba(255,215,0,0.25); box-shadow: 0 0 16px rgba(255,215,0,0.08); }
+.ranking-stab-icon { font-size: 1.3rem; line-height: 1; }
+.ranking-stab-label { font-size: .75rem; letter-spacing: 1.2px; }
+.ranking-stab-count { font-family: 'Orbitron', sans-serif; font-size: .6rem; color: var(--text-dim); font-weight: 400; letter-spacing: 0; text-transform: none; }
 .ranking-panel { display: none; animation: fadeInUp .3s ease; }
 .ranking-panel.active { display: block; }
 @media (max-width: 600px) {
-  .ranking-stab { padding: 10px 14px; font-size: .72rem; letter-spacing: .5px; }
+  .ranking-subtabs { gap: 4px; padding: 3px; }
+  .ranking-stab { padding: 10px 8px; font-size: .68rem; letter-spacing: .5px; }
+  .ranking-stab-icon { font-size: 1.1rem; }
+  .ranking-stab-label { font-size: .65rem; }
 }
 /* ═══ END CAPA 3 SPRINT 2 v180 ═══ */
 
@@ -2593,9 +2601,21 @@ body.telem-open { overflow:hidden; }
   <div class="panel" id="panel-ranking">
     <!-- v180: Ranking unificado con sub-tabs -->
     <div class="ranking-subtabs" id="rankingSubtabs">
-      <button class="ranking-stab active" data-rstab="clanes" onclick="_rkSwitch('clanes')">&#x1F6E1; Clanes</button>
-      <button class="ranking-stab" data-rstab="jugadores" onclick="_rkSwitch('jugadores')">&#x1F31F; Jugadores V4NZ</button>
-      <button class="ranking-stab" data-rstab="top500" onclick="_rkSwitch('top500')">&#x1F3C6; Top 500 PUBG</button>
+      <button class="ranking-stab active" data-rstab="clanes" onclick="_rkSwitch('clanes')">
+        <span class="ranking-stab-icon">&#x1F6E1;</span>
+        <span class="ranking-stab-label">Clanes</span>
+        <span class="ranking-stab-count" id="rkCountClanes"></span>
+      </button>
+      <button class="ranking-stab" data-rstab="jugadores" onclick="_rkSwitch('jugadores')">
+        <span class="ranking-stab-icon">&#x1F31F;</span>
+        <span class="ranking-stab-label">Jugadores V4NZ</span>
+        <span class="ranking-stab-count" id="rkCountJugadores"></span>
+      </button>
+      <button class="ranking-stab" data-rstab="top500" onclick="_rkSwitch('top500')">
+        <span class="ranking-stab-icon">&#x1F3C6;</span>
+        <span class="ranking-stab-label">Top 500 PUBG</span>
+        <span class="ranking-stab-count">Leaderboard oficial</span>
+      </button>
     </div>
     <!-- Sub-tab: Clanes -->
     <div class="ranking-panel active" id="rkPanel-clanes">
@@ -3429,6 +3449,8 @@ async function loadClanRanking(){
     });
     h+='<p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:16px;">'+d.clans.length+' clanes registrados &mdash; Publica tu clan para aparecer aqui</p>';
     el.innerHTML=h;
+    // v185: Update pill counter
+    var _rkc=document.getElementById('rkCountClanes');if(_rkc)_rkc.textContent=d.clans.length+' clanes';
   }catch(e){
     el.innerHTML='<div class="empty-state"><p>'+esc(friendlyErr(e))+'</p></div>';
   }
@@ -9665,6 +9687,8 @@ async function loadV4NZRanking(platform,mode,gameMode,btn){
     h+='</tbody></table>';
     if(data.cacheHit&&data.cachedAt){h+='<div style="text-align:right;font-size:.55rem;color:var(--text-dim);margin-top:6px;font-family:Rajdhani,sans-serif;">Actualizado: '+timeAgo(data.cachedAt)+'</div>';}
     el.innerHTML=h;
+    // v185: Update pill counter
+    var _rkj=document.getElementById('rkCountJugadores');if(_rkj)_rkj.textContent=data.players.length+' jugadores';
   }catch(e){
     console.error('V4NZ ranking error:',e);
     el.innerHTML='<div class="v4nz-ranking-empty">Error al cargar el ranking. Int\u00e9ntalo de nuevo.</div>';
