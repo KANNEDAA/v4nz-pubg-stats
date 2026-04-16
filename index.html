@@ -1509,6 +1509,21 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 @media (max-width: 720px) { .curio-highlights { grid-template-columns: 1fr; gap: 8px; } }
 /* ═══ END CAPA 1 SPRINT 3 v171 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 2 SPRINT 1 — marker: capa-2-sprint-1-v172
+   Delta badges + sparklines en overview stats
+   ═══════════════════════════════════════════════════════════════ */
+.stat-delta { display: inline-flex; align-items: center; gap: 3px; font-family: 'Orbitron', sans-serif; font-size: .6rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-left: 6px; vertical-align: middle; line-height: 1; }
+.stat-delta.delta-up { color: var(--accent-green); background: rgba(0,255,136,0.12); }
+.stat-delta.delta-down { color: var(--accent-red); background: rgba(255,51,85,0.12); }
+.stat-delta.delta-same { color: var(--text-dim); background: rgba(255,255,255,0.06); }
+.stat-delta .delta-arrow { font-size: .55rem; }
+.stat-spark { display: block; margin-top: 6px; overflow: visible; }
+.stat-spark polyline { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.stat-spark .spark-area { stroke: none; opacity: .12; }
+.stat-spark .spark-dot { r: 2; }
+/* ═══ END CAPA 2 SPRINT 1 v172 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -4552,15 +4567,17 @@ function renderOverviewStats(){
   const kd=calcKD(s),wr=calcWinRate(s),ad=calcAvgDmg(s),t10=calcTop10Rate(s),hs=calcHSRate(s);
   const d=s.losses||(s.roundsPlayed||0)-(s.wins||0)||0;
   document.getElementById('overviewStats').innerHTML=
-    '<div class="stat-card"><div class="stat-icon icon-blue">&#x2694;&#xFE0F;</div><div class="stat-value val-blue">'+kd+'</div><div class="stat-label">K/D Ratio</div><div class="stat-sub">'+(s.kills||0)+' kills / '+d+' muertes</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+Math.min(parseFloat(kd)*20,100)+'%;background:var(--gradient-main)"></div></div></div>'+
-    '<div class="stat-card"><div class="stat-icon icon-yellow">&#x1F3C6;</div><div class="stat-value val-yellow">'+(s.wins||0)+'</div><div class="stat-label">Victorias ('+wr+'%)</div><div class="stat-sub">'+(s.roundsPlayed||0)+' partidas</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+wr+'%;background:var(--gradient-orange)"></div></div></div>'+
-    '<div class="stat-card"><div class="stat-icon icon-orange">&#x1F4A5;</div><div class="stat-value val-orange">'+ad+'</div><div class="stat-label">Dano Promedio</div><div class="stat-sub">'+Math.round(s.damageDealt||0)+' total</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+Math.min(parseInt(ad)/5,100)+'%;background:var(--accent-orange)"></div></div></div>'+
-    '<div class="stat-card"><div class="stat-icon icon-green">&#x1F3AF;</div><div class="stat-value val-green">'+t10+'%</div><div class="stat-label">Top 10 Rate</div><div class="stat-sub">'+(s.top10s||0)+' veces en Top 10</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+t10+'%;background:var(--accent-green)"></div></div></div>'+
-    '<div class="stat-card"><div class="stat-icon icon-red">&#x1F52B;</div><div class="stat-value val-red">'+(s.kills||0)+'</div><div class="stat-label">Total Kills</div><div class="stat-sub">Assists: '+(s.assists||0)+' | Knocks: '+(s.DBNOs||0)+'</div></div>'+
-    '<div class="stat-card"><div class="stat-icon icon-purple">&#x1F3AF;</div><div class="stat-value" style="color:var(--accent-purple)">'+hs+'%</div><div class="stat-label">Headshot Rate</div><div class="stat-sub">'+(s.headshotKills||0)+' headshots de '+(s.kills||0)+' kills</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+hs+'%;background:var(--accent-purple)"></div></div></div>'+
+    '<div class="stat-card" data-stat="kd"><div class="stat-icon icon-blue">&#x2694;&#xFE0F;</div><div class="stat-value val-blue">'+kd+'</div><div class="stat-label">K/D Ratio</div><div class="stat-sub">'+(s.kills||0)+' kills / '+d+' muertes</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+Math.min(parseFloat(kd)*20,100)+'%;background:var(--gradient-main)"></div></div></div>'+
+    '<div class="stat-card" data-stat="win_rate"><div class="stat-icon icon-yellow">&#x1F3C6;</div><div class="stat-value val-yellow">'+(s.wins||0)+'</div><div class="stat-label">Victorias ('+wr+'%)</div><div class="stat-sub">'+(s.roundsPlayed||0)+' partidas</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+wr+'%;background:var(--gradient-orange)"></div></div></div>'+
+    '<div class="stat-card" data-stat="avg_damage"><div class="stat-icon icon-orange">&#x1F4A5;</div><div class="stat-value val-orange">'+ad+'</div><div class="stat-label">Dano Promedio</div><div class="stat-sub">'+Math.round(s.damageDealt||0)+' total</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+Math.min(parseInt(ad)/5,100)+'%;background:var(--accent-orange)"></div></div></div>'+
+    '<div class="stat-card" data-stat="top10_rate"><div class="stat-icon icon-green">&#x1F3AF;</div><div class="stat-value val-green">'+t10+'%</div><div class="stat-label">Top 10 Rate</div><div class="stat-sub">'+(s.top10s||0)+' veces en Top 10</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+t10+'%;background:var(--accent-green)"></div></div></div>'+
+    '<div class="stat-card" data-stat="kills"><div class="stat-icon icon-red">&#x1F52B;</div><div class="stat-value val-red">'+(s.kills||0)+'</div><div class="stat-label">Total Kills</div><div class="stat-sub">Assists: '+(s.assists||0)+' | Knocks: '+(s.DBNOs||0)+'</div></div>'+
+    '<div class="stat-card" data-stat="hs_rate"><div class="stat-icon icon-purple">&#x1F3AF;</div><div class="stat-value" style="color:var(--accent-purple)">'+hs+'%</div><div class="stat-label">Headshot Rate</div><div class="stat-sub">'+(s.headshotKills||0)+' headshots de '+(s.kills||0)+' kills</div><div class="stat-bar"><div class="stat-bar-fill" style="width:'+hs+'%;background:var(--accent-purple)"></div></div></div>'+
     '<div class="stat-card"><div class="stat-icon icon-blue">&#x23F1;&#xFE0F;</div><div class="stat-value val-blue">'+(s.longestTimeSurvived?formatTime(s.longestTimeSurvived):'---')+'</div><div class="stat-label">Mayor Supervivencia</div><div class="stat-sub">Promedio: '+(s.timeSurvived&&s.roundsPlayed?formatTime(s.timeSurvived/s.roundsPlayed):'---')+'</div></div>'+
     '<div class="stat-card"><div class="stat-icon icon-orange">&#x1F4CF;</div><div class="stat-value val-orange">'+(s.longestKill?Math.round(s.longestKill)+'m':'---')+'</div><div class="stat-label">Kill Mas Lejano</div><div class="stat-sub">Vehiculo: '+(s.rideDistance?(s.rideDistance/1000).toFixed(1)+'km':'---')+' | A pie: '+(s.walkDistance?(s.walkDistance/1000).toFixed(1)+'km':'---')+'</div></div>'+
     '<div class="stat-card"><div class="stat-icon icon-green">&#x1FA79;</div><div class="stat-value val-green">'+(s.heals||0)+'</div><div class="stat-label">Heals Usados</div><div class="stat-sub">Boosts: '+(s.boosts||0)+' | Revives: '+(s.revives||0)+'</div></div>';
+  // v172: inject delta badges + sparklines from snapshot data
+  try{if(typeof renderStatDeltas==='function')renderStatDeltas();}catch(e){}
 }
 
 function renderMatchHistoryDemo(){let h='';DEMO_DATA.matches.forEach(m=>{const pc=m.place===1?'win':m.place<=10?'top10':'normal';h+='<div class="match-item animate-in"><div class="match-place '+pc+'">'+(m.place===1?'&#x1F3C6; #1':'#'+m.place)+'</div><div class="match-mode">'+m.mode+'<span class="map-name">'+m.map+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+m.kills+'</div><div class="ms-label">Kills</div></div><div class="match-stat"><div class="ms-val val-orange">'+m.damage+'</div><div class="ms-label">Dano</div></div><div class="match-stat"><div class="ms-val">'+formatTime(m.time)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+m.ago+'</div></div>';});document.getElementById('matchList').innerHTML=h;}
@@ -6581,6 +6598,80 @@ const EVO_METRICS={
   top10_rate: {color:'#00e5ff',label:'Top 10%',   dec:1,suffix:'%',int:false},
   longest_kill:{color:'#ffa500',label:'Longest',  dec:0,suffix:'m',int:false}
 };
+// === V172 CAPA 2 SPRINT 1: DELTA BADGES + SPARKLINES ===
+function renderStatDeltas(){
+  if(!_evoData||!_evoData.snaps||_evoData.snaps.length<1)return;
+  const snaps=_evoData.snaps.slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const latest=snaps[snaps.length-1];
+  // Find snapshot closest to 7 days ago
+  const cutoff7d=Date.now()-7*86400000;
+  let ref7d=null;
+  for(let i=snaps.length-2;i>=0;i--){
+    if(new Date(snaps[i].created_at).getTime()<=cutoff7d){ref7d=snaps[i];break;}
+  }
+  // If no snap older than 7d, use oldest available (if different from latest)
+  if(!ref7d&&snaps.length>=2)ref7d=snaps[0];
+  const STAT_MAP={
+    kd:{field:'kd',dec:2,color:'#00f0ff'},
+    win_rate:{field:'win_rate',dec:1,color:'#ffd700'},
+    avg_damage:{field:'avg_damage',dec:0,color:'#ff6b00'},
+    top10_rate:{field:'top10_rate',dec:1,color:'#00e5ff'},
+    kills:{field:'kills',dec:0,color:'#ff3355'},
+    hs_rate:{field:'hs_rate',dec:1,color:'#a855f7'}
+  };
+  const cards=document.querySelectorAll('#overviewStats .stat-card[data-stat]');
+  cards.forEach(card=>{
+    const key=card.getAttribute('data-stat');
+    const cfg=STAT_MAP[key];if(!cfg)return;
+    // Remove previous delta/spark if re-rendering
+    const oldD=card.querySelector('.stat-delta');if(oldD)oldD.remove();
+    const oldS=card.querySelector('.stat-spark');if(oldS)oldS.remove();
+    const curVal=parseFloat(latest[cfg.field])||0;
+    // Delta badge
+    if(ref7d){
+      const refVal=parseFloat(ref7d[cfg.field])||0;
+      const diff=curVal-refVal;
+      const absDiff=Math.abs(diff);
+      let cls='delta-same',arrow='—',txt='=';
+      if(diff>0.005){cls='delta-up';arrow='&#x25B2;';txt='+'+absDiff.toFixed(cfg.dec);}
+      else if(diff<-0.005){cls='delta-down';arrow='&#x25BC;';txt=absDiff.toFixed(cfg.dec);}
+      else{txt='=';}
+      // Calculate days span for label
+      const days=Math.round((new Date(latest.created_at)-new Date(ref7d.created_at))/86400000);
+      const label=days<=1?'':' ('+days+'d)';
+      const badge=document.createElement('span');
+      badge.className='stat-delta '+cls;
+      badge.innerHTML='<span class="delta-arrow">'+arrow+'</span> '+(txt==='='?'=':txt)+label;
+      const valEl=card.querySelector('.stat-value');
+      if(valEl)valEl.after(badge);
+    }
+    // Sparkline SVG — last 14 data points max
+    const sparkSnaps=snaps.slice(-14);
+    if(sparkSnaps.length>=2){
+      const vals=sparkSnaps.map(s=>parseFloat(s[cfg.field])||0);
+      const mn=Math.min(...vals),mx=Math.max(...vals);
+      const range=mx-mn||1;
+      const w=60,h=20,pad=2;
+      const pts=vals.map((v,i)=>{
+        const x=pad+i*(w-2*pad)/(vals.length-1);
+        const y=pad+(1-(v-mn)/range)*(h-2*pad);
+        return x.toFixed(1)+','+y.toFixed(1);
+      });
+      const lastPt=pts[pts.length-1];
+      // Area fill under the line
+      const areaPts=pts.join(' ')+' '+(w-pad).toFixed(1)+','+(h-pad).toFixed(1)+' '+pad.toFixed(1)+','+(h-pad).toFixed(1);
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('class','stat-spark');
+      svg.setAttribute('width',w);svg.setAttribute('height',h);
+      svg.setAttribute('viewBox','0 0 '+w+' '+h);
+      svg.innerHTML='<polygon class="spark-area" points="'+areaPts+'" fill="'+cfg.color+'"/><polyline points="'+pts.join(' ')+'" stroke="'+cfg.color+'"/><circle class="spark-dot" cx="'+lastPt.split(',')[0]+'" cy="'+lastPt.split(',')[1]+'" fill="'+cfg.color+'"/>';
+      // Insert after stat-bar or at end
+      const bar=card.querySelector('.stat-bar');
+      if(bar)bar.after(svg);else card.appendChild(svg);
+    }
+  });
+}
+
 async function loadEvolutionChart(){
   const sec=document.getElementById('evolutionSection');if(!sec)return;
   const name=currentPlayerData?.attributes?.name;if(!name){sec.style.display='none';return;}
@@ -6611,6 +6702,7 @@ async function loadEvolutionChart(){
     _evoData={snaps};_evoMetric='kd';_evoMode='total';_evoRange='all';
     sec.style.display='block';
     renderEvoSection();
+    try{renderStatDeltas();}catch(e){console.error('Stat deltas error:',e);}
   }catch(e){console.error('Evolution chart error:',e);sec.style.display='none';}
 }
 function getFilteredEvoSnaps(){
