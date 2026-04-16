@@ -1781,6 +1781,13 @@ body.has-player-loaded .hero-glow { display: none; }
 }
 /* ═══ END CAPA 3 SPRINT 2 v180 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 3 SPRINT 3 — marker: capa-3-sprint-3-v181
+   Consolidar a 3 secciones (Jugador/Clanes/Ranking)
+   ═══════════════════════════════════════════════════════════════ */
+/* No new CSS needed — uses existing classes */
+/* ═══ END CAPA 3 SPRINT 3 v181 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -2083,7 +2090,6 @@ body.telem-open { overflow:hidden; }
       <a href="#" class="active" data-tab="overview">Jugador</a>
       <a href="#" data-tab="clans">Clanes</a>
       <a href="#" data-tab="ranking">Ranking</a>
-      <a href="#" data-tab="compare">Comparar / Squad</a>
     </nav>
     <div style="display:flex;align-items:center;gap:6px;">
       <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()" aria-label="Iniciar sesión con Discord">Iniciar Sesion</button>
@@ -2244,6 +2250,7 @@ body.telem-open { overflow:hidden; }
         <button class="share-stats-btn" id="shareCardBtn" style="display:none;" onclick="generateStatsCard()">&#x1F4F7; Stats Card</button>
         <button class="share-stats-btn" id="wrappedBtn" style="display:none;background:linear-gradient(135deg,#ff6b00,#a855f7);" onclick="generateSeasonWrapped()">&#x1F3C6; Mi Temporada</button>
         <button class="copy-link-btn" id="copyLinkBtn" style="display:none;" onclick="copyPlayerLink(this)">&#x1F517; Copiar Enlace</button>
+        <button class="share-stats-btn" onclick="_goCompareWithMe()" style="background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(168,85,247,0.15));border:1px solid rgba(0,240,255,0.25);color:var(--accent);">&#x2694;&#xFE0F; Comparar</button>
         <a id="pubgReportBtn" class="pubg-report-btn" href="#" target="_blank">&#x1F3AC; PUBG Report</a>
       </div>
     </div>
@@ -9633,9 +9640,18 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
   <button class="bottom-nav-item" data-bntab="matches" onclick="_bnSwitch('matches')"><span class="bn-icon">&#x1F3AE;</span>Partidas</button>
   <button class="bottom-nav-item" data-bntab="clans" onclick="_bnSwitch('clans')"><span class="bn-icon">&#x1F6E1;</span>Clanes</button>
   <button class="bottom-nav-item" data-bntab="ranking" onclick="_bnSwitch('ranking')"><span class="bn-icon">&#x1F3C6;</span>Ranking</button>
-  <button class="bottom-nav-item" data-bntab="more" onclick="_bnToggleMore()"><span class="bn-icon">&#x2026;</span>M&#225;s</button>
 </nav>
 <script>
+// v181: Go to Compare with current player pre-filled
+function _goCompareWithMe(){
+  if(!currentPlayerData)return;
+  var name=currentPlayerData.attributes.name;
+  switchTab('compare');
+  setTimeout(function(){
+    var inp=document.getElementById('compare1Input');
+    if(inp){inp.value=name;}
+  },100);
+}
 // v180: Ranking sub-tab switcher
 function _rkSwitch(sub){
   document.querySelectorAll('.ranking-stab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-rstab')===sub);});
@@ -9651,9 +9667,9 @@ function _bnSwitch(tab){
   _bnUpdateActive(tab);
 }
 function _bnUpdateActive(tab){
-  // Map tabs that don't have a direct bottom nav button to 'more'
+  // v181: 4 direct items — player sub-tabs map to 'overview'
   var mapped=tab;
-  if(tab==='top500'||tab==='compare'||tab==='weapons'||tab==='funstats')mapped='more';
+  if(tab==='weapons'||tab==='funstats'||tab==='compare')mapped='overview';
   if(tab==='matches'||tab==='overview'||tab==='clans'||tab==='ranking')mapped=tab;
   document.querySelectorAll('.bottom-nav-item').forEach(function(b){
     b.classList.toggle('active',b.getAttribute('data-bntab')===mapped);
