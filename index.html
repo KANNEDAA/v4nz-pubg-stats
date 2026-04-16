@@ -1788,6 +1788,20 @@ body.has-player-loaded .hero-glow { display: none; }
 /* No new CSS needed — uses existing classes */
 /* ═══ END CAPA 3 SPRINT 3 v181 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 3 SPRINT 4 — marker: capa-3-sprint-4-v182
+   Sub-tabs de clan con paths propios
+   ═══════════════════════════════════════════════════════════════ */
+.clan-subtabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin: 16px 0 0; overflow-x: auto; scrollbar-width: none; }
+.clan-subtabs::-webkit-scrollbar { display: none; }
+.clan-stab { flex: 0 0 auto; padding: 11px 18px; font-family: 'Rajdhani', sans-serif; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+.clan-stab:hover { color: var(--text-secondary); }
+.clan-stab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.clan-tab-panel { display: none; padding-top: 16px; animation: fadeInUp .3s ease; }
+.clan-tab-panel.active { display: block; }
+@media (max-width: 600px) { .clan-stab { padding: 9px 12px; font-size: .7rem; } }
+/* ═══ END CAPA 3 SPRINT 4 v182 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -3344,7 +3358,7 @@ function v4nzShareToast(btn, msg){
 }
 
 // Clan page rendering for /clan/:tag URLs
-async function loadClanPage(tag){
+async function loadClanPage(tag,subtab){
   switchTab('clans');
   const cr=document.getElementById('clanResults');
   cr.innerHTML='<div style="text-align:center;padding:40px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando clan '+tag+'...</div></div></div>';
@@ -3386,6 +3400,15 @@ async function loadClanPage(tag){
       h+='<div id="aiClanResult" style="margin-top:14px;"></div>';
     }
     h+='</div>';
+    // v182: Sub-tabs de clan con paths propios
+    var _cst=subtab||'miembros';
+    h+='<div class="clan-subtabs" id="clanSubtabs">';
+    h+='<button class="clan-stab'+(_cst==='miembros'?' active':'')+'" data-cstab="miembros" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'miembros\')">&#x1F465; Miembros</button>';
+    h+='<button class="clan-stab'+(_cst==='radiografia'?' active':'')+'" data-cstab="radiografia" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'radiografia\')">&#x1F9E0; Radiografia</button>';
+    h+='<button class="clan-stab'+(_cst==='actividad'?' active':'')+'" data-cstab="actividad" onclick="_clanSubtab(\''+escJs(c.tag)+'\',\'actividad\')">&#x1F4E1; Actividad</button>';
+    h+='</div>';
+    // ═══ TAB: MIEMBROS ═══
+    h+='<div class="clan-tab-panel'+(_cst==='miembros'?' active':'')+'" id="clanTab-miembros">';
     // Member ranking
     if(members.length){
       const clanAvgKd=parseFloat(c.avg_kd)||0;
@@ -3431,16 +3454,23 @@ async function loadClanPage(tag){
       h+='</div>';
       h+='</div>';
     }
+    h+='</div>'; // close clanTab-miembros
+    // ═══ TAB: RADIOGRAFÍA ═══
+    h+='<div class="clan-tab-panel'+(_cst==='radiografia'?' active':'')+'" id="clanTab-radiografia">';
     // Clan Analytics
     if(members.length>=3){h+=renderClanIntelligence(members,c);}
     // Clan Evolution + Transfers
     h+='<div id="clanEvoSection" style="margin-top:24px;"></div>';
     h+='<div id="clanTransfersSection" style="margin-top:16px;"></div>';
+    h+='</div>'; // close clanTab-radiografia
+    // ═══ TAB: ACTIVIDAD ═══
+    h+='<div class="clan-tab-panel'+(_cst==='actividad'?' active':'')+'" id="clanTab-actividad">';
     // Clan Feed placeholder
     h+='<div id="clanFeedSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;display:none;">';
     h+='<div class="section-title" style="font-size:.9rem;margin-bottom:14px;">&#x1F4E1; Actividad Reciente</div>';
     h+='<div id="clanFeedContent"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Cargando actividad...</div></div></div>';
     h+='</div>';
+    h+='</div>'; // close clanTab-actividad
     cr.innerHTML=h;
     // Scroll to the rendered clan so user lands on it (esp. when arriving via /clan/TAG deep-link)
     requestAnimationFrame(()=>{
@@ -4145,8 +4175,7 @@ const Router = {
       searchPlayer();
     }],
     [/^\/clan\/([^\/]+)(?:\/([^\/]+))?\/?$/i, (m) => {
-      loadClanPage(decodeURIComponent(m[1]));
-      // m[2] = subtab (radiografia, rivalidades, ...) — reservado para Capa 3
+      loadClanPage(decodeURIComponent(m[1]), m[2]||null);
     }],
     [/^\/(ranking|top500|compare|comparar|clans|clanes)\/?$/i, (m) => {
       const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};
@@ -9656,6 +9685,13 @@ function _goCompareWithMe(){
 function _rkSwitch(sub){
   document.querySelectorAll('.ranking-stab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-rstab')===sub);});
   document.querySelectorAll('.ranking-panel').forEach(function(p){p.classList.toggle('active',p.id==='rkPanel-'+sub);});
+}
+// v182: Clan sub-tab switching with URL push
+function _clanSubtab(tag, sub){
+  document.querySelectorAll('.clan-stab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-cstab')===sub);});
+  document.querySelectorAll('.clan-tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='clanTab-'+sub);});
+  var path='/clan/'+encodeURIComponent(tag)+(sub&&sub!=='miembros'?'/'+sub:'');
+  history.pushState(null,'',path);
 }
 // v179: Bottom nav logic
 function _bnSwitch(tab){
