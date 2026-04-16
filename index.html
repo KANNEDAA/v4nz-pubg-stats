@@ -1524,6 +1524,19 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 .stat-spark .spark-dot { r: 2; }
 /* ═══ END CAPA 2 SPRINT 1 v172 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 2 SPRINT 2 — marker: capa-2-sprint-2-v173
+   Fix deltas acumulativas + Cargar más partidas (paginación)
+   ═══════════════════════════════════════════════════════════════ */
+.load-more-wrap { text-align: center; margin: 18px 0 8px; }
+.load-more-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25); color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 10px 28px; border-radius: 8px; cursor: pointer; transition: all .25s ease; }
+.load-more-btn:hover { background: rgba(0,240,255,0.16); border-color: var(--accent); box-shadow: 0 0 12px rgba(0,240,255,0.15); transform: translateY(-1px); }
+.load-more-btn:active { transform: translateY(0); }
+.load-more-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+.load-more-btn .lm-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,240,255,0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+.load-more-count { font-family: 'Rajdhani', sans-serif; font-size: .72rem; color: var(--text-dim); margin-top: 6px; }
+/* ═══ END CAPA 2 SPRINT 2 v173 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -4076,7 +4089,10 @@ async function searchPlayer(){
     currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
     populateSeasonDropdown(sr.data,cs.id);
     setLoaderStep('Cargando partidas...');
-    const mids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]).slice(0,20);
+    const _allMids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]);
+    window._allMatchIds=_allMids.map(m=>m.id);
+    const mids=_allMids.slice(0,20);
+    window._matchesLoaded=mids.length;
     // Load matches in batches of 5 to avoid rate limits
     currentMatchData=[];
     for(let b=0;b<mids.length;b+=5){
@@ -4593,6 +4609,45 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}c
   try{renderMatchRivals();}catch(e){console.error('Match rivals error:',e);}
   // Render streaks & records
   try{renderMatchStreaks();}catch(e){console.error('Match streaks error:',e);}
+  // v173: Load more button
+  try{renderLoadMoreButton();}catch(e){console.error('Load more btn error:',e);}
+}
+/* ===== v173 LOAD MORE MATCHES ===== */
+function renderLoadMoreButton(){
+  const existing=document.getElementById('loadMoreWrap');if(existing)existing.remove();
+  const total=window._allMatchIds?window._allMatchIds.length:0;
+  const loaded=window._matchesLoaded||0;
+  if(loaded>=total||total<=20)return;
+  const remaining=total-loaded;
+  const nextBatch=Math.min(remaining,14);
+  const wrap=document.createElement('div');wrap.id='loadMoreWrap';wrap.className='load-more-wrap';
+  wrap.innerHTML='<button class="load-more-btn" onclick="loadMoreMatches()">Cargar '+nextBatch+' m\u00e1s</button><div class="load-more-count">'+loaded+' de '+total+' partidas cargadas</div>';
+  const ml=document.getElementById('matchList');if(ml)ml.parentNode.insertBefore(wrap,ml.nextSibling);
+}
+async function loadMoreMatches(){
+  if(!window._allMatchIds||!currentPlayerData)return;
+  const btn=document.querySelector('.load-more-btn');if(!btn)return;
+  const loaded=window._matchesLoaded||0;
+  const total=window._allMatchIds.length;
+  if(loaded>=total)return;
+  const nextIds=window._allMatchIds.slice(loaded,loaded+14);
+  btn.disabled=true;btn.innerHTML='<span class="lm-spinner"></span> Cargando...';
+  try{
+    const newMatches=[];
+    for(let b=0;b<nextIds.length;b+=5){
+      const batch=nextIds.slice(b,b+5);
+      const results=await Promise.all(batch.map(id=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+id).catch(()=>null)));
+      newMatches.push(...results.filter(Boolean));
+      const progress=loaded+b+batch.length;
+      btn.innerHTML='<span class="lm-spinner"></span> Cargando ('+progress+'/'+total+')...';
+    }
+    currentMatchData.push(...newMatches);
+    window._matchesLoaded=loaded+nextIds.length;
+    renderMatchHistory();
+  }catch(e){
+    console.error('Load more error:',e);
+    btn.disabled=false;btn.innerHTML='Error \u2014 Reintentar';
+  }
 }
 /* ===== V170 MATCH SUMMARY (14 partidas) ===== */
 function renderMatchSummary(pn){
@@ -6611,13 +6666,14 @@ function renderStatDeltas(){
   }
   // If no snap older than 7d, use oldest available (if different from latest)
   if(!ref7d&&snaps.length>=2)ref7d=snaps[0];
+  // v173 fix: only show deltas for RATE stats, not cumulative (kills shows misleading ▼875)
   const STAT_MAP={
-    kd:{field:'kd',dec:2,color:'#00f0ff'},
-    win_rate:{field:'win_rate',dec:1,color:'#ffd700'},
-    avg_damage:{field:'avg_damage',dec:0,color:'#ff6b00'},
-    top10_rate:{field:'top10_rate',dec:1,color:'#00e5ff'},
-    kills:{field:'kills',dec:0,color:'#ff3355'},
-    hs_rate:{field:'hs_rate',dec:1,color:'#a855f7'}
+    kd:{field:'kd',dec:2,color:'#00f0ff',showDelta:true},
+    win_rate:{field:'win_rate',dec:1,color:'#ffd700',showDelta:true},
+    avg_damage:{field:'avg_damage',dec:0,color:'#ff6b00',showDelta:true},
+    top10_rate:{field:'top10_rate',dec:1,color:'#00e5ff',showDelta:true},
+    kills:{field:'kills',dec:0,color:'#ff3355',showDelta:false},
+    hs_rate:{field:'hs_rate',dec:1,color:'#a855f7',showDelta:true}
   };
   const cards=document.querySelectorAll('#overviewStats .stat-card[data-stat]');
   cards.forEach(card=>{
@@ -6627,8 +6683,8 @@ function renderStatDeltas(){
     const oldD=card.querySelector('.stat-delta');if(oldD)oldD.remove();
     const oldS=card.querySelector('.stat-spark');if(oldS)oldS.remove();
     const curVal=parseFloat(latest[cfg.field])||0;
-    // Delta badge
-    if(ref7d){
+    // Delta badge — only for rate stats, not cumulative
+    if(ref7d&&cfg.showDelta){
       const refVal=parseFloat(ref7d[cfg.field])||0;
       const diff=curVal-refVal;
       const absDiff=Math.abs(diff);
