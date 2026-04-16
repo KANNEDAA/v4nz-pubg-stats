@@ -1802,6 +1802,49 @@ body.has-player-loaded .hero-glow { display: none; }
 @media (max-width: 600px) { .clan-stab { padding: 9px 12px; font-size: .7rem; } }
 /* ═══ END CAPA 3 SPRINT 4 v182 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 3 SPRINT 5 — marker: capa-3-sprint-5-v183
+   Tab ADN con jerarquia en 3 niveles
+   ═══════════════════════════════════════════════════════════════ */
+/* Level 1: always visible — radar + role + bars */
+.adn-level1 { margin-bottom: 16px; }
+/* Level 2: collapsible blocks */
+.dna-collapse { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: box-shadow .2s; }
+.dna-collapse:hover { box-shadow: 0 0 12px rgba(0,240,255,0.06); }
+.dna-collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; user-select: none; gap: 10px; }
+.dna-collapse-title { font-family: 'Rajdhani', sans-serif; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+.dna-collapse-preview { flex: 1; min-width: 0; font-family: 'Rajdhani', sans-serif; font-size: .68rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dna-collapse-arrow { font-size: .7rem; color: var(--text-dim); transition: transform .25s ease; flex-shrink: 0; }
+.dna-collapse.open .dna-collapse-arrow { transform: rotate(180deg); }
+.dna-collapse-body { max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .25s ease; padding: 0 16px; }
+.dna-collapse.open .dna-collapse-body { max-height: 800px; padding: 0 16px 16px; }
+/* Level 3: blur lock overlay */
+.dna-blur-wrap { position: relative; }
+.dna-blur-content { filter: blur(5px); pointer-events: none; user-select: none; }
+.dna-blur-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 2; }
+.dna-blur-overlay span { font-family: 'Rajdhani', sans-serif; font-size: .75rem; font-weight: 700; color: var(--text-secondary); }
+.dna-blur-overlay a { color: var(--accent); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: .72rem; text-decoration: none; }
+/* ADN summary pills (curiosidades compact in collapse title) */
+.adn-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.adn-pill { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 16px; padding: 4px 10px; font-family: 'Rajdhani', sans-serif; font-size: .65rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+/* Squad compact row inside collapse */
+.adn-squad-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.adn-squad-row:last-child { border-bottom: none; }
+.adn-squad-name { font-family: 'Rajdhani', sans-serif; font-size: .75rem; font-weight: 700; color: var(--accent); cursor: pointer; }
+.adn-squad-count { font-family: 'Orbitron', sans-serif; font-size: .65rem; color: var(--text-dim); }
+/* Rival compact row */
+.adn-rival-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.adn-rival-icon { font-size: 1rem; }
+.adn-rival-name { font-family: 'Rajdhani', sans-serif; font-size: .78rem; font-weight: 700; color: var(--accent-red); cursor: pointer; }
+.adn-rival-stat { font-family: 'Orbitron', sans-serif; font-size: .65rem; color: var(--text-dim); }
+.adn-link-more { font-family: 'Rajdhani', sans-serif; font-size: .68rem; font-weight: 600; color: var(--accent); cursor: pointer; margin-top: 8px; display: inline-block; }
+.adn-link-more:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .dna-collapse-header { padding: 12px 14px; }
+  .dna-collapse-preview { display: none; }
+}
+/* ═══ END CAPA 3 SPRINT 5 v183 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -2285,7 +2328,7 @@ body.telem-open { overflow:hidden; }
         <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')"><span class="tab-icon">&#x1F4CA;</span>Resumen</button>
         <button class="tab-btn" data-tab="matches" onclick="switchTab('matches')"><span class="tab-icon">&#x1F3AE;</span>Partidas</button>
         <button class="tab-btn" data-tab="weapons" onclick="switchTab('weapons')"><span class="tab-icon">&#x1F52B;</span>Armas</button>
-        <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')"><span class="tab-icon">&#x1F50D;</span>Curiosidades</button>
+        <button class="tab-btn" data-tab="funstats" onclick="switchTab('funstats')"><span class="tab-icon">&#x1F9EC;</span>ADN</button>
       </div>
       <div class="mode-selector"><button class="mode-btn active" onclick="setGameMode('tpp')">TPP</button><button class="mode-btn" onclick="setGameMode('fpp')">FPP</button></div>
     </div>
@@ -2308,7 +2351,37 @@ body.telem-open { overflow:hidden; }
   </div>
   <div class="panel" id="panel-matches"><div class="section-title">Historial de Partidas Recientes</div><div id="matchSummary" class="match-summary-grid" style="display:none;"></div><div id="matchFilters" class="match-filters" style="display:none;"></div><div id="matchRivals" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange));"></div><div style="font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px;">&#x1F440; Rivales Habituales</div><div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">Jugadores con los que te cruzas en varias partidas (enemigos y aliados)</div><div id="matchRivalsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div></div><div id="squadMatesSection" class="squadmates-section"><div class="squadmates-title">&#x1F91D; Compañeros Frecuentes</div><div class="squadmates-sub">Jugadores con los que más has compartido equipo en tus últimas partidas</div><div id="squadMatesList" class="squadmates-list"></div></div><div class="match-list" id="matchList"></div><div id="matchStreaksSection" style="display:none;margin-top:20px;"></div><div style="text-align:center;margin-top:20px;"><button onclick="generateHeatmap()" style="background:transparent;border:1px solid rgba(255,107,0,0.3);color:var(--accent-orange);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:1px;text-transform:uppercase;">&#x1F525; Generar Heatmap de Kills</button></div></div>
   <div class="panel" id="panel-weapons"><div class="section-title">Dominio de Armas</div><div class="weapon-grid" id="weaponGrid"></div></div>
-  <div class="panel" id="panel-funstats"><div class="section-title">Datos Curiosos</div><div id="curioHighlights" class="curio-highlights" style="display:none;"></div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
+  <div class="panel" id="panel-funstats">
+    <!-- v183: Level 2 — Bloques colapsables (Level 1 = personalitySection, siempre visible arriba) -->
+    <div id="adnLevel2">
+      <div class="dna-collapse open" id="adnCurio">
+        <div class="dna-collapse-header" onclick="_adnToggle('adnCurio')">
+          <span class="dna-collapse-title">&#x1F50D; Curiosidades</span>
+          <span class="dna-collapse-preview" id="adnCurioPreview"></span>
+          <span class="dna-collapse-arrow">&#x25BC;</span>
+        </div>
+        <div class="dna-collapse-body"><div id="curioHighlights" class="curio-highlights" style="display:none;"></div><div class="fun-stats-grid" id="funStatsGrid"></div></div>
+      </div>
+      <div class="dna-collapse" id="adnSquad">
+        <div class="dna-collapse-header" onclick="_adnToggle('adnSquad')">
+          <span class="dna-collapse-title">&#x1F91D; Squad Habitual</span>
+          <span class="dna-collapse-preview" id="adnSquadPreview"></span>
+          <span class="dna-collapse-arrow">&#x25BC;</span>
+        </div>
+        <div class="dna-collapse-body"><div id="adnSquadContent"><div style="font-size:.7rem;color:var(--text-dim);padding:8px 0;">Cargando companeros...</div></div></div>
+      </div>
+      <div class="dna-collapse" id="adnRivals">
+        <div class="dna-collapse-header" onclick="_adnToggle('adnRivals')">
+          <span class="dna-collapse-title">&#x1F440; Rivales</span>
+          <span class="dna-collapse-preview" id="adnRivalsPreview"></span>
+          <span class="dna-collapse-arrow">&#x25BC;</span>
+        </div>
+        <div class="dna-collapse-body"><div id="adnRivalsContent"><div style="font-size:.7rem;color:var(--text-dim);padding:8px 0;">Cargando rivales...</div></div></div>
+      </div>
+    </div>
+    <!-- v183: Level 3 — Contenido exclusivo del propio jugador -->
+    <div id="adnLevel3"></div>
+  </div>
   <div class="panel" id="panel-clans">
     <div class="section-title">Clanes de Consola</div>
     <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Busca el clan de cualquier jugador. Si el clan ya esta registrado, veras a todos sus miembros con stats.</p>
@@ -5802,7 +5875,7 @@ function closeMatchDetail(){document.getElementById('matchDetailPopup').classLis
 
 function renderFrequentTeammates(){
   const el=document.getElementById('frequentTeammates');const listEl=document.getElementById('frequentTeammatesList');
-  if(!el||!listEl||!currentMatchData.length||!currentPlayerData){el.style.display='none';return;}
+  if(!el||!listEl||!currentMatchData.length||!currentPlayerData){if(el)el.style.display='none';try{_adnPopulateSquad([]);}catch(e){}return;}
   const pn=currentPlayerData.attributes.name.toLowerCase();const tmCount={};
   currentMatchData.forEach(match=>{
     const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn);if(!pp)return;
@@ -5814,7 +5887,7 @@ function renderFrequentTeammates(){
     });
   });
   const sorted=Object.entries(tmCount).sort((a,b)=>b[1]-a[1]).filter(e=>e[1]>=2).slice(0,8);
-  if(!sorted.length){el.style.display='none';return;}
+  if(!sorted.length){el.style.display='none';try{_adnPopulateSquad([]);}catch(e){}return;}
   let h='';sorted.forEach(([name,count])=>{
     h+='<div class="freq-tm-chip" onclick="event.stopPropagation();goToPlayer(\''+escJs(name)+'\',\''+currentPlatform+'\');">';
     h+='<span style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.7rem;color:var(--text-primary);">'+esc(name)+'</span>';
@@ -5822,6 +5895,8 @@ function renderFrequentTeammates(){
     h+='</div>';
   });
   listEl.innerHTML=h;el.style.display='block';
+  // v183: populate ADN Level 2 squad compact
+  try{_adnPopulateSquad(sorted.map(function(e){return{name:e[0],count:e[1]};}));}catch(e){}
 }
 
 function searchRival(name){goToPlayer(name);}
@@ -5847,7 +5922,7 @@ function goToPlayer(name,plat){
 /* ===== RIVALES HABITUALES (todos los jugadores, no solo equipo) ===== */
 function renderMatchRivals(){
   const el=document.getElementById('matchRivals');const listEl=document.getElementById('matchRivalsList');
-  if(!el||!listEl||!currentMatchData.length||!currentPlayerData){if(el)el.style.display='none';return;}
+  if(!el||!listEl||!currentMatchData.length||!currentPlayerData){if(el)el.style.display='none';try{_adnPopulateRivals([]);}catch(e){}return;}
   const pn=currentPlayerData.attributes.name.toLowerCase();
   const playerCount={};
   currentMatchData.forEach(match=>{
@@ -5880,7 +5955,7 @@ function renderMatchRivals(){
     });
   });
   const sorted=Object.values(playerCount).sort((a,b)=>b.count-a.count).filter(e=>e.count>=2).slice(0,10);
-  if(!sorted.length){el.style.display='none';return;}
+  if(!sorted.length){el.style.display='none';try{_adnPopulateRivals([]);}catch(e){}return;}
   // v177: enhanced rival cards
   let h='';sorted.forEach(d=>{
     const ctx=d.sameTeam>0?(d.sameTeam===d.count?'ally':'mixed'):'enemy';
@@ -5907,6 +5982,8 @@ function renderMatchRivals(){
   // Update rivals set for badge detection
   window._matchRivalsSet=new Set();
   sorted.forEach(d=>{if(d.count>=3)window._matchRivalsSet.add(d.name.toLowerCase());});
+  // v183: populate ADN Level 2 rivals compact
+  try{_adnPopulateRivals(sorted.map(function(d){return{name:d.name,count:d.count};}));}catch(e){}
 }
 
 /* ===== v175 COMPAÑEROS FRECUENTES ===== */
@@ -6511,6 +6588,8 @@ function renderCurioHighlights(s){
   if(cards.length===0){el.style.display='none';el.innerHTML='';return;}
   el.innerHTML=cards.map(c=>'<div class="curio-card '+c.cls+'"><div class="curio-head"><span class="curio-icon">'+c.icon+'</span><span class="curio-title">'+c.title+'</span></div><div class="curio-value">'+c.val+'</div><div class="curio-detail">'+c.detail+'</div>'+(c.pill||'')+'</div>').join('');
   el.style.display='grid';
+  // v183: update ADN collapse preview with curio titles
+  try{var _cp=document.getElementById('adnCurioPreview');if(_cp)_cp.textContent=cards.map(function(c){return c.title+': '+c.val;}).join(' \u00B7 ');}catch(e){}
 }
 
 function renderCotilleo(s){
@@ -9693,6 +9772,58 @@ function _clanSubtab(tag, sub){
   var path='/clan/'+encodeURIComponent(tag)+(sub&&sub!=='miembros'?'/'+sub:'');
   history.pushState(null,'',path);
 }
+// v183: ADN tab — collapsible toggle
+function _adnToggle(id){
+  var el=document.getElementById(id);
+  if(el)el.classList.toggle('open');
+}
+// v183: Populate ADN Level 2 squad compact summary
+function _adnPopulateSquad(teammates){
+  var cont=document.getElementById('adnSquadContent');
+  var preview=document.getElementById('adnSquadPreview');
+  if(!cont)return;
+  if(!teammates||!teammates.length){
+    cont.innerHTML='<div style="font-size:.7rem;color:var(--text-dim);padding:8px 0;">No se encontraron companeros frecuentes en tus ultimas partidas.</div>';
+    if(preview)preview.textContent='';
+    return;
+  }
+  var top=teammates.slice(0,5);
+  if(preview)preview.textContent=top.map(function(t){return t.name+' ('+t.count+')';}).join(' \u00B7 ');
+  var h='';
+  top.forEach(function(t){
+    h+='<div class="adn-squad-row">';
+    h+='<span class="adn-squad-name" onclick="goToPlayer(\''+t.name.replace(/'/g,"\\'")+'\')">'+t.name+'</span>';
+    h+='<span class="adn-squad-count">'+t.count+' partidas juntos</span>';
+    h+='</div>';
+  });
+  if(teammates.length>5)h+='<div class="adn-link-more" onclick="switchTab(\'matches\')">Ver todos los companeros &rarr;</div>';
+  cont.innerHTML=h;
+}
+// v183: Populate ADN Level 2 rivals compact summary
+function _adnPopulateRivals(rivals){
+  var cont=document.getElementById('adnRivalsContent');
+  var preview=document.getElementById('adnRivalsPreview');
+  if(!cont)return;
+  if(!rivals||!rivals.length){
+    cont.innerHTML='<div style="font-size:.7rem;color:var(--text-dim);padding:8px 0;">No se encontraron rivales habituales en tus ultimas partidas.</div>';
+    if(preview)preview.textContent='';
+    return;
+  }
+  var top=rivals.slice(0,3);
+  if(preview)preview.textContent=top.map(function(r){return r.name+' ('+r.count+'x)';}).join(' \u00B7 ');
+  var h='';
+  top.forEach(function(r,i){
+    var icon=i===0?'&#x1F525;':'&#x1F440;';
+    var label=i===0?'Nemesis':'Rival';
+    h+='<div class="adn-rival-row">';
+    h+='<span class="adn-rival-icon">'+icon+'</span>';
+    h+='<span class="adn-rival-name" onclick="goToPlayer(\''+r.name.replace(/'/g,"\\'")+'\')">'+r.name+'</span>';
+    h+='<span class="adn-rival-stat">'+r.count+' cruces &middot; '+label+'</span>';
+    h+='</div>';
+  });
+  h+='<div class="adn-link-more" onclick="switchTab(\'matches\')">Ver rivales completos &rarr;</div>';
+  cont.innerHTML=h;
+}
 // v179: Bottom nav logic
 function _bnSwitch(tab){
   // Close more menu if open
@@ -9720,7 +9851,7 @@ function _bnToggleMore(){
   var items=[
     {tab:'compare',icon:'&#x2694;&#xFE0F;',label:'Comparar'},
     {tab:'weapons',icon:'&#x1F52B;',label:'Armas'},
-    {tab:'funstats',icon:'&#x1F50D;',label:'Curiosidades'}
+    {tab:'funstats',icon:'&#x1F9EC;',label:'ADN'}
   ];
   items.forEach(function(it){
     var btn=document.createElement('button');
