@@ -4087,7 +4087,21 @@ async function searchPlayer(){
     const sr=await apiGet(API_BASE+'/'+currentPlatform+'/seasons');allSeasons=sr.data;const cs=sr.data.find(s=>s.attributes.isCurrentSeason);currentSeasonId=cs.id;
     setLoaderStep('Cargando stats...');
     currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+cs.id);
-    populateSeasonDropdown(sr.data,cs.id);
+    // v174 GT-24: detect empty current season and auto-fallback to previous
+    let _emptyCurrentSeason=false;
+    try{
+      const _gms=currentSeasonData&&currentSeasonData.data&&currentSeasonData.data.attributes&&currentSeasonData.data.attributes.gameModeStats||{};
+      const _totalRounds=Object.values(_gms).reduce((sum,m)=>sum+(m.roundsPlayed||0),0);
+      if(_totalRounds===0){
+        _emptyCurrentSeason=true;
+        const _prevSeason=sr.data.filter(s=>!s.attributes.isOffSeason&&!s.attributes.isCurrentSeason).sort((a,b)=>{const na=parseInt(a.id.replace(/\D/g,''))||0,nb=parseInt(b.id.replace(/\D/g,''))||0;return nb-na;})[0];
+        if(_prevSeason){
+          currentSeasonId=_prevSeason.id;
+          currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+_prevSeason.id);
+        }
+      }
+    }catch(e){console.log('Empty season check error:',e);}
+    populateSeasonDropdown(sr.data,currentSeasonId||cs.id);
     setLoaderStep('Cargando partidas...');
     const _allMids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]);
     window._allMatchIds=_allMids.map(m=>m.id);
@@ -4105,6 +4119,15 @@ async function searchPlayer(){
     try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
     try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
     showSkeletons(false);autoBestMode();renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
+    // v174 GT-24: show banner if current season was empty
+    try{const _esBanner=document.getElementById('emptySeasonBanner');if(_esBanner)_esBanner.remove();}catch(e){}
+    if(_emptyCurrentSeason){
+      const _label=getSeasonLabel(cs.id);
+      const _bn=document.createElement('div');_bn.id='emptySeasonBanner';
+      _bn.style.cssText='background:rgba(255,204,0,0.1);border:1px solid rgba(255,204,0,0.3);border-radius:8px;padding:12px 16px;margin:12px 0;font-family:Rajdhani,sans-serif;font-size:.85rem;color:var(--accent-yellow);text-align:center;';
+      _bn.innerHTML='&#x1F4E2; Sin actividad en '+_label+' \u2014 mostrando la temporada anterior. Juega una partida y vuelve a buscar para ver tus stats de la nueva temporada.';
+      const _ov=document.getElementById('overviewStats');if(_ov&&_ov.parentNode)_ov.parentNode.insertBefore(_bn,_ov);
+    }
     // Deep link: open specific match if ?match=ID is in URL (shared match link)
     try{
       const urlMatch=new URLSearchParams(location.search).get('match');
@@ -4549,7 +4572,7 @@ function renderSeasonBarDemo(){document.getElementById('seasonName').textContent
 function populateSeasonDropdown(seasons,currentId){
   const sel=document.getElementById('seasonSelect');
   /* Sort seasons by number descending, show last 10 */
-  const sorted=seasons.filter(s=>!s.attributes.isOffSeason).sort((a,b)=>{
+  const sorted=seasons.filter(s=>!s.attributes.isOffSeason&&(s.id.includes('console-')||s.attributes.isCurrentSeason)).sort((a,b)=>{
     const na=parseInt(a.id.replace(/\D/g,''))||0,nb=parseInt(b.id.replace(/\D/g,''))||0;return nb-na;
   }).slice(0,10);
   sel.innerHTML=sorted.map(s=>{
@@ -4574,6 +4597,8 @@ async function switchSeason(seasonId){
       document.getElementById('seasonDates').textContent=seasonObj.attributes.isCurrentSeason?'Temporada actual':'Temporada anterior';
     }
     autoBestMode();renderOverviewStats();renderWLGrid();renderCharts();try{renderFunStats();}catch(e){}try{renderPersonality();}catch(e){}renderNarrativeInsights();renderRankBadge();
+    // v174 GT-23: update quickStats in header on season change
+    try{const _qs=getActiveStats();document.getElementById('quickStats').innerHTML='<div class="quick-stat"><div class="value">'+(_qs.wins||0)+'</div><div class="label">Victorias</div></div><div class="quick-stat"><div class="value">'+(_qs.kills||0)+'</div><div class="label">Kills</div></div><div class="quick-stat"><div class="value">'+calcKD(_qs)+'</div><div class="label">K/D</div></div><div class="quick-stat"><div class="value">'+(_qs.roundsPlayed||0)+'</div><div class="label">Partidas</div></div>';}catch(e){}
   }catch(e){console.error('Switch season error:',e);showError('Error al cargar temporada: '+friendlyErr(e));}
   finally{showLoading(false);}
 }
