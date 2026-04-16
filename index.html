@@ -1845,6 +1845,12 @@ body.has-player-loaded .hero-glow { display: none; }
 }
 /* ═══ END CAPA 3 SPRINT 5 v183 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 3 SPRINT 6 — marker: capa-3-sprint-6-v184
+   Match detail con URL propia /match/ID — deep link compartible
+   ═══════════════════════════════════════════════════════════════ */
+/* ═══ END CAPA 3 SPRINT 6 v184 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -4240,6 +4246,15 @@ const Router = {
       // En primer load no hay nada que limpiar — el DOM ya está virgen.
       if (currentPlayerData || document.body.classList.contains('has-player-loaded')) resetHomeState();
     }],
+    [/^\/stats\/(psn|xbox)\/(.+?)\/match\/([a-f0-9-]+)\/?$/i, (m) => {
+      // v184: Deep link to match detail — load player first, then open match
+      window._pendingMatchId=m[3];
+      document.body.classList.add('has-player-loaded');
+      setPlatform(m[1].toLowerCase());
+      const inp=document.getElementById('searchInput');
+      if(inp) inp.value=decodeURIComponent(m[2]);
+      searchPlayer();
+    }],
     [/^\/stats\/(psn|xbox)\/(.+?)\/?$/i, (m) => {
       document.body.classList.add('has-player-loaded');
       setPlatform(m[1].toLowerCase());
@@ -4277,7 +4292,14 @@ const Router = {
     // 404 silencioso — usuario ve home
   }
 };
-window.addEventListener('popstate',()=>Router.dispatch());
+window.addEventListener('popstate',()=>{
+  // v184: If match detail is open and we're going back, just close it instead of full re-dispatch
+  const mdp=document.getElementById('matchDetailPopup');
+  if(mdp&&mdp.classList.contains('active')&&!location.pathname.includes('/match/')){
+    mdp.classList.remove('active');document.body.classList.remove('mdp-open');return;
+  }
+  Router.dispatch();
+});
 
 document.addEventListener('DOMContentLoaded',()=>{
   renderRecentSearches();
@@ -4511,9 +4533,10 @@ async function searchPlayer(){
       _bn.innerHTML='&#x1F4E2; Sin actividad en '+_label+' \u2014 mostrando la temporada anterior. Juega una partida y vuelve a buscar para ver tus stats de la nueva temporada.';
       const _ov=document.getElementById('overviewStats');if(_ov&&_ov.parentNode)_ov.parentNode.insertBefore(_bn,_ov);
     }
-    // Deep link: open specific match if ?match=ID is in URL (shared match link)
+    // v184: Deep link to match detail — supports both /match/ID path and ?match=ID legacy
     try{
-      const urlMatch=new URLSearchParams(location.search).get('match');
+      const urlMatch=window._pendingMatchId||new URLSearchParams(location.search).get('match');
+      window._pendingMatchId=null;
       if(urlMatch){
         const idx=currentMatchData.findIndex(m=>m&&m.data&&m.data.id===urlMatch);
         if(idx>=0){switchTab('matches');setTimeout(()=>showMatchDetail(idx),120);}
@@ -5280,11 +5303,12 @@ function showMatchDetail(idx){
   document.getElementById('matchDetailPopup').classList.add('active');
   document.body.classList.add('mdp-open');
   document.getElementById('matchDetailPopup').scrollTop=0;
+  // v184: Push clean URL path for match detail (shareable)
   try{
     const matchId=match.data&&match.data.id;
     if(matchId&&currentPlayerData){
       const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);
-      history.pushState({matchDetail:true},'',baseUrl+'?match='+encodeURIComponent(matchId));
+      history.pushState({matchDetail:true},'',baseUrl+'/match/'+matchId);
     }
   }catch(e){}
 }
@@ -5753,7 +5777,7 @@ async function shareMatchCard(idx){
   const ps=pp.attributes.stats;const pl=ps.winPlace;
   const matchId=match.data&&match.data.id;
   if(!matchId)return;
-  const shareUrl='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(pn)+'?match='+encodeURIComponent(matchId);
+  const shareUrl='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(pn)+'/match/'+matchId;
   const shareText=pl===1?pn+' CHICKEN DINNER en '+mn+'! '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano':pn+' #'+pl+' en '+mn+' — '+ps.kills+' kills, '+Math.round(ps.damageDealt)+' dano';
   const showToast=(msg)=>{const t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(()=>{t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2400);});};
   // 1) Native share sheet (mobile) — link only, no image
