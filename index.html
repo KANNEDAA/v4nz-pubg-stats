@@ -1616,6 +1616,40 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 @media (max-width: 720px) { .rival-card { min-width: 180px; padding: 6px 10px; } .rival-avatar { width: 28px; height: 28px; font-size: .55rem; } }
 /* ═══ END CAPA 2 SPRINT 5 v177 ═══ */
 
+/* ═══════════════════════════════════════════════════════════════
+   V4NZ CAPA 2 SPRINT 6 — marker: capa-2-sprint-6-v178
+   Detalle telemetría dividido visual con sub-tabs
+   ═══════════════════════════════════════════════════════════════ */
+.md-subtabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin: 16px 0 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.md-subtabs::-webkit-scrollbar { display: none; }
+.md-subtab { flex: 0 0 auto; padding: 10px 16px; font-family: 'Rajdhani', sans-serif; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+.md-subtab:hover { color: var(--text-secondary); }
+.md-subtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.md-subtab-icon { margin-right: 4px; font-style: normal; }
+.md-tab-content { display: none; animation: fadeInUp .3s ease; }
+.md-tab-content.active { display: block; }
+.md-tab-loading { text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: .8rem; }
+.md-tab-loading .tab-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(0,240,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; margin-bottom: 8px; }
+/* Damage tab */
+.dmg-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.dmg-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.dmg-card-title { font-family: 'Rajdhani', sans-serif; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 8px; }
+.dmg-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: .72rem; }
+.dmg-bar-label { flex: 0 0 90px; color: var(--text-secondary); font-family: 'Rajdhani', sans-serif; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dmg-bar-track { flex: 1; height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; }
+.dmg-bar-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+.dmg-bar-val { flex: 0 0 40px; text-align: right; font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700; color: var(--accent-orange); }
+/* Inline telemetry map in tab */
+.md-telem-inline { width: 100%; aspect-ratio: 1; max-width: 600px; margin: 12px auto; border-radius: 10px; overflow: hidden; position: relative; background: var(--bg-secondary); border: 1px solid var(--border); }
+.md-telem-inline canvas { width: 100%; height: 100%; }
+@media (max-width: 600px) {
+  .md-subtab { padding: 8px 10px; font-size: .65rem; letter-spacing: .5px; }
+  .dmg-breakdown { grid-template-columns: 1fr; }
+  .dmg-bar-label { flex: 0 0 70px; }
+  .md-telem-inline { max-width: 100%; }
+}
+/* ═══ END CAPA 2 SPRINT 6 v178 ═══ */
+
 /* FAVORITES */
 .fav-section { margin-bottom:12px; }
 .fav-section-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; }
@@ -4927,6 +4961,7 @@ function _mdToggleCollapsible(btn){
   if(body)body.classList.toggle('open');
 }
 function showMatchDetail(idx){
+  _mdResetTabs();
   const match=currentMatchData[idx];if(!match)return;
   const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';
   const pn=currentPlayerData.attributes.name;
@@ -4934,72 +4969,127 @@ function showMatchDetail(idx){
   if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;
   const totalP=(match.included||[]).filter(i=>i.type==='participant').length;
   const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;
-  // Placement color system: gold win, green top5, cyan top10, gray top25, red rest
   const plColor=pl===1?'var(--accent-yellow)':pl<=5?'var(--accent-green)':pl<=10?'var(--accent)':pl<=25?'var(--text-secondary)':'var(--accent-red)';
   const plClass=pl===1?'placement-win':pl<=5?'placement-top5':pl<=10?'placement-top10':pl<=25?'placement-top25':'placement-low';
   const plIcon=pl===1?' &#x1F451;':'';
   const matchDur=a.duration?formatTime(a.duration):'?';
   const mapImgUrl=TELEM_MAP_IMGS[a.mapName]||'';
   const mapBg='background:linear-gradient(135deg,'+mc+'33,'+mc+'11,var(--bg-secondary));';
-  // Get player averages for comparison
-  const avgS=getActiveStats();
-  const hasAvg=avgS&&avgS.roundsPlayed>0;
-  const avgKills=hasAvg?(avgS.kills/avgS.roundsPlayed):0;
-  const avgDmg=hasAvg?(avgS.damageDealt/avgS.roundsPlayed):0;
-  const avgHS=hasAvg&&avgS.kills>0?(avgS.headshotKills/avgS.kills*avgS.kills/avgS.roundsPlayed):0;
-  const avgHSPerRound=hasAvg?(avgS.headshotKills/avgS.roundsPlayed):0;
-  const avgAssists=hasAvg?((avgS.assists||0)/avgS.roundsPlayed):0;
-  const avgKnocks=hasAvg?((avgS.DBNOs||0)/avgS.roundsPlayed):0;
-  const avgRevives=hasAvg?((avgS.revives||0)/avgS.roundsPlayed):0;
-  // Build HTML — Map header (gradient always, image lazy-upgrade)
+  const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
+  const auditMatchId=match.data?match.data.id:null;
+  // Store match context for lazy tab loading
+  window._mdCtx={idx:idx,match:match,pn:pn,pp:pp,ps:ps,pl:pl,totalP:totalP,telemetryUrl:telemetryUrl,mapName:a.mapName,auditMatchId:auditMatchId,plColor:plColor};
+  // ═══ HEADER — always visible ═══
   let h='<div class="match-map-img" id="mdMapHeader" style="'+mapBg+'"><div class="map-label" style="color:'+mc+';text-shadow:0 2px 8px rgba(0,0,0,.7);">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:#ccc;text-shadow:0 1px 4px rgba(0,0,0,.8);">'+(MAP_SIZE[mn]||'')+'</div></div>';
-  // Open desktop 70/30 grid: md-main holds analytical content, md-side holds action buttons
-  h+='<div class="md-grid"><div class="md-main">';
-  // Placement — BIGGER with icon for #1
-  h+='<div style="text-align:center;margin-bottom:16px;">';
+  h+='<div style="text-align:center;margin-bottom:4px;">';
   h+='<span style="font-family:Orbitron,sans-serif;font-size:2.4rem;font-weight:800;color:'+plColor+';line-height:1;">#'+pl+plIcon+'</span>';
   h+='<span style="color:var(--text-dim);font-size:.8rem;"> / '+totalP+'</span>';
   h+='<div style="margin:8px auto;width:80%;height:5px;border-radius:3px;background:var(--bg-secondary);"><div style="height:100%;width:'+survPct+'%;border-radius:3px;background:'+plColor+';transition:width .4s;"></div></div>';
   h+='<span style="display:block;color:var(--text-secondary);font-size:.78rem;">'+gm.toUpperCase()+' &mdash; '+new Date(a.createdAt).toLocaleString('es-ES')+'</span>';
   h+='<span style="display:block;color:var(--text-dim);font-size:.68rem;margin-top:2px;">Duracion partida: '+matchDur+'</span></div>';
-  // Primary stats row — kills, damage, time (bigger)
-  h+='<div class="match-detail-stats" style="margin-bottom:8px;">';
+  // ═══ SUB-TABS BAR ═══
+  h+='<div class="md-subtabs" id="mdSubtabs">';
+  h+='<button class="md-subtab active" data-mdtab="resumen" onclick="_mdSwitchTab(\'resumen\')"><span class="md-subtab-icon">&#x1F4CA;</span>Resumen</button>';
+  h+='<button class="md-subtab" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
+  h+='<button class="md-subtab" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
+  h+='<button class="md-subtab" data-mdtab="mapa" onclick="_mdSwitchTab(\'mapa\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F5FA;</span>Mapa</button>';
+  h+='<button class="md-subtab" data-mdtab="audit" onclick="_mdSwitchTab(\'audit\')"'+(auditMatchId?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F916;</span>Auditor\u00eda</button>';
+  h+='</div>';
+  // ═══ TAB CONTENTS ═══
+  h+='<div class="md-tab-content active" id="mdTab-resumen"></div>';
+  h+='<div class="md-tab-content" id="mdTab-killlog"></div>';
+  h+='<div class="md-tab-content" id="mdTab-damage"></div>';
+  h+='<div class="md-tab-content" id="mdTab-mapa"></div>';
+  h+='<div class="md-tab-content" id="mdTab-audit"></div>';
+  // ═══ STICKY ACTIONS (always visible below tabs) ═══
+  h+='<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center;justify-content:center;">';
+  h+='<button onclick="shareMatchCard('+idx+')" style="flex:1;min-width:140px;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;">&#x1F517; Compartir</button>';
+  const matchIdForClip=match.data?match.data.id:null;
+  if(matchIdForClip&&window._pubgReportClips&&window._pubgReportClips[matchIdForClip]){
+    const clip=window._pubgReportClips[matchIdForClip];
+    h+='<a href="'+esc(clip.url)+'" target="_blank" rel="noopener" style="flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--accent-purple);padding:10px 12px;border-radius:8px;font-weight:700;font-size:.78rem;font-family:Rajdhani,sans-serif;text-decoration:none;text-transform:uppercase;letter-spacing:1px;">&#x1F3AC; PUBG Report</a>';
+  }
+  h+='<button class="match-back-btn" onclick="closeMatchDetail()" style="flex:1;min-width:140px;margin-top:0;">&#x2190; Volver</button>';
+  h+='</div>';
+  document.getElementById('matchDetailContent').innerHTML=h;
+  // Lazy-load resumen tab immediately
+  _mdLoadTab('resumen');
+  // Map image lazy upgrade
+  if(mapImgUrl){const _mi=new Image();_mi.onload=function(){const hdr=document.getElementById('mdMapHeader');if(hdr){hdr.style.background='url('+mapImgUrl+') center/cover no-repeat';hdr.classList.add('has-bg');}};_mi.src=mapImgUrl;}
+  const card=document.querySelector('.match-detail-card');
+  card.className='match-detail-card '+plClass;
+  document.getElementById('matchDetailPopup').classList.add('active');
+  document.body.classList.add('mdp-open');
+  document.getElementById('matchDetailPopup').scrollTop=0;
+  try{
+    const matchId=match.data&&match.data.id;
+    if(matchId&&currentPlayerData){
+      const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);
+      history.pushState({matchDetail:true},'',baseUrl+'?match='+encodeURIComponent(matchId));
+    }
+  }catch(e){}
+}
+// v178: Sub-tab switching
+function _mdSwitchTab(tab){
+  document.querySelectorAll('.md-subtab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-mdtab')===tab);});
+  document.querySelectorAll('.md-tab-content').forEach(function(d){d.classList.toggle('active',d.id==='mdTab-'+tab);});
+  _mdLoadTab(tab);
+}
+// v178: Lazy tab loader — each tab loads only once
+var _mdTabLoaded={};
+function _mdLoadTab(tab){
+  if(_mdTabLoaded[tab])return;
+  _mdTabLoaded[tab]=true;
+  var ctx=window._mdCtx;if(!ctx)return;
+  if(tab==='resumen')_mdRenderResumen(ctx);
+  else if(tab==='killlog')_mdRenderKillLog(ctx);
+  else if(tab==='damage')_mdRenderDamage(ctx);
+  else if(tab==='mapa')_mdRenderMapa(ctx);
+  else if(tab==='audit')_mdRenderAudit(ctx);
+}
+// v178: Reset tab cache when opening new match detail
+var _origShowMatchDetail_reset=true;
+function _mdResetTabs(){_mdTabLoaded={};window._mdCtx=null;}
+// ═══ TAB: RESUMEN ═══
+function _mdRenderResumen(ctx){
+  var ps=ctx.ps,pn=ctx.pn,match=ctx.match,pp=ctx.pp;
+  var avgS=getActiveStats();var hasAvg=avgS&&avgS.roundsPlayed>0;
+  var avgKills=hasAvg?(avgS.kills/avgS.roundsPlayed):0;
+  var avgDmg=hasAvg?(avgS.damageDealt/avgS.roundsPlayed):0;
+  var avgHSPerRound=hasAvg?(avgS.headshotKills/avgS.roundsPlayed):0;
+  var avgAssists=hasAvg?((avgS.assists||0)/avgS.roundsPlayed):0;
+  var avgKnocks=hasAvg?((avgS.DBNOs||0)/avgS.roundsPlayed):0;
+  var h='';
+  // Primary stats
+  h+='<div class="match-detail-stats" style="margin:12px 0 8px;">';
   h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent);font-size:1.4rem;">'+ps.kills+'</div><div class="lbl">Kills</div>'+_mdAvgCmp(ps.kills,avgKills)+'</div>';
   h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-orange);font-size:1.4rem;">'+Math.round(ps.damageDealt)+'</div><div class="lbl">Dano</div>'+_mdAvgCmp(Math.round(ps.damageDealt),Math.round(avgDmg))+'</div>';
   h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-green);font-size:1.4rem;">'+formatTime(ps.timeSurvived)+'</div><div class="lbl">Tiempo</div></div>';
   h+='</div>';
-  // Secondary stats row — HS, assists, knocks
+  // Secondary stats
   h+='<div class="match-detail-stats">';
   h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-purple);">'+(ps.headshotKills||0)+'</div><div class="lbl">Headshots</div>'+_mdAvgCmp(ps.headshotKills||0,avgHSPerRound)+'</div>';
   h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-yellow);">'+(ps.assists||0)+'</div><div class="lbl">Assists</div>'+_mdAvgCmp(ps.assists||0,avgAssists)+'</div>';
   h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-red);">'+(ps.DBNOs||0)+'</div><div class="lbl">Knocks</div>'+_mdAvgCmp(ps.DBNOs||0,avgKnocks)+'</div>';
   h+='</div>';
-  // Combat summary: damage dealt vs avg, efficiency
-  const dmgDealt=Math.round(ps.damageDealt||0);const killDmgRatio=ps.kills>0?Math.round(dmgDealt/ps.kills):0;
-  const dpm=ps.timeSurvived>0?(dmgDealt/(ps.timeSurvived/60)).toFixed(1):'0';
+  // Combat summary
+  var dmgDealt=Math.round(ps.damageDealt||0);var killDmgRatio=ps.kills>0?Math.round(dmgDealt/ps.kills):0;
+  var dpm=ps.timeSurvived>0?(dmgDealt/(ps.timeSurvived/60)).toFixed(1):'0';
   h+='<div class="md-combat-summary"><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent-orange);">'+dmgDealt+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano Total</div></div><div style="text-align:center;padding:0 16px;"><div style="font-size:.7rem;color:var(--text-dim);margin-bottom:4px;">Eficiencia</div><div style="font-family:Orbitron,sans-serif;font-size:1rem;color:var(--accent);">'+killDmgRatio+'</div><div style="font-size:.6rem;color:var(--text-dim);">dano/kill</div></div><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent);">'+dpm+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano/min</div></div></div>';
-  // Team section with contribution bar
-  const myRoster=(match.included||[]).find(i=>i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(p=>p.id===pp.id));let teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){const partIds=myRoster.relationships.participants.data.map(p=>p.id);teammates=(match.included||[]).filter(i=>i.type==='participant'&&partIds.includes(i.id)).map(p=>p.attributes.stats).sort((a,b)=>(b.damageDealt||0)-(a.damageDealt||0));}
+  // Team section
+  var myRoster=(match.included||[]).find(function(i){return i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(function(p){return p.id===pp.id;});});
+  var teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){var partIds=myRoster.relationships.participants.data.map(function(p){return p.id;});teammates=(match.included||[]).filter(function(i){return i.type==='participant'&&partIds.includes(i.id);}).map(function(p){return p.attributes.stats;}).sort(function(a,b){return(b.damageDealt||0)-(a.damageDealt||0);});}
   if(teammates.length>1){
-    const totalDmg=teammates.reduce((s,tm)=>s+(tm.damageDealt||0),0);
-    const tmColors=['var(--accent)','var(--accent-orange)','var(--accent-purple)','var(--accent-green)'];
+    var totalDmg=teammates.reduce(function(s,tm){return s+(tm.damageDealt||0);},0);
+    var tmColors=['var(--accent)','var(--accent-orange)','var(--accent-purple)','var(--accent-green)'];
     h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">';
     h+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">Tu Equipo</div>';
-    // Contribution bar
-    if(totalDmg>0){
-      h+='<div class="team-contrib-bar">';
-      teammates.forEach((tm,ti)=>{
-        const pct=((tm.damageDealt||0)/totalDmg*100).toFixed(1);
-        h+='<div class="seg" style="width:'+pct+'%;background:'+tmColors[ti%4]+';"></div>';
-      });
-      h+='</div>';
-    }
-    // Teammate cards
+    if(totalDmg>0){h+='<div class="team-contrib-bar">';teammates.forEach(function(tm,ti){var pct=((tm.damageDealt||0)/totalDmg*100).toFixed(1);h+='<div class="seg" style="width:'+pct+'%;background:'+tmColors[ti%4]+';"></div>';});h+='</div>';}
     h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;">';
-    teammates.forEach((tm,ti)=>{
-      const isMe=tm.name.toLowerCase()===pn.toLowerCase();
-      const pct=totalDmg>0?Math.round((tm.damageDealt||0)/totalDmg*100):0;
-      const isMvp=ti===0;
+    teammates.forEach(function(tm,ti){
+      var isMe=tm.name.toLowerCase()===pn.toLowerCase();
+      var pct=totalDmg>0?Math.round((tm.damageDealt||0)/totalDmg*100):0;
+      var isMvp=ti===0;
       h+='<div style="background:var(--bg-secondary);padding:10px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'border:1px solid var(--border);')+'">';
       h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">';
       h+='<span style="color:'+(isMe?'var(--accent)':tmColors[ti%4])+';font-weight:700;font-size:.78rem;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();goToPlayer(\''+escJs(tm.name)+'\',\''+currentPlatform+'\');" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.55rem;opacity:.6;">(tu)</span>':'')+'</span>';
@@ -5013,82 +5103,131 @@ function showMatchDetail(idx){
     });
     h+='</div></div>';
   }
-  // Collapsible: Loot & movement
-  const lootItems=[];
+  // Loot & movement
+  var lootItems=[];
   if(ps.heals)lootItems.push({l:'Heals',v:ps.heals});if(ps.boosts)lootItems.push({l:'Boosts',v:ps.boosts});if(ps.weaponsAcquired)lootItems.push({l:'Armas',v:ps.weaponsAcquired});if(ps.roadKills)lootItems.push({l:'Atropellos',v:ps.roadKills});if(ps.vehicleDestroys)lootItems.push({l:'Vehiculos',v:ps.vehicleDestroys});if(ps.longestKill)lootItems.push({l:'Kill lejano',v:Math.round(ps.longestKill)+'m'});if(ps.swimDistance>0)lootItems.push({l:'Nado',v:((ps.swimDistance)/1000).toFixed(2)+'km'});
-  const walkKm=((ps.walkDistance||0)/1000).toFixed(1);const rideKm=((ps.rideDistance||0)/1000).toFixed(1);
-  const hasLootOrMove=lootItems.length>0||parseFloat(walkKm)>0||parseFloat(rideKm)>0;
-  if(hasLootOrMove){
-    h+='<button class="md-collapsible-toggle" onclick="_mdToggleCollapsible(this)"><span>Loot y Movimiento</span><span class="arrow">&#x25BC;</span></button>';
-    h+='<div class="md-collapsible-body">';
-    // Movement stats
-    h+='<div style="display:flex;gap:12px;margin-top:12px;margin-bottom:8px;">';
+  var walkKm=((ps.walkDistance||0)/1000).toFixed(1);var rideKm=((ps.rideDistance||0)/1000).toFixed(1);
+  if(lootItems.length>0||parseFloat(walkKm)>0||parseFloat(rideKm)>0){
+    h+='<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">';
+    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Loot y Movimiento</div>';
+    h+='<div style="display:flex;gap:12px;margin-bottom:8px;">';
     h+='<div style="flex:1;background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);"><div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:700;">'+walkKm+'km</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;margin-top:2px;">A pie</div></div>';
     h+='<div style="flex:1;background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);"><div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:700;">'+rideKm+'km</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;margin-top:2px;">Vehiculo</div></div>';
     h+='</div>';
-    if(lootItems.length){h+='<div class="md-loot-grid">';lootItems.forEach(i=>{h+='<div class="md-loot-item"><span class="loot-val">'+i.v+'</span>'+i.l+'</div>';});h+='</div>';}
+    if(lootItems.length){h+='<div class="md-loot-grid">';lootItems.forEach(function(i){h+='<div class="md-loot-item"><span class="loot-val">'+i.v+'</span>'+i.l+'</div>';});h+='</div>';}
     h+='</div>';
   }
   // Top killer warning
-  const allParts=(match.included||[]).filter(i=>i.type==='participant');
-  let detailTopK=null,detailTopKills=0;allParts.forEach(p=>{const k=p.attributes.stats.kills||0;if(k>detailTopKills){detailTopKills=k;detailTopK=p.attributes.stats.name;}});
+  var allParts=(match.included||[]).filter(function(i){return i.type==='participant';});
+  var detailTopK=null,detailTopKills=0;allParts.forEach(function(p){var k=p.attributes.stats.kills||0;if(k>detailTopKills){detailTopKills=k;detailTopK=p.attributes.stats.name;}});
   if(detailTopKills>=10&&detailTopK&&detailTopK.toLowerCase()!==pn.toLowerCase()){
-    const suspectColor=detailTopKills>=15?'var(--accent-red)':'var(--accent-orange)';
+    var suspectColor=detailTopKills>=15?'var(--accent-red)':'var(--accent-orange)';
     h+='<div style="margin-top:16px;background:rgba(255,51,85,0.08);border:1px solid rgba(255,51,85,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;">';
     h+='<span style="font-size:1.2rem;">'+(detailTopKills>=15?'&#x26A0;&#xFE0F;':'&#x1F525;')+'</span>';
     h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">Top Killer de la Partida</div>';
     h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(detailTopK)+'\',\''+currentPlatform+'\');">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
     h+='</div></div>';
   }
-  // Collapsible: Kill Tree
-  const asset=(match.included||[]).find(i=>i.type==='asset');let telemetryUrl='';if(asset&&asset.attributes&&asset.attributes.URL){telemetryUrl=asset.attributes.URL;}
-  if(telemetryUrl){
-    h+='<button class="md-collapsible-toggle" onclick="_mdToggleCollapsible(this)"><span>Kill Tree</span><span class="arrow">&#x25BC;</span></button>';
-    h+='<div class="md-collapsible-body">';
-    h+='<div class="kt-section" id="killTreeSection" style="margin-top:0;border-top:none;padding-top:8px;">';
-    h+='<div id="killTreeContent"><button onclick="loadKillTree(\''+telemetryUrl.replace(/'/g,"\\'")+'\',\''+pn.replace(/'/g,"\\'")+'\',this)" style="width:100%;background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.2);color:var(--accent);padding:10px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;">&#x1F52E; Cargar Kill Tree</button></div>';
-    h+='</div></div>';
-  }
-  // PUBG Report clip link
-  const matchIdForClip=match.data?match.data.id:null;
-  if(matchIdForClip&&window._pubgReportClips&&window._pubgReportClips[matchIdForClip]){
-    const clip=window._pubgReportClips[matchIdForClip];
-    h+='<div style="margin-top:12px;"><a href="'+esc(clip.url)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--accent-purple);padding:10px 12px;border-radius:6px;font-weight:700;font-size:.82rem;font-family:Rajdhani,sans-serif;text-decoration:none;text-transform:uppercase;letter-spacing:1px;transition:all .2s;" onmouseover="this.style.background=\'rgba(168,85,247,0.25)\'" onmouseout="this.style.background=\'rgba(168,85,247,0.12)\'">&#x1F3AC; Ver Video en PUBG Report ('+esc(clip.streamer)+')</a></div>';
-  }
-  if(telemetryUrl){h+='<div style="margin-top:12px;"><button onclick="openTelemMap(\''+telemetryUrl+'\',\''+pn.replace(/'/g,"\\'")+'\',\''+a.mapName+'\','+idx+')" style="width:100%;background:var(--accent);color:#000;border:none;padding:8px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.8rem;font-family:Rajdhani,sans-serif;">&#x1F5FA; Ver Mapa de Telemetria</button></div>';}
-  // Close md-main, open md-side (desktop 70/30 layout)
-  h+='</div><div class="md-side">';
-  // Telemetry audit button
-  const auditMatchId=match.data?match.data.id:null;
-  if(auditMatchId){
-    h+='<div style="margin-top:0;" id="auditBtnWrap"><button class="audit-btn" onclick="requestTelemetryAudit(\''+escJs(auditMatchId)+'\',\''+escJs(pn)+'\',\''+escJs(currentPlatform||'psn')+'\',this)">&#x1F50D; Auditar Partida con IA</button></div>';
-    h+='<div id="auditResult"></div>';
-  }
-  // Share match card button
-  h+='<div style="margin-top:12px;"><button onclick="shareMatchCard('+idx+')" style="width:100%;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">&#x1F517; Compartir Enlace</button></div>';
-  h+='<button class="match-back-btn" onclick="closeMatchDetail()">&#x2190; Volver a Partidas</button>';
-  // Close md-side and md-grid wrapper
-  h+='</div></div>';
-  document.getElementById('matchDetailContent').innerHTML=h;
-  // Try loading map image in background — if it works, upgrade the header
-  if(mapImgUrl){const _mi=new Image();_mi.onload=function(){const hdr=document.getElementById('mdMapHeader');if(hdr){hdr.style.background='url('+mapImgUrl+') center/cover no-repeat';hdr.classList.add('has-bg');}};_mi.src=mapImgUrl;}
-  // Apply placement color class to card
-  const card=document.querySelector('.match-detail-card');
-  card.className='match-detail-card '+plClass;
-  // Popup is position:fixed below the header, so no scroll movement happens.
-  // body.mdp-open kills backdrop-filter on header (renderer crash fix) AND locks body scroll.
-  document.getElementById('matchDetailPopup').classList.add('active');
-  document.body.classList.add('mdp-open');
-  // Reset the popup's internal scroll to top so the user starts at the match header
-  document.getElementById('matchDetailPopup').scrollTop=0;
-  // Push deep link URL ?match=ID so the user can copy/share it
-  try{
-    const matchId=match.data&&match.data.id;
-    if(matchId&&currentPlayerData){
-      const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);
-      history.pushState({matchDetail:true},'',baseUrl+'?match='+encodeURIComponent(matchId));
+  document.getElementById('mdTab-resumen').innerHTML=h;
+}
+// ═══ TAB: KILL LOG ═══
+function _mdRenderKillLog(ctx){
+  var el=document.getElementById('mdTab-killlog');if(!el)return;
+  if(!ctx.telemetryUrl){el.innerHTML='<div class="md-tab-loading">Sin telemetria disponible</div>';return;}
+  el.innerHTML='<div class="kt-section" id="killTreeSection" style="margin-top:12px;border-top:none;padding-top:0;"><div id="killTreeContent"><button onclick="loadKillTree(\''+ctx.telemetryUrl.replace(/'/g,"\\'")+'\',\''+ctx.pn.replace(/'/g,"\\'")+'\',this)" style="width:100%;background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.2);color:var(--accent);padding:14px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;">&#x1F52E; Cargar Kill Tree</button></div></div>';
+}
+// ═══ TAB: DAÑO (telemetry damage breakdown) ═══
+function _mdRenderDamage(ctx){
+  var el=document.getElementById('mdTab-damage');if(!el)return;
+  if(!ctx.telemetryUrl){el.innerHTML='<div class="md-tab-loading">Sin telemetria disponible</div>';return;}
+  el.innerHTML='<div class="md-tab-loading"><div class="tab-spinner"></div><div>Descargando telemetria de da\u00f1o...</div></div>';
+  fetch(ctx.telemetryUrl).then(function(r){if(!r.ok)throw new Error('Telemetry fetch failed');return r.json();}).then(function(telem){
+    var pnL=ctx.pn.toLowerCase();
+    // Collect damage events where attacker is the player
+    var byWeapon={},byVictim={},totalDmg=0,totalReceived=0;
+    var byAttacker={};
+    telem.forEach(function(ev){
+      if(ev._T==='LogPlayerTakeDamage'||ev._T==='LogPlayerMakeDamage'){
+        var atkName=(ev.attacker&&ev.attacker.name||'').toLowerCase();
+        var vicName=(ev.victim&&ev.victim.name||'').toLowerCase();
+        var dmg=ev.damage||0;
+        if(atkName===pnL&&vicName!==pnL&&dmg>0){
+          totalDmg+=dmg;
+          var weapon=ev.damageCauserName||'Desconocido';
+          weapon=weapon.replace(/^WeapHK416_C$/,'M416').replace(/^WeapAK47_C$/,'AKM').replace(/^WeapBerreta686_C$/,'S686').replace(/^WeapScar-L_C$/,'SCAR-L').replace(/^WeapMini14_C$/,'Mini14').replace(/^WeapM16A4_C$/,'M16A4').replace(/^WeapUMP_C$/,'UMP45').replace(/^WeapDP12_C$/,'DBS').replace(/^WeapGroza_C$/,'Groza').replace(/^WeapM24_C$/,'M24').replace(/^WeapKar98k_C$/,'Kar98k').replace(/^WeapAWM_C$/,'AWM').replace(/^WeapDP28_C$/,'DP-28').replace(/^Weap/,'').replace(/_C$/,'');
+          if(!byWeapon[weapon])byWeapon[weapon]=0;
+          byWeapon[weapon]+=dmg;
+          var vic=ev.victim&&ev.victim.name||'?';
+          if(!byVictim[vic])byVictim[vic]=0;
+          byVictim[vic]+=dmg;
+        }
+        if(vicName===pnL&&atkName!==pnL&&dmg>0){
+          totalReceived+=dmg;
+          var atkN=ev.attacker&&ev.attacker.name||'Zona/Caida';
+          if(!byAttacker[atkN])byAttacker[atkN]=0;
+          byAttacker[atkN]+=dmg;
+        }
+      }
+    });
+    if(totalDmg===0&&totalReceived===0){el.innerHTML='<div class="md-tab-loading" style="color:var(--text-dim);">No se encontraron eventos de da\u00f1o en la telemetria.</div>';return;}
+    var weaponSorted=Object.entries(byWeapon).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+    var victimSorted=Object.entries(byVictim).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+    var attackerSorted=Object.entries(byAttacker).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+    var maxW=weaponSorted.length?weaponSorted[0][1]:1;
+    var maxV=victimSorted.length?victimSorted[0][1]:1;
+    var maxA=attackerSorted.length?attackerSorted[0][1]:1;
+    var h='<div style="text-align:center;margin:12px 0;"><span style="font-family:Orbitron,sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent-orange);">'+Math.round(totalDmg)+'</span><span style="font-size:.7rem;color:var(--text-dim);margin-left:6px;">da\u00f1o infligido</span>';
+    if(totalReceived>0)h+='<span style="margin-left:16px;font-family:Orbitron,sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent-red);">'+Math.round(totalReceived)+'</span><span style="font-size:.7rem;color:var(--text-dim);margin-left:6px;">recibido</span>';
+    h+='</div>';
+    h+='<div class="dmg-breakdown">';
+    // By weapon
+    h+='<div class="dmg-card"><div class="dmg-card-title">&#x1F52B; Por Arma</div>';
+    weaponSorted.forEach(function(w){
+      var pct=(w[1]/maxW*100).toFixed(0);
+      h+='<div class="dmg-bar-row"><div class="dmg-bar-label">'+esc(w[0])+'</div><div class="dmg-bar-track"><div class="dmg-bar-fill" style="width:'+pct+'%;background:var(--accent-orange);"></div></div><div class="dmg-bar-val">'+Math.round(w[1])+'</div></div>';
+    });
+    h+='</div>';
+    // By victim
+    h+='<div class="dmg-card"><div class="dmg-card-title">&#x1F3AF; Por Victima</div>';
+    victimSorted.forEach(function(v){
+      var pct=(v[1]/maxV*100).toFixed(0);
+      h+='<div class="dmg-bar-row"><div class="dmg-bar-label" style="cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(v[0])+'\',\''+currentPlatform+'\');">'+esc(v[0])+'</div><div class="dmg-bar-track"><div class="dmg-bar-fill" style="width:'+pct+'%;background:var(--accent);"></div></div><div class="dmg-bar-val">'+Math.round(v[1])+'</div></div>';
+    });
+    h+='</div>';
+    h+='</div>';
+    // Damage received
+    if(attackerSorted.length){
+      h+='<div class="dmg-card" style="margin-top:10px;"><div class="dmg-card-title">&#x1F6E1; Da\u00f1o Recibido De</div>';
+      attackerSorted.forEach(function(a){
+        var pct=(a[1]/maxA*100).toFixed(0);
+        h+='<div class="dmg-bar-row"><div class="dmg-bar-label">'+esc(a[0])+'</div><div class="dmg-bar-track"><div class="dmg-bar-fill" style="width:'+pct+'%;background:var(--accent-red);"></div></div><div class="dmg-bar-val">'+Math.round(a[1])+'</div></div>';
+      });
+      h+='</div>';
     }
-  }catch(e){}
+    el.innerHTML=h;
+  }).catch(function(e){el.innerHTML='<div class="md-tab-loading" style="color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message||'')+'</div>';});
+}
+// ═══ TAB: MAPA ═══
+function _mdRenderMapa(ctx){
+  var el=document.getElementById('mdTab-mapa');if(!el)return;
+  if(!ctx.telemetryUrl){el.innerHTML='<div class="md-tab-loading">Sin telemetria disponible</div>';return;}
+  // Reuse existing openTelemMap but inline — render a button that opens the existing telem popup
+  var h='<div style="text-align:center;margin:16px 0;">';
+  h+='<button onclick="openTelemMap(\''+ctx.telemetryUrl+'\',\''+ctx.pn.replace(/'/g,"\\'")+'\',\''+ctx.mapName+'\','+ctx.idx+')" style="width:100%;max-width:400px;background:var(--accent);color:#000;border:none;padding:14px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9rem;font-family:Rajdhani,sans-serif;text-transform:uppercase;letter-spacing:1px;">&#x1F5FA; Abrir Mapa Interactivo</button>';
+  h+='<div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Se abrira el mapa completo con tu ruta, kills y zona azul</div>';
+  h+='</div>';
+  el.innerHTML=h;
+}
+// ═══ TAB: AUDITORÍA IA ═══
+function _mdRenderAudit(ctx){
+  var el=document.getElementById('mdTab-audit');if(!el)return;
+  if(!ctx.auditMatchId){el.innerHTML='<div class="md-tab-loading">Auditoria no disponible</div>';return;}
+  var h='<div style="text-align:center;margin:16px 0;" id="auditBtnWrap">';
+  h+='<button class="audit-btn" onclick="requestTelemetryAudit(\''+escJs(ctx.auditMatchId)+'\',\''+escJs(ctx.pn)+'\',\''+escJs(currentPlatform||'psn')+'\',this)" style="max-width:400px;">&#x1F50D; Auditar Partida con IA</button>';
+  h+='<div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Analiza tu partida con inteligencia artificial</div>';
+  h+='</div>';
+  h+='<div id="auditResult"></div>';
+  el.innerHTML=h;
 }
 // ═══ TELEMETRY AUDIT ═══
 let _auditAbort=null;
