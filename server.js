@@ -1723,6 +1723,63 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
   } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
 });
 
+// ============ V4NZ Leaderboard (top players from snapshots) ============
+app.get('/api/v4nz-leaderboard', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'No database' });
+  const { platform = 'all', mode = 'squad', game_mode = 'tpp' } = req.query;
+
+  const cacheKey = `v4nz-lb:${platform}:${mode}:${game_mode}`;
+  // Check cache (1 hour TTL)
+  try {
+    const cached = await pool.query(
+      "SELECT response_data, created_at FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '60 minutes'",
+      [cacheKey]
+    );
+    if (cached.rows.length > 0) {
+      return res.json({ ...JSON.parse(cached.rows[0].response_data), cachedAt: cached.rows[0].created_at, cacheHit: true });
+    }
+  } catch (e) { /* cache miss */ }
+
+  try {
+    const platformFilter = platform !== 'all' ? 'AND ps.platform = $4' : '';
+    const params = [mode, game_mode, 50];
+    if (platform !== 'all') params.push(platform);
+
+    const { rows } = await pool.query(
+      `SELECT DISTINCT ON (ps.player_name)
+         ps.player_name, ps.platform, ps.kd, ps.avg_damage, ps.win_rate, ps.hs_rate, ps.kills, ps.wins, ps.rounds, ps.top10_rate, ps.created_at
+       FROM player_snapshots ps
+       WHERE ps.squad_mode = $1 AND ps.game_mode = $2
+         AND ps.rounds >= $3
+         ${platformFilter}
+       ORDER BY ps.player_name, ps.created_at DESC`,
+      params
+    );
+
+    // Sort by K/D descending, take top 100
+    const sorted = rows.sort((a, b) => parseFloat(b.kd) - parseFloat(a.kd)).slice(0, 100);
+
+    // Add rank
+    const ranked = sorted.map((r, i) => ({ ...r, rank: i + 1 }));
+
+    const result = { players: ranked, total: ranked.length, filters: { platform, mode, game_mode } };
+
+    // Store in cache
+    try {
+      await pool.query(
+        `INSERT INTO api_cache (cache_key, response_data, created_at) VALUES ($1, $2, NOW())
+         ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()`,
+        [cacheKey, JSON.stringify(result)]
+      );
+    } catch (e) { /* cache write error, non-fatal */ }
+
+    res.json(result);
+  } catch (e) {
+    console.error('V4NZ leaderboard error:', e.message);
+    res.status(500).json({ error: 'Error fetching leaderboard' });
+  }
+});
+
 // ============ Clear AI DNA cache for a player (admin use) ============
 app.delete('/api/ai-dna-cache', async (req, res) => {
   const { playerName, platform } = req.query;
