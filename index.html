@@ -5142,9 +5142,9 @@ async function detectPlayerClan(){
               if(existing&&existing.clan){console.log('Clan ['+tag+'] ya registrado en V4NZ');return;}
             }
             console.log('Auto-registrando clan ['+tag+'] en V4NZ...');
-            const importResp=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,gameMode:'squad'})});
+            const importResp=await fetch('/clans/import-members',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,gameMode:'squad'})});
             if(importResp.ok){console.log('Clan ['+tag+'] registrado exitosamente en V4NZ');}
-            else{console.log('No se pudo importar clan ['+tag+'] desde pubgclans.net');}
+            else{console.log('No se pudo importar clan ['+tag+']');}
           }catch(e){console.log('Auto-register clan error:',e.message);}
         }
       }catch(e){console.log('Clan API fallback error:',e.message);}
@@ -8833,9 +8833,9 @@ async function searchPlayerClanAC(playerName,inputId,listId){
     try{
       const dbCheck=await fetch('/clans/'+encodeURIComponent(tag));
       if(!dbCheck.ok){
-        // Intentar importar desde pubgclans.net
+        // Auto-importar clan si no existe en DB
         const clanId=clan.id||'';
-        if(clanId){fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,tag:tag,name:name,platform:plat})}).catch(()=>{});}
+        if(clanId){fetch('/clans/import-members',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,tag:tag,name:name,platform:plat})}).catch(()=>{});}
       }
     }catch(e){}
     document.getElementById(inputId).value=tag;
@@ -9215,7 +9215,7 @@ async function searchClan(){
       if(pubgClanId){
         cr.innerHTML+='<div id="autoImportStatus" style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:12px;border:1px solid rgba(0,240,255,0.15);"><div class="api-loader" style="padding:12px 0;"><div class="spinner"></div><div class="loader-text">Importando miembros del clan automaticamente...</div></div></div>';
         try{
-          const impResp=await fetch('/clans/import-pubgclans',{
+          const impResp=await fetch('/clans/import-members',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({clanId:pubgClanId,gameMode:'squad'})
@@ -9378,7 +9378,7 @@ async function refreshClanStats(clanTag,btn){
   const origText=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='&#x23F3; Actualizando...';btn.style.opacity='0.5';
   try{
-    // Server-side refresh — handles PUBG API lookup + pubgclans.net import
+    // Server-side refresh — handles PUBG API lookup + clan stats import
     const resp=await fetch('/clans/refresh-stats/'+encodeURIComponent(clanTag),{method:'POST'});
     if(!resp.ok){const txt=await resp.text();let msg='Error al actualizar';try{const d=JSON.parse(txt);msg=d.error||msg;}catch(e){}throw new Error(msg);}
     btn.innerHTML='&#x2705; Actualizado!';btn.style.color='var(--accent-green)';
@@ -9553,11 +9553,11 @@ async function compareClans(){
     // If clans not in DB, try auto-import (only if we have clan ID from search)
     if(!db1?.members?.length&&clan1.id&&clan1.id!==tag1){
       setLoaderStep('Importando ['+tag1+']...');
-      try{const ir=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clan1.id,gameMode:'squad'})});if(ir.ok){const r2=await fetch('/clans/'+encodeURIComponent(tag1));if(r2.ok)db1=await r2.json();else clan1NotInDB=true;}}catch(e){clan1NotInDB=true;}
+      try{const ir=await fetch('/clans/import-members',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clan1.id,gameMode:'squad'})});if(ir.ok){const r2=await fetch('/clans/'+encodeURIComponent(tag1));if(r2.ok)db1=await r2.json();else clan1NotInDB=true;}}catch(e){clan1NotInDB=true;}
     }
     if(!db2?.members?.length&&clan2.id&&clan2.id!==tag2){
       setLoaderStep('Importando ['+tag2+']...');
-      try{const ir=await fetch('/clans/import-pubgclans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clan2.id,gameMode:'squad'})});if(ir.ok){const r2=await fetch('/clans/'+encodeURIComponent(tag2));if(r2.ok)db2=await r2.json();else clan2NotInDB=true;}}catch(e){clan2NotInDB=true;}
+      try{const ir=await fetch('/clans/import-members',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clan2.id,gameMode:'squad'})});if(ir.ok){const r2=await fetch('/clans/'+encodeURIComponent(tag2));if(r2.ok)db2=await r2.json();else clan2NotInDB=true;}}catch(e){clan2NotInDB=true;}
     }
 
     // Check if clans are not in DB and show message
