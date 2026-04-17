@@ -1495,7 +1495,7 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
    V4NZ CAPA 1 SPRINT 3 — marker: capa-1-sprint-3-v171
    Curiosidades destacadas: pollos, tiempo vivo, mapa favorito
    ═══════════════════════════════════════════════════════════════ */
-.curio-highlights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 20px; }
+.curio-highlights { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 16px 0 20px; }
 .curio-card { position: relative; background: linear-gradient(135deg, rgba(0,240,255,0.06), rgba(255,107,0,0.04)); border: 1px solid rgba(0,240,255,0.18); border-radius: 10px; padding: 14px 14px 12px; overflow: hidden; }
 .curio-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent); opacity: .8; }
 .curio-card.cc-chicken::before { background: var(--accent-orange); }
@@ -1504,10 +1504,12 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 .curio-card.cc-map { border-color: rgba(0,255,136,0.25); background: linear-gradient(135deg, rgba(0,255,136,0.06), rgba(0,240,255,0.04)); }
 .curio-card.cc-time::before { background: var(--accent-purple); }
 .curio-card.cc-time { border-color: rgba(168,85,247,0.28); background: linear-gradient(135deg, rgba(168,85,247,0.07), rgba(0,240,255,0.04)); }
+.curio-card.cc-hour::before { background: #ffd700; }
+.curio-card.cc-hour { border-color: rgba(255,215,0,0.25); background: linear-gradient(135deg, rgba(255,215,0,0.06), rgba(0,240,255,0.04)); }
 .curio-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .curio-icon { font-size: 1.35rem; line-height: 1; }
 .curio-title { font-family: 'Rajdhani', sans-serif; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.3px; color: var(--text-dim); }
-.curio-value { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-bottom: 4px; }
+.curio-value { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-bottom: 4px; word-break: break-word; }
 .curio-detail { font-size: .75rem; color: var(--text-dim); line-height: 1.4; }
 .curio-detail strong { color: var(--text-primary); font-weight: 600; }
 .curio-pill { display: inline-block; font-family: 'Rajdhani', sans-serif; font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 2px 7px; border-radius: 8px; margin-top: 6px; }
@@ -6747,7 +6749,43 @@ function renderCurioHighlights(s){
       }
     }
   }catch(e){console.error('Map fav error:',e);}
-  // 3) TIEMPO VIVO TOTAL — acumulado de season stats
+  // 3) HORARIO HABITUAL — desde match history
+  try{
+    const pnH=(currentPlayerData?.attributes?.name||'').toLowerCase();
+    if(currentMatchData&&currentMatchData.length>=3&&pnH){
+      const hourBuckets=[0,0,0,0,0,0]; // 6 franjas de 4h: 0-4, 4-8, 8-12, 12-16, 16-20, 20-24
+      const franjaNames=['Madrugada','Amanecer','Manana','Mediodia','Tarde','Noche'];
+      const franjaIcons=['&#x1F319;','&#x1F305;','&#x2600;&#xFE0F;','&#x1F31E;','&#x1F307;','&#x1F303;'];
+      let totalH=0;
+      currentMatchData.forEach(match=>{
+        if(!match||!match.data)return;
+        const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pnH);
+        if(!pp)return;
+        const h=new Date(match.data.attributes.createdAt).getHours();
+        hourBuckets[Math.floor(h/4)]++;totalH++;
+      });
+      if(totalH>=3){
+        const maxIdx=hourBuckets.indexOf(Math.max(...hourBuckets));
+        const maxPct=Math.round(hourBuckets[maxIdx]/totalH*100);
+        const rolLabel=maxIdx>=5||maxIdx===0?'Jugador nocturno':maxIdx<=1?'Madrugador':maxIdx<=2?'Jugador de manana':'Jugador de '+franjaNames[maxIdx].toLowerCase();
+        // Mini heatmap bars
+        const maxBucket=Math.max(...hourBuckets,1);
+        let barsHtml='<div style="display:flex;gap:3px;align-items:flex-end;height:22px;margin-top:6px;">';
+        hourBuckets.forEach((v,i)=>{
+          const pct=Math.round(v/maxBucket*100);
+          const isMax=i===maxIdx;
+          barsHtml+='<div title="'+franjaNames[i]+': '+v+'" style="flex:1;height:'+Math.max(pct,8)+'%;border-radius:2px;background:'+(isMax?'var(--accent)':'rgba(255,255,255,0.15)')+';transition:height .3s;"></div>';
+        });
+        barsHtml+='</div><div style="display:flex;justify-content:space-between;font-size:.48rem;color:var(--text-dim);margin-top:2px;"><span>0h</span><span>8h</span><span>16h</span><span>24h</span></div>';
+        const detail=franjaIcons[maxIdx]+' '+maxPct+'% de partidas entre las <strong>'+(maxIdx*4)+':00-'+((maxIdx+1)*4)+':00</strong>'+barsHtml;
+        let pill='';
+        if(maxIdx>=5||maxIdx===0)pill='<span class="curio-pill pill-cold">Nocturno</span>';
+        else if(maxIdx<=1)pill='<span class="curio-pill pill-hot">Madrugador</span>';
+        cards.push({cls:'cc-hour',icon:'&#x1F570;&#xFE0F;',title:'Horario',val:rolLabel,detail,pill});
+      }
+    }
+  }catch(e){console.error('Horario curio error:',e);}
+  // 4) TIEMPO VIVO TOTAL — acumulado de season stats
   if(s.timeSurvived>0){
     const totalSec=s.timeSurvived;
     const h=Math.floor(totalSec/3600);
