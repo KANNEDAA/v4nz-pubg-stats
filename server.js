@@ -79,7 +79,7 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://cdn.discordapp.com https://v4nz.com https://www.googletagmanager.com https://www.google-analytics.com",
-    "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://www.pubgclans.net https://api.pubg.report https://discord.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://region1.google-analytics.com",
+    "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://api.pubg.report https://discord.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://region1.google-analytics.com",
     "frame-src https://open.spotify.com https://discord.com",
     "media-src 'none'",
     "object-src 'none'",
@@ -798,8 +798,8 @@ async function importClanByPubgId(clanId) {
   };
 }
 
-// POST /clans/import-pubgclans — Import a clan using pubgclans.net data + PUBG API metadata
-app.post('/clans/import-pubgclans', rateLimit, async (req, res) => {
+// POST /clans/import-members — Import a clan using PUBG API metadata + member stats
+app.post('/clans/import-members', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database configured' });
   const { clanId } = req.body;
   if (!clanId) return res.status(400).json({ error: 'clanId required (e.g. clan.bc03cc7f04a347ef81e48070f004283c)' });
