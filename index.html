@@ -3498,7 +3498,23 @@ async function toggleClanMembers(tag,cardEl){
     const d=await r.json();
     const members=d.members||[];
     if(!members.length){
-      container.innerHTML='<p style="font-size:.75rem;color:var(--text-dim);text-align:center;">No hay miembros registrados</p>';
+      // Auto-refresh: try to import stats via server
+      container.innerHTML='<div class="api-loader" style="justify-content:center;padding:8px;"><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div><div class="loader-text" style="font-size:.7rem;">Importando stats del clan...</div></div>';
+      try{
+        const rr=await fetch('/clans/refresh-stats/'+encodeURIComponent(tag),{method:'POST'});
+        if(rr.ok){
+          const rd=await rr.json();
+          if(rd.ok||rd.members>0){
+            // Reload the card — remove loaded flag and re-trigger
+            delete container.dataset.loaded;
+            container.style.display='none';
+            // Refresh the whole ranking to update stats
+            loadClanRanking();
+            return;
+          }
+        }
+      }catch(e){console.log('Auto-refresh failed:',e);}
+      container.innerHTML='<p style="font-size:.75rem;color:var(--text-dim);text-align:center;">No se encontraron miembros &mdash; intenta buscar un jugador del clan primero</p>';
       container.dataset.loaded='1';
       return;
     }
@@ -3533,16 +3549,18 @@ async function toggleClanMembers(tag,cardEl){
   }
 }
 
-async function publishClanToServer(clanTag,clanName,memberCount,level,platform,memberStats){
+async function publishClanToServer(clanTag,clanName,memberCount,level,platform,memberStats,clanId){
   try{
     const members=memberStats.filter(m=>m.stats).map(m=>{
       const k=m.stats.kills||0,r=m.stats.roundsPlayed||m.stats.rounds||0;
       return{name:m.name,active:m.active!==false,stats:{kills:k,wins:m.stats.wins||0,kd:r>0?parseFloat((k/r).toFixed(2)):0,damage:m.stats.damageDealt||m.stats.damage||0,rounds:r}};
     });
+    const payload={tag:clanTag,name:clanName,memberCount,level,platform,registeredBy:currentPlayerData?.attributes?.name||'anon',members};
+    if(clanId)payload.clanId=clanId;
     const r=await fetch('/clans/register',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({tag:clanTag,name:clanName,memberCount,level,platform,registeredBy:currentPlayerData?.attributes?.name||'anon',members})
+      body:JSON.stringify(payload)
     });
     const d=await r.json();
     if(d.ok)return d;
@@ -9050,7 +9068,7 @@ async function doPublishClan(tag,name,memberCount,level){
   btn.disabled=true;btn.innerHTML='Publicando...';
   try{
     const ms=window.__lastClanMembers||[];
-    const result=await publishClanToServer(tag,name,memberCount,level,window.__lastClanPlatform||'psn',ms);
+    const result=await publishClanToServer(tag,name,memberCount,level,window.__lastClanPlatform||'psn',ms,window.__lastClanId||null);
     btn.innerHTML='&#x2705; Publicado! v4nz.com/clan/'+tag;
     btn.style.background='var(--accent-green)';
     btn.onclick=()=>window.location.href='/clan/'+tag;
@@ -9128,6 +9146,7 @@ async function searchClan(){
   try{
     const clan=await fetchClanByPlayer(n, clanPlatform);
     const clanInfo=renderClanCard(clan,'clanResults');
+    window.__lastClanId=clan.id||null;
     saveClanToHistory(clanInfo.name,clanInfo.tag,clanInfo.memberCount,clanInfo.level,clanPlatform,[]);
 
     // Check if this clan already exists in our database
