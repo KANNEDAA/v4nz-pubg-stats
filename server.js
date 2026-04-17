@@ -310,9 +310,9 @@ app.get('/clans/leaderboard', async (req, res) => {
         `SELECT tag, name, member_count, level, platform, total_kills, total_wins,
                 avg_kd, avg_damage, total_rounds, win_rate, active_members,
                 stats_updated_at, created_at
-         FROM clans WHERE active_members > 0 ORDER BY ${order} LIMIT $1`, [limit]
+         FROM clans ORDER BY active_members > 0 DESC, ${order} LIMIT $1`, [limit]
       ),
-      pool.query('SELECT COUNT(*)::int AS cnt, SUM(active_members)::int AS players, SUM(total_kills)::int AS kills FROM clans WHERE active_members > 0')
+      pool.query('SELECT COUNT(*)::int AS cnt, SUM(active_members)::int AS players, SUM(total_kills)::int AS kills FROM clans')
     ]);
     const stats = countRes.rows[0] || {};
     res.json({ clans: rows, total: stats.cnt || rows.length, totalPlayers: stats.players || 0, totalKills: stats.kills || 0 });
@@ -3408,10 +3408,11 @@ app.get('/maps/:name.png', async (req, res) => {
   res.status(502).send('Map image unavailable');
 });
 
-// Fallback: serve index.html for SPA routes with dynamic meta tags
+// Fallback: serve index.html for SPA routes with dynamic meta tags — marker: v184-server
 app.get('*', (req, res) => {
-  const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/(.+)$/i);
-  const clanMatch = req.path.match(/^\/clan\/(.+)$/i);
+  const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/([^\/]+)(?:\/match\/[a-f0-9-]+)?$/i);
+  const clanMatch = req.path.match(/^\/clan\/([^\/]+)(?:\/[^\/]+)?$/i);
+  const isMatchDetail = /\/match\/[a-f0-9-]+$/i.test(req.path);
 
   // Map SPA paths to SEO titles/descriptions for crawlers
   const spaPages = {
@@ -3430,8 +3431,13 @@ app.get('*', (req, res) => {
     if (statsMatch) {
       const platform = statsMatch[1].toUpperCase();
       const playerName = decodeURIComponent(statsMatch[2]);
-      title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
-      desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
+      if (isMatchDetail) {
+        title = `Partida de ${playerName} — PUBG ${platform} | V4NZ`;
+        desc = `Detalle de partida de ${playerName} en PUBG ${platform}. Kill log, daño, mapa y auditoría IA.`;
+      } else {
+        title = `${playerName} — Stats PUBG ${platform} | V4NZ`;
+        desc = `Estadísticas de ${playerName} en PUBG ${platform}. K/D, victorias, partidas, daño y más. Datos en tiempo real via PUBG API.`;
+      }
       canonicalUrl = `https://v4nz.com/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}`;
       ogImage = `https://v4nz.com/og-image/stats/${statsMatch[1].toLowerCase()}/${encodeURIComponent(playerName)}.png`;
     } else if (clanMatch) {
