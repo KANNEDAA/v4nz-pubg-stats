@@ -3519,15 +3519,15 @@ async function toggleClanMembers(tag,cardEl){
       container.dataset.loaded='1';
       return;
     }
-    // Show top members as mini cards
+    // Show active members as mini cards, summarize inactive
+    const activeMembers=members.filter(m=>(m.kills||0)>0||(m.rounds||0)>0);
+    const inactiveMembers=members.filter(m=>(m.kills||0)===0&&(m.rounds||0)===0);
     let mh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
-    const maxK=members[0]?.kills||1;
-    members.forEach((m,i)=>{
+    const maxK=activeMembers[0]?.kills||1;
+    activeMembers.forEach((m,i)=>{
       const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
       const barW=Math.max(5,Math.round(((m.kills||0)/maxK)*100));
-      const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
-      const opacity=isActive?'1':'0.4';
-      mh+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;position:relative;overflow:hidden;opacity:'+opacity+';cursor:pointer;" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+d.clan.platform+'\');switchTab(\'overview\');searchPlayer();">';
+      mh+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;position:relative;overflow:hidden;cursor:pointer;" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+d.clan.platform+'\');switchTab(\'overview\');searchPlayer();">';
       mh+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:8px;"></div>';
       mh+='<div style="position:relative;z-index:1;">';
       mh+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
@@ -3542,6 +3542,9 @@ async function toggleClanMembers(tag,cardEl){
       mh+='</div></div></div>';
     });
     mh+='</div>';
+    if(inactiveMembers.length>0){
+      mh+='<div style="text-align:center;margin-top:8px;font-size:.65rem;color:var(--text-dim);opacity:0.6;">+ '+inactiveMembers.length+' miembros sin actividad esta temporada</div>';
+    }
     mh+='<div style="text-align:center;margin-top:8px;"><a href="/clan/'+tag+'" style="color:var(--accent);font-size:.7rem;text-decoration:none;font-weight:600;" onclick="event.stopPropagation();event.preventDefault();history.pushState(null,\'\',\'/clan/'+tag+'\');loadClanPage(\''+tag+'\');">Ver pagina completa del clan &#x2192;</a></div>';
     container.innerHTML=mh;
     container.dataset.loaded='1';
