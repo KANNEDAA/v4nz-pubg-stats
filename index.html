@@ -134,6 +134,9 @@
   --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.08);
   --shadow-card: 0 2px 12px rgba(0,0,0,0.35);
   --shadow-card-hover: 0 8px 30px rgba(0,0,0,0.45), 0 0 20px rgba(0,240,255,0.06);
+  --bg: #0b0b12;
+  --bg-tertiary: #1e1e30;
+  --accent-blue: #0080ff;
 }
 [data-theme="light"] {
   --bg-primary: #f0f2f5;
@@ -160,6 +163,9 @@
   --shadow-glow: 0 0 20px rgba(0,136,204,0.06);
   --shadow-card: 0 2px 12px rgba(0,0,0,0.08);
   --shadow-card-hover: 0 8px 30px rgba(0,0,0,0.12), 0 0 20px rgba(0,136,204,0.05);
+  --bg: #f0f2f5;
+  --bg-tertiary: #e8eaed;
+  --accent-blue: #0060aa;
 }
 [data-theme="light"] body { background: var(--bg-primary); }
 [data-theme="light"] header { background: rgba(240,242,245,0.95); border-bottom-color: rgba(0,0,0,0.06); }
@@ -2773,6 +2779,7 @@ body.telem-open { overflow:hidden; }
     <p style="color:var(--text-secondary);font-size:.82rem;line-height:1.7;">Todos los datos provienen de la API oficial de PUBG (developer.pubg.com). V4NZ consulta los datos en tiempo real cada vez que buscas un jugador. Tambien puedes ver el historial de tus ultimas 20 partidas con estadisticas detalladas de cada match: mapa, modo de juego, kills, damage, posicion final, duracion de partida y momento exacto de cada eliminacion.</p>
   </article>
 </section>
+</main>
 
 <footer>
   <!-- KANNEDA Social Icons -->
@@ -3212,7 +3219,7 @@ const SEASON_NAMES={1:'T1 — Ene 2018',2:'T2 — Mar 2018',3:'T3 — Jun 2018',
 function getSeasonLabel(id){const num=parseInt(id.replace(/\D/g,''))||0;return SEASON_NAMES[num]||('Temporada '+num);}
 const MAP_COLORS={'Erangel':'#4caf50','Miramar':'#ff9800','Sanhok':'#8bc34a','Vikendi':'#90caf9','Karakin':'#e6a23c','Taego':'#66bb6a','Deston':'#5c6bc0','Haven':'#ef5350','Paramo':'#78909c','Rondo':'#ab47bc','Camp Jackal':'#ffa726'};
 const MAP_SIZE={'Erangel':'8x8','Miramar':'8x8','Sanhok':'4x4','Vikendi':'6x6','Karakin':'2x2','Taego':'8x8','Deston':'8x8','Haven':'1x1','Paramo':'3x3','Rondo':'1.2x1.2','Camp Jackal':'2x2'};
-const WEAPON_TYPES={'M416':'Fusil de Asalto','Beryl M762':'Fusil de Asalto','AKM':'Fusil de Asalto','SCAR-L':'Fusil de Asalto','AUG':'Fusil de Asalto','G36C':'Fusil de Asalto','Groza':'Fusil de Asalto','QBZ':'Fusil de Asalto','M16A4':'Fusil de Asalto','ACE32':'Fusil de Asalto','Mk47':'Fusil de Asalto','FAMAS':'Fusil de Asalto','K2':'Fusil de Asalto','L85A3':'Fusil de Asalto','Mini 14':'DMR','SKS':'DMR','SLR':'DMR','QBU':'DMR','Mk14':'DMR','VSS':'DMR','Dragunov':'DMR','Kar98k':'Francotirador','M24':'Francotirador','AWM':'Francotirador','Mosin':'Francotirador','Lynx AMR':'Francotirador','Win94':'Francotirador','UMP45':'SMG','Vector':'SMG','MP5K':'SMG','P90':'SMG','Bizon':'SMG','Tommy Gun':'SMG','MP9':'SMG','JS9':'SMG','Skorpion':'SMG','S12K':'Escopeta','S686':'Escopeta','S1897':'Escopeta','Origin 12':'Escopeta','DBS':'Escopeta','M249':'LMG','DP-28':'LMG','MG3':'LMG','Pan':'Cuerpo a cuerpo','Machete':'Cuerpo a cuerpo','Sickle':'Cuerpo a cuerpo','Crossbow':'Arco','Deagle':'Pistola','P1911':'Pistola','P92':'Pistola','Rhino':'Pistola','Nagant':'Pistola','Skorpion':'Pistola','Flare Gun':'Especial','Mortar':'Especial','Panzerfaust':'Especial','C4':'Explosivo','Grenade':'Explosivo','Sticky Bomb':'Explosivo','Molotov':'Explosivo','Smoke':'Utilidad','Jolt':'Especial','BZ-187':'Especial'};
+const WEAPON_TYPES={'M416':'Fusil de Asalto','Beryl M762':'Fusil de Asalto','AKM':'Fusil de Asalto','SCAR-L':'Fusil de Asalto','AUG':'Fusil de Asalto','G36C':'Fusil de Asalto','Groza':'Fusil de Asalto','QBZ':'Fusil de Asalto','M16A4':'Fusil de Asalto','ACE32':'Fusil de Asalto','Mk47':'Fusil de Asalto','FAMAS':'Fusil de Asalto','K2':'Fusil de Asalto','L85A3':'Fusil de Asalto','Mini 14':'DMR','SKS':'DMR','SLR':'DMR','QBU':'DMR','Mk14':'DMR','VSS':'DMR','Dragunov':'DMR','Kar98k':'Francotirador','M24':'Francotirador','AWM':'Francotirador','Mosin':'Francotirador','Lynx AMR':'Francotirador','Win94':'Francotirador','UMP45':'SMG','Vector':'SMG','MP5K':'SMG','P90':'SMG','Bizon':'SMG','Tommy Gun':'SMG','MP9':'SMG','JS9':'SMG','Skorpion':'SMG','S12K':'Escopeta','S686':'Escopeta','S1897':'Escopeta','Origin 12':'Escopeta','DBS':'Escopeta','M249':'LMG','DP-28':'LMG','MG3':'LMG','Pan':'Cuerpo a cuerpo','Machete':'Cuerpo a cuerpo','Sickle':'Cuerpo a cuerpo','Crossbow':'Arco','Deagle':'Pistola','P1911':'Pistola','P92':'Pistola','Rhino':'Pistola','Nagant':'Pistola','Flare Gun':'Especial','Mortar':'Especial','Panzerfaust':'Especial','C4':'Explosivo','Grenade':'Explosivo','Sticky Bomb':'Explosivo','Molotov':'Explosivo','Smoke':'Utilidad','Jolt':'Especial','BZ-187':'Especial'};
 
 const DEMO_DATA={
   player:{type:'player',id:'account.f32bf5a234c74ab096cb376d077958ac',attributes:{name:'KANNEDA'},relationships:{matches:{data:[]}}},
@@ -4825,11 +4832,11 @@ function switchTab(t){
     if(searchBtn)setClanMode('search',searchBtn);
   }
 }
-function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
-function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}}
+function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.toggle('active',(m==='tpp'&&b.textContent==='TPP')||(m==='fpp'&&b.textContent==='FPP'));});renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderMatchStreaks();}catch(e){}}
+function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderMatchStreaks();}catch(e){}}
 async function setSeasonType(type){
   seasonTypeMode=type;document.querySelectorAll('.season-type-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(type.substring(0,3))));
-  if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();try{renderBadges();}catch(e){}return;}
+  if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();try{renderMatchStreaks();}catch(e){}return;}
   try{
     showLoading(true);setLoaderStep('Cargando datos de '+type+'...');
     if(type==='ranked'&&!currentRankedData){const rd=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+currentSeasonId+'/ranked');currentRankedData=rd;console.log('Ranked data loaded:',currentRankedData);}else if(type==='lifetime'&&!currentLifetimeData){const ld=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/lifetime');currentLifetimeData=ld;console.log('Lifetime data loaded:',currentLifetimeData);}
