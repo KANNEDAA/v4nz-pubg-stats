@@ -241,7 +241,9 @@ nav a.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; 
 /* === HERO SEARCH PROTAGONIST v1.4.2 === marker: hero-search-protagonist-v142-platsel */
 .search-hero { position: relative; z-index: 1; text-align: center; padding: 96px 2rem 60px; transition: padding .35s cubic-bezier(.4,0,.2,1); }
 .search-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse 60% 55% at 50% 45%, rgba(0,240,255,0.08), transparent 70%); pointer-events:none; z-index:-1; }
-.search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 3.4rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; line-height:1.05; transition: font-size .35s ease, margin .35s ease, opacity .35s ease; }
+.hero-claim { font-family:'Rajdhani',sans-serif; font-size:.68rem; letter-spacing:.35em; color:var(--accent); margin-bottom:10px; text-transform:uppercase; transition: opacity .35s ease, height .35s ease, margin .35s ease; }
+body.has-player-loaded .search-hero .hero-claim { opacity:0; height:0; margin:0; overflow:hidden; font-size:0; }
+.search-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 2.6rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 3px; line-height:1.15; transition: font-size .35s ease, margin .35s ease, opacity .35s ease; }
 .search-hero h1 span { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .hero-tagline { color:var(--text-secondary); font-size:1.15rem; margin-bottom:12px; font-family:'Inter',sans-serif; font-weight:400; transition: opacity .3s ease, margin .35s ease; }
 .hero-powered { font-size:.76rem; color:var(--text-dim); margin-bottom:32px; transition: opacity .3s ease, margin .35s ease; }
@@ -512,10 +514,11 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .evo-export:hover { border-color:var(--accent-green); color:var(--accent-green); }
 .evo-mode-hint { font-size:.62rem; color:var(--text-dim); font-style:italic; text-align:center; padding:6px 10px; background:var(--bg-secondary); border-radius:8px; margin-top:10px; }
 /* HOMEPAGE CONTENT */
-.home-counters { display:flex; justify-content:center; gap:40px; margin:30px 0 28px; flex-wrap:wrap; }
-.home-counter { text-align:center; }
-.home-counter-val { font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:800; color:var(--text-primary); }
-.home-counter-lbl { font-family:'Rajdhani',sans-serif; font-size:.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-top:2px; }
+.home-counters { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:30px auto 28px; max-width:700px; }
+.home-counter { text-align:center; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:18px 12px; transition:border-color .2s; }
+.home-counter:hover { border-color:rgba(0,240,255,0.2); }
+.home-counter-val { font-family:'Orbitron',sans-serif; font-size:1.6rem; font-weight:800; color:var(--accent); }
+.home-counter-lbl { font-family:'Rajdhani',sans-serif; font-size:.68rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-top:4px; }
 .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
 .home-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:20px; box-shadow:var(--shadow-card); }
 .home-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
@@ -898,9 +901,14 @@ body.mdp-open { overflow:hidden; }
 .match-list { display: flex; flex-direction: column; gap: 8px; }
 .match-item { display: grid; grid-template-columns: 70px 1fr 90px 90px 90px 70px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; transition: all 0.3s; gap: 14px; box-shadow: var(--shadow-card); position:relative; overflow:hidden; }
 .match-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:12px 0 0 12px; }
-.match-item.mi-win::before { background:var(--accent-yellow); }
-.match-item.mi-top10::before { background:var(--accent-green); }
+.match-item.mi-win::before { background:var(--accent-green); }
+.match-item.mi-top10::before { background:var(--accent-orange); }
 .match-item.mi-normal::before { background:var(--text-dim); opacity:.3; }
+.mi-result-badge { display:inline-block; font-family:'Rajdhani',sans-serif; font-size:.58rem; font-weight:700; letter-spacing:.08em; padding:2px 7px; border-radius:4px; text-transform:uppercase; }
+.mi-win .mi-result-badge { background:rgba(57,217,138,0.18); color:var(--accent-green); }
+.mi-top10 .mi-result-badge { background:rgba(255,107,0,0.15); color:var(--accent-orange); }
+.mi-normal .mi-result-badge, .mi-fast-death .mi-result-badge { background:rgba(255,255,255,0.06); color:var(--text-dim); }
+.mi-fast-death .mi-result-badge { background:rgba(255,51,85,0.15); color:var(--accent-red); }
 .match-item:hover { border-color: var(--border-hover); background: var(--bg-card-hover); transform: translateY(-1px); box-shadow: var(--shadow-card-hover); }
 .match-place { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.3rem; }
 .match-place.win { color: var(--accent-yellow); } .match-place.top10 { color: var(--accent-green); } .match-place.normal { color: var(--text-secondary); }
@@ -1283,8 +1291,10 @@ footer a { color: var(--accent); text-decoration: none; }
   .stat-card:hover { box-shadow: var(--shadow-accent); }
 }
 @media (max-width: 480px) {
-  .search-hero h1 { font-size: 2.1rem; letter-spacing: 2px; }
+  .search-hero h1 { font-size: 1.6rem; letter-spacing: 2px; }
   .search-hero { padding: 60px 1rem 32px; }
+  .hero-claim { font-size:.58rem; letter-spacing:.25em; }
+  .home-counters { grid-template-columns:repeat(3,1fr); gap:8px; }
   .search-hero .search-input { padding: 18px 16px; font-size: 1rem; }
   .search-hero .search-btn { padding: 18px 20px; font-size: .85rem; }
 }
@@ -2258,8 +2268,9 @@ body.telem-open { overflow:hidden; }
 <main id="mainContent">
 <section class="search-hero" id="searchHero">
   <div class="hero-glow"></div>
-  <h1>El tracker <span>PUBG</span> para consola</h1>
-  <p class="hero-tagline">Stats en tiempo real para PlayStation y Xbox &mdash; en espanol</p>
+  <div class="hero-claim">EL UNICO TRACKER PUBG EN ESPANOL PARA CONSOLA</div>
+  <h1>Encuentra tus stats.<br><span>Conoce tu ADN.</span></h1>
+  <p class="hero-tagline">Stats, clanes y ranking en tiempo real para PlayStation y Xbox</p>
   <p class="hero-powered">Powered by <span>PUBG Official API</span> &mdash; Gratis, sin anuncios, hecho por jugadores</p>
   <div class="hero-platform-toggle">
     <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">
@@ -5173,10 +5184,11 @@ function renderMatchHistory(){if(isUsingDemo){renderMatchHistoryDemo();return;}c
   // Build rivals set for badge detection
   window._matchRivalsSet=new Set();
   const _rc={};currentMatchData.forEach(match=>{const seen=new Set();(match.included||[]).filter(i=>i.type==='participant').forEach(p=>{const nmL=p.attributes.stats.name.toLowerCase();if(nmL===pn.toLowerCase()||seen.has(nmL))return;seen.add(nmL);_rc[nmL]=(_rc[nmL]||0)+1;});});Object.entries(_rc).forEach(([k,v])=>{if(v>=3)window._matchRivalsSet.add(k);});
-  const _mf=window._matchFilters||{result:'all',mode:'all',map:'all'};const _matchesFiltered=currentMatchData.map((m,idx)=>({m,idx})).filter(({m})=>{const pp=(m.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return false;const ps=pp.attributes.stats;const pl=ps.winPlace||99;const a=m.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=(a.gameMode||'').toLowerCase();if(_mf.result==='win'&&pl!==1)return false;if(_mf.result==='top10'&&!(pl<=10&&pl!==1))return false;if(_mf.result==='out'&&pl<=10)return false;if(_mf.map!=='all'&&mn!==_mf.map)return false;if(_mf.mode!=='all'&&!gm.includes(_mf.mode))return false;return true;});let h='';_matchesFiltered.forEach(({m:match,idx})=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const _md=new Date(a.createdAt);const ta=getTimeAgoMatch(_md);const tabs=formatMatchDateTime(_md);const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const isFastDeath=(ps.timeSurvived||0)<300&&pl>10;const miClass=pl===1?'mi-win':pl<=10?'mi-top10':(isFastDeath?'mi-fast-death':'mi-normal');const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-yellow)':pl<=10?'var(--accent-green)':(isFastDeath?'var(--accent-red)':'var(--text-dim)');const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+'A / '+(ps.DBNOs||0)+'K</span>':'';const dmgPct=Math.min(Math.round(((ps.damageDealt||0)/400)*100),100);
+  const _mf=window._matchFilters||{result:'all',mode:'all',map:'all'};const _matchesFiltered=currentMatchData.map((m,idx)=>({m,idx})).filter(({m})=>{const pp=(m.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return false;const ps=pp.attributes.stats;const pl=ps.winPlace||99;const a=m.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const gm=(a.gameMode||'').toLowerCase();if(_mf.result==='win'&&pl!==1)return false;if(_mf.result==='top10'&&!(pl<=10&&pl!==1))return false;if(_mf.result==='out'&&pl<=10)return false;if(_mf.map!=='all'&&mn!==_mf.map)return false;if(_mf.mode!=='all'&&!gm.includes(_mf.mode))return false;return true;});let h='';_matchesFiltered.forEach(({m:match,idx})=>{const a=match.data.attributes;const mn=MAP_NAMES[a.mapName]||a.mapName||'?';const mc=MAP_COLORS[mn]||'#888';const gm=a.gameMode||'';const _md=new Date(a.createdAt);const ta=getTimeAgoMatch(_md);const tabs=formatMatchDateTime(_md);const totalP=(match.included||[]).filter(i=>i.type==='participant').length;const pp=(match.included||[]).find(i=>i.type==='participant'&&i.attributes.stats.name.toLowerCase()===pn.toLowerCase());if(!pp)return;const ps=pp.attributes.stats;const pl=ps.winPlace;const pc=pl===1?'win':pl<=10?'top10':'normal';const isFastDeath=(ps.timeSurvived||0)<300&&pl>10;const miClass=pl===1?'mi-win':pl<=10?'mi-top10':(isFastDeath?'mi-fast-death':'mi-normal');const survPct=totalP>0?Math.round(((totalP-pl)/totalP)*100):0;const survColor=pl===1?'var(--accent-green)':pl<=10?'var(--accent-orange)':(isFastDeath?'var(--accent-red)':'var(--text-dim)');const kaSub=((ps.assists||0)+(ps.DBNOs||0))>0?' <span class="ms-sub">'+(ps.assists||0)+'A / '+(ps.DBNOs||0)+'K</span>':'';const dmgPct=Math.min(Math.round(((ps.damageDealt||0)/400)*100),100);
   // Match badges
   const badges=getMatchBadges(match,pn);let badgeHtml='';if(badges.length){badgeHtml='<div class="match-badges">';badges.forEach(b=>{if(b.url){badgeHtml+='<a href="'+esc(b.url)+'" target="_blank" rel="noopener" class="match-badge badge-'+b.type+'" onclick="event.stopPropagation();">'+b.icon+' '+esc(b.text)+'</a>';}else if(b.player){badgeHtml+='<span class="match-badge badge-'+b.type+'" style="cursor:pointer;" onclick="event.stopPropagation();goToPlayer(\''+escJs(b.player)+'\');">'+b.icon+' '+esc(b.text)+'</span>';}else{badgeHtml+='<span class="match-badge badge-'+b.type+'">'+b.icon+' '+esc(b.text)+'</span>';}});badgeHtml+='</div>';}
-  h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'">'+(pl===1?'&#x1F3C6; #1':'#'+pl)+'<span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span><span class="match-datetime" style="display:block;font-size:.6rem;font-weight:500;color:var(--text-dim);margin-top:3px;letter-spacing:.5px;">'+tabs+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div><div class="match-dmg-bar"><div class="match-dmg-fill" style="width:'+dmgPct+'%;"></div></div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="match-filter-empty">Ninguna partida cumple los filtros seleccionados. <button class="mf-reset" style="margin-left:8px;" onclick="resetMatchFilters()">Limpiar filtros</button></div>';
+  const resultLabel=pl===1?'VICTORIA':pl<=10?'TOP '+pl:(isFastDeath?'ELIM.':'#'+pl);
+  h+='<div class="match-item '+miClass+' animate-in" style="cursor:pointer;" onclick="showMatchDetail('+idx+')">'+badgeHtml+'<div class="match-place '+pc+'"><span class="mi-result-badge">'+resultLabel+'</span><span style="display:block;font-size:.55rem;font-weight:400;color:var(--text-dim);margin-top:2px;">#'+pl+'/'+totalP+'</span></div><div class="match-mode">'+gm.toUpperCase()+'<span class="map-name"><span class="map-dot" style="background:'+mc+';"></span>'+mn+(MAP_SIZE[mn]?' <span style="opacity:.5;">('+MAP_SIZE[mn]+')</span>':'')+'</span><span class="match-datetime" style="display:block;font-size:.6rem;font-weight:500;color:var(--text-dim);margin-top:3px;letter-spacing:.5px;">'+tabs+'</span></div><div class="match-stat"><div class="ms-val val-blue">'+ps.kills+'</div><div class="ms-label">Kills</div>'+kaSub+'</div><div class="match-stat"><div class="ms-val val-orange">'+Math.round(ps.damageDealt)+'</div><div class="ms-label">Dano</div><div class="match-dmg-bar"><div class="match-dmg-fill" style="width:'+dmgPct+'%;"></div></div></div><div class="match-stat"><div class="ms-val">'+formatTime(ps.timeSurvived)+'</div><div class="ms-label">Tiempo</div></div><div class="match-time">'+ta+'</div><div class="match-surv-bar"><div class="match-surv-fill" style="width:'+survPct+'%;background:'+survColor+';"></div></div></div>';});document.getElementById('matchList').innerHTML=h||'<div class="match-filter-empty">Ninguna partida cumple los filtros seleccionados. <button class="mf-reset" style="margin-left:8px;" onclick="resetMatchFilters()">Limpiar filtros</button></div>';
   // Render rivals section
   try{renderMatchRivals();}catch(e){console.error('Match rivals error:',e);}
   // v175: Render squad mates
