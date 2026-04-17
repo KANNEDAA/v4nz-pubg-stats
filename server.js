@@ -3627,27 +3627,70 @@ initDB().then(() => {
     // ═══ CRON: Auto-refresh all clans every 24h ═══
     async function cronRefreshAllClans() {
       if (!pool) return;
+      const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
       try {
-        const staleClans = await pool.query(
-          "SELECT tag, pubg_clan_id FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 20"
+        // Phase 1: Clans WITH pubg_clan_id — direct import
+        const staleDirect = await pool.query(
+          "SELECT tag, pubg_clan_id FROM clans WHERE pubg_clan_id IS NOT NULL AND (stats_updated_at IS NULL OR stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY stats_updated_at ASC NULLS FIRST LIMIT 15"
         );
-        if (!staleClans.rows.length) { console.log('[cron] All clans up to date'); return; }
-        console.log(`[cron] Refreshing ${staleClans.rows.length} stale clans...`);
-        for (const clan of staleClans.rows) {
+        // Phase 2: Clans WITHOUT pubg_clan_id — resolve via member lookup
+        const staleNoId = await pool.query(
+          "SELECT c.tag, c.platform, (SELECT cm.player_name FROM clan_members cm WHERE cm.clan_tag = c.tag AND (cm.kills > 0 OR cm.rounds > 0) ORDER BY cm.kills DESC LIMIT 1) AS top_member FROM clans c WHERE c.pubg_clan_id IS NULL AND (c.stats_updated_at IS NULL OR c.stats_updated_at < NOW() - INTERVAL '24 hours') ORDER BY c.stats_updated_at ASC NULLS FIRST LIMIT 10"
+        );
+        const totalStale = staleDirect.rows.length + staleNoId.rows.length;
+        if (!totalStale) { console.log('[cron] All clans up to date'); return; }
+        console.log(`[cron] Refreshing ${totalStale} stale clans (${staleDirect.rows.length} with ID, ${staleNoId.rows.length} need lookup)...`);
+
+        // Phase 1: direct import
+        for (const clan of staleDirect.rows) {
           try {
             await importClanByPubgId(clan.pubg_clan_id);
             console.log(`[cron] ✓ Updated [${clan.tag}]`);
-            // Small delay between imports to respect PUBG API rate limits
-            await new Promise(r => setTimeout(r, 3000));
           } catch (e) {
             console.error(`[cron] ✗ Failed [${clan.tag}]:`, e.message);
           }
+          await new Promise(r => setTimeout(r, 3000));
         }
+
+        // Phase 2: resolve pubg_clan_id from top member, then import
+        for (const clan of staleNoId.rows) {
+          if (!clan.top_member) {
+            console.log(`[cron] ⊘ Skipped [${clan.tag}]: no active members to lookup`);
+            continue;
+          }
+          try {
+            const shardsToTry = [clan.platform || 'psn', 'xbox', 'psn', 'steam'].filter((v, i, a) => a.indexOf(v) === i);
+            let foundClanId = null, foundShard = null;
+            for (const shard of shardsToTry) {
+              try {
+                const pResp = await fetchWithTimeout(fetch,
+                  `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(clan.top_member)}`,
+                  { headers }, 8000);
+                if (pResp.ok) {
+                  const pData = await pResp.json();
+                  const cId = pData.data?.[0]?.attributes?.clanId;
+                  if (cId) { foundClanId = cId; foundShard = shard; break; }
+                }
+              } catch (e) { /* shard fail, try next */ }
+            }
+            if (foundClanId) {
+              try { await pool.query('UPDATE clans SET pubg_clan_id = $1, platform = $2 WHERE tag = $3', [foundClanId, foundShard, clan.tag]); } catch(e) {}
+              await importClanByPubgId(foundClanId);
+              console.log(`[cron] ✓ Resolved + Updated [${clan.tag}] via ${clan.top_member} → ${foundClanId}`);
+            } else {
+              console.log(`[cron] ⊘ Could not resolve clan ID for [${clan.tag}] via ${clan.top_member}`);
+            }
+          } catch (e) {
+            console.error(`[cron] ✗ Failed [${clan.tag}]:`, e.message);
+          }
+          await new Promise(r => setTimeout(r, 3000));
+        }
+
         console.log('[cron] Clan refresh cycle complete');
       } catch (e) { console.error('[cron] Error:', e.message); }
     }
-    // Run 30s after startup, then every 24 hours
-    setTimeout(cronRefreshAllClans, 30000);
-    setInterval(cronRefreshAllClans, 24 * 60 * 60 * 1000);
+    // Run 60s after startup, then every 12 hours
+    setTimeout(cronRefreshAllClans, 60000);
+    setInterval(cronRefreshAllClans, 12 * 60 * 60 * 1000);
   });
 });
