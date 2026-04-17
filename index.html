@@ -3497,7 +3497,8 @@ async function toggleClanMembers(tag,cardEl){
     if(!r.ok)throw new Error('Error');
     const d=await r.json();
     const members=d.members||[];
-    if(!members.length){
+    const hasRealStats=members.some(m=>(m.kills||0)>0||(m.rounds||0)>0);
+    if(!members.length||!hasRealStats){
       // Auto-refresh: try to import stats via server
       container.innerHTML='<div class="api-loader" style="justify-content:center;padding:8px;"><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div><div class="loader-text" style="font-size:.7rem;">Importando stats del clan...</div></div>';
       try{
