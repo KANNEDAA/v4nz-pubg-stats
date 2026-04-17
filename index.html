@@ -4414,7 +4414,7 @@ async function loadWhoIsPlaying(force){
     list.innerHTML=h;
   }catch(e){
     console.error('whoPlaying error:',e);
-    list.innerHTML='<div class="wp-empty">Error al consultar (rate limit?)</div>';
+    card.style.display='none'; // Hide card silently if endpoint unavailable
   }
 }
 function hideHomepageContent(){const h=document.getElementById('homepageContent');if(h)h.style.display='none';}
@@ -7050,7 +7050,7 @@ function drawDnaRadar(canvasId,scores,color){
 }
 function renderPersonality(){
   _lastAiDnaData=null; // Reset AI data when showing heuristic personality
-  const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('personalitySection').classList.remove('visible');return;}
+  const s=getActiveStats();if(!s.roundsPlayed){document.getElementById('personalitySection').classList.remove('visible');const _l2=document.getElementById('adnLevel2');if(_l2)_l2.style.display='none';const _l3=document.getElementById('adnLevel3');if(_l3)_l3.style.display='none';return;}
   const kd=parseFloat(calcKD(s)),wr=parseFloat(calcWinRate(s)),hs=parseFloat(calcHSRate(s)),ad=parseFloat(calcAvgDmg(s));
   const rr=s.roundsPlayed?(s.revives||0)/s.roundsPlayed:0;const rd=s.roundsPlayed?(s.rideDistance||0)/s.roundsPlayed:0;
   let ic,ti,de,co,tg=[];
@@ -7117,6 +7117,8 @@ function renderPersonality(){
     +'</div>';
   document.getElementById('personalitySection').innerHTML='<div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvas" width="200" height="200"></canvas></div><div class="dna-info"><div class="personality-icon">'+ic+'</div><div class="personality-title" style="color:'+co+';">'+ti+'</div><div class="personality-desc">'+de+'</div><div class="personality-tags">'+tg.map(t=>'<span class="personality-tag" style="background:'+co+'22;color:'+co+';border:1px solid '+co+'44;">'+t+'</span>').join('')+'</div><div class="dna-bars">'+barsHtml+'</div>'+combatLine+'<div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:'+co+'18;border-color:'+co+'44;color:'+co+';" onclick="shareAdnImage()">&#x1F4F8; COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\''+ti+'\')">&#x1F517; COMPARTIR ENLACE</button></div></div></div>';
   document.getElementById('personalitySection').classList.add('visible');
+  const _l2b=document.getElementById('adnLevel2');if(_l2b)_l2b.style.display='';
+  const _l3b=document.getElementById('adnLevel3');if(_l3b)_l3b.style.display='';
   drawDnaRadar('dnaRadarCanvas',dn,coHex);
   // AI DNA: show button for registered users, teaser for guests
   const aiContainer=document.createElement('div');
@@ -8860,6 +8862,11 @@ document.addEventListener('click',function(e){if(!e.target.closest('.clan-ac-wra
 async function loadClanAnalysisHub(){
   const container=document.getElementById('clanAnalysisContent');
   if(!container)return;
+  // v186: If logged in but clanFavorites still empty, wait briefly for server sync
+  if(authToken&&!clanFavorites.length&&!myClan&&!clanHistory.length){
+    container.innerHTML='<div style="text-align:center;padding:30px;"><div class="spinner" style="margin:0 auto;"></div><div style="font-size:.75rem;color:var(--text-dim);margin-top:10px;">Sincronizando favoritos...</div></div>';
+    await new Promise(r=>setTimeout(r,1500));
+  }
   // Collect all clans to show: myClan first, then favorites, then history (deduplicated)
   const allTags=[];
   const clansToShow=[];
