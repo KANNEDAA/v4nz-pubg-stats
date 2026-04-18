@@ -1728,6 +1728,10 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
   main { padding-bottom: 64px !important; }
   /* Adjust fixed popups to account for bottom nav */
   .match-detail-popup.active { bottom: 0; }
+  /* v186: Tap targets ≥44px (WCAG 2.5.5) */
+  .theme-toggle { min-width: 44px; min-height: 44px; }
+  .close-btn, .auth-popup .close-btn, .match-detail-popup .close-btn { min-width: 44px; min-height: 44px; }
+  .footer-social a { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 }
 [data-theme="light"] .bottom-nav { background: rgba(240,242,245,0.98); box-shadow: 0 -4px 20px rgba(0,0,0,.08); }
 /* ─── HERO SEARCH MEJORADO ─── */
@@ -2188,7 +2192,7 @@ body.telem-open { overflow:hidden; }
   .search-hero h1{font-size:1rem;letter-spacing:1px}
   .search-hero{padding:36px .8rem 24px}
   .hero-platform-toggle .platform-btn{padding:8px 12px;font-size:.7rem}
-  .search-input{font-size:.9rem;padding:14px 14px}
+  .search-input{font-size:16px;padding:14px 14px} /* 16px mínimo para evitar zoom iOS */
   .search-btn{padding:14px 18px;font-size:.8rem}
   .stats-grid{gap:8px}
   .stat-card{padding:14px 10px}
@@ -2268,7 +2272,7 @@ body.telem-open { overflow:hidden; }
     <div style="display:flex;align-items:center;gap:6px;">
       <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()" aria-label="Iniciar sesión con Discord">Iniciar Sesion</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">&#x1F319;</button>
-      <button class="hamburger" id="hamburgerBtn" onclick="this.classList.toggle('open');document.getElementById('mainNav').classList.toggle('mobile-open');this.setAttribute('aria-expanded',this.classList.contains('open'));" aria-label="Abrir menú de navegación" aria-expanded="false"><span></span><span></span><span></span></button>
+      <!-- v186: hamburger eliminado — bottom-nav + Perfil reemplazan la navegación móvil -->
     </div>
   </div>
 </header>
@@ -2280,14 +2284,7 @@ body.telem-open { overflow:hidden; }
   <h1>Encuentra tus stats.<br><span>Conoce tu ADN.</span></h1>
   <p class="hero-tagline">Stats, clanes y ranking en tiempo real para PlayStation y Xbox</p>
   <p class="hero-powered">Powered by <span>PUBG Official API</span> &mdash; Gratis, sin anuncios, hecho por jugadores</p>
-  <div class="hero-platform-toggle">
-    <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.21-1.263-4.834-4.003-5.676-1.47-.448-3.828-.926-5.828-1.648zM18.875 16.155c-1.478-.396-3.055-.208-4.673.467l-.537.222v3.076l.793-.34c.832-.346 1.684-.574 2.47-.414.557.112.682.413.682.736 0 .382-.193.683-.782.87-1.324.419-3.816-.313-3.816-.313v2.611s1.795.645 3.535.645c1.7 0 3.453-.553 3.453-2.813 0-2.115-1.333-3.308-4.125-3.947zM1.125 18.527c1.657.573 4.087.773 5.456.396 1.47-.405 2.586-1.28 2.586-3.236 0-1.853-.822-2.964-2.758-3.606-1.157-.378-2.41-.912-2.41-1.554 0-.456.342-.73.988-.758.862-.039 1.85.222 2.752.602v-2.546c-.872-.267-1.795-.392-2.744-.392-2.388 0-4.12 1.074-4.12 3.303 0 1.688.884 2.822 2.768 3.506 1.177.419 1.644.771 1.644 1.405 0 .611-.503.927-1.415.927-.935 0-2.168-.35-3.17-.87l.424 2.823z"/></svg> PlayStation
-    </button>
-    <button class="platform-btn" data-platform="xbox" onclick="setPlatform('xbox')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.102 21.033C6.211 22.881 8.977 24 12 24s5.789-1.119 7.898-2.967c1.074-1.065-.534-3.86-2.192-5.857-1.419-1.58-3.218-3.485-5.706-5.669-2.488 2.184-4.287 4.089-5.706 5.669-1.658 1.997-3.266 4.792-2.192 5.857zM12 0C9.626 0 7.417.843 5.63 2.282c1.09-.222 2.834.397 4.734 2.074.913.806 1.636 1.548 1.636 1.548s.723-.742 1.636-1.548c1.9-1.677 3.644-2.296 4.734-2.074C16.583.843 14.374 0 12 0zM3.48 3.527C1.335 5.512 0 8.436 0 11.707c0 2.386.674 4.607 1.833 6.496-.094-1.811.603-3.677 1.722-5.055 1.383-1.704 3.062-3.597 5.003-5.519C6.494 5.637 4.833 4.163 3.48 3.527zM20.52 3.527c-1.353.636-3.014 2.11-5.078 4.102 1.941 1.922 3.62 3.815 5.003 5.519 1.119 1.378 1.816 3.244 1.722 5.055C23.326 16.314 24 14.093 24 11.707c0-3.271-1.335-6.195-3.48-8.18z"/></svg> Xbox
-    </button>
-  </div>
+  <!-- v186: hero-platform-toggle grande eliminado (duplicaba el selector compacto del search-box) -->
   <div class="search-box">
     <div class="platform-selector">
       <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">PS</button>
@@ -2950,7 +2947,18 @@ body.telem-open { overflow:hidden; }
   </div>
 </div>
 
-<script src="/html2canvas.min.js"></script>
+<!-- v186: html2canvas lazy-loaded solo cuando se necesita (ahorro 197KB en carga inicial) -->
+<script>
+function _loadHtml2Canvas(){
+  return new Promise((resolve,reject)=>{
+    if(window.html2canvas){resolve(window.html2canvas);return;}
+    const s=document.createElement('script');s.src='/html2canvas.min.js';
+    s.onload=()=>resolve(window.html2canvas);
+    s.onerror=()=>reject(new Error('No se pudo cargar html2canvas'));
+    document.head.appendChild(s);
+  });
+}
+</script>
 <script>
 // THEME TOGGLE
 function toggleTheme(){
@@ -3009,6 +3017,8 @@ function updateAuthUI(){
     btn.innerHTML='Iniciar Sesion';
     btn.style.background='';btn.style.border='';btn.style.color='';
   }
+  // v186: Update bottom-nav profile icon
+  if(typeof _bnUpdateProfileIcon==='function')_bnUpdateProfileIcon();
 }
 let profilePlat='psn';
 function updateProfileGT(){
@@ -5872,7 +5882,7 @@ async function shareAuditCard(){
   card.innerHTML=h;
   document.body.appendChild(card);
   try{
-    const canvas=await html2canvas(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
+    const _h2c=await _loadHtml2Canvas();const canvas=await _h2c(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
     card.remove();
     canvas.toBlob(async function(blob){
       if(!blob)return;
@@ -5959,7 +5969,7 @@ async function generateSeasonWrapped(){
   document.body.appendChild(card);
   const showToast=(msg)=>{const t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ff6b00,#a855f7);color:#fff;padding:12px 22px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.85rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(()=>{t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2400);});};
   try{
-    const canvas=await html2canvas(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
+    const _h2c=await _loadHtml2Canvas();const canvas=await _h2c(card,{backgroundColor:'#0b0b12',scale:2,useCORS:true,logging:false});
     card.remove();
     canvas.toBlob(async blob=>{
       if(!blob)return;
@@ -7220,7 +7230,7 @@ async function shareAdnImage(){
   }
   // Render to image
   try{
-    const canvas=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,logging:false});
+    const _h2c3=await _loadHtml2Canvas();const canvas=await _h2c3(card,{backgroundColor:null,scale:2,useCORS:true,logging:false});
     card.remove();
     canvas.toBlob(async blob=>{
       if(!blob)return;
@@ -10070,6 +10080,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then
   <button class="bottom-nav-item" data-bntab="matches" onclick="_bnSwitch('matches')"><span class="bn-icon">&#x1F3AE;</span>Partidas</button>
   <button class="bottom-nav-item" data-bntab="clans" onclick="_bnSwitch('clans')"><span class="bn-icon">&#x1F6E1;</span>Clanes</button>
   <button class="bottom-nav-item" data-bntab="ranking" onclick="_bnSwitch('ranking')"><span class="bn-icon">&#x1F3C6;</span>Ranking</button>
+  <button class="bottom-nav-item" data-bntab="profile" onclick="_bnProfile()"><span class="bn-icon" id="bnProfileIcon">&#x1F464;</span><span id="bnProfileLabel">Perfil</span></button>
 </nav>
 <script>
 // v181: Go to Compare with current player pre-filled
@@ -10154,6 +10165,30 @@ function _bnSwitch(tab){
   if(tab==='overview'&&!currentPlayerData){switchTab('overview');}
   else{switchTab(tab);}
   _bnUpdateActive(tab);
+}
+// v186: Bottom-nav Perfil — abre auth si no logueado, o muestra info si logueado
+function _bnProfile(){
+  if(currentUser){
+    // Si hay jugador logueado, scroll arriba y mostrar info de perfil
+    window.scrollTo({top:0,behavior:'smooth'});
+    // Abrir popup de auth que muestra el perfil cuando ya está logueado
+    if(typeof openAuthPopup==='function') openAuthPopup();
+  } else {
+    if(typeof openAuthPopup==='function') openAuthPopup();
+  }
+}
+// Actualizar icono de perfil cuando cambia el estado de auth
+function _bnUpdateProfileIcon(){
+  const icon=document.getElementById('bnProfileIcon');
+  const label=document.getElementById('bnProfileLabel');
+  if(!icon)return;
+  if(currentUser){
+    icon.textContent='';icon.innerHTML='&#x2705;';
+    if(label)label.textContent=currentUser.display_name||'Perfil';
+  } else {
+    icon.innerHTML='&#x1F464;';
+    if(label)label.textContent='Entrar';
+  }
 }
 function _bnUpdateActive(tab){
   // v181: 4 direct items — player sub-tabs map to 'overview'
