@@ -585,91 +585,34 @@ async function importClanByPubgId(clanId) {
   if (!clanMeta) throw new Error('Clan not found on any platform');
   console.log(`[import] Found clan: [${clanMeta.clanTag}] ${clanMeta.clanName} (${detectedPlatform}, level ${clanMeta.clanLevel}, ${clanMeta.clanMemberCount} members)`);
 
-  // Step 2: Fetch member stats from pubgclans.net — try ALL game modes and merge
-  const gameModes = ['squad', 'squad-fpp', 'solo', 'solo-fpp', 'duo', 'duo-fpp'];
-  const mergedPlayers = {};
-  for (const gm of gameModes) {
+  // Step 2: Get clan members + stats — PUBG API first (official), internal fallback second
+  let members = [];
+
+  // ── Path A (primary): PUBG API direct — roster + season stats ──
+  console.log(`[import] Fetching members via PUBG API for clan ${clanId}`);
+  let clanMembers = [];
+  for (const shard of ['xbox', 'psn', 'steam']) {
     try {
-      const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${gm}`;
-      const pcnResp = await fetchWithTimeout(fetch, pcnUrl, {}, 10000);
-      if (!pcnResp.ok) { console.log(`[import] pubgclans.net ${gm}: HTTP ${pcnResp.status}`); continue; }
-      const pcnData = await pcnResp.json();
-      if (!Array.isArray(pcnData)) continue;
-      console.log(`[import] pubgclans.net ${gm}: ${pcnData.length} members`);
-      pcnData.forEach(p => {
-        const name = p.player_name;
-        if (!name) return;
-        const kills = parseInt(p.kills) || 0;
-        const rounds = parseInt(p.roundsplayed) || 0;
-        const wins = parseInt(p.wins) || 0;
-        const damage = parseFloat(p.damagedealt) || 0;
-        if (mergedPlayers[name]) {
-          mergedPlayers[name].kills += kills;
-          mergedPlayers[name].wins += wins;
-          mergedPlayers[name].rounds += rounds;
-          mergedPlayers[name].damage += damage;
-        } else {
-          mergedPlayers[name] = { kills, wins, rounds, damage };
+      const cmResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers }, 8000);
+      if (cmResp.ok) {
+        const cmData = await cmResp.json();
+        const rels = cmData.data?.relationships?.members?.data || [];
+        if (rels.length) {
+          clanMembers = rels.map(r => ({ accountId: r.id }));
+          const included = cmData.included || [];
+          clanMembers.forEach(cm => {
+            const inc = included.find(i => i.id === cm.accountId);
+            if (inc) cm.name = inc.attributes?.name || cm.accountId;
+          });
+          break;
         }
-      });
-    } catch (e) { console.log(`[import] pubgclans.net ${gm}: error — ${e.message}`); }
+      }
+    } catch (e) { /* try next shard */ }
   }
 
-  // Deduplicate by lowercase name
-  const deduped = {};
-  for (const [name, stats] of Object.entries(mergedPlayers)) {
-    const key = name.toLowerCase();
-    if (deduped[key]) {
-      if (stats.kills > deduped[key].stats.kills) deduped[key].displayName = name;
-      deduped[key].stats.kills += stats.kills;
-      deduped[key].stats.wins += stats.wins;
-      deduped[key].stats.rounds += stats.rounds;
-      deduped[key].stats.damage += stats.damage;
-    } else {
-      deduped[key] = { displayName: name, stats: { ...stats } };
-    }
-  }
-  let playerNames = Object.keys(deduped);
-  console.log(`[import] pubgclans.net returned ${playerNames.length} unique members across all modes`);
-
-  let members;
-
-  if (playerNames.length > 0) {
-    // Path A: pubgclans.net had data — use it
-    members = playerNames.map(key => {
-      const p = deduped[key];
-      const s = p.stats;
-      const kd = s.rounds > 0 ? parseFloat((s.kills / s.rounds).toFixed(2)) : 0;
-      return { name: p.displayName, active: s.rounds > 0, stats: { kills: s.kills, wins: s.wins, kd, damage: s.damage, rounds: s.rounds } };
-    }).sort((a, b) => b.stats.kills - a.stats.kills);
-  } else {
-    // Path B: pubgclans.net failed — fallback to PUBG API season stats
-    console.log(`[import] Fallback: fetching members via PUBG API for clan ${clanId}`);
-    // Step B1: Get clan members list from PUBG API
-    let clanMembers = [];
-    for (const shard of ['xbox', 'psn', 'steam']) {
-      try {
-        const cmResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/clans/${clanId}`, { headers }, 8000);
-        if (cmResp.ok) {
-          const cmData = await cmResp.json();
-          const rels = cmData.data?.relationships?.members?.data || [];
-          if (rels.length) {
-            clanMembers = rels.map(r => ({ accountId: r.id }));
-            // Also get names from included
-            const included = cmData.included || [];
-            clanMembers.forEach(cm => {
-              const inc = included.find(i => i.id === cm.accountId);
-              if (inc) cm.name = inc.attributes?.name || cm.accountId;
-            });
-            break;
-          }
-        }
-      } catch (e) { /* try next shard */ }
-    }
-    if (!clanMembers.length) throw new Error('No se encontraron miembros del clan en PUBG API');
+  if (clanMembers.length > 0) {
     console.log(`[import] PUBG API found ${clanMembers.length} clan members`);
-
-    // Step B2: Get current season
+    // Get current season
     let seasonId = null;
     try {
       const sResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${detectedPlatform}/seasons`, { headers }, 8000);
@@ -680,21 +623,18 @@ async function importClanByPubgId(clanId) {
       }
     } catch (e) { console.log('[import] Could not fetch current season:', e.message); }
 
-    // Step B3: Fetch season stats for each member (batched, max 10 concurrent)
-    members = [];
+    // Fetch season stats for each member (batched, max 10 concurrent)
     const batchSize = 10;
     for (let i = 0; i < clanMembers.length; i += batchSize) {
       const batch = clanMembers.slice(i, i + batchSize);
       const results = await Promise.allSettled(batch.map(async (cm) => {
         if (!seasonId) return { name: cm.name || cm.accountId, active: false, stats: { kills: 0, wins: 0, kd: 0, damage: 0, rounds: 0 } };
         try {
-          // Try squad-fpp + squad TPP stats
           const url = `https://api.pubg.com/shards/${detectedPlatform}/players/${cm.accountId}/seasons/${seasonId}`;
           const stResp = await fetchWithTimeout(fetch, url, { headers }, 8000);
           if (!stResp.ok) return { name: cm.name || cm.accountId, active: false, stats: { kills: 0, wins: 0, kd: 0, damage: 0, rounds: 0 } };
           const stData = await stResp.json();
           const attrs = stData.data?.attributes?.gameModeStats || {};
-          // Merge all game modes
           let kills = 0, wins = 0, rounds = 0, damage = 0;
           for (const mode of Object.keys(attrs)) {
             const ms = attrs[mode];
@@ -711,12 +651,66 @@ async function importClanByPubgId(clanId) {
         }
       }));
       results.forEach(r => { if (r.status === 'fulfilled') members.push(r.value); });
-      // Rate limit between batches
       if (i + batchSize < clanMembers.length) await new Promise(r => setTimeout(r, 1500));
     }
     members.sort((a, b) => b.stats.kills - a.stats.kills);
-    console.log(`[import] PUBG API fallback: got stats for ${members.length} members (${members.filter(m => m.active).length} active)`);
+    console.log(`[import] PUBG API: got stats for ${members.length} members (${members.filter(m => m.active).length} active)`);
   }
+
+  // ── Path B (internal fallback): secondary source — only if PUBG API returned 0 members ──
+  if (!members.length) {
+    console.log(`[import] PUBG API returned 0 members, trying internal fallback for ${clanId}`);
+    const gameModes = ['squad', 'squad-fpp', 'solo', 'solo-fpp', 'duo', 'duo-fpp'];
+    const mergedPlayers = {};
+    for (const gm of gameModes) {
+      try {
+        const pcnUrl = `https://www.pubgclans.net/includes/getClanMemberDataAjax.php?clanId=${encodeURIComponent(clanId)}&mode=unranked&gameMode=${gm}`;
+        const pcnResp = await fetchWithTimeout(fetch, pcnUrl, {}, 10000);
+        if (!pcnResp.ok) continue;
+        const pcnData = await pcnResp.json();
+        if (!Array.isArray(pcnData)) continue;
+        pcnData.forEach(p => {
+          const name = p.player_name;
+          if (!name) return;
+          const kills = parseInt(p.kills) || 0;
+          const rounds = parseInt(p.roundsplayed) || 0;
+          const wins = parseInt(p.wins) || 0;
+          const damage = parseFloat(p.damagedealt) || 0;
+          if (mergedPlayers[name]) {
+            mergedPlayers[name].kills += kills;
+            mergedPlayers[name].wins += wins;
+            mergedPlayers[name].rounds += rounds;
+            mergedPlayers[name].damage += damage;
+          } else {
+            mergedPlayers[name] = { kills, wins, rounds, damage };
+          }
+        });
+      } catch (e) { /* silent */ }
+    }
+    const deduped = {};
+    for (const [name, stats] of Object.entries(mergedPlayers)) {
+      const key = name.toLowerCase();
+      if (deduped[key]) {
+        if (stats.kills > deduped[key].stats.kills) deduped[key].displayName = name;
+        deduped[key].stats.kills += stats.kills;
+        deduped[key].stats.wins += stats.wins;
+        deduped[key].stats.rounds += stats.rounds;
+        deduped[key].stats.damage += stats.damage;
+      } else {
+        deduped[key] = { displayName: name, stats: { ...stats } };
+      }
+    }
+    if (Object.keys(deduped).length > 0) {
+      members = Object.values(deduped).map(p => {
+        const s = p.stats;
+        const kd = s.rounds > 0 ? parseFloat((s.kills / s.rounds).toFixed(2)) : 0;
+        return { name: p.displayName, active: s.rounds > 0, stats: { kills: s.kills, wins: s.wins, kd, damage: s.damage, rounds: s.rounds } };
+      }).sort((a, b) => b.stats.kills - a.stats.kills);
+      console.log(`[import] Internal fallback: ${members.length} members`);
+    }
+  }
+
+  if (!members.length) throw new Error('No se encontraron miembros del clan en ninguna fuente');
 
   // Step 4: Register the clan (upsert)
   const cleanTag = clanMeta.clanTag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
@@ -2887,6 +2881,118 @@ Genera el análisis JSON con este formato exacto:
     }
     res.status(500).json({ error: 'Telemetry audit failed' });
   }
+});
+
+// ═══ WHO IS PLAYING (v186) — Check last match of favorite players ═══
+const _wipRateMap = new Map();
+app.post('/api/who-is-playing', async (req, res) => {
+  // Rate limit: 1 req/min per IP
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  if (_wipRateMap.get(ip) && now - _wipRateMap.get(ip) < 60000) {
+    return res.status(429).json({ error: 'Rate limited — 1 req/min' });
+  }
+  _wipRateMap.set(ip, now);
+
+  const { players } = req.body;
+  if (!Array.isArray(players) || !players.length) return res.json({ players: [] });
+  if (!SERVER_API_KEY) return res.status(503).json({ error: 'No API key' });
+
+  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+  const results = [];
+  const maxPlayers = Math.min(players.length, 20);
+
+  // Group players by platform, batch up to 10 names per PUBG API call
+  const byPlatform = {};
+  for (let i = 0; i < maxPlayers; i++) {
+    const p = players[i];
+    const plat = (p.platform || 'psn').toLowerCase() === 'xbox' ? 'xbox' : 'psn';
+    if (!byPlatform[plat]) byPlatform[plat] = [];
+    byPlatform[plat].push(p.name);
+  }
+
+  for (const [platform, names] of Object.entries(byPlatform)) {
+    // PUBG API accepts up to 10 playerNames per request
+    for (let i = 0; i < names.length; i += 10) {
+      const batch = names.slice(i, i + 10);
+      const shard = platform === 'xbox' ? 'xbox-na' : 'psn';
+      try {
+        // Check cache first (5 min TTL)
+        const cacheKey = `wip:${shard}:${batch.sort().join(',')}`;
+        if (pool) {
+          const cached = await pool.query(
+            "SELECT data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '5 minutes'",
+            [cacheKey]
+          ).catch(() => ({ rows: [] }));
+          if (cached.rows.length > 0) {
+            const cachedData = cached.rows[0].data;
+            if (cachedData && cachedData.players) { results.push(...cachedData.players); continue; }
+          }
+        }
+
+        const url = `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${batch.map(encodeURIComponent).join(',')}`;
+        const r = await fetch(url, { headers, timeout: 8000 });
+        if (!r.ok) continue;
+        const data = await r.json();
+        const batchResults = [];
+
+        for (const player of (data.data || [])) {
+          const name = player.attributes?.name;
+          const matches = player.relationships?.matches?.data || [];
+          if (!name || !matches.length) continue;
+
+          // Get the most recent match to find lastPlayedAt
+          const matchId = matches[0].id;
+          try {
+            // Check match cache
+            const matchCacheKey = `match:${shard}:${matchId}`;
+            let matchData = null;
+            if (pool) {
+              const mc = await pool.query(
+                "SELECT data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 minutes'",
+                [matchCacheKey]
+              ).catch(() => ({ rows: [] }));
+              if (mc.rows.length > 0) matchData = mc.rows[0].data;
+            }
+            if (!matchData) {
+              const mr = await fetch(`https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers: { 'Accept': 'application/vnd.api+json' } });
+              if (mr.ok) {
+                matchData = await mr.json();
+                // Cache match data
+                if (pool) {
+                  pool.query(
+                    "INSERT INTO api_cache(cache_key, data, created_at, ttl_seconds) VALUES($1,$2,NOW(),1800) ON CONFLICT(cache_key) DO UPDATE SET data=$2, created_at=NOW()",
+                    [matchCacheKey, matchData]
+                  ).catch(() => {});
+                }
+              }
+            }
+            if (matchData) {
+              const attrs = matchData.data?.attributes || {};
+              batchResults.push({
+                name,
+                platform,
+                lastPlayedAt: attrs.createdAt || null,
+                mapName: attrs.mapName || null,
+                gameMode: attrs.gameMode || null
+              });
+            }
+          } catch (e) { /* skip this match */ }
+        }
+
+        // Cache batch results
+        if (pool && batchResults.length) {
+          pool.query(
+            "INSERT INTO api_cache(cache_key, data, created_at, ttl_seconds) VALUES($1,$2,NOW(),300) ON CONFLICT(cache_key) DO UPDATE SET data=$2, created_at=NOW()",
+            [cacheKey, { players: batchResults }]
+          ).catch(() => {});
+        }
+        results.push(...batchResults);
+      } catch (e) { /* skip batch */ }
+    }
+  }
+
+  res.json({ players: results });
 });
 
 // ═══ PUBG API PROXY (generic catch-all — MUST be after ALL /api/* specific routes) ═══
