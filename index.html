@@ -9505,16 +9505,19 @@ function _goCompareClans(tag){
     history.pushState(null,'','/compare');
     if(typeof switchTab==='function')switchTab('compare');
     setTimeout(()=>{
+      // Reubicar el panel clanCompareMode dentro del host correcto (necesario al navegar directo)
+      if(typeof relocateClanCompareToCompareTab==='function')relocateClanCompareToCompareTab();
+      const cm=document.getElementById('clanCompareMode');if(cm)cm.style.display='';
       if(typeof switchCompareMode==='function')switchCompareMode('clans');
       setTimeout(()=>{
         const i1=document.getElementById('clanCompare1');
         const i2=document.getElementById('clanCompare2');
         if(i1){i1.value=tag;i1.dispatchEvent(new Event('input',{bubbles:true}));}
         if(i2){i2.focus();}
-        const tgt=document.getElementById('clanCompareMode')||i1;
+        const tgt=document.getElementById('compareModeClansHost')||document.getElementById('clanCompareMode')||i1;
         if(tgt){const y=tgt.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}
-      },220);
-    },150);
+      },260);
+    },200);
   }catch(e){console.error('_goCompareClans:',e);}
 }
 
