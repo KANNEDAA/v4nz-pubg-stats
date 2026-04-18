@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════
 //  V4NZ PUBG Stats — Server + Clan API
 //  Proxy PUBG API + PostgreSQL clan system
-//  sitemap-cleanup — eliminar ruta duplicada sitemap
+//  rivalidades-v1-sec — schema kill_events + endpoint process-kills + whitelist estáticos
 // ═══════════════════════════════════════════════
 
 const express = require('express');
@@ -108,8 +108,46 @@ function clearAuthCookie(res) {
   res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
 }
 
+// ═══ WHITELIST de estáticos (rivalidades-v1-sec) ═══
+// Bloquea server.js, package.json, package-lock.json, .env, etc del express.static abajo.
+// Permite solo extensiones legítimas de frontend + nombres concretos.
+const ALLOWED_STATIC_EXT = /\.(html|css|js|mjs|map|png|jpg|jpeg|gif|svg|ico|webp|avif|woff2?|ttf|eot|mp3|mp4|webm|webmanifest|xml|txt|json)$/i;
+const BLOCKED_STATIC_NAMES = new Set([
+  'server.js',
+  'package.json',
+  'package-lock.json',
+  'yarn.lock',
+  'pnpm-lock.yaml',
+  '.env',
+  '.env.local',
+  '.env.production',
+  'railway.toml',
+  'railway.json',
+  'Dockerfile',
+  'docker-compose.yml',
+  'v4nz-deploy.ps1',
+  'README.md',
+  '.gitignore',
+  '.dockerignore'
+]);
+app.use((req, res, next) => {
+  const p = req.path;
+  if (p === '/' || p.endsWith('/')) return next();
+  const name = decodeURIComponent(p.split('/').pop() || '').toLowerCase();
+  // Dotfiles (.env, .git, etc) — bloqueo explícito
+  if (name.startsWith('.')) return res.status(404).type('text').send('Not found');
+  // Archivos con nombres sensibles conocidos — bloqueo explícito
+  if (BLOCKED_STATIC_NAMES.has(name)) return res.status(404).type('text').send('Not found');
+  // Si el path tiene un punto (parece archivo) y la extensión NO está permitida — bloquear
+  if (name.includes('.') && !ALLOWED_STATIC_EXT.test(name)) {
+    return res.status(404).type('text').send('Not found');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname), {
   maxAge: '7d',
+  dotfiles: 'deny',
   setHeaders: (res, filePath) => {
     // HTML always fresh (SPA with dynamic meta)
     if (filePath.endsWith('.html')) {
@@ -274,9 +312,29 @@ async function initDB() {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_player_accounts_name ON player_accounts(player_name);
+
+      -- rivalidades-v1: kill_events entre jugadores de clanes registrados
+      CREATE TABLE IF NOT EXISTS kill_events (
+        id SERIAL PRIMARY KEY,
+        match_id VARCHAR(50) NOT NULL,
+        killer_name VARCHAR(50) NOT NULL,
+        victim_name VARCHAR(50) NOT NULL,
+        killer_clan VARCHAR(20),
+        victim_clan VARCHAR(20),
+        platform VARCHAR(10) DEFAULT 'psn',
+        game_mode VARCHAR(20),
+        occurred_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(match_id, killer_name, victim_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_kill_events_killer_clan ON kill_events(killer_clan) WHERE killer_clan IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_kill_events_victim_clan ON kill_events(victim_clan) WHERE victim_clan IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_kill_events_match ON kill_events(match_id);
     `);
-    // Cleanup old cache entries on startup (older than 1 hour)
-    await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour'").catch(() => {});
+    // Cleanup old cache entries on startup (older than 1 hour) — EXCLUYE telemetry_* que tiene vida de 30 días (rivalidades-v1)
+    await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour' AND cache_key NOT LIKE 'telemetry\\_%' ESCAPE '\\'").catch(() => {});
+    // Cleanup específico de telemetries > 30 días
+    await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '30 days' AND cache_key LIKE 'telemetry\\_%' ESCAPE '\\'").catch(() => {});
     // Alter existing columns to support larger values (safe to run multiple times)
     await pool.query(`
       ALTER TABLE clans ALTER COLUMN avg_kd TYPE NUMERIC(6,2);
@@ -1120,6 +1178,110 @@ app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
   } catch (e) {
     console.error('[clan-feed] Error:', e.message);
     res.status(500).json({ error: 'Error al cargar feed del clan' });
+  }
+});
+
+// ═══ RIVALIDADES v1 — procesar telemetries cacheadas para extraer kill_events entre clanes registrados ═══
+// POST /clans/:tag/process-kills — escanea api_cache, extrae kills, inserta en kill_events (idempotente por UNIQUE)
+app.post('/clans/:tag/process-kills', rateLimit, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'DB not configured' });
+  const cleanTag = (req.params.tag || '').toUpperCase().replace(/[^A-Z0-9_]/g, '');
+  if (!cleanTag) return res.status(400).json({ error: 'Tag inválido' });
+
+  try {
+    // 1. Miembros activos del clan objetivo
+    const memRes = await pool.query(
+      'SELECT player_name FROM clan_members WHERE clan_tag = $1 AND active = true',
+      [cleanTag]
+    );
+    if (!memRes.rows.length) return res.status(404).json({ error: `Clan ${cleanTag} sin miembros activos` });
+    const memberNamesLower = new Set(memRes.rows.map(r => r.player_name.toLowerCase()));
+
+    // 2. Mapa global player → clan (incluye platform para distinguir jugadores homónimos)
+    const allMembersRes = await pool.query(
+      'SELECT cm.clan_tag, cm.player_name, c.platform FROM clan_members cm JOIN clans c ON c.tag = cm.clan_tag WHERE cm.active = true'
+    );
+    const playerToClan = new Map();
+    for (const r of allMembersRes.rows) {
+      playerToClan.set(r.player_name.toLowerCase(), { clan: r.clan_tag, platform: r.platform });
+    }
+
+    // 3. Telemetries cacheadas (limit alto pero acotado)
+    const cacheRes = await pool.query(
+      "SELECT cache_key, response_data FROM api_cache WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\' ORDER BY created_at DESC LIMIT 1000"
+    );
+
+    let telemetriesScanned = cacheRes.rows.length;
+    let matchesProcessed = 0;
+    let killsInserted = 0;
+    let killsSkippedNoClans = 0;
+    let errors = 0;
+
+    // Batch de inserts para reducir round-trips
+    const pending = [];
+
+    for (const row of cacheRes.rows) {
+      const matchId = row.cache_key.replace(/^telemetry_/, '');
+      let telemetry;
+      try { telemetry = JSON.parse(row.response_data); } catch (e) { errors++; continue; }
+      if (!Array.isArray(telemetry)) continue;
+
+      // Pre-filtro: solo telemetries que contengan miembros de este clan
+      const relevant = telemetry.some(ev => {
+        const n1 = (ev.killer?.name || ev.finisher?.name || '').toLowerCase();
+        const n2 = (ev.victim?.name || '').toLowerCase();
+        return memberNamesLower.has(n1) || memberNamesLower.has(n2);
+      });
+      if (!relevant) continue;
+      matchesProcessed++;
+
+      // Extraer kills
+      for (const ev of telemetry) {
+        if (ev._T !== 'LogPlayerKillV2' && ev._T !== 'LogPlayerKill') continue;
+        const killer = ev.killer?.name || ev.finisher?.name;
+        const victim = ev.victim?.name;
+        if (!killer || !victim || killer === victim) continue;
+
+        const kInfo = playerToClan.get(killer.toLowerCase());
+        const vInfo = playerToClan.get(victim.toLowerCase());
+        if (!kInfo && !vInfo) { killsSkippedNoClans++; continue; }
+
+        pending.push({
+          match_id: matchId,
+          killer, victim,
+          kClan: kInfo?.clan || null,
+          vClan: vInfo?.clan || null,
+          platform: kInfo?.platform || vInfo?.platform || 'xbox',
+          occurred_at: ev._D || null
+        });
+      }
+    }
+
+    // Batch insert con UNIQUE constraint (match_id, killer, victim) → ON CONFLICT DO NOTHING
+    for (const k of pending) {
+      try {
+        const r = await pool.query(
+          `INSERT INTO kill_events (match_id, killer_name, victim_name, killer_clan, victim_clan, platform, occurred_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (match_id, killer_name, victim_name) DO NOTHING`,
+          [k.match_id, k.killer, k.victim, k.kClan, k.vClan, k.platform, k.occurred_at]
+        );
+        if (r.rowCount > 0) killsInserted++;
+      } catch (e) { errors++; }
+    }
+
+    res.json({
+      clan: cleanTag,
+      telemetriesScanned,
+      matchesProcessed,
+      killsQueued: pending.length,
+      killsInserted,
+      killsSkippedNoClans,
+      errors
+    });
+  } catch (e) {
+    console.error('[process-kills] Error:', e.message);
+    res.status(500).json({ error: 'Error procesando kills: ' + e.message });
   }
 });
 
@@ -3070,10 +3232,10 @@ app.all('/api/*', rateLimit, async (req, res) => {
   }
 });
 
-// Cleanup old cache entries every 30 minutes
+// Cleanup old cache entries every 30 minutes — EXCLUYE telemetry_* (rivalidades-v1)
 setInterval(async () => {
   if (!pool) return;
-  try { await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '2 hours'"); }
+  try { await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '2 hours' AND cache_key NOT LIKE 'telemetry\\_%' ESCAPE '\\'"); }
   catch (e) { /* silent */ }
 }, 1800000);
 
