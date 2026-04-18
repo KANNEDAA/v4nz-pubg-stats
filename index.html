@@ -679,19 +679,7 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .share-stats-btn { background:linear-gradient(135deg,#5865F2,#00f0ff); color:#fff; border:none; padding:8px 18px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.75rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
 .share-stats-btn:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(0,240,255,.3); }
 
-/* MOBILE HAMBURGER MENU */
-.hamburger { display:none; background:none; border:none; cursor:pointer; padding:8px; z-index:101; }
-.hamburger span { display:block; width:24px; height:2px; background:var(--text-primary); margin:5px 0; transition:all .3s; border-radius:2px; }
-.hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
-.hamburger.open span:nth-child(2) { opacity:0; }
-.hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
-@media(max-width:768px){
-  .hamburger { display:block; }
-  #mainNav { display:none; position:fixed; top:0; left:0; width:100%; height:100vh; background:rgba(11,11,18,.97); flex-direction:column; justify-content:center; align-items:center; gap:16px; z-index:100; backdrop-filter:blur(20px); }
-  #mainNav.mobile-open { display:flex; }
-  #mainNav a { font-size:1.1rem; padding:14px 32px; color:var(--text-secondary); border-radius:12px; }
-  #mainNav a.active { background:var(--accent-dim); color:var(--accent); }
-}
+/* cleanup-v200: bloque CSS hamburger + #mainNav fullscreen eliminado. Bottom-nav (v186) reemplaza la navegación móvil. */
 
 /* STREAMER BANNER */
 .streamer-banner { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:16px 24px; margin:0 auto; display:flex; align-items:center; gap:16px; position:relative; overflow:hidden; box-shadow:var(--shadow-card); z-index:1; }
@@ -1721,8 +1709,7 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
     background: var(--accent);
     border-radius: 0 0 2px 2px;
   }
-  /* Hide old hamburger + fullscreen nav when bottom nav active */
-  .hamburger { display: none !important; }
+  /* cleanup-v200: .hamburger ya eliminado. Mantener #mainNav display:none para ocultar nav desktop en móvil (bottom-nav lo reemplaza). */
   #mainNav { display: none !important; }
   /* Add bottom padding to main content so nothing hides behind bottom nav */
   main { padding-bottom: 64px !important; }
@@ -2272,7 +2259,6 @@ body.telem-open { overflow:hidden; }
     <div style="display:flex;align-items:center;gap:6px;">
       <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()" aria-label="Iniciar sesión con Discord">Iniciar Sesion</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">&#x1F319;</button>
-      <!-- v186: hamburger eliminado — bottom-nav + Perfil reemplazan la navegación móvil -->
     </div>
   </div>
 </header>
@@ -3524,7 +3510,7 @@ async function toggleClanMembers(tag,cardEl){
             return;
           }
         }
-      }catch(e){console.log('Auto-refresh failed:',e);}
+      }catch(e){console.error('Auto-refresh failed:',e);}
       container.innerHTML='<p style="font-size:.75rem;color:var(--text-dim);text-align:center;">No se encontraron miembros &mdash; intenta buscar un jugador del clan primero</p>';
       container.dataset.loaded='1';
       return;
@@ -4502,7 +4488,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadHomepageContent();
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')smartSearch();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMatchDetail();}});
-  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','compare'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{requestAnimationFrame(()=>{if(t==='overview'&&currentPlayerData){const ph=document.getElementById('playerHeader');if(ph){const py=ph.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:py,behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}}else if(t==='clans'){const cp=document.getElementById('panel-clans');if(cp){const cy=cp.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:cy,behavior:'smooth'});}}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}});}}document.getElementById('mainNav').classList.remove('mobile-open');document.getElementById('hamburgerBtn').classList.remove('open');}));
+  document.querySelectorAll('#mainNav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=a.dataset.tab;if(t){switchTab(t);const standaloneTabs=['ranking','compare'];if(standaloneTabs.includes(t)||(t==='overview'&&!currentPlayerData)){window.scrollTo({top:0,behavior:'smooth'});}else{requestAnimationFrame(()=>{if(t==='overview'&&currentPlayerData){const ph=document.getElementById('playerHeader');if(ph){const py=ph.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:py,behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}}else if(t==='clans'){const cp=document.getElementById('panel-clans');if(cp){const cy=cp.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:cy,behavior:'smooth'});}}else{const panel=document.getElementById('panel-'+t);if(panel){const y=panel.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}});}}}));
   // URL inicial → Router decide qué cargar (v160: centralizado en objeto Router)
   // /stats/psn/PLAYER, /clan/TAG, /clan/TAG/subtab (reservado), /ranking, /top500, /comparar, /clanes, /admin
   setTimeout(()=>Router.dispatch(),100);
@@ -4700,7 +4686,7 @@ async function searchPlayer(){
           currentSeasonData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+_prevSeason.id);
         }
       }
-    }catch(e){console.log('Empty season check error:',e);}
+    }catch(e){console.error('Empty season check error:',e);}
     populateSeasonDropdown(sr.data,currentSeasonId||cs.id);
     setLoaderStep('Cargando partidas...');
     const _allMids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]);
@@ -4736,13 +4722,13 @@ async function searchPlayer(){
         const idx=currentMatchData.findIndex(m=>m&&m.data&&m.data.id===urlMatch);
         if(idx>=0){switchTab('matches');setTimeout(()=>showMatchDetail(idx),120);}
       }
-    }catch(e){console.log('Match deep link error:',e.message);}
+    }catch(e){console.error('Match deep link error:',e.message);}
     // PUBG Report link
     try{const prBtn=document.getElementById('pubgReportBtn');if(prBtn&&currentPlayerData&&currentPlayerData.id){prBtn.href='https://pubg.report/players/'+currentPlayerData.id;prBtn.classList.add('visible');}}catch(e){}
     // Frequent teammates
     try{renderFrequentTeammates();}catch(e){console.error('Frequent teammates error:',e);}
     // PUBG Report clips — async, no bloquea la carga
-    checkPubgReport().catch(e=>console.log('PUBG Report check error:',e.message));
+    checkPubgReport().catch(e=>console.error('PUBG Report check error:',e.message));
     // Track accountId ↔ gamertag for name change detection + show aliases
     trackPlayerName(currentPlayerData.id,currentPlayerData.attributes.name,currentPlatform).then(()=>{
       loadPlayerAliases(currentPlayerData.attributes.name).then(aliases=>{
@@ -4757,11 +4743,11 @@ async function searchPlayer(){
       });
     }).catch(()=>{});
     // Detect player's clan and auto-register
-    detectPlayerClan().catch(e=>console.log('Clan detection error:',e.message));
+    detectPlayerClan().catch(e=>console.error('Clan detection error:',e.message));
     // Bot Index — async analysis
-    loadBotIndex(currentPlatform,currentPlayerData.attributes.name).catch(e=>console.log('Bot index error:',e.message));
+    loadBotIndex(currentPlatform,currentPlayerData.attributes.name).catch(e=>console.error('Bot index error:',e.message));
     // Save snapshot THEN load evolution chart (must wait for save to complete)
-    savePlayerSnapshot().then(()=>loadEvolutionChart()).catch(e=>console.log('Snapshot/evolution error:',e.message));
+    savePlayerSnapshot().then(()=>loadEvolutionChart()).catch(e=>console.error('Snapshot/evolution error:',e.message));
       }catch(err){showSkeletons(false);if(name.toUpperCase()==='KANNEDA')loadDemoData();else{showError(getErrorMessage(err));document.getElementById('playerHeader').classList.remove('visible');document.getElementById('seasonBar').classList.remove('visible');document.getElementById('tabsContainer').classList.remove('visible');document.getElementById('narrativeInsights').classList.remove('visible');document.getElementById('personalitySection').classList.remove('visible');document.getElementById('seasonTypeSelector').style.display='none';document.getElementById('modeTabs').style.display='none';document.getElementById('emptyState').style.display='block';document.getElementById('frequentTeammates').style.display='none';const prBtn=document.getElementById('pubgReportBtn');if(prBtn)prBtn.classList.remove('visible');currentPlayerData=null;currentSeasonData=null;currentRankedData=null;currentLifetimeData=null;currentWeaponData=null;currentSurvivalData=null;}console.error(err);}
   finally{showLoading(false);}
 }
@@ -4873,7 +4859,7 @@ async function setSeasonType(type){
   if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();try{renderMatchStreaks();}catch(e){}return;}
   try{
     showLoading(true);setLoaderStep('Cargando datos de '+type+'...');
-    if(type==='ranked'&&!currentRankedData){const rd=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+currentSeasonId+'/ranked');currentRankedData=rd;console.log('Ranked data loaded:',currentRankedData);}else if(type==='lifetime'&&!currentLifetimeData){const ld=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/lifetime');currentLifetimeData=ld;console.log('Lifetime data loaded:',currentLifetimeData);}
+    if(type==='ranked'&&!currentRankedData){const rd=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+currentSeasonId+'/ranked');currentRankedData=rd;}else if(type==='lifetime'&&!currentLifetimeData){const ld=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/lifetime');currentLifetimeData=ld;}
     const s=getActiveStats();
     if(!s.roundsPlayed){document.getElementById('overviewStats').innerHTML='<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px;"><p style="color:var(--text-secondary);font-size:.9rem;">No hay datos de '+(type==='ranked'?'Ranked':'Lifetime')+' para este modo. Prueba otro modo (Solo/Duo/Squad) o perspectiva (TPP/FPP).</p></div>';document.getElementById('funStatsGrid').innerHTML='';return;}
     renderOverviewStats();renderFunStats();renderPersonality();  }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
@@ -5153,17 +5139,14 @@ async function detectPlayerClan(){
             const checkResp=await fetch('/clans/'+encodeURIComponent(tag));
             if(checkResp.ok){
               const existing=await checkResp.json();
-              if(existing&&existing.clan){console.log('Clan ['+tag+'] ya registrado en V4NZ');return;}
+              if(existing&&existing.clan){return;}
             }
-            console.log('Auto-registrando clan ['+tag+'] en V4NZ...');
             const importResp=await fetch('/clans/import-members',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:clanId,gameMode:'squad'})});
-            if(importResp.ok){console.log('Clan ['+tag+'] registrado exitosamente en V4NZ');}
-            else{console.log('No se pudo importar clan ['+tag+']');}
-          }catch(e){console.log('Auto-register clan error:',e.message);}
+          }catch(e){console.error('Auto-register clan error:',e.message);}
         }
-      }catch(e){console.log('Clan API fallback error:',e.message);}
+      }catch(e){console.error('Clan API fallback error:',e.message);}
     }
-  }catch(e){console.log('Clan detection error:',e.message);}
+  }catch(e){console.error('Clan detection error:',e.message);}
 }
 
 function copyPlayerLink(btn){const n=currentPlayerData?.attributes?.name;if(!n)return;const url='https://v4nz.com/stats/'+currentPlatform+'/'+encodeURIComponent(n);navigator.clipboard?.writeText(url).then(()=>{btn.classList.add('copied');btn.innerHTML='&#x2705; Copiado!';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='&#x1F517; Copiar Enlace';},2000);}).catch(()=>{prompt('Copia este enlace:',url);});}
@@ -6337,9 +6320,8 @@ async function checkPubgReport(){
   try{
     // Try pubg.report API — formato más común observado
     const resp=await fetch('https://api.pubg.report/v1/players/'+encodeURIComponent(accountId));
-    if(!resp.ok){console.log('PUBG Report API status:',resp.status);return;}
+    if(!resp.ok){console.error('PUBG Report API status:',resp.status);return;}
     const data=await resp.json();
-    console.log('PUBG Report raw response:',data);// Debug — para verificar formato real
     // Intentar parsear varios formatos posibles de respuesta
     let encounters=[];
     if(Array.isArray(data))encounters=data;
@@ -6364,7 +6346,6 @@ async function checkPubgReport(){
     });
     // Si encontramos clips en nuestras partidas, re-renderizar
     if(Object.keys(window._pubgReportClips).length>0){
-      console.log('PUBG Report: encontrados '+Object.keys(window._pubgReportClips).length+' clips en tus partidas');
       renderMatchHistory();
     }
   }catch(e){
@@ -6373,14 +6354,13 @@ async function checkPubgReport(){
       const resp2=await fetch('/api/pubg-report/'+encodeURIComponent(accountId));
       if(!resp2.ok)return;
       const data2=await resp2.json();
-      console.log('PUBG Report (proxy) response:',data2);
       if(data2.clips){
         Object.entries(data2.clips).forEach(([mid,info])=>{
           if(ourMatchIds.has(mid))window._pubgReportClips[mid]=info;
         });
         if(Object.keys(window._pubgReportClips).length>0)renderMatchHistory();
       }
-    }catch(e2){console.log('PUBG Report not available:',e2.message);}
+    }catch(e2){console.error('PUBG Report not available:',e2.message);}
   }
 }
 
@@ -7551,7 +7531,7 @@ async function savePlayerSnapshot(){
     top10_rate:parseFloat(calcTop10Rate(s))||0,longest_kill:s.longestKill||0
   };
   try{await fetch('/api/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
-  catch(e){console.log('Snapshot save failed:',e.message);}
+  catch(e){console.error('Snapshot save failed:',e.message);}
 }
 /* ═══ v151 — HISTORIAL DEL JUGADOR (ex Mi Evolucion) ═══
    9 metricas togglables + modo Acumulado/Delta + filtro temporal + export CSV */
@@ -9882,7 +9862,7 @@ function renderLeaderboardDemo(){
   document.getElementById('leaderboardContent').innerHTML=h;
 }
 // PWA: Register Service Worker
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.log('SW registration failed:',e));}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(e=>console.error('SW registration failed:',e));}
 
 /* ═══ V4NZ VISUAL POLISH v147 — JS hooks — marker: visual-polish-v147-full ═══ */
 (function(){
