@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════
 //  V4NZ PUBG Stats — Server + Clan API
 //  Proxy PUBG API + PostgreSQL clan system
-//  sitemap-cleanup — eliminar ruta duplicada sitemap
+//  rivalidades-v1-sec — schema kill_events + endpoint process-kills + whitelist estáticos
 // ═══════════════════════════════════════════════
 
 const express = require('express');
@@ -108,8 +108,46 @@ function clearAuthCookie(res) {
   res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
 }
 
+// ═══ WHITELIST de estáticos (rivalidades-v1-sec) ═══
+// Bloquea server.js, package.json, package-lock.json, .env, etc del express.static abajo.
+// Permite solo extensiones legítimas de frontend + nombres concretos.
+const ALLOWED_STATIC_EXT = /\.(html|css|js|mjs|map|png|jpg|jpeg|gif|svg|ico|webp|avif|woff2?|ttf|eot|mp3|mp4|webm|webmanifest|xml|txt|json)$/i;
+const BLOCKED_STATIC_NAMES = new Set([
+  'server.js',
+  'package.json',
+  'package-lock.json',
+  'yarn.lock',
+  'pnpm-lock.yaml',
+  '.env',
+  '.env.local',
+  '.env.production',
+  'railway.toml',
+  'railway.json',
+  'Dockerfile',
+  'docker-compose.yml',
+  'v4nz-deploy.ps1',
+  'README.md',
+  '.gitignore',
+  '.dockerignore'
+]);
+app.use((req, res, next) => {
+  const p = req.path;
+  if (p === '/' || p.endsWith('/')) return next();
+  const name = decodeURIComponent(p.split('/').pop() || '').toLowerCase();
+  // Dotfiles (.env, .git, etc) — bloqueo explícito
+  if (name.startsWith('.')) return res.status(404).type('text').send('Not found');
+  // Archivos con nombres sensibles conocidos — bloqueo explícito
+  if (BLOCKED_STATIC_NAMES.has(name)) return res.status(404).type('text').send('Not found');
+  // Si el path tiene un punto (parece archivo) y la extensión NO está permitida — bloquear
+  if (name.includes('.') && !ALLOWED_STATIC_EXT.test(name)) {
+    return res.status(404).type('text').send('Not found');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname), {
   maxAge: '7d',
+  dotfiles: 'deny',
   setHeaders: (res, filePath) => {
     // HTML always fresh (SPA with dynamic meta)
     if (filePath.endsWith('.html')) {
