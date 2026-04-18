@@ -3722,13 +3722,13 @@ async function loadClanPage(tag,subtab){
     h+='<div style="font-size:.65rem;color:var(--text-secondary);margin-top:12px;font-style:italic;">Pr\u00f3ximamente</div>';
     h+='</div>';
     h+='</div>'; // close clanTab-ia
-    // ═══ TAB: COMPARAR ═══
+    // ═══ TAB: COMPARAR ═══ (cleanup-v201: CTA real en vez de "Próximamente")
     h+='<div class="clan-tab-panel'+(_cst==='comparar'?' active':'')+'" id="clanTab-comparar">';
     h+='<div style="text-align:center;padding:30px 16px;">';
     h+='<div style="font-size:1.6rem;margin-bottom:8px;">&#x1F4CA;</div>';
     h+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Comparar clanes</div>';
-    h+='<div style="font-size:.72rem;color:var(--text-dim);line-height:1.5;">Compara K/D, win rate, da\u00f1o medio y actividad entre dos clanes registrados.</div>';
-    h+='<div style="font-size:.65rem;color:var(--text-secondary);margin-top:12px;font-style:italic;">Pr\u00f3ximamente</div>';
+    h+='<div style="font-size:.72rem;color:var(--text-dim);line-height:1.5;margin-bottom:16px;">Compara K/D, win rate, da\u00f1o medio y actividad entre dos clanes registrados.</div>';
+    h+='<button class="search-btn" style="border-radius:8px;padding:10px 22px;font-size:.75rem;display:inline-flex;align-items:center;gap:8px;" onclick="_goCompareClans(\''+escJs(c.tag)+'\')">&#x2694;&#xFE0F; Comparar ['+esc(c.tag)+'] con otro clan</button>';
     h+='</div>';
     h+='</div>'; // close clanTab-comparar
     cr.innerHTML=h;
@@ -9499,6 +9499,25 @@ function renderClanDemo(targetId){
   document.getElementById(targetId).innerHTML='<div class="clan-card"><div class="clan-header"><div class="clan-icon">'+c.tag.charAt(0)+'</div><div><div class="clan-name">'+c.name+'</div><div class="clan-tag">['+c.tag+'] &mdash; '+c.members.length+' miembros</div></div></div><div class="clan-stats-grid"><div class="clan-stat"><div class="cs-val">'+tk+'</div><div class="cs-label">Total Kills</div></div><div class="clan-stat"><div class="cs-val">'+ak+'</div><div class="cs-label">K/D Medio</div></div><div class="clan-stat"><div class="cs-val">'+tw+'</div><div class="cs-label">Victorias</div></div><div class="clan-stat"><div class="cs-val">'+c.members.length+'</div><div class="cs-label">Miembros</div></div></div><div class="section-title" style="font-size:.85rem;">Roster del Clan</div>'+c.members.map(m=>'<div class="clan-member"><div><span class="clan-member-name" onclick="goToPlayer(\''+escJs(m.name)+'\');">'+m.name+'</span> <span style="font-size:.65rem;color:var(--accent-orange);">'+m.role+'</span></div><div class="clan-member-stats"><div>Kills: <span>'+m.kills+'</span></div><div>K/D: <span>'+m.kd+'</span></div><div>Wins: <span>'+m.wins+'</span></div></div></div>').join('')+'</div><p style="text-align:center;color:var(--text-dim);font-size:.7rem;margin-top:12px;">Datos demo &mdash; Introduce tu API Key para buscar clanes reales</p>';
 }
 
+/* cleanup-v201: helper para saltar desde /clan/TAG al modo Comparar Clanes de /compare con el clan pre-rellenado */
+function _goCompareClans(tag){
+  try{
+    history.pushState(null,'','/compare');
+    if(typeof switchTab==='function')switchTab('compare');
+    setTimeout(()=>{
+      if(typeof switchCompareMode==='function')switchCompareMode('clans');
+      setTimeout(()=>{
+        const i1=document.getElementById('clanCompare1');
+        const i2=document.getElementById('clanCompare2');
+        if(i1){i1.value=tag;i1.dispatchEvent(new Event('input',{bubbles:true}));}
+        if(i2){i2.focus();}
+        const tgt=document.getElementById('clanCompareMode')||i1;
+        if(tgt){const y=tgt.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}
+      },220);
+    },150);
+  }catch(e){console.error('_goCompareClans:',e);}
+}
+
 async function compareClans(){
   const cc1=getCCValue(1);const cc2=getCCValue(2);
   const n1=cc1.value;const n2=cc2.value;
@@ -9532,10 +9551,14 @@ async function compareClans(){
           if(tagData.clan){const c=tagData.clan;return {tag:c.tag,name:c.name,memberCount:c.member_count||0,level:c.level||0,id:c.tag,_source:'db',platform:c.platform};}
         }
       }catch(e){}
-      // Fallback: player lookup via PUBG API
-      const apiClan=await fetchClanByPlayer(query,clanComparePlatform);
-      const a=apiClan.attributes||{};
-      return {tag:a.clanTag||'???',name:a.clanName||query,memberCount:a.clanMemberCount||0,level:a.clanLevel||0,id:apiClan.id||'',_source:'api'};
+      // Fallback: player lookup via PUBG API — si falla (jugador no existe) tirar mensaje específico de clan (cleanup-v201)
+      try{
+        const apiClan=await fetchClanByPlayer(query,clanComparePlatform);
+        const a=apiClan.attributes||{};
+        return {tag:a.clanTag||'???',name:a.clanName||query,memberCount:a.clanMemberCount||0,level:a.clanLevel||0,id:apiClan.id||'',_source:'api'};
+      }catch(e){
+        throw new Error('No se encontr\u00f3 "'+query+'" ni como clan ni como jugador. Registra el clan buscando primero a un miembro en la pesta\u00f1a Clanes, o escribe el gamertag exacto de un jugador que pertenezca a \u00e9l.');
+      }
     }
     const [clan1,clan2]=await Promise.all([getClanForCompare(n1),getClanForCompare(n2)]);
     const tag1=clan1.tag;const tag2=clan2.tag;
