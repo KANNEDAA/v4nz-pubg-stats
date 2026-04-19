@@ -710,10 +710,16 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
   background:transparent;
   padding:0;
   margin:0;
+  /* Neutralizar la animacion popupFadeBg antigua que dejaba opacity:0 en modo SPA */
+  opacity:1 !important;
+  animation:none !important;
 }
 /* Ocultar el resto de la vista cuando el match detail esta abierto.
-   Solo dejamos visible el popup (y wrappers tipo loading-overlay que viven fuera de main). */
-body.mdp-open #mainContent > :not(#matchDetailPopup) { display:none !important; }
+   Importante: el popup esta anidado dentro de <div class="main-content">, no
+   directo en <main>, asi que usamos :has() para dejar visible el camino hasta el popup
+   y solo ocultar los hermanos laterales. */
+body.mdp-open #mainContent > *:not(#matchDetailPopup):not(:has(#matchDetailPopup)) { display:none !important; }
+body.mdp-open #mainContent *:has(> #matchDetailPopup) > *:not(#matchDetailPopup) { display:none !important; }
 body.mdp-open footer { display:none !important; }
 /* Ya no bloqueamos scroll del body — el scroll es el de la pagina entera, como cualquier vista */
 /* Frequent teammate / rival chip — class-based hover (avoid iOS hover-on-touch double tap) */
