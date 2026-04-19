@@ -731,12 +731,14 @@ body.mdp-open { overflow:hidden; }
 .freq-tm-chip { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; transition:border-color .2s, box-shadow .2s; white-space:nowrap; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
 @media(hover:hover){ .freq-tm-chip:hover { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); } }
 .freq-tm-chip:active { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); }
-.match-detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; width:calc(100% - 32px); max-width:1200px; margin:16px auto; position:relative; }
+/* match-page-view-v1 — modal → full-page refactor (R-1): el card deja de ser una tarjeta flotante y se convierte en contenedor fluido que rellena el popup fullscreen */
+.match-detail-card { background:var(--bg-primary); border:none; border-radius:0; padding:20px 16px; width:100%; max-width:100%; margin:0; position:relative; }
 /* Desktop 70/30 layout: main analytical content + sticky action sidebar */
 .md-grid { display:block; }
 .md-main, .md-side { display:block; }
 @media (min-width: 980px) {
-  .match-detail-card { padding:28px 32px; margin:24px auto; }
+  /* Padding horizontal dinamico: cap a 1200px de contenido en pantallas anchas sin usar max-width */
+  .match-detail-card { padding:28px max(32px, calc((100% - 1200px) / 2)); margin:0; }
   .md-grid { display:grid; grid-template-columns:1fr 280px; gap:24px; align-items:start; margin-top:8px; }
   .md-side { position:sticky; top:8px; display:flex; flex-direction:column; gap:12px; }
   .md-side > div, .md-side > button { margin-top:0 !important; }
@@ -785,11 +787,12 @@ body.mdp-open { overflow:hidden; }
 .match-detail-stat .avg-cmp.down { color:var(--accent-red); }
 .match-detail-stat .avg-cmp.neutral { color:var(--text-dim); }
 /* Placement color bands */
-.match-detail-card.placement-win { border-color:var(--accent-yellow); box-shadow:0 0 30px rgba(255,200,0,.12); }
-.match-detail-card.placement-top5 { border-color:var(--accent-green); box-shadow:0 0 20px rgba(0,255,100,.08); }
-.match-detail-card.placement-top10 { border-color:var(--accent); box-shadow:0 0 20px rgba(0,240,255,.08); }
-.match-detail-card.placement-top25 { border-color:var(--border); }
-.match-detail-card.placement-low { border-color:rgba(255,51,85,.3); }
+/* Placement accent — linea superior 3px, funciona sin border general (ahora somos pagina, no tarjeta) */
+.match-detail-card.placement-win { border-top:3px solid var(--accent-yellow); box-shadow:0 4px 20px rgba(255,200,0,.08); }
+.match-detail-card.placement-top5 { border-top:3px solid var(--accent-green); box-shadow:0 4px 20px rgba(0,255,100,.06); }
+.match-detail-card.placement-top10 { border-top:3px solid var(--accent); box-shadow:0 4px 20px rgba(0,240,255,.06); }
+.match-detail-card.placement-top25 { border-top:3px solid var(--border); }
+.match-detail-card.placement-low { border-top:3px solid rgba(255,51,85,.4); }
 /* Team contribution bar */
 .team-contrib-bar { display:flex; height:8px; border-radius:4px; overflow:hidden; margin:8px 0 12px; background:var(--bg-secondary); }
 .team-contrib-bar .seg { height:100%; transition:width .4s; }
