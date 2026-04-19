@@ -743,8 +743,15 @@ body.mdp-open { overflow:hidden; }
   .md-side { position:sticky; top:8px; display:flex; flex-direction:column; gap:12px; }
   .md-side > div, .md-side > button { margin-top:0 !important; }
 }
-.match-detail-card .close-btn { position:absolute; top:14px; right:14px; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-secondary); font-size:1.1rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; z-index:2; transition:all .2s; }
-.match-detail-card .close-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+/* match-page-chrome-v1 — R-2b: la X se esconde (parecia modal); se reemplaza por breadcrumb arriba como cualquier pagina navegable */
+.match-detail-card .close-btn { display:none !important; }
+/* Breadcrumb de vuelta: no es boton, es un link estilo "volver al perfil" como cualquier web */
+.md-breadcrumb { display:inline-flex; align-items:center; gap:8px; color:var(--text-secondary); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.82rem; text-transform:uppercase; letter-spacing:1.2px; padding:6px 2px; margin:0 0 14px; cursor:pointer; background:none; border:none; transition:color .2s; }
+.md-breadcrumb:hover { color:var(--accent); }
+.md-breadcrumb .md-bc-arrow { font-size:1.05rem; line-height:1; transition:transform .2s; }
+.md-breadcrumb:hover .md-bc-arrow { transform:translateX(-3px); }
+.md-breadcrumb .md-bc-sep { color:var(--text-dim); margin:0 4px; }
+.md-breadcrumb .md-bc-current { color:var(--text-dim); font-weight:500; }
 .match-back-btn { width:100%; margin-top:16px; padding:10px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; }
 .match-back-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
 .audit-btn { width:100%; background:linear-gradient(135deg,rgba(255,200,0,0.12),rgba(255,106,0,0.12)); border:1px solid rgba(255,200,0,0.3); color:var(--accent-yellow); padding:10px 12px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.82rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; transition:all .2s; }
@@ -5483,8 +5490,10 @@ function showMatchDetail(idx){
   const auditMatchId=match.data?match.data.id:null;
   // Store match context for lazy tab loading
   window._mdCtx={idx:idx,match:match,pn:pn,pp:pp,ps:ps,pl:pl,totalP:totalP,telemetryUrl:telemetryUrl,mapName:a.mapName,auditMatchId:auditMatchId,plColor:plColor};
+  // ═══ R-2b: BREADCRUMB — aspecto de pagina navegable (no modal con X) ═══
+  let h='<button class="md-breadcrumb" onclick="closeMatchDetail()"><span class="md-bc-arrow">&#x2190;</span><span>'+esc(pn)+'</span><span class="md-bc-sep">/</span><span class="md-bc-current">Partida '+mn+'</span></button>';
   // ═══ HEADER — always visible ═══
-  let h='<div class="match-map-img" id="mdMapHeader" style="'+mapBg+'"><div class="map-label" style="color:'+mc+';text-shadow:0 2px 8px rgba(0,0,0,.7);">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:#ccc;text-shadow:0 1px 4px rgba(0,0,0,.8);">'+(MAP_SIZE[mn]||'')+'</div></div>';
+  h+='<div class="match-map-img" id="mdMapHeader" style="'+mapBg+'"><div class="map-label" style="color:'+mc+';text-shadow:0 2px 8px rgba(0,0,0,.7);">'+mn+'</div><div style="position:absolute;bottom:8px;right:12px;font-size:.65rem;color:#ccc;text-shadow:0 1px 4px rgba(0,0,0,.8);">'+(MAP_SIZE[mn]||'')+'</div></div>';
   h+='<div style="text-align:center;margin-bottom:4px;">';
   h+='<span style="font-family:Orbitron,sans-serif;font-size:2.4rem;font-weight:800;color:'+plColor+';line-height:1;">#'+pl+plIcon+'</span>';
   h+='<span style="color:var(--text-dim);font-size:.8rem;"> / '+totalP+'</span>';
