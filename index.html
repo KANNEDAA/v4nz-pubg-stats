@@ -1834,6 +1834,94 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
   .md-insight-val { font-size: 1.1rem; }
   .md-insight-desc { display: none; }
 }
+/* ─── match-insights-ui-v2 renderers (mi-*) ─── */
+.mi-good { color: var(--accent-green, #3cd07a); }
+.mi-mid  { color: var(--accent-yellow, #ffc800); }
+.mi-bad  { color: var(--accent-red, #ff3355); }
+.mi-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: .55rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-radius: 4px;
+  vertical-align: middle;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+}
+.mi-tag.mi-good { background: rgba(60,208,122,.12); border-color: rgba(60,208,122,.25); }
+.mi-tag.mi-mid  { background: rgba(255,200,0,.12);  border-color: rgba(255,200,0,.25); }
+.mi-tag.mi-bad  { background: rgba(255,51,85,.1);   border-color: rgba(255,51,85,.25); }
+.md-insight-sub {
+  font-size: .65rem;
+  line-height: 1.3;
+  color: var(--text-secondary, rgba(255,255,255,.65));
+  margin-top: 4px;
+}
+.md-insight-sub strong { color: var(--text-primary, #fff); font-weight: 600; }
+.md-insight-note {
+  font-size: .55rem;
+  font-style: italic;
+  color: var(--text-tertiary, rgba(255,255,255,.45));
+  margin-top: 4px;
+}
+.mi-buckets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.mi-bucket {
+  display: grid;
+  grid-template-columns: 48px 1fr 42px;
+  align-items: center;
+  gap: 6px;
+  font-size: .6rem;
+  font-family: 'Rajdhani', sans-serif;
+}
+.mi-bucket-lbl {
+  font-weight: 600;
+  color: var(--text-secondary, rgba(255,255,255,.65));
+  letter-spacing: .3px;
+}
+.mi-bucket-bar {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.06);
+  overflow: hidden;
+}
+.mi-bucket-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  border-radius: 3px;
+  transition: width .3s ease;
+}
+.mi-bucket-fill.good { background: var(--accent-green, #3cd07a); }
+.mi-bucket-fill.mid  { background: var(--accent-yellow, #ffc800); }
+.mi-bucket-fill.bad  { background: var(--accent-red, #ff3355); }
+.mi-bucket-val {
+  font-weight: 700;
+  text-align: right;
+  color: var(--text-primary, #fff);
+}
+.mi-bucket-n {
+  display: inline-block;
+  font-weight: 400;
+  color: var(--text-tertiary, rgba(255,255,255,.45));
+  margin-left: 2px;
+}
+.mi-sub-range {
+  color: var(--text-tertiary, rgba(255,255,255,.45));
+  font-size: .6rem;
+}
+@media (max-width: 600px) {
+  .mi-bucket { grid-template-columns: 44px 1fr 38px; font-size: .55rem; }
+  .md-insight-sub { font-size: .6rem; }
+}
 /* ═══ END match-insights-ui-v1 ═══ */
 
 /* ═══════════════════════════════════════════════════════════════
@@ -5743,23 +5831,25 @@ function _mdLoadTab(tab){
   else if(tab==='mapa')_mdRenderMapa(ctx);
   else if(tab==='audit')_mdRenderAudit(ctx);
 }
-// ═══ match-insights-ui-v1 — Radiografia del match ═══
-// Catalogo de 14 insights (orden y claves sincronizados con server INSIGHTS_PLANNED_KEYS)
+// ═══ match-insights-ui-v2 (insightsV2) — Radiografia del match ═══
+// Catalogo de 14 insights. Claves en snake_case sincronizadas con server INSIGHTS_PLANNED_KEYS.
+// Las dos primeras (ttfk, hs_by_distance) quedan VIVAS en I-1 — el resto muestra
+// skeleton "Proximamente" hasta que I-2..I-6 rellenen sus bloques.
 var INSIGHTS_CATALOG=[
-  {key:'ttfk',               icon:'\u23F1\uFE0F',    title:'Tiempo al 1er kill',     desc:'Cuanto tardas en conseguir el primer kill desde el inicio.',                       session:'I-1'},
-  {key:'hsByDistance',        icon:'\uD83C\uDFAF',    title:'HS% por distancia',      desc:'Porcentaje de headshots en corta, media y larga distancia.',                         session:'I-1'},
-  {key:'engagementWinRate',   icon:'\u2694\uFE0F',    title:'Engagement Win Rate',    desc:'De los duelos en los que entraste, cuantos ganaste.',                                session:'I-2'},
-  {key:'healingEfficiency',   icon:'\uD83D\uDC89',    title:'Eficiencia curacion',    desc:'Cuanto curas vs cuanto dano recibes. Sobre/infra-curacion.',                         session:'I-3'},
-  {key:'grenadeDamage',       icon:'\uD83D\uDCA3',    title:'Granadas efectivas',     desc:'Dano hecho con lanzables y % que impactan objetivo.',                                session:'I-3'},
-  {key:'reloadInterruptions', icon:'\uD83D\uDD04',    title:'Recargas interrumpidas', desc:'Veces que te pillan recargando o cambias arma mal.',                                 session:'I-3'},
-  {key:'landingSpot',         icon:'\uD83D\uDCCD',    title:'Zona de drop',           desc:'Donde caes, que tan disputado y como acaba el minuto 1.',                            session:'I-6'},
-  {key:'blueZoneDamage',      icon:'\uD83D\uDD35',    title:'Dano zona azul',         desc:'Cuanto HP pierdes rotando mal vs rotaciones limpias.',                               session:'I-2'},
-  {key:'vehicleTime',         icon:'\uD83D\uDE97',    title:'Tiempo en vehiculo',     desc:'Minutos conduciendo vs a pie. Kill/muerte por vehiculo.',                            session:'I-4'},
-  {key:'knockedSurvival',     icon:'\uD83E\uDE79',    title:'Supervivencia knocked',  desc:'De los knocks que recibes, cuantos revives y cuantos acaban en muerte.',             session:'I-4'},
-  {key:'blueChip',            icon:'\uD83D\uDCBB',    title:'Blue Chip operation',    desc:'Uso de escaneos Blue Chip para localizar enemigos.',                                 session:'I-5'},
-  {key:'redeployImpact',      icon:'\u2708\uFE0F',    title:'Redeploy impact',        desc:'Impacto de los redeploys (ascensor/lanzadera) en tu partida.',                       session:'I-5'},
-  {key:'earlyLootLevel',      icon:'\uD83C\uDF92',    title:'Loot temprano',          desc:'Nivel de loot al primer engagement (armas, chaleco, casco).',                        session:'I-6'},
-  {key:'finalCircleMargin',   icon:'\u25CE',          title:'Timing circulo final',   desc:'Margen con el que llegas a los circulos finales. Zona o no zona.',                   session:'I-6'}
+  {key:'ttfk',                  icon:'\u23F1\uFE0F',    title:'Tiempo al 1er kill',     desc:'Cuanto tardas en conseguir el primer kill desde el inicio.',                       session:'I-1'},
+  {key:'hs_by_distance',        icon:'\uD83C\uDFAF',    title:'HS% por distancia',      desc:'Porcentaje de headshots en corta, media y larga distancia.',                         session:'I-1'},
+  {key:'engagement_winrate',    icon:'\u2694\uFE0F',    title:'Engagement Win Rate',    desc:'De los duelos en los que entraste, cuantos ganaste.',                                session:'I-2'},
+  {key:'blue_zone_damage',      icon:'\uD83D\uDD35',    title:'Dano zona azul',         desc:'Cuanto HP pierdes rotando mal vs rotaciones limpias.',                               session:'I-2'},
+  {key:'healing_efficiency',    icon:'\uD83D\uDC89',    title:'Eficiencia curacion',    desc:'Cuanto curas vs cuanto dano recibes. Sobre/infra-curacion.',                         session:'I-3'},
+  {key:'grenade_effectiveness', icon:'\uD83D\uDCA3',    title:'Granadas efectivas',     desc:'Dano hecho con lanzables y % que impactan objetivo.',                                session:'I-3'},
+  {key:'reload_interruptions',  icon:'\uD83D\uDD04',    title:'Recargas interrumpidas', desc:'Veces que te pillan recargando o cambias arma mal.',                                 session:'I-3'},
+  {key:'knocked_survival',      icon:'\uD83E\uDE79',    title:'Supervivencia knocked',  desc:'De los knocks que recibes, cuantos revives y cuantos acaban en muerte.',             session:'I-4'},
+  {key:'vehicle_time',          icon:'\uD83D\uDE97',    title:'Tiempo en vehiculo',     desc:'Minutos conduciendo vs a pie. Kill/muerte por vehiculo.',                            session:'I-4'},
+  {key:'blue_chip_ops',         icon:'\uD83D\uDCBB',    title:'Blue Chip operation',    desc:'Uso de escaneos Blue Chip para localizar enemigos.',                                 session:'I-5'},
+  {key:'redeploy_impact',       icon:'\u2708\uFE0F',    title:'Redeploy impact',        desc:'Impacto de los redeploys (ascensor/lanzadera) en tu partida.',                       session:'I-5'},
+  {key:'landing_spot',          icon:'\uD83D\uDCCD',    title:'Zona de drop',           desc:'Donde caes, que tan disputado y como acaba el minuto 1.',                            session:'I-6'},
+  {key:'final_circle_timing',   icon:'\u25CE',          title:'Timing circulo final',   desc:'Margen con el que llegas a los circulos finales. Zona o no zona.',                   session:'I-6'},
+  {key:'audit_summary',         icon:'\uD83E\uDDD0',    title:'Audit summary',          desc:'Resumen IA de la partida con nota global y fortalezas.',                             session:'I-6'}
 ];
 function _mdInsightsShellHTML(state){
   // state: 'loading' | 'pending' | 'computing' | 'ready' | 'error'
@@ -5773,21 +5863,77 @@ function _mdInsightsShellHTML(state){
   var m=msgMap[state]||msgMap.loading;
   return '<div class="md-insights-intro"><span class="mii-ico">'+m.ico+'</span><span>'+m.txt+'</span><span class="mii-status '+m.cls+'">'+m.status+'</span></div>';
 }
+// Format mm:ss o "Xs" segun segundos. >=60s => "m:ss", <60s => "Xs".
+function _mdFmtSeconds(s){
+  if(s==null||isNaN(s))return '\u2014';
+  s=Math.max(0,Math.round(s));
+  if(s<60)return s+'s';
+  var m=Math.floor(s/60), r=s%60;
+  return m+':'+(r<10?'0':'')+r;
+}
+// Renderer especifico para cada insight. Devuelve {val, body} — val es el
+// numero grande, body es markup adicional debajo del numero (barras, texto).
+function _mdInsightRenderer(item,data){
+  if(!data||data._pending)return null;
+  if(item.key==='ttfk'){
+    var r=data.rating||'sin_kills';
+    if(r==='sin_kills')return {val:'\u2014',body:'<div class="md-insight-sub">Sin kills en esta partida</div>'};
+    if(r==='solo_bots')return {val:'Solo bots',body:'<div class="md-insight-sub">'+(data.total_kills||0)+' kill(s), todos a bots (no cuentan)</div>'};
+    var cls=r==='excelente'?'good':(r==='normal'?'mid':'bad');
+    var label=r==='excelente'?'Rapido':(r==='normal'?'Normal':'Tardio');
+    var extra='';
+    if(data.first_victim)extra+='a <b>'+esc(data.first_victim)+'</b>';
+    if(data.first_weapon){var wn=String(data.first_weapon).replace(/^Item_Weapon_/,'').replace(/_C$/,'');extra+=(extra?' ':'')+'con '+esc(wn);}
+    var botsNote=data.bots_excluded>0?' <span class="md-insight-note">('+data.bots_excluded+' bot'+(data.bots_excluded>1?'s':'')+' excluido'+(data.bots_excluded>1?'s':'')+')</span>':'';
+    return {
+      val:'<span class="mi-'+cls+'">'+_mdFmtSeconds(data.value_seconds)+'</span> <span class="mi-tag mi-'+cls+'">'+label+'</span>',
+      body:'<div class="md-insight-sub">'+(extra||'Primer kill registrado')+botsNote+'</div>'
+    };
+  }
+  if(item.key==='hs_by_distance'){
+    var buckets=data.buckets||[];
+    var total=data.total_hits||0;
+    if(!total)return {val:'\u2014',body:'<div class="md-insight-sub">Sin kills humanos en esta partida</div>'};
+    // Pintar 3 mini barras con label range, hs_pct y sample_size
+    var rows='';
+    buckets.forEach(function(b){
+      var pct=b.hs_pct==null?0:b.hs_pct;
+      var hasData=b.sample_size>0;
+      var cls=pct>=30?'good':(pct>=15?'mid':(hasData?'bad':''));
+      rows+='<div class="mi-bucket">';
+      rows+='<span class="mi-bucket-lbl">'+b.range+'m</span>';
+      rows+='<div class="mi-bucket-bar"><div class="mi-bucket-fill '+cls+'" style="width:'+Math.min(100,pct)+'%"></div></div>';
+      rows+='<span class="mi-bucket-val">'+(hasData?pct.toFixed(1)+'%':'n/d')+' <span class="mi-bucket-n">('+b.hs_count+'/'+b.sample_size+')</span></span>';
+      rows+='</div>';
+    });
+    var headline=buckets.reduce(function(a,b){return(b.hs_pct!=null&&(a==null||b.hs_pct>a.hs_pct))?b:a;},null);
+    var headVal=headline?headline.hs_pct.toFixed(1)+'% <span class="mi-sub-range">en '+headline.range+'m</span>':'\u2014';
+    var botsNote=data.bots_excluded>0?' ('+data.bots_excluded+' bot'+(data.bots_excluded>1?'s':'')+' excluido'+(data.bots_excluded>1?'s':'')+')':'';
+    return {
+      val:headVal,
+      body:'<div class="mi-buckets">'+rows+'</div><div class="md-insight-sub">'+total+' kill'+(total>1?'s':'')+' humano'+(total>1?'s':'')+' analizado'+(total>1?'s':'')+botsNote+'</div>'
+    };
+  }
+  // Generico: si trae value/display
+  if(typeof data.display==='string')return {val:data.display,body:''};
+  if(typeof data.value!=='undefined')return {val:String(data.value),body:''};
+  return null;
+}
 function _mdRenderInsightCard(item,insights,state){
   var data=insights&&insights[item.key];
-  var hasData=data!=null&&typeof data==='object'&&!data._placeholder;
+  var rendered=null;
+  var hasData=data!=null&&typeof data==='object'&&!data._placeholder&&!data._pending;
+  if(hasData)rendered=_mdInsightRenderer(item,data);
   var cardState=state;
-  if(state==='ready'&&!hasData)cardState='pending';
-  var val='\u2014';
-  if(hasData){
-    if(typeof data.display==='string')val=data.display;
-    else if(typeof data.value!=='undefined')val=String(data.value);
-  }
+  if(state==='ready'&&!rendered)cardState='pending';
+  var val=rendered&&rendered.val?rendered.val:'\u2014';
+  var body=rendered&&rendered.body?rendered.body:'';
   var h='<div class="md-insight-card '+cardState+'" data-key="'+item.key+'">';
   h+='<div class="md-insight-head"><i class="mic-ico">'+item.icon+'</i>'+item.title+'</div>';
   h+='<div class="md-insight-val">'+val+'</div>';
+  if(body)h+=body;
   h+='<div class="md-insight-desc">'+item.desc+'</div>';
-  if(!hasData||cardState!=='ready')h+='<span class="md-insight-badge">\uD83D\uDEA7 Proximamente '+item.session+'</span>';
+  if(!rendered||cardState!=='ready')h+='<span class="md-insight-badge">\uD83D\uDEA7 Proximamente '+item.session+'</span>';
   h+='</div>';
   return h;
 }
