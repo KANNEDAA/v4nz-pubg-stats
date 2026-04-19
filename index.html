@@ -1708,6 +1708,134 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 /* ═══ END CAPA 2 SPRINT 6 v178 ═══ */
 
 /* ═══════════════════════════════════════════════════════════════
+   match-insights-ui-v1 — I-0b: Radiografia del match (placeholder UI)
+   Chip dorado destacado + grid de 14 cards con estados
+   (pending/computing/ready/error) y badges "Proximamente I-X"
+   ═══════════════════════════════════════════════════════════════ */
+.md-subtab.md-chip-insights {
+  color: var(--accent-yellow);
+  position: relative;
+  font-weight: 800;
+}
+.md-subtab.md-chip-insights::after {
+  content: 'NEW';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: .45rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--accent-yellow);
+  color: #000;
+  letter-spacing: .5px;
+  font-weight: 900;
+  line-height: 1;
+}
+.md-subtab.md-chip-insights.active {
+  color: var(--accent-yellow);
+  border-bottom-color: var(--accent-yellow);
+}
+.md-subtab.md-chip-insights:hover { color: #ffe070; }
+.md-insights-intro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(255,200,0,.08), rgba(168,85,247,.06));
+  border: 1px solid rgba(255,200,0,.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 4px 0 14px;
+  font-size: .78rem;
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+}
+.md-insights-intro .mii-ico { font-size: 1.2rem; }
+.md-insights-intro .mii-status {
+  margin-left: auto;
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+.md-insights-intro .mii-status.ready { color: var(--accent-green); }
+.md-insights-intro .mii-status.computing { color: var(--accent-yellow); }
+.md-insights-intro .mii-status.error { color: var(--accent-red); }
+
+.md-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+.md-insight-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: border-color .2s, transform .2s;
+}
+.md-insight-card:hover { border-color: rgba(255,200,0,.3); transform: translateY(-1px); }
+.md-insight-card.pending, .md-insight-card.computing { opacity: .75; }
+.md-insight-card.ready { border-color: rgba(255,200,0,.2); }
+.md-insight-card.error { border-color: rgba(255,51,85,.25); }
+.md-insight-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.md-insight-head .mic-ico { font-size: .95rem; font-style: normal; }
+.md-insight-val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.md-insight-card.pending .md-insight-val,
+.md-insight-card.computing .md-insight-val { color: var(--text-dim); }
+.md-insight-desc {
+  font-size: .68rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+.md-insight-badge {
+  align-self: flex-start;
+  font-size: .55rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,200,0,.12);
+  color: var(--accent-yellow);
+  border: 1px solid rgba(255,200,0,.2);
+}
+.md-insight-card.ready .md-insight-badge { display: none; }
+.md-insight-card.error .md-insight-badge {
+  background: rgba(255,51,85,.1);
+  color: var(--accent-red);
+  border-color: rgba(255,51,85,.2);
+}
+@media (max-width: 600px) {
+  .md-insights-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .md-insight-card { padding: 10px; }
+  .md-insight-val { font-size: 1.1rem; }
+  .md-insight-desc { display: none; }
+}
+/* ═══ END match-insights-ui-v1 ═══ */
+
+/* ═══════════════════════════════════════════════════════════════
    V4NZ CAPA 3 SPRINT 1 — marker: capa-3-sprint-1-v179
    Bottom nav móvil + Hero search mejorado
    ═══════════════════════════════════════════════════════════════ */
@@ -5503,6 +5631,7 @@ function showMatchDetail(idx){
   // ═══ SUB-TABS BAR ═══
   h+='<div class="md-subtabs" id="mdSubtabs">';
   h+='<button class="md-subtab active" data-mdtab="resumen" onclick="_mdSwitchTab(\'resumen\')"><span class="md-subtab-icon">&#x1F4CA;</span>Resumen</button>';
+  h+='<button class="md-subtab md-chip-insights" data-mdtab="insights" onclick="_mdSwitchTab(\'insights\')"><span class="md-subtab-icon">&#x1F9EC;</span>Radiograf\u00eda</button>';
   h+='<button class="md-subtab" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
   h+='<button class="md-subtab" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
   h+='<button class="md-subtab" data-mdtab="mapa" onclick="_mdSwitchTab(\'mapa\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F5FA;</span>Mapa</button>';
@@ -5511,6 +5640,8 @@ function showMatchDetail(idx){
   // ═══ TAB CONTENTS ═══
   // R-2a: wrappers mdSec-X contienen heading + mdTab-X (los render siguen escribiendo en mdTab-X sin tocar el heading)
   h+='<section class="md-section" id="mdSec-resumen"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4CA;</i> Resumen</h3><div class="md-tab-content active" id="mdTab-resumen"></div></section>';
+  // I-0b: Radiografia del match — seccion nueva con chip dorado
+  h+='<section class="md-section" id="mdSec-insights"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F9EC;</i> Radiograf\u00eda del match</h3><div class="md-tab-content" id="mdTab-insights"></div></section>';
   if(telemetryUrl){
     h+='<section class="md-section" id="mdSec-killlog"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F52E;</i> Kill Log</h3><div class="md-tab-content" id="mdTab-killlog"></div></section>';
     h+='<section class="md-section" id="mdSec-damage"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4A5;</i> Da\u00f1o</h3><div class="md-tab-content" id="mdTab-damage"></div></section>';
@@ -5540,6 +5671,7 @@ function showMatchDetail(idx){
   // R-2a: cargar resumen inmediato (sincrono para ver stats basicos YA), los demas en siguiente tick
   _mdLoadTab('resumen');
   setTimeout(function(){
+    _mdLoadTab('insights');
     if(telemetryUrl){_mdLoadTab('killlog');_mdLoadTab('damage');_mdLoadTab('mapa');}
     if(auditMatchId){_mdLoadTab('audit');}
     _mdSetupScrollspy();
@@ -5578,7 +5710,7 @@ function _mdSetupScrollspy(){
   if(window._mdScrollspyObs){try{window._mdScrollspyObs.disconnect();}catch(e){}window._mdScrollspyObs=null;}
   var root=document.getElementById('matchDetailPopup');
   if(!root||!('IntersectionObserver' in window))return;
-  var ids=['resumen','killlog','damage','mapa','audit'];
+  var ids=['resumen','insights','killlog','damage','mapa','audit'];
   var obs=new IntersectionObserver(function(entries){
     // Elegir la entrada con mayor intersectionRatio que este intersectando
     var best=null;
@@ -5602,10 +5734,107 @@ function _mdLoadTab(tab){
   _mdTabLoaded[tab]=true;
   var ctx=window._mdCtx;if(!ctx)return;
   if(tab==='resumen')_mdRenderResumen(ctx);
+  else if(tab==='insights')_mdRenderInsights(ctx);
   else if(tab==='killlog')_mdRenderKillLog(ctx);
   else if(tab==='damage')_mdRenderDamage(ctx);
   else if(tab==='mapa')_mdRenderMapa(ctx);
   else if(tab==='audit')_mdRenderAudit(ctx);
+}
+// ═══ match-insights-ui-v1 — Radiografia del match ═══
+// Catalogo de 14 insights (orden y claves sincronizados con server INSIGHTS_PLANNED_KEYS)
+var INSIGHTS_CATALOG=[
+  {key:'ttfk',               icon:'\u23F1\uFE0F',    title:'Tiempo al 1er kill',     desc:'Cuanto tardas en conseguir el primer kill desde el inicio.',                       session:'I-1'},
+  {key:'hsByDistance',        icon:'\uD83C\uDFAF',    title:'HS% por distancia',      desc:'Porcentaje de headshots en corta, media y larga distancia.',                         session:'I-1'},
+  {key:'engagementWinRate',   icon:'\u2694\uFE0F',    title:'Engagement Win Rate',    desc:'De los duelos en los que entraste, cuantos ganaste.',                                session:'I-2'},
+  {key:'healingEfficiency',   icon:'\uD83D\uDC89',    title:'Eficiencia curacion',    desc:'Cuanto curas vs cuanto dano recibes. Sobre/infra-curacion.',                         session:'I-3'},
+  {key:'grenadeDamage',       icon:'\uD83D\uDCA3',    title:'Granadas efectivas',     desc:'Dano hecho con lanzables y % que impactan objetivo.',                                session:'I-3'},
+  {key:'reloadInterruptions', icon:'\uD83D\uDD04',    title:'Recargas interrumpidas', desc:'Veces que te pillan recargando o cambias arma mal.',                                 session:'I-3'},
+  {key:'landingSpot',         icon:'\uD83D\uDCCD',    title:'Zona de drop',           desc:'Donde caes, que tan disputado y como acaba el minuto 1.',                            session:'I-6'},
+  {key:'blueZoneDamage',      icon:'\uD83D\uDD35',    title:'Dano zona azul',         desc:'Cuanto HP pierdes rotando mal vs rotaciones limpias.',                               session:'I-2'},
+  {key:'vehicleTime',         icon:'\uD83D\uDE97',    title:'Tiempo en vehiculo',     desc:'Minutos conduciendo vs a pie. Kill/muerte por vehiculo.',                            session:'I-4'},
+  {key:'knockedSurvival',     icon:'\uD83E\uDE79',    title:'Supervivencia knocked',  desc:'De los knocks que recibes, cuantos revives y cuantos acaban en muerte.',             session:'I-4'},
+  {key:'blueChip',            icon:'\uD83D\uDCBB',    title:'Blue Chip operation',    desc:'Uso de escaneos Blue Chip para localizar enemigos.',                                 session:'I-5'},
+  {key:'redeployImpact',      icon:'\u2708\uFE0F',    title:'Redeploy impact',        desc:'Impacto de los redeploys (ascensor/lanzadera) en tu partida.',                       session:'I-5'},
+  {key:'earlyLootLevel',      icon:'\uD83C\uDF92',    title:'Loot temprano',          desc:'Nivel de loot al primer engagement (armas, chaleco, casco).',                        session:'I-6'},
+  {key:'finalCircleMargin',   icon:'\u25CE',          title:'Timing circulo final',   desc:'Margen con el que llegas a los circulos finales. Zona o no zona.',                   session:'I-6'}
+];
+function _mdInsightsShellHTML(state){
+  // state: 'loading' | 'pending' | 'computing' | 'ready' | 'error'
+  var msgMap={
+    loading:  {ico:'\u23F3',            txt:'Cargando radiografia...',                        status:'...',        cls:''},
+    pending:  {ico:'\uD83E\uDDEC',       txt:'Preparando calculo de insights...',             status:'Pendiente',  cls:'computing'},
+    computing:{ico:'\uD83E\uDDEC',       txt:'Calculando radiografia desde la telemetria...', status:'Calculando', cls:'computing'},
+    ready:    {ico:'\uD83E\uDDEC',       txt:'Analisis profundo basado en telemetria + stats.',status:'Listo',      cls:'ready'},
+    error:    {ico:'\u26A0\uFE0F',      txt:'No se pudo calcular la radiografia.',            status:'Error',      cls:'error'}
+  };
+  var m=msgMap[state]||msgMap.loading;
+  return '<div class="md-insights-intro"><span class="mii-ico">'+m.ico+'</span><span>'+m.txt+'</span><span class="mii-status '+m.cls+'">'+m.status+'</span></div>';
+}
+function _mdRenderInsightCard(item,insights,state){
+  var data=insights&&insights[item.key];
+  var hasData=data!=null&&typeof data==='object'&&!data._placeholder;
+  var cardState=state;
+  if(state==='ready'&&!hasData)cardState='pending';
+  var val='\u2014';
+  if(hasData){
+    if(typeof data.display==='string')val=data.display;
+    else if(typeof data.value!=='undefined')val=String(data.value);
+  }
+  var h='<div class="md-insight-card '+cardState+'" data-key="'+item.key+'">';
+  h+='<div class="md-insight-head"><i class="mic-ico">'+item.icon+'</i>'+item.title+'</div>';
+  h+='<div class="md-insight-val">'+val+'</div>';
+  h+='<div class="md-insight-desc">'+item.desc+'</div>';
+  if(!hasData||cardState!=='ready')h+='<span class="md-insight-badge">\uD83D\uDEA7 Proximamente '+item.session+'</span>';
+  h+='</div>';
+  return h;
+}
+function _mdRenderInsightsGrid(state,insights){
+  var h='';
+  INSIGHTS_CATALOG.forEach(function(item){
+    h+=_mdRenderInsightCard(item,insights,state);
+  });
+  return h;
+}
+function _mdRenderInsights(ctx){
+  var el=document.getElementById('mdTab-insights');if(!el)return;
+  var matchId=ctx.match&&ctx.match.data&&ctx.match.data.id;
+  if(!matchId){el.innerHTML=_mdInsightsShellHTML('error')+'<div class="md-insights-grid">'+_mdRenderInsightsGrid('error',null)+'</div>';return;}
+  var platform=(window.currentPlatform||'psn');
+  var player=ctx.pn;
+  el.innerHTML=_mdInsightsShellHTML('loading')+'<div class="md-insights-grid" id="mdInsightsGrid">'+_mdRenderInsightsGrid('loading',null)+'</div>';
+  // Limpiar polling anterior si existe
+  if(window._mdInsightsPoll){try{clearInterval(window._mdInsightsPoll);}catch(e){}window._mdInsightsPoll=null;}
+  var url='/api/match-insights/'+encodeURIComponent(matchId)+'?player='+encodeURIComponent(player)+'&platform='+encodeURIComponent(platform);
+  var applyResp=function(resp){
+    var state=(resp&&resp.status)||'error';
+    var insights=resp&&resp.insights||null;
+    el.innerHTML=_mdInsightsShellHTML(state)+'<div class="md-insights-grid" id="mdInsightsGrid">'+_mdRenderInsightsGrid(state,insights)+'</div>';
+    return state;
+  };
+  var poll=function(){
+    fetch(url).then(function(r){return r.json();}).then(function(resp){
+      var state=applyResp(resp);
+      if(state==='ready'||state==='error'){
+        if(window._mdInsightsPoll){clearInterval(window._mdInsightsPoll);window._mdInsightsPoll=null;}
+      }
+    }).catch(function(){
+      if(window._mdInsightsPoll){clearInterval(window._mdInsightsPoll);window._mdInsightsPoll=null;}
+      el.innerHTML=_mdInsightsShellHTML('error')+'<div class="md-insights-grid">'+_mdRenderInsightsGrid('error',null)+'</div>';
+    });
+  };
+  fetch(url).then(function(r){return r.json();}).then(function(resp){
+    var state=applyResp(resp);
+    if(state==='pending'||state==='computing'){
+      // Polling cada 2.5s hasta ready/error (max ~60s = 24 ticks)
+      var ticks=0;
+      window._mdInsightsPoll=setInterval(function(){
+        ticks++;if(ticks>24){clearInterval(window._mdInsightsPoll);window._mdInsightsPoll=null;return;}
+        poll();
+      },2500);
+    }
+  }).catch(function(){
+    el.innerHTML=_mdInsightsShellHTML('error')+'<div class="md-insights-grid">'+_mdRenderInsightsGrid('error',null)+'</div>';
+  });
 }
 // v178: Reset tab cache when opening new match detail
 var _origShowMatchDetail_reset=true;
@@ -6204,7 +6433,7 @@ async function loadKillTree(telemUrl,playerName,btn){
     container.innerHTML='<div style="text-align:center;padding:12px;font-size:.7rem;color:var(--accent-red);">Error al cargar telemetria: '+esc(friendlyErr(e))+'</div>';
   }
 }
-function closeMatchDetail(){if(window._mdScrollspyObs){try{window._mdScrollspyObs.disconnect();}catch(e){}window._mdScrollspyObs=null;}document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');try{if(currentPlayerData){const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);history.replaceState(null,'',baseUrl);}}catch(e){}}
+function closeMatchDetail(){if(window._mdScrollspyObs){try{window._mdScrollspyObs.disconnect();}catch(e){}window._mdScrollspyObs=null;}if(window._mdInsightsPoll){try{clearInterval(window._mdInsightsPoll);}catch(e){}window._mdInsightsPoll=null;}document.getElementById('matchDetailPopup').classList.remove('active');document.body.classList.remove('mdp-open');try{if(currentPlayerData){const baseUrl='/stats/'+currentPlatform+'/'+encodeURIComponent(currentPlayerData.attributes.name);history.replaceState(null,'',baseUrl);}}catch(e){}}
 
 function renderFrequentTeammates(){
   const el=document.getElementById('frequentTeammates');const listEl=document.getElementById('frequentTeammatesList');
