@@ -697,36 +697,25 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .streamer-banner-link.kick { background:#53FC18; color:#000; }
 @media(max-width:768px){ .streamer-banner { flex-direction:column; text-align:center; } .streamer-banner-links { justify-content:center; } }
 
-/* MATCH DETAIL — fixed overlay below the header, no scroll movement when opening.
-   The original modal crashed Chrome because the sticky <header> with
-   backdrop-filter:blur(24px) composited under an opaque fixed popup → black screen.
-   FIX: while popup is open, force backdrop-filter:none on the header (and any other
-   blurred element). That removes the GPU compositing conflict but keeps the popup
-   as a fixed overlay so the user's scroll position in the matches list is preserved. */
+/* match-page-spa-v1 — R-3a: match detail como vista SPA real (no overlay)
+   El popup deja de ser fixed; pasa a ser un bloque normal dentro de <main>.
+   Cuando se abre, ocultamos los demas hijos de <main> (hero, stats del jugador,
+   listado de partidas, etc.) y mostramos solo #matchDetailPopup. Asi la navbar
+   del sitio queda arriba igual que en el resto de paginas, y el scroll es el
+   scroll normal del body. */
 .match-detail-popup { display:none; }
 .match-detail-popup.active {
   display:block;
-  position:fixed;
-  top:64px; /* below the header */
-  left:0; right:0; bottom:0;
-  background:var(--bg-primary);
-  z-index:99; /* under header (z:100) but over everything else */
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
+  position:relative;
+  background:transparent;
   padding:0;
+  margin:0;
 }
-@media (max-width:600px){
-  .match-detail-popup.active { top:56px; }
-}
-/* Kill backdrop-filter on header while popup is open — this is the renderer crash fix */
-body.mdp-open header { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background:rgba(11,11,18,0.98) !important; }
-[data-theme="light"] body.mdp-open header { background:rgba(240,242,245,0.98) !important; }
-body.mdp-open .auth-popup,
-body.mdp-open .telem-popup,
-body.mdp-open .card-modal { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-/* Lock body scroll so the underlying matches list doesn't scroll behind the popup */
-body.mdp-open { overflow:hidden; }
+/* Ocultar el resto de la vista cuando el match detail esta abierto.
+   Solo dejamos visible el popup (y wrappers tipo loading-overlay que viven fuera de main). */
+body.mdp-open #mainContent > :not(#matchDetailPopup) { display:none !important; }
+body.mdp-open footer { display:none !important; }
+/* Ya no bloqueamos scroll del body — el scroll es el de la pagina entera, como cualquier vista */
 /* Frequent teammate / rival chip — class-based hover (avoid iOS hover-on-touch double tap) */
 .freq-tm-chip { display:inline-flex; align-items:center; gap:6px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; transition:border-color .2s, box-shadow .2s; white-space:nowrap; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
 @media(hover:hover){ .freq-tm-chip:hover { border-color:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.15); } }
@@ -1645,10 +1634,12 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 .md-tab-content { display: none; animation: fadeInUp .3s ease; }
 .md-tab-content.active { display: block; }
 
-/* match-scrollspy-v1 — R-2a: dentro del match-detail-popup todas las secciones son scrolleables + nav sticky + scrollspy */
+/* match-scrollspy-v1 — R-2a / R-3a: secciones scrolleables + nav sticky + scrollspy
+   R-3a: el sticky ahora se pega debajo del header del sitio (64px desktop, 56px mobile)
+   porque el scroll es del viewport, no del popup */
 .match-detail-popup.active .md-subtabs {
   position: sticky;
-  top: 0;
+  top: 64px;
   z-index: 10;
   background: var(--bg-primary);
   padding-top: 10px;
@@ -1656,10 +1647,14 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
   /* Sombra sutil cuando el nav queda "pegado" sobre el contenido */
   box-shadow: 0 4px 12px -6px rgba(0,0,0,0.4);
 }
+@media (max-width:600px){
+  .match-detail-popup.active .md-subtabs { top: 56px; }
+}
 .match-detail-popup.active .md-section {
   padding: 28px 0 24px;
   border-bottom: 1px solid var(--border);
-  scroll-margin-top: 68px; /* compensar altura del sticky nav */
+  /* compensar altura del header + sticky nav al navegar por scrollIntoView */
+  scroll-margin-top: 132px;
 }
 .match-detail-popup.active .md-section:last-of-type { border-bottom: none; padding-bottom: 16px; }
 .match-detail-popup.active .md-section .md-tab-content { display: block !important; }
@@ -5682,7 +5677,8 @@ function showMatchDetail(idx){
   card.className='match-detail-card '+plClass;
   document.getElementById('matchDetailPopup').classList.add('active');
   document.body.classList.add('mdp-open');
-  document.getElementById('matchDetailPopup').scrollTop=0;
+  // match-page-spa-v1: ahora es vista SPA normal, scrolleamos el body
+  try{window.scrollTo({top:0,behavior:'instant'});}catch(e){window.scrollTo(0,0);}
   // v184: Push clean URL path for match detail (shareable)
   try{
     const matchId=match.data&&match.data.id;
@@ -5704,15 +5700,16 @@ function _mdSwitchTab(tab){
   // Safety: si la seccion aun no se cargo (unusual porque cargamos todas al abrir), cargarla ahora
   _mdLoadTab(tab);
 }
-// R-2a: Scrollspy con IntersectionObserver dentro del popup scroll container
+// R-2a / R-3a: Scrollspy con IntersectionObserver sobre el viewport
+// El scroll ahora es del body, no del popup, asi que root:null (viewport)
 function _mdSetupScrollspy(){
   // Limpiar observer anterior si existe (al reabrir el popup en otra partida)
   if(window._mdScrollspyObs){try{window._mdScrollspyObs.disconnect();}catch(e){}window._mdScrollspyObs=null;}
-  var root=document.getElementById('matchDetailPopup');
-  if(!root||!('IntersectionObserver' in window))return;
+  if(!('IntersectionObserver' in window))return;
   var ids=['resumen','insights','killlog','damage','mapa','audit'];
+  // rootMargin negativo arriba = compensa header (64px) + sticky chips (~48px) = -132px
+  // rootMargin negativo abajo = zona "muerta" de 55% para que la seccion activa sea la del centro
   var obs=new IntersectionObserver(function(entries){
-    // Elegir la entrada con mayor intersectionRatio que este intersectando
     var best=null;
     entries.forEach(function(e){if(e.isIntersecting&&(!best||e.intersectionRatio>best.intersectionRatio))best=e;});
     if(!best)return;
@@ -5720,7 +5717,7 @@ function _mdSetupScrollspy(){
     document.querySelectorAll('.md-subtab').forEach(function(b){
       b.classList.toggle('active',b.getAttribute('data-mdtab')===id);
     });
-  },{root:root,rootMargin:'-80px 0px -55% 0px',threshold:[0,0.1,0.3]});
+  },{root:null,rootMargin:'-132px 0px -55% 0px',threshold:[0,0.1,0.3]});
   ids.forEach(function(s){
     var el=document.getElementById('mdSec-'+s);
     if(el)obs.observe(el);
