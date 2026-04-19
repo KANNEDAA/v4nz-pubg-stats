@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════
 //  V4NZ PUBG Stats — Server + Clan API
 //  Proxy PUBG API + PostgreSQL clan system
-//  rivalidades-v1-sec — schema kill_events + endpoint process-kills + whitelist estáticos
+//  rivalidades-v1-sec-hotfix1 — whitelist estáticos solo sobre rutas de 1 segmento (arregla 404 en endpoints API con IDs con puntos: account., season., division., etc)
 // ═══════════════════════════════════════════════
 
 const express = require('express');
@@ -133,7 +133,13 @@ const BLOCKED_STATIC_NAMES = new Set([
 app.use((req, res, next) => {
   const p = req.path;
   if (p === '/' || p.endsWith('/')) return next();
-  const name = decodeURIComponent(p.split('/').pop() || '').toLowerCase();
+  // Solo vigilar rutas de un único segmento (archivos del root tipo /server.js).
+  // Las rutas anidadas como /api/shards/psn/players/account.XXX/seasons/division.bro.official.console-41
+  // contienen IDs con puntos (account., division., match., etc) y NO deben bloquearse aquí —
+  // son endpoints API que van a su propio handler.
+  const segments = p.split('/').filter(Boolean);
+  if (segments.length !== 1) return next();
+  const name = decodeURIComponent(segments[0]).toLowerCase();
   // Dotfiles (.env, .git, etc) — bloqueo explícito
   if (name.startsWith('.')) return res.status(404).type('text').send('Not found');
   // Archivos con nombres sensibles conocidos — bloqueo explícito
