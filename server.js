@@ -336,6 +336,23 @@ async function initDB() {
       CREATE INDEX IF NOT EXISTS idx_kill_events_killer_clan ON kill_events(killer_clan) WHERE killer_clan IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_kill_events_victim_clan ON kill_events(victim_clan) WHERE victim_clan IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_kill_events_match ON kill_events(match_id);
+
+      -- match-insights-v1: Radiografia del match - cache por (match, jugador) del analisis profundo.
+      -- I-0a crea la mesa con placeholders; I-1..I-6 iran rellenando calculos reales por bloques.
+      CREATE TABLE IF NOT EXISTS match_insights (
+        match_id    VARCHAR(50) NOT NULL,
+        player_name VARCHAR(50) NOT NULL,
+        platform    VARCHAR(10) NOT NULL DEFAULT 'psn',
+        status      VARCHAR(12) NOT NULL DEFAULT 'pending',
+        insights    JSONB,
+        error_msg   TEXT,
+        version     INT NOT NULL DEFAULT 1,
+        computed_at TIMESTAMPTZ,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (match_id, player_name, platform)
+      );
+      CREATE INDEX IF NOT EXISTS idx_match_insights_inflight ON match_insights(status) WHERE status IN ('pending','computing');
+      CREATE INDEX IF NOT EXISTS idx_match_insights_created ON match_insights(created_at);
     `);
     // Cleanup old cache entries on startup (older than 1 hour) — EXCLUYE telemetry_* que tiene vida de 30 días (rivalidades-v1)
     await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour' AND cache_key NOT LIKE 'telemetry\\_%' ESCAPE '\\'").catch(() => {});
@@ -3048,6 +3065,84 @@ Genera el análisis JSON con este formato exacto:
       return res.status(504).json({ error: 'Timeout downloading telemetry. Try again.' });
     }
     res.status(500).json({ error: 'Telemetry audit failed' });
+  }
+});
+
+// ═══ MATCH INSIGHTS (match-insights-v1) — Radiografia del match ═══
+// I-0a: infraestructura. Tabla + endpoint que devuelven placeholder con los 14 slots planificados.
+// I-0c/I-1 conectaran descarga de telemetria + computo real por bloques.
+const INSIGHTS_VERSION = 1;
+const INSIGHTS_PLANNED_KEYS = [
+  'ttfk','hsByDistance','engagementWinRate','healingEfficiency',
+  'grenadeDamage','reloadInterruptions','landingSpot','blueZoneDamage',
+  'vehicleTime','knockedSurvival','blueChip','redeployImpact',
+  'earlyLootLevel','finalCircleMargin'
+];
+app.get('/api/match-insights/:matchId', async (req, res) => {
+  try {
+    const { matchId } = req.params;
+    const player = String(req.query.player || '').trim();
+    const platform = String(req.query.platform || 'psn').trim().toLowerCase();
+    if (!matchId || !player) {
+      return res.status(400).json({ error: 'Missing matchId or player' });
+    }
+    // Sin pool: devolver placeholder en modo memoria (dev local)
+    if (!pool) {
+      return res.json({
+        status: 'ready', version: INSIGHTS_VERSION,
+        insights: { _placeholder: true, message: 'DB no disponible en este entorno', planned: INSIGHTS_PLANNED_KEYS }
+      });
+    }
+    // 1. Cache hit con version actual
+    const found = await pool.query(
+      `SELECT status, insights, error_msg, version, computed_at
+       FROM match_insights WHERE match_id=$1 AND player_name=$2 AND platform=$3`,
+      [matchId, player, platform]
+    );
+    if (found.rows.length > 0) {
+      const row = found.rows[0];
+      if (row.version >= INSIGHTS_VERSION && row.status === 'ready') {
+        return res.json({
+          status: 'ready', version: row.version, computed_at: row.computed_at,
+          insights: row.insights
+        });
+      }
+      if (row.status === 'pending' || row.status === 'computing') {
+        return res.json({
+          status: row.status, version: INSIGHTS_VERSION,
+          message: 'Analizando telemetria...'
+        });
+      }
+      if (row.status === 'error') {
+        return res.json({
+          status: 'error', version: INSIGHTS_VERSION,
+          error: row.error_msg || 'Fallo desconocido'
+        });
+      }
+    }
+    // 2. I-0a: no computamos telemetria todavia. Insertamos placeholder directamente en ready.
+    //    Asi el cliente puede renderizar la UI y ver la lista de insights planificados.
+    //    I-0c cambiara este bloque por: INSERT pending + setImmediate(computeMatchInsights(...))
+    const placeholder = {
+      _placeholder: true,
+      message: 'Radiografia en proximas sesiones (I-1 a I-6)',
+      planned: INSIGHTS_PLANNED_KEYS
+    };
+    await pool.query(
+      `INSERT INTO match_insights (match_id, player_name, platform, status, insights, version, computed_at)
+       VALUES ($1, $2, $3, 'ready', $4::jsonb, $5, NOW())
+       ON CONFLICT (match_id, player_name, platform) DO UPDATE
+         SET status='ready', insights=EXCLUDED.insights, version=EXCLUDED.version,
+             computed_at=NOW(), error_msg=NULL`,
+      [matchId, player, platform, JSON.stringify(placeholder), INSIGHTS_VERSION]
+    ).catch(e => console.error('match-insights insert error:', e));
+    return res.json({
+      status: 'ready', version: INSIGHTS_VERSION,
+      insights: placeholder
+    });
+  } catch (e) {
+    console.error('match-insights error:', e);
+    return res.status(500).json({ error: 'internal', message: e.message });
   }
 });
 
