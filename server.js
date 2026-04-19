@@ -3068,16 +3068,283 @@ Genera el análisis JSON con este formato exacto:
   }
 });
 
-// ═══ MATCH INSIGHTS (match-insights-v1) — Radiografia del match ═══
-// I-0a: infraestructura. Tabla + endpoint que devuelven placeholder con los 14 slots planificados.
-// I-0c/I-1 conectaran descarga de telemetria + computo real por bloques.
-const INSIGHTS_VERSION = 1;
+// ═══ MATCH INSIGHTS (match-insights-v2) — Radiografia del match ═══
+// I-0a: infraestructura. Tabla + endpoint placeholder de los 14 slots.
+// I-1 (INSIGHTS_V=2): TTFK + HS by distance reales (primeras 2 tarjetas vivas).
+//   Resto de tarjetas siguen marcadas como _pending en el JSON para que el
+//   frontend las muestre con skeleton "Próximamente" hasta sesiones I-2..I-6.
+const INSIGHTS_VERSION = 2;
 const INSIGHTS_PLANNED_KEYS = [
-  'ttfk','hsByDistance','engagementWinRate','healingEfficiency',
-  'grenadeDamage','reloadInterruptions','landingSpot','blueZoneDamage',
-  'vehicleTime','knockedSurvival','blueChip','redeployImpact',
-  'earlyLootLevel','finalCircleMargin'
+  'ttfk','hs_by_distance','engagement_winrate','blue_zone_damage',
+  'healing_efficiency','grenade_effectiveness','reload_interruptions',
+  'knocked_survival','vehicle_time','blue_chip_ops','redeploy_impact',
+  'landing_spot','final_circle_timing','audit_summary'
 ];
+
+// ─── Helpers compartidos ────────────────────────────────────────────────
+// Bot PUBG: accountId vacío o con prefijo "ai." (robusto — visto en ambos formatos).
+function _isBotEntity(e) {
+  if (!e) return false;
+  const id = e.accountId;
+  if (id === '' || id == null) return true;
+  if (typeof id === 'string' && id.startsWith('ai.')) return true;
+  return false;
+}
+
+// Distancia 3D en metros. PUBG guarda locations en cm — dividir /100.
+// Fallback al campo ev.distance directo si está presente (también en cm).
+function _killDistanceMeters(ev) {
+  try {
+    const a = ev?.killer?.location || ev?.finisher?.location;
+    const b = ev?.victim?.location;
+    if (a && b && typeof a.x === 'number' && typeof b.x === 'number') {
+      const dx = a.x - b.x, dy = a.y - b.y, dz = (a.z || 0) - (b.z || 0);
+      return Math.sqrt(dx*dx + dy*dy + dz*dz) / 100;
+    }
+  } catch(_) {}
+  if (typeof ev?.distance === 'number' && ev.distance > 0) return ev.distance / 100;
+  return null;
+}
+
+// Fetch match JSON con cache 24h (match JSON + telemetry URL). Reutiliza
+// la misma cache_key que bot-index para no duplicar: `match_${shard}_${id}`.
+async function _getMatchJsonCached(shard, matchId) {
+  if (!pool) return null;
+  const mKey = `match_${shard}_${matchId}`;
+  try {
+    const cached = await pool.query(
+      "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '24 hours'",
+      [mKey]
+    );
+    if (cached.rows.length) {
+      try { return JSON.parse(cached.rows[0].response_data); } catch(_) {}
+    }
+  } catch(_) {}
+  if (!SERVER_API_KEY) return null;
+  try {
+    const mRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/matches/${matchId}`, {
+      headers: { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' }
+    }, 12000);
+    if (!mRes.ok) return null;
+    const data = await mRes.json();
+    pool.query(
+      'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+      [mKey, JSON.stringify(data)]
+    ).catch(() => {});
+    return data;
+  } catch(_) { return null; }
+}
+
+// Fetch telemetría con cache 30 días (key: `telemetry_${matchId}`).
+async function _getTelemetryCached(matchId, telemetryUrl) {
+  if (!pool) {
+    if (!telemetryUrl) return null;
+    try {
+      const tRes = await fetchWithTimeout(fetch, telemetryUrl, {}, 30000);
+      return tRes.ok ? await tRes.json() : null;
+    } catch(_) { return null; }
+  }
+  const tKey = `telemetry_${matchId}`;
+  try {
+    const cached = await pool.query(
+      "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'",
+      [tKey]
+    );
+    if (cached.rows.length) {
+      try { return JSON.parse(cached.rows[0].response_data); } catch(_) {}
+    }
+  } catch(_) {}
+  if (!telemetryUrl) return null;
+  try {
+    const tRes = await fetchWithTimeout(fetch, telemetryUrl, {}, 30000);
+    if (!tRes.ok) return null;
+    const data = await tRes.json();
+    pool.query(
+      'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+      [tKey, JSON.stringify(data)]
+    ).catch(() => {});
+    return data;
+  } catch(_) { return null; }
+}
+
+// ─── Worker — calcula insights reales para (matchId, player, platform) ──
+// No-throw: cualquier fallo deja status='error' en la tabla con error_msg.
+// I-1 produce TTFK + hs_by_distance. Resto de keys se entregan con
+// `_pending: true` para que el frontend renderice "Próximamente".
+async function computeMatchInsights(matchId, player, platform) {
+  if (!pool) return;
+  const setErr = async (msg) => {
+    try {
+      await pool.query(
+        `UPDATE match_insights SET status='error', error_msg=$4, computed_at=NOW()
+         WHERE match_id=$1 AND player_name=$2 AND platform=$3`,
+        [matchId, player, platform, String(msg).slice(0, 500)]
+      );
+    } catch(_) {}
+  };
+  try {
+    // Marcar como "computing" (en marcha). El endpoint ya dejó 'pending'.
+    await pool.query(
+      `UPDATE match_insights SET status='computing' WHERE match_id=$1 AND player_name=$2 AND platform=$3 AND status IN ('pending','error')`,
+      [matchId, player, platform]
+    );
+
+    // 1. Match JSON (cache 24h) — saca telemetry URL + stats del participante.
+    const shard = platform === 'xbox' ? 'xbox' : 'psn';
+    const matchData = await _getMatchJsonCached(shard, matchId);
+    if (!matchData) return setErr('match_fetch_failed');
+
+    const included = matchData.included || [];
+    const attrs = matchData.data?.attributes || {};
+    const matchDuration = attrs.duration || 0;
+
+    // Buscar participante por nombre (case-insensitive) para accountId + stats
+    let participantAccountId = null;
+    let participantStats = null;
+    const pLower = player.toLowerCase();
+    for (const it of included) {
+      if (it.type === 'participant' && it.attributes?.stats?.name?.toLowerCase() === pLower) {
+        participantStats = it.attributes.stats;
+        participantAccountId = participantStats.playerId || null;
+        break;
+      }
+    }
+    if (!participantStats) return setErr('participant_not_found');
+
+    // 2. Telemetry URL desde los assets
+    let telemetryUrl = null;
+    for (const it of included) {
+      if (it.type === 'asset' && it.attributes?.name === 'telemetry') {
+        telemetryUrl = it.attributes.URL; break;
+      }
+    }
+    if (!telemetryUrl) return setErr('telemetry_url_missing');
+
+    // 3. Telemetría (cache 30d) — puede fallar con partidas >14 días (CDN purga)
+    const telemetry = await _getTelemetryCached(matchId, telemetryUrl);
+    if (!telemetry || !Array.isArray(telemetry)) return setErr('telemetry_fetch_failed');
+
+    // 4. Calcular insights reales
+    // matchStartedAt: desde LogMatchStart._D o fallback al createdAt del match
+    let matchStartISO = null;
+    for (const ev of telemetry) {
+      if (ev._T === 'LogMatchStart') { matchStartISO = ev._D; break; }
+    }
+    const matchStartMs = matchStartISO ? new Date(matchStartISO).getTime() : (attrs.createdAt ? new Date(attrs.createdAt).getTime() : null);
+
+    // Filtrar kills del jugador (LogPlayerKillV2 prioritario, fallback LogPlayerKill).
+    // Match por accountId primero (más robusto frente a cambios de nombre),
+    // fallback por nombre (case-insensitive).
+    const myKills = [];
+    for (const ev of telemetry) {
+      if (ev._T !== 'LogPlayerKillV2' && ev._T !== 'LogPlayerKill') continue;
+      const killer = ev.killer || ev.finisher;
+      if (!killer) continue;
+      const isMe = (participantAccountId && killer.accountId === participantAccountId) ||
+                   (killer.name && killer.name.toLowerCase() === pLower);
+      if (!isMe) continue;
+      myKills.push(ev);
+    }
+
+    // ─── TTFK (Time To First Kill) ─────────────────────────────────────
+    // Regla acordada: excluir kills de bots. Si todos son bots → n/d.
+    const humanKills = myKills.filter(ev => !_isBotEntity(ev.victim));
+    humanKills.sort((a,b) => new Date(a._D).getTime() - new Date(b._D).getTime());
+    let ttfk = null;
+    if (humanKills.length && matchStartMs) {
+      const firstMs = new Date(humanKills[0]._D).getTime();
+      const seconds = Math.max(0, Math.round((firstMs - matchStartMs) / 1000));
+      // Benchmark: <90s excelente · 90-240s normal · >240s tardío
+      let rating = 'tardio';
+      if (seconds <= 90) rating = 'excelente';
+      else if (seconds <= 240) rating = 'normal';
+      ttfk = {
+        value_seconds: seconds,
+        first_victim: humanKills[0].victim?.name || null,
+        first_weapon: humanKills[0].damageCauserName || null,
+        rating,
+        bots_excluded: myKills.length - humanKills.length,
+        total_kills: myKills.length
+      };
+    } else if (myKills.length && humanKills.length === 0) {
+      ttfk = { value_seconds: null, rating: 'solo_bots', total_kills: myKills.length, bots_excluded: myKills.length };
+    } else {
+      ttfk = { value_seconds: null, rating: 'sin_kills', total_kills: 0, bots_excluded: 0 };
+    }
+
+    // ─── HS by distance (3 buckets: 0-50, 50-150, 150+) ────────────────
+    // Solo kills a jugadores reales. Headshot: damageReason === 'HeadShot'.
+    const buckets = [
+      { key: '0-50',    min: 0,   max: 50,    hits: 0, hs: 0 },
+      { key: '50-150',  min: 50,  max: 150,   hits: 0, hs: 0 },
+      { key: '150+',    min: 150, max: Infinity, hits: 0, hs: 0 }
+    ];
+    let outOfRange = 0;
+    for (const ev of humanKills) {
+      const d = _killDistanceMeters(ev);
+      if (d == null) { outOfRange++; continue; }
+      const isHS = ev.damageReason === 'HeadShot' || ev.isHeadShot === true;
+      const b = buckets.find(bk => d >= bk.min && d < bk.max);
+      if (!b) continue;
+      b.hits++;
+      if (isHS) b.hs++;
+    }
+    const hsByDistance = {
+      buckets: buckets.map(b => ({
+        range: b.key,
+        min_m: b.min,
+        max_m: b.max === Infinity ? null : b.max,
+        sample_size: b.hits,
+        hs_count: b.hs,
+        hs_pct: b.hits > 0 ? Math.round((b.hs / b.hits) * 1000) / 10 : null
+      })),
+      total_hits: humanKills.length,
+      out_of_range: outOfRange,
+      bots_excluded: myKills.length - humanKills.length
+    };
+
+    // ─── Resto de tarjetas: _pending (I-2..I-6 las rellenarán) ─────────
+    const pending = { _pending: true };
+    const insights = {
+      _version: INSIGHTS_VERSION,
+      _meta: {
+        match_id: matchId,
+        player_name: player,
+        platform,
+        match_duration_s: matchDuration,
+        map: attrs.mapName || null,
+        game_mode: attrs.gameMode || null,
+        computed_at: new Date().toISOString()
+      },
+      ttfk,
+      hs_by_distance: hsByDistance,
+      engagement_winrate: pending,
+      blue_zone_damage: pending,
+      healing_efficiency: pending,
+      grenade_effectiveness: pending,
+      reload_interruptions: pending,
+      knocked_survival: pending,
+      vehicle_time: pending,
+      blue_chip_ops: pending,
+      redeploy_impact: pending,
+      landing_spot: pending,
+      final_circle_timing: pending,
+      audit_summary: pending
+    };
+
+    // 5. Persistir ready
+    await pool.query(
+      `UPDATE match_insights
+         SET status='ready', insights=$4::jsonb, version=$5, computed_at=NOW(), error_msg=NULL
+       WHERE match_id=$1 AND player_name=$2 AND platform=$3`,
+      [matchId, player, platform, JSON.stringify(insights), INSIGHTS_VERSION]
+    );
+  } catch (e) {
+    console.error('[match-insights] compute error:', e);
+    await setErr(e.message || 'compute_failed');
+  }
+}
+
 app.get('/api/match-insights/:matchId', async (req, res) => {
   try {
     const { matchId } = req.params;
@@ -3086,14 +3353,14 @@ app.get('/api/match-insights/:matchId', async (req, res) => {
     if (!matchId || !player) {
       return res.status(400).json({ error: 'Missing matchId or player' });
     }
-    // Sin pool: devolver placeholder en modo memoria (dev local)
+    // Sin pool: devolver placeholder (dev local sin DB)
     if (!pool) {
       return res.json({
         status: 'ready', version: INSIGHTS_VERSION,
         insights: { _placeholder: true, message: 'DB no disponible en este entorno', planned: INSIGHTS_PLANNED_KEYS }
       });
     }
-    // 1. Cache hit con version actual
+    // 1. Cache hit
     const found = await pool.query(
       `SELECT status, insights, error_msg, version, computed_at
        FROM match_insights WHERE match_id=$1 AND player_name=$2 AND platform=$3`,
@@ -3101,44 +3368,43 @@ app.get('/api/match-insights/:matchId', async (req, res) => {
     );
     if (found.rows.length > 0) {
       const row = found.rows[0];
+      // Ready + versión actual → devolver tal cual
       if (row.version >= INSIGHTS_VERSION && row.status === 'ready') {
         return res.json({
           status: 'ready', version: row.version, computed_at: row.computed_at,
           insights: row.insights
         });
       }
+      // In-flight → decir que siga haciendo polling
       if (row.status === 'pending' || row.status === 'computing') {
         return res.json({
           status: row.status, version: INSIGHTS_VERSION,
           message: 'Analizando telemetria...'
         });
       }
-      if (row.status === 'error') {
-        return res.json({
-          status: 'error', version: INSIGHTS_VERSION,
-          error: row.error_msg || 'Fallo desconocido'
-        });
+      // Versión vieja o error → re-computar
+      if (row.version < INSIGHTS_VERSION || row.status === 'error') {
+        await pool.query(
+          `UPDATE match_insights SET status='pending', version=$4, error_msg=NULL
+           WHERE match_id=$1 AND player_name=$2 AND platform=$3`,
+          [matchId, player, platform, INSIGHTS_VERSION]
+        ).catch(() => {});
+        setImmediate(() => { computeMatchInsights(matchId, player, platform).catch(err => console.error('[match-insights] bg err:', err)); });
+        return res.json({ status: 'pending', version: INSIGHTS_VERSION, message: 'Recomputando...' });
       }
     }
-    // 2. I-0a: no computamos telemetria todavia. Insertamos placeholder directamente en ready.
-    //    Asi el cliente puede renderizar la UI y ver la lista de insights planificados.
-    //    I-0c cambiara este bloque por: INSERT pending + setImmediate(computeMatchInsights(...))
-    const placeholder = {
-      _placeholder: true,
-      message: 'Radiografia en proximas sesiones (I-1 a I-6)',
-      planned: INSIGHTS_PLANNED_KEYS
-    };
+    // 2. Primera vez: insertar pending + disparar worker asíncrono
     await pool.query(
-      `INSERT INTO match_insights (match_id, player_name, platform, status, insights, version, computed_at)
-       VALUES ($1, $2, $3, 'ready', $4::jsonb, $5, NOW())
+      `INSERT INTO match_insights (match_id, player_name, platform, status, insights, version)
+       VALUES ($1, $2, $3, 'pending', NULL, $4)
        ON CONFLICT (match_id, player_name, platform) DO UPDATE
-         SET status='ready', insights=EXCLUDED.insights, version=EXCLUDED.version,
-             computed_at=NOW(), error_msg=NULL`,
-      [matchId, player, platform, JSON.stringify(placeholder), INSIGHTS_VERSION]
+         SET status='pending', version=EXCLUDED.version, error_msg=NULL`,
+      [matchId, player, platform, INSIGHTS_VERSION]
     ).catch(e => console.error('match-insights insert error:', e));
+    setImmediate(() => { computeMatchInsights(matchId, player, platform).catch(err => console.error('[match-insights] bg err:', err)); });
     return res.json({
-      status: 'ready', version: INSIGHTS_VERSION,
-      insights: placeholder
+      status: 'pending', version: INSIGHTS_VERSION,
+      message: 'Analizando telemetria...'
     });
   } catch (e) {
     console.error('match-insights error:', e);
