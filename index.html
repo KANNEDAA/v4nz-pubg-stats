@@ -2073,6 +2073,289 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 /* ═══ END match-detail-mockup-v2-m1 ═══ */
 
 /* ═══════════════════════════════════════════════════════════════
+   match-detail-mockup-v2-m2 — Squad cards + Timeline
+   Sprint M-2 · inspirado en match-detail-mockup-v2.html
+   ═══════════════════════════════════════════════════════════════ */
+/* ─── NAV CHIPS específicos M-2 ─── */
+.md-subtabs .md-subtab.md-chip-squad.active {
+  background: var(--accent-green, #3cd07a);
+  border-color: var(--accent-green, #3cd07a);
+  color: #04170d;
+  box-shadow: 0 0 14px rgba(60,208,122,.22);
+}
+.md-subtabs .md-subtab.md-chip-timeline.active {
+  background: var(--accent-orange, #ff7a00);
+  border-color: var(--accent-orange, #ff7a00);
+  color: #1a0f00;
+  box-shadow: 0 0 14px rgba(255,122,0,.22);
+}
+/* ─── SECCIÓN SQUAD ─── */
+.md-section-squad {
+  background: linear-gradient(135deg, rgba(60,208,122,.04), rgba(0,240,255,.03));
+  border: 1px solid rgba(60,208,122,.15);
+}
+.md-section-squad .md-section-title { color: var(--accent-green, #3cd07a); }
+.md-squad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+.md-player-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all .18s ease;
+  position: relative;
+}
+.md-player-card.me {
+  border-color: var(--accent, #00f0ff);
+  box-shadow: 0 0 14px rgba(0,240,255,.12);
+}
+.md-player-card.mvp {
+  border-color: var(--accent-yellow, #ffc800);
+  box-shadow: 0 0 16px rgba(255,200,0,.14);
+}
+.md-player-card.me.mvp {
+  border-color: var(--accent-yellow, #ffc800);
+  box-shadow: 0 0 18px rgba(255,200,0,.18), 0 0 12px rgba(0,240,255,.10);
+}
+.md-player-card.dead {
+  opacity: .72;
+  border-style: dashed;
+}
+.md-player-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+.md-player-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.md-player-name .md-pname-link {
+  color: var(--accent, #00f0ff);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.md-player-name .md-pname-link:hover { text-decoration: underline; }
+.md-player-name .md-pname-me {
+  color: var(--accent, #00f0ff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.md-mvp-tag {
+  background: var(--accent-yellow, #ffc800);
+  color: #1a1405;
+  font-size: .55rem;
+  font-family: 'Rajdhani', sans-serif;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.md-survive {
+  font-size: .65rem;
+  color: var(--text-dim, rgba(255,255,255,.55));
+  font-family: 'SF Mono', 'Consolas', monospace;
+  white-space: nowrap;
+}
+.md-survive.alive { color: var(--accent-green, #3cd07a); }
+.md-survive.dead  { color: var(--accent-red, #ff3355); }
+.md-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.md-stat-box {
+  background: rgba(0,0,0,.22);
+  border-radius: 7px;
+  padding: 7px 4px;
+  text-align: center;
+}
+.md-stat-box .val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  line-height: 1.05;
+}
+.md-stat-box .lbl {
+  font-size: .55rem;
+  color: var(--text-faint, rgba(255,255,255,.4));
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-top: 3px;
+  font-family: 'Rajdhani', sans-serif;
+}
+.md-stat-box.hi .val { color: var(--accent, #00f0ff); }
+.md-stat-box.hi-yellow .val { color: var(--accent-yellow, #ffc800); }
+.md-stat-box.hi-orange .val { color: var(--accent-orange, #ff7a00); }
+.md-stat-box.hi-purple .val { color: var(--accent-purple, #a855f7); }
+.md-dmg-bar {
+  background: rgba(0,0,0,.22);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: .68rem;
+}
+.md-dmg-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim, rgba(255,255,255,.55));
+  margin-bottom: 4px;
+}
+.md-dmg-labels strong {
+  color: var(--text-primary, #fff);
+  font-family: 'Orbitron', sans-serif;
+  font-size: .72rem;
+}
+.md-dmg-visual {
+  display: flex;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255,255,255,.06);
+}
+.md-dmg-visual .md-dmg-dealt {
+  background: linear-gradient(90deg, var(--accent-orange, #ff7a00), var(--accent-yellow, #ffc800));
+  transition: width .3s ease;
+}
+/* ─── SECCIÓN TIMELINE ─── */
+.md-section-timeline {
+  background: linear-gradient(135deg, rgba(255,122,0,.04), rgba(168,85,247,.03));
+  border: 1px solid rgba(255,122,0,.15);
+}
+.md-section-timeline .md-section-title { color: var(--accent-orange, #ff7a00); }
+.md-timeline {
+  position: relative;
+  padding-left: 28px;
+  margin-top: 8px;
+}
+.md-timeline::before {
+  content: '';
+  position: absolute;
+  left: 9px; top: 4px; bottom: 4px;
+  width: 2px;
+  background: rgba(255,255,255,.08);
+}
+.md-event {
+  position: relative;
+  padding: 9px 12px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .75rem;
+}
+.md-event::before {
+  content: '';
+  position: absolute;
+  left: -24px; top: 50%;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-card, #0b1120);
+  border: 3px solid rgba(255,255,255,.15);
+}
+.md-event.kill::before  { border-color: var(--accent-green, #3cd07a); }
+.md-event.death::before { border-color: var(--accent-red,   #ff3355); }
+.md-event.zone::before  { border-color: var(--accent,        #00f0ff); }
+.md-event.drop::before  { border-color: var(--accent-purple, #a855f7); }
+.md-event.knock::before { border-color: var(--accent-orange, #ff7a00); }
+.md-event.finale::before { border-color: var(--accent-yellow, #ffc800); background: var(--accent-yellow, #ffc800); }
+.md-event-time {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  color: var(--accent, #00f0ff);
+  font-size: .7rem;
+  font-weight: 700;
+  min-width: 42px;
+}
+.md-event-zone {
+  background: rgba(0,240,255,.18);
+  color: var(--accent, #00f0ff);
+  font-size: .55rem;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: 'Rajdhani', sans-serif;
+}
+.md-event-icon { font-size: 1rem; flex-shrink: 0; }
+.md-event-text { flex: 1; font-size: .75rem; color: var(--text-secondary, rgba(255,255,255,.75)); line-height: 1.4; }
+.md-event-text strong { color: var(--text-primary, #fff); }
+.md-event-text .ev-teammate { color: var(--accent-green, #3cd07a); font-weight: 600; cursor: pointer; }
+.md-event-text .ev-teammate:hover { text-decoration: underline; }
+.md-event-text .ev-enemy { color: var(--accent-red, #ff3355); font-weight: 500; }
+.md-event-weapon {
+  background: rgba(0,0,0,.28);
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: .65rem;
+  color: var(--text-dim, rgba(255,255,255,.55));
+  font-family: 'SF Mono', 'Consolas', monospace;
+  white-space: nowrap;
+}
+.md-timeline-summary {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.22);
+  border-radius: 8px;
+  font-size: .72rem;
+  color: var(--text-dim, rgba(255,255,255,.55));
+  line-height: 1.5;
+}
+.md-timeline-summary strong { color: var(--accent-orange, #ff7a00); }
+.md-timeline-load {
+  width: 100%;
+  background: rgba(255,122,0,.08);
+  border: 1px solid rgba(255,122,0,.22);
+  color: var(--accent-orange, #ff7a00);
+  padding: 13px;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: .82rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all .15s ease;
+}
+.md-timeline-load:hover { background: rgba(255,122,0,.14); }
+@media (max-width: 768px) {
+  .md-squad-grid { grid-template-columns: 1fr; }
+  .md-player-card { padding: 12px; }
+  .md-stats-row { gap: 5px; }
+  .md-stat-box .val { font-size: .95rem; }
+  .md-stat-box { padding: 6px 2px; }
+  .md-event { padding: 8px 10px; gap: 8px; font-size: .7rem; flex-wrap: wrap; }
+  .md-event-text { font-size: .7rem; flex-basis: 100%; order: 3; }
+  .md-event-weapon { font-size: .6rem; margin-left: auto; }
+  .md-timeline { padding-left: 22px; }
+  .md-event::before { left: -20px; width: 10px; height: 10px; }
+  .md-timeline::before { left: 7px; }
+}
+/* ═══ END match-detail-mockup-v2-m2 ═══ */
+
+/* ═══════════════════════════════════════════════════════════════
    V4NZ CAPA 3 SPRINT 1 — marker: capa-3-sprint-1-v179
    Bottom nav móvil + Hero search mejorado
    ═══════════════════════════════════════════════════════════════ */
@@ -5869,8 +6152,12 @@ function showMatchDetail(idx){
   // match-detail-mockup-v2-m1: chip Diagnóstico como primer item
   h+='<div class="md-subtabs" id="mdSubtabs">';
   h+='<button class="md-subtab md-chip-diag active" data-mdtab="diag" onclick="_mdSwitchTab(\'diag\')"><span class="md-subtab-icon">&#x1F3AF;</span>Diagn\u00f3stico</button>';
+  // match-detail-mockup-v2-m2: chip Squad (siempre visible, no requiere telemetry)
+  h+='<button class="md-subtab md-chip-squad" data-mdtab="squad" onclick="_mdSwitchTab(\'squad\')"><span class="md-subtab-icon">&#x1F465;</span>Squad</button>';
   h+='<button class="md-subtab" data-mdtab="resumen" onclick="_mdSwitchTab(\'resumen\')"><span class="md-subtab-icon">&#x1F4CA;</span>Resumen</button>';
   h+='<button class="md-subtab md-chip-insights" data-mdtab="insights" onclick="_mdSwitchTab(\'insights\')"><span class="md-subtab-icon">&#x1F9EC;</span>Radiograf\u00eda</button>';
+  // match-detail-mockup-v2-m2: chip Timeline (requiere telemetry)
+  h+='<button class="md-subtab md-chip-timeline" data-mdtab="timeline" onclick="_mdSwitchTab(\'timeline\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x23F1;</span>Timeline</button>';
   h+='<button class="md-subtab" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
   h+='<button class="md-subtab" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
   h+='<button class="md-subtab" data-mdtab="mapa" onclick="_mdSwitchTab(\'mapa\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F5FA;</span>Mapa</button>';
@@ -5880,15 +6167,20 @@ function showMatchDetail(idx){
   // R-2a: wrappers mdSec-X contienen heading + mdTab-X (los render siguen escribiendo en mdTab-X sin tocar el heading)
   // match-detail-mockup-v2-m1: sección Diagnóstico del match (primera sección, heurística sobre stats)
   h+='<section class="md-section md-section-diag" id="mdSec-diag"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F3AF;</i> Diagn\u00f3stico del match <span class="md-sec-count">auto \u00b7 '+esc(pn)+'</span></h3><div class="md-section-hint">Le\u00eddo autom\u00e1ticamente de las stats de esta partida \u2014 perfil detectado + alertas</div><div class="md-tab-content active" id="mdTab-diag"></div></section>';
+  // match-detail-mockup-v2-m2: sección Squad (tarjetas jugador por miembro del squad)
+  h+='<section class="md-section md-section-squad" id="mdSec-squad"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F465;</i> Tu squad <span class="md-sec-count">stats \u00b7 partida</span></h3><div class="md-section-hint">Tarjetas individuales por cada miembro del squad \u2014 MVP, tiempo vivo y breakdown de stats</div><div class="md-tab-content" id="mdTab-squad"></div></section>';
   h+='<section class="md-section" id="mdSec-resumen"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4CA;</i> Resumen</h3><div class="md-tab-content" id="mdTab-resumen"></div></section>';
   // I-0b: Radiografia del match — seccion nueva con chip dorado
   h+='<section class="md-section" id="mdSec-insights"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F9EC;</i> Radiograf\u00eda del match</h3><div class="md-tab-content" id="mdTab-insights"></div></section>';
   if(telemetryUrl){
+    // match-detail-mockup-v2-m2: sección Timeline (narrativa cronológica de la partida)
+    h+='<section class="md-section md-section-timeline" id="mdSec-timeline"><h3 class="md-section-title"><i class="md-sec-ico">&#x23F1;</i> Timeline del match <span class="md-sec-count">eventos cronol\u00f3gicos</span></h3><div class="md-section-hint">Kills, knocks, muertes y cierres de zona de tu squad \u2014 ordenados por minuto</div><div class="md-tab-content" id="mdTab-timeline"></div></section>';
     h+='<section class="md-section" id="mdSec-killlog"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F52E;</i> Kill Log</h3><div class="md-tab-content" id="mdTab-killlog"></div></section>';
     h+='<section class="md-section" id="mdSec-damage"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4A5;</i> Da\u00f1o</h3><div class="md-tab-content" id="mdTab-damage"></div></section>';
     h+='<section class="md-section" id="mdSec-mapa"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F5FA;</i> Mapa</h3><div class="md-tab-content" id="mdTab-mapa"></div></section>';
   } else {
     // Placeholders vacios por si alguna funcion los busca; no generan seccion visible
+    h+='<div class="md-tab-content" id="mdTab-timeline" style="display:none"></div>';
     h+='<div class="md-tab-content" id="mdTab-killlog" style="display:none"></div>';
     h+='<div class="md-tab-content" id="mdTab-damage" style="display:none"></div>';
     h+='<div class="md-tab-content" id="mdTab-mapa" style="display:none"></div>';
@@ -5911,10 +6203,13 @@ function showMatchDetail(idx){
   document.getElementById('matchDetailContent').innerHTML=h;
   // match-detail-mockup-v2-m1: cargar 'diag' inmediato (primera sección visible), luego el resto en next tick
   _mdLoadTab('diag');
+  // match-detail-mockup-v2-m2: squad se carga inmediato (solo stats, sin telemetry)
+  _mdLoadTab('squad');
   _mdLoadTab('resumen');
   setTimeout(function(){
     _mdLoadTab('insights');
-    if(telemetryUrl){_mdLoadTab('killlog');_mdLoadTab('damage');_mdLoadTab('mapa');}
+    // match-detail-mockup-v2-m2: timeline pinta solo el botón "Cargar timeline" (lazy, requiere telemetry)
+    if(telemetryUrl){_mdLoadTab('timeline');_mdLoadTab('killlog');_mdLoadTab('damage');_mdLoadTab('mapa');}
     if(auditMatchId){_mdLoadTab('audit');}
     _mdSetupScrollspy();
   },0);
@@ -5954,7 +6249,8 @@ function _mdSetupScrollspy(){
   if(window._mdScrollspyObs){try{window._mdScrollspyObs.disconnect();}catch(e){}window._mdScrollspyObs=null;}
   if(!('IntersectionObserver' in window))return;
   // match-detail-mockup-v2-m1: 'diag' primero para scrollspy
-  var ids=['diag','resumen','insights','killlog','damage','mapa','audit'];
+  // match-detail-mockup-v2-m2: incluir 'squad' y 'timeline' en el scrollspy
+  var ids=['diag','squad','resumen','insights','timeline','killlog','damage','mapa','audit'];
   // rootMargin negativo arriba = compensa header (64px) + sticky chips (~48px) = -132px
   // rootMargin negativo abajo = zona "muerta" de 55% para que la seccion activa sea la del centro
   var obs=new IntersectionObserver(function(entries){
@@ -5979,6 +6275,8 @@ function _mdLoadTab(tab){
   _mdTabLoaded[tab]=true;
   var ctx=window._mdCtx;if(!ctx)return;
   if(tab==='diag')_mdRenderDiag(ctx);
+  else if(tab==='squad')_mdRenderSquad(ctx);
+  else if(tab==='timeline')_mdRenderTimeline(ctx);
   else if(tab==='resumen')_mdRenderResumen(ctx);
   else if(tab==='insights')_mdRenderInsights(ctx);
   else if(tab==='killlog')_mdRenderKillLog(ctx);
@@ -6235,6 +6533,259 @@ function _mdRenderDiag(ctx){
   });
   h+='</div>';
   h+='</div>';
+  el.innerHTML=h;
+}
+// ═══ TAB: SQUAD (match-detail-mockup-v2-m2) ═══
+// Tarjetas por miembro del squad (obtenidas vía roster + participants de match.included).
+// Sin telemetry — solo stats de la match API. MVP = top damage del squad.
+function _mdRenderSquad(ctx){
+  var el=document.getElementById('mdTab-squad');if(!el)return;
+  var match=ctx.match||{},pp=ctx.pp||{},pn=ctx.pn||'';
+  var pnL=pn.toLowerCase();
+  var included=match.included||[];
+  // Encontrar el roster del jugador
+  var myRoster=included.find(function(i){
+    return i.type==='roster' && i.relationships && i.relationships.participants
+      && i.relationships.participants.data.some(function(p){return p.id===pp.id;});
+  });
+  if(!myRoster){
+    el.innerHTML='<div class="md-tab-loading" style="padding:20px;color:var(--text-dim);text-align:center;">No se pudo localizar el squad en los datos de la partida.</div>';
+    return;
+  }
+  var partIds=myRoster.relationships.participants.data.map(function(p){return p.id;});
+  var teammates=included.filter(function(i){return i.type==='participant'&&partIds.indexOf(i.id)>=0;})
+    .map(function(p){return p.attributes.stats;})
+    .sort(function(a,b){return(b.damageDealt||0)-(a.damageDealt||0);});
+  if(teammates.length===0){
+    el.innerHTML='<div class="md-tab-loading" style="padding:20px;color:var(--text-dim);text-align:center;">Sin datos de jugadores en este squad.</div>';
+    return;
+  }
+  // Identificar MVP (top damage) y dmg máximo para normalizar barras
+  var maxDmg=teammates.reduce(function(m,tm){return Math.max(m,tm.damageDealt||0);},0);
+  if(maxDmg<=0)maxDmg=1;
+  var h='<div class="md-squad-grid">';
+  teammates.forEach(function(tm,idx){
+    var name=tm.name||'?';
+    var isMe=name.toLowerCase()===pnL;
+    var isMvp=idx===0 && (tm.damageDealt||0)>0;
+    var isDead=tm.deathType && tm.deathType!=='alive';
+    var cardClass='md-player-card'+(isMe?' me':'')+(isMvp?' mvp':'')+(isDead?' dead':'');
+    var timeSurv=tm.timeSurvived||0;
+    var tmMin=Math.floor(timeSurv/60);
+    var tmSec=Math.round(timeSurv%60);
+    var timeStr=tmMin+':'+(tmSec<10?'0':'')+tmSec;
+    var kills=tm.kills||0;
+    var dbno=tm.DBNOs||0;
+    var assists=tm.assists||0;
+    var hs=tm.headshotKills||0;
+    var hsPct=kills>0?Math.round((hs/kills)*100):0;
+    var dmg=Math.round(tm.damageDealt||0);
+    var dmgPct=Math.round((dmg/maxDmg)*100);
+    h+='<div class="'+cardClass+'">';
+    h+='<div class="md-player-head">';
+    h+='<div class="md-player-name">';
+    if(isMe){
+      h+='<span class="md-pname-me" title="'+esc(name)+'">'+esc(name)+' <span style="font-size:.55rem;opacity:.7;">(tu)</span></span>';
+    } else {
+      h+='<span class="md-pname-link" onclick="closeMatchDetail();goToPlayer(\''+escJs(name)+'\',\''+currentPlatform+'\');" title="'+esc(name)+'">'+esc(name)+'</span>';
+    }
+    if(isMvp)h+='<span class="md-mvp-tag">MVP</span>';
+    h+='</div>';
+    h+='<div class="md-survive '+(isDead?'dead':'alive')+'">'+(isDead?'\u2620\uFE0F ':'\uD83C\uDFC6 ')+timeStr+'</div>';
+    h+='</div>';
+    // Stats 4-box
+    h+='<div class="md-stats-row">';
+    h+='<div class="md-stat-box'+(kills>=3?' hi':'')+'"><div class="val">'+kills+'</div><div class="lbl">Kills</div></div>';
+    h+='<div class="md-stat-box'+(dbno>=2?' hi-orange':'')+'"><div class="val">'+dbno+'</div><div class="lbl">Knocks</div></div>';
+    h+='<div class="md-stat-box'+(assists>=2?' hi-purple':'')+'"><div class="val">'+assists+'</div><div class="lbl">Assists</div></div>';
+    h+='<div class="md-stat-box'+(hsPct>=30?' hi-yellow':'')+'"><div class="val">'+(kills>0?hsPct+'%':'\u2014')+'</div><div class="lbl">HS%</div></div>';
+    h+='</div>';
+    // Damage bar
+    h+='<div class="md-dmg-bar">';
+    h+='<div class="md-dmg-labels"><span>Da\u00f1o</span><strong>'+dmg+'</strong></div>';
+    h+='<div class="md-dmg-visual"><div class="md-dmg-dealt" style="width:'+dmgPct+'%;"></div></div>';
+    h+='</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  // Resumen squad
+  var totalK=teammates.reduce(function(s,tm){return s+(tm.kills||0);},0);
+  var totalDmg=teammates.reduce(function(s,tm){return s+(tm.damageDealt||0);},0);
+  var totalKnocks=teammates.reduce(function(s,tm){return s+(tm.DBNOs||0);},0);
+  var alive=teammates.filter(function(tm){return !tm.deathType||tm.deathType==='alive';}).length;
+  h+='<div class="md-timeline-summary" style="margin-top:14px;"><strong>Squad:</strong> '+teammates.length+' jugadores \u00b7 '+totalK+' kills \u00b7 '+totalKnocks+' knocks \u00b7 '+Math.round(totalDmg)+' da\u00f1o total \u00b7 '+alive+'/'+teammates.length+' vivos al final</div>';
+  el.innerHTML=h;
+}
+// ═══ TAB: TIMELINE (match-detail-mockup-v2-m2) ═══
+// Eventos cronológicos de la partida extraídos de la telemetría.
+// Pinta botón de carga si no hay telemetry fetched aún. Al pulsar, parsea eventos.
+function _mdRenderTimeline(ctx){
+  var el=document.getElementById('mdTab-timeline');if(!el)return;
+  if(!ctx.telemetryUrl){el.innerHTML='<div class="md-tab-loading">Sin telemetria disponible</div>';return;}
+  var safeUrl=ctx.telemetryUrl.replace(/'/g,"\\'");
+  var safePn=ctx.pn.replace(/'/g,"\\'");
+  el.innerHTML='<button class="md-timeline-load" onclick="_mdLoadTimeline(\''+safeUrl+'\',\''+safePn+'\',this)">&#x23F1; Cargar timeline de la partida</button>';
+}
+function _mdLoadTimeline(url,pn,btn){
+  btn.disabled=true;
+  btn.innerHTML='<span style="display:inline-flex;align-items:center;gap:8px;"><span class="tab-spinner" style="width:14px;height:14px;border-width:2px;"></span>Descargando telemetr\u00eda...</span>';
+  fetch(url).then(function(r){if(!r.ok)throw new Error('Telemetry fetch failed');return r.json();})
+    .then(function(telem){_mdRenderTimelineEvents(telem,pn);})
+    .catch(function(err){
+      var el=document.getElementById('mdTab-timeline');
+      if(el)el.innerHTML='<div class="md-tab-loading" style="padding:20px;color:var(--accent-red);text-align:center;">Error al cargar telemetr\u00eda: '+esc(err.message||'desconocido')+'</div>';
+    });
+}
+function _mdRenderTimelineEvents(telem,pn){
+  var el=document.getElementById('mdTab-timeline');if(!el)return;
+  if(!Array.isArray(telem)||telem.length===0){
+    el.innerHTML='<div class="md-tab-loading" style="padding:20px;color:var(--text-dim);text-align:center;">Telemetr\u00eda vac\u00eda para esta partida.</div>';return;
+  }
+  var pnL=pn.toLowerCase();
+  // 1) Identificar el squad del jugador desde los eventos
+  // Estrategia: recorrer LogMatchStart / LogPlayerCreate para encontrar el teamId del jugador
+  var myTeamId=null;
+  var playersByName={}; // name -> {teamId, accountId, name}
+  for(var i=0;i<telem.length;i++){
+    var ev=telem[i];
+    if(ev._T==='LogMatchStart'&&ev.characters){
+      ev.characters.forEach(function(c){
+        if(c.name)playersByName[c.name.toLowerCase()]={name:c.name,teamId:c.teamId,accountId:c.accountId};
+        if(c.name&&c.name.toLowerCase()===pnL)myTeamId=c.teamId;
+      });
+      break;
+    }
+  }
+  // Fallback: si no hay LogMatchStart, usar LogPlayerPosition / LogPlayerLogin
+  if(myTeamId==null){
+    for(var j=0;j<telem.length;j++){
+      var e2=telem[j];
+      var char=e2.character||e2.attacker||e2.victim;
+      if(char&&char.name&&char.name.toLowerCase()===pnL&&char.teamId!=null){myTeamId=char.teamId;break;}
+    }
+  }
+  var squadNames={};
+  Object.keys(playersByName).forEach(function(k){
+    var p=playersByName[k];
+    if(p.teamId===myTeamId)squadNames[k]=true;
+  });
+  if(Object.keys(squadNames).length===0)squadNames[pnL]=true;
+  // 2) Timestamp base del match
+  var t0=null;
+  for(var k=0;k<telem.length;k++){
+    var e=telem[k];
+    if(e._T==='LogMatchStart'&&e._D){t0=new Date(e._D).getTime();break;}
+  }
+  if(t0==null&&telem[0]&&telem[0]._D)t0=new Date(telem[0]._D).getTime();
+  if(t0==null){el.innerHTML='<div class="md-tab-loading" style="padding:20px;color:var(--text-dim);text-align:center;">No se pudo leer timestamps de la telemetr\u00eda.</div>';return;}
+  // Helper: tiempo relativo mm:ss
+  function rel(iso){
+    if(!iso)return '00:00';
+    var t=(new Date(iso).getTime()-t0)/1000;
+    if(t<0)t=0;
+    var m=Math.floor(t/60),s=Math.round(t%60);
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  // Helper: normalizar nombres de armas (misma lógica que _mdRenderDamage)
+  function weapName(raw){
+    if(!raw)return '';
+    var w=raw.replace(/^WeapHK416_C$/,'M416').replace(/^WeapAK47_C$/,'AKM').replace(/^WeapBerreta686_C$/,'S686').replace(/^WeapScar-L_C$/,'SCAR-L').replace(/^WeapMini14_C$/,'Mini14').replace(/^WeapM16A4_C$/,'M16A4').replace(/^WeapUMP_C$/,'UMP45').replace(/^WeapDP12_C$/,'DBS').replace(/^WeapGroza_C$/,'Groza').replace(/^WeapM24_C$/,'M24').replace(/^WeapKar98k_C$/,'Kar98k').replace(/^WeapAWM_C$/,'AWM').replace(/^WeapDP28_C$/,'DP-28').replace(/^WeapL6_C$/,'Lynx AMR').replace(/^WeapQBZ95_C$/,'QBZ').replace(/^WeapMk14_C$/,'Mk14').replace(/^WeapMk47Mutant_C$/,'Mk47').replace(/^WeapG36C_C$/,'G36C').replace(/^WeapBerylM762_C$/,'Beryl M762').replace(/^WeapACE32_C$/,'ACE32').replace(/^WeapMG3_C$/,'MG3').replace(/^Weap/,'').replace(/_C$/,'');
+    if(w==='ProjGrenade'||w==='Grenade')return 'Granada';
+    if(w==='Molotov'||w==='ProjMolotov')return 'Molotov';
+    if(w==='BlueZone')return 'Zona azul';
+    if(w==='RedZone')return 'Zona roja';
+    return w;
+  }
+  // Helper: enriquecer un nombre de teammate (clicable)
+  function nameTag(nm,isTeammate){
+    if(!nm)return '';
+    if(isTeammate){
+      if(nm.toLowerCase()===pnL)return '<strong>'+esc(nm)+'</strong> <span style="font-size:.55rem;opacity:.7;">(tu)</span>';
+      return '<span class="ev-teammate" onclick="closeMatchDetail();goToPlayer(\''+escJs(nm)+'\',\''+currentPlatform+'\');">'+esc(nm)+'</span>';
+    }
+    return '<span class="ev-enemy">'+esc(nm)+'</span>';
+  }
+  // 3) Extraer eventos relevantes
+  var events=[];
+  // Drop del jugador — LogParachuteLanding del propio player
+  for(var p=0;p<telem.length;p++){
+    var pe=telem[p];
+    if(pe._T==='LogParachuteLanding'&&pe.character&&pe.character.name&&pe.character.name.toLowerCase()===pnL){
+      events.push({t:rel(pe._D),type:'drop',icon:'\uD83E\uDE82',text:nameTag(pe.character.name,true)+' aterriza'});
+      break;
+    }
+  }
+  // Knocks del squad (LogPlayerMakeGroggy)
+  telem.forEach(function(ev){
+    if(ev._T!=='LogPlayerMakeGroggy')return;
+    var atk=ev.attacker||{},vic=ev.victim||{};
+    if(!atk.name||!vic.name)return;
+    var akL=atk.name.toLowerCase();
+    if(!squadNames[akL])return;
+    var dist=ev.distance?Math.round(ev.distance/100):null;
+    var wp=weapName(ev.damageCauserName);
+    var text=nameTag(atk.name,true)+' knock a '+nameTag(vic.name,false);
+    if(dist!=null&&dist>0)text+=' \u00b7 '+dist+'m';
+    events.push({t:rel(ev._D),type:'knock',icon:'\uD83D\uDCA5',text:text,weap:wp});
+  });
+  // Kills del squad y muertes del squad (LogPlayerKillV2 / LogPlayerKill)
+  telem.forEach(function(ev){
+    if(ev._T!=='LogPlayerKillV2'&&ev._T!=='LogPlayerKill')return;
+    var killer=ev.killer||ev.finisher||{};
+    var victim=ev.victim||{};
+    if(!victim.name)return;
+    var kName=killer.name||'';
+    var vName=victim.name;
+    var kL=kName.toLowerCase(),vL=vName.toLowerCase();
+    var killerInSquad=kL&&squadNames[kL];
+    var victimInSquad=squadNames[vL];
+    if(!killerInSquad&&!victimInSquad)return;
+    var dist=null;
+    if(ev.killerDamageInfo&&ev.killerDamageInfo.distance)dist=Math.round(ev.killerDamageInfo.distance/100);
+    else if(ev.distance)dist=Math.round(ev.distance/100);
+    var wpRaw=(ev.killerDamageInfo&&ev.killerDamageInfo.damageCauserName)||ev.damageCauserName||ev.damageTypeCategory||'';
+    var wp=weapName(wpRaw);
+    var isHS=(ev.killerDamageInfo&&ev.killerDamageInfo.damageReason)==='HeadShot'||ev.damageReason==='HeadShot';
+    if(killerInSquad&&!victimInSquad){
+      // Kill del squad
+      var text=nameTag(kName,true)+' mata a '+nameTag(vName,false);
+      if(isHS)text+=' \u00b7 headshot';
+      if(dist!=null&&dist>0)text+=' \u00b7 '+dist+'m';
+      events.push({t:rel(ev._D),type:'kill',icon:'\uD83D\uDC80',text:text,weap:wp});
+    } else if(victimInSquad){
+      // Muerte del squad
+      var text2=nameTag(vName,true)+' muere';
+      if(kName&&kName!=='')text2+=' por '+nameTag(kName,false);
+      if(isHS)text2+=' \u00b7 headshot';
+      if(dist!=null&&dist>0)text2+=' \u00b7 '+dist+'m';
+      events.push({t:rel(ev._D),type:'death',icon:'\u26B0\uFE0F',text:text2,weap:wp});
+    }
+  });
+  if(events.length===0){
+    el.innerHTML='<div class="md-tab-loading" style="padding:20px;color:var(--text-dim);text-align:center;">No se detectaron eventos del squad en la telemetr\u00eda.</div>';return;
+  }
+  // Sort por tiempo (convertir mm:ss a segundos)
+  function toSec(mmss){var p=mmss.split(':');return parseInt(p[0],10)*60+parseInt(p[1],10);}
+  events.sort(function(a,b){return toSec(a.t)-toSec(b.t);});
+  // Marcar el último kill del squad como finale si cierra la partida
+  var lastKill=null;
+  events.forEach(function(e){if(e.type==='kill')lastKill=e;});
+  // Render
+  var h='<div class="md-timeline">';
+  events.forEach(function(e){
+    h+='<div class="md-event '+e.type+'">';
+    h+='<span class="md-event-time">'+e.t+'</span>';
+    h+='<span class="md-event-icon">'+e.icon+'</span>';
+    h+='<span class="md-event-text">'+e.text+'</span>';
+    if(e.weap)h+='<span class="md-event-weapon">'+esc(e.weap)+'</span>';
+    h+='</div>';
+  });
+  h+='</div>';
+  // Resumen
+  var nK=events.filter(function(e){return e.type==='kill';}).length;
+  var nKn=events.filter(function(e){return e.type==='knock';}).length;
+  var nD=events.filter(function(e){return e.type==='death';}).length;
+  h+='<div class="md-timeline-summary"><strong>Resumen:</strong> '+nK+' kills del squad \u00b7 '+nKn+' knocks \u00b7 '+nD+' muertes del squad \u00b7 '+events.length+' eventos totales</div>';
   el.innerHTML=h;
 }
 // ═══ TAB: RESUMEN ═══
