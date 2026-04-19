@@ -2356,6 +2356,90 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 /* ═══ END match-detail-mockup-v2-m2 ═══ */
 
 /* ═══════════════════════════════════════════════════════════════
+   match-detail-m3a — limpieza: Resumen y Audit fusionados en Diagnóstico
+   ═══════════════════════════════════════════════════════════════ */
+.md-diag-extras {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(255,200,0,0.25);
+}
+.md-diag-extras-title {
+  font-family: Rajdhani, sans-serif;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--accent-yellow);
+  margin-bottom: 10px;
+  opacity: .85;
+}
+.md-diag-move {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.md-diag-move-card {
+  background: rgba(255,200,0,0.05);
+  border: 1px solid rgba(255,200,0,0.18);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.md-diag-move-v {
+  font-family: Orbitron, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent-yellow);
+}
+.md-diag-move-l {
+  font-size: .6rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+.md-diag-loot {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 6px;
+}
+.md-diag-loot-item {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: .7rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.md-diag-loot-v {
+  font-family: Orbitron, sans-serif;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: .78rem;
+}
+.md-diag-audit {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(168,85,247,0.3);
+  text-align: center;
+}
+.md-diag-audit-hint {
+  font-size: .66rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  letter-spacing: .5px;
+}
+@media (max-width: 768px) {
+  .md-diag-move { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .md-diag-loot { grid-template-columns: repeat(2, 1fr); }
+}
+/* ═══ END match-detail-m3a ═══ */
+
+/* ═══════════════════════════════════════════════════════════════
    V4NZ CAPA 3 SPRINT 1 — marker: capa-3-sprint-1-v179
    Bottom nav móvil + Hero search mejorado
    ═══════════════════════════════════════════════════════════════ */
@@ -6154,14 +6238,14 @@ function showMatchDetail(idx){
   h+='<button class="md-subtab md-chip-diag active" data-mdtab="diag" onclick="_mdSwitchTab(\'diag\')"><span class="md-subtab-icon">&#x1F3AF;</span>Diagn\u00f3stico</button>';
   // match-detail-mockup-v2-m2: chip Squad (siempre visible, no requiere telemetry)
   h+='<button class="md-subtab md-chip-squad" data-mdtab="squad" onclick="_mdSwitchTab(\'squad\')"><span class="md-subtab-icon">&#x1F465;</span>Squad</button>';
-  h+='<button class="md-subtab" data-mdtab="resumen" onclick="_mdSwitchTab(\'resumen\')"><span class="md-subtab-icon">&#x1F4CA;</span>Resumen</button>';
+  // match-detail-m3a: chip "Resumen" eliminado — sus bloques únicos se inyectan al final de Diagnóstico
   h+='<button class="md-subtab md-chip-insights" data-mdtab="insights" onclick="_mdSwitchTab(\'insights\')"><span class="md-subtab-icon">&#x1F9EC;</span>Radiograf\u00eda</button>';
   // match-detail-mockup-v2-m2: chip Timeline (requiere telemetry)
   h+='<button class="md-subtab md-chip-timeline" data-mdtab="timeline" onclick="_mdSwitchTab(\'timeline\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x23F1;</span>Timeline</button>';
   h+='<button class="md-subtab" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
   h+='<button class="md-subtab" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
   h+='<button class="md-subtab" data-mdtab="mapa" onclick="_mdSwitchTab(\'mapa\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F5FA;</span>Mapa</button>';
-  h+='<button class="md-subtab" data-mdtab="audit" onclick="_mdSwitchTab(\'audit\')"'+(auditMatchId?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F916;</span>Auditor\u00eda</button>';
+  // match-detail-m3a: chip "Auditoría" eliminado — botón "Auditar con IA" ahora vive al final de Diagnóstico
   h+='</div>';
   // ═══ TAB CONTENTS ═══
   // R-2a: wrappers mdSec-X contienen heading + mdTab-X (los render siguen escribiendo en mdTab-X sin tocar el heading)
@@ -6169,7 +6253,8 @@ function showMatchDetail(idx){
   h+='<section class="md-section md-section-diag" id="mdSec-diag"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F3AF;</i> Diagn\u00f3stico del match <span class="md-sec-count">auto \u00b7 '+esc(pn)+'</span></h3><div class="md-section-hint">Le\u00eddo autom\u00e1ticamente de las stats de esta partida \u2014 perfil detectado + alertas</div><div class="md-tab-content active" id="mdTab-diag"></div></section>';
   // match-detail-mockup-v2-m2: sección Squad (tarjetas jugador por miembro del squad)
   h+='<section class="md-section md-section-squad" id="mdSec-squad"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F465;</i> Tu squad <span class="md-sec-count">stats \u00b7 partida</span></h3><div class="md-section-hint">Tarjetas individuales por cada miembro del squad \u2014 MVP, tiempo vivo y breakdown de stats</div><div class="md-tab-content" id="mdTab-squad"></div></section>';
-  h+='<section class="md-section" id="mdSec-resumen"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4CA;</i> Resumen</h3><div class="md-tab-content" id="mdTab-resumen"></div></section>';
+  // match-detail-m3a: sección Resumen eliminada — placeholder invisible para retrocompat
+  h+='<div class="md-tab-content" id="mdTab-resumen" style="display:none"></div>';
   // I-0b: Radiografia del match — seccion nueva con chip dorado
   h+='<section class="md-section" id="mdSec-insights"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F9EC;</i> Radiograf\u00eda del match</h3><div class="md-tab-content" id="mdTab-insights"></div></section>';
   if(telemetryUrl){
@@ -6185,11 +6270,8 @@ function showMatchDetail(idx){
     h+='<div class="md-tab-content" id="mdTab-damage" style="display:none"></div>';
     h+='<div class="md-tab-content" id="mdTab-mapa" style="display:none"></div>';
   }
-  if(auditMatchId){
-    h+='<section class="md-section" id="mdSec-audit"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F916;</i> Auditor\u00eda</h3><div class="md-tab-content" id="mdTab-audit"></div></section>';
-  } else {
-    h+='<div class="md-tab-content" id="mdTab-audit" style="display:none"></div>';
-  }
+  // match-detail-m3a: sección Audit eliminada como tab independiente — el botón vive al final de Diagnóstico
+  h+='<div class="md-tab-content" id="mdTab-audit" style="display:none"></div>';
   // ═══ STICKY ACTIONS (always visible below tabs) ═══
   h+='<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center;justify-content:center;">';
   h+='<button onclick="shareMatchCard('+idx+')" style="flex:1;min-width:140px;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;">&#x1F517; Compartir</button>';
@@ -6205,12 +6287,11 @@ function showMatchDetail(idx){
   _mdLoadTab('diag');
   // match-detail-mockup-v2-m2: squad se carga inmediato (solo stats, sin telemetry)
   _mdLoadTab('squad');
-  _mdLoadTab('resumen');
+  // match-detail-m3a: ya no se carga 'resumen' — extras van dentro de Diag; 'audit' se activa por botón
   setTimeout(function(){
     _mdLoadTab('insights');
     // match-detail-mockup-v2-m2: timeline pinta solo el botón "Cargar timeline" (lazy, requiere telemetry)
     if(telemetryUrl){_mdLoadTab('timeline');_mdLoadTab('killlog');_mdLoadTab('damage');_mdLoadTab('mapa');}
-    if(auditMatchId){_mdLoadTab('audit');}
     _mdSetupScrollspy();
   },0);
   // Map image lazy upgrade
@@ -6250,7 +6331,8 @@ function _mdSetupScrollspy(){
   if(!('IntersectionObserver' in window))return;
   // match-detail-mockup-v2-m1: 'diag' primero para scrollspy
   // match-detail-mockup-v2-m2: incluir 'squad' y 'timeline' en el scrollspy
-  var ids=['diag','squad','resumen','insights','timeline','killlog','damage','mapa','audit'];
+  // match-detail-m3a: eliminados 'resumen' y 'audit' (fusionados en Diagnóstico)
+  var ids=['diag','squad','insights','timeline','killlog','damage','mapa'];
   // rootMargin negativo arriba = compensa header (64px) + sticky chips (~48px) = -132px
   // rootMargin negativo abajo = zona "muerta" de 55% para que la seccion activa sea la del centro
   var obs=new IntersectionObserver(function(entries){
@@ -6277,12 +6359,11 @@ function _mdLoadTab(tab){
   if(tab==='diag')_mdRenderDiag(ctx);
   else if(tab==='squad')_mdRenderSquad(ctx);
   else if(tab==='timeline')_mdRenderTimeline(ctx);
-  else if(tab==='resumen')_mdRenderResumen(ctx);
   else if(tab==='insights')_mdRenderInsights(ctx);
   else if(tab==='killlog')_mdRenderKillLog(ctx);
   else if(tab==='damage')_mdRenderDamage(ctx);
   else if(tab==='mapa')_mdRenderMapa(ctx);
-  else if(tab==='audit')_mdRenderAudit(ctx);
+  // match-detail-m3a: 'resumen' y 'audit' ya no se dispatchan — viven dentro de Diagnóstico
 }
 // ═══ match-insights-ui-v2 (insightsV2) — Radiografia del match ═══
 // Catalogo de 14 insights. Claves en snake_case sincronizadas con server INSIGHTS_PLANNED_KEYS.
@@ -6444,6 +6525,47 @@ function _mdResetTabs(){_mdTabLoaded={};window._mdCtx=null;}
 // ═══ TAB: DIAGNÓSTICO (match-detail-mockup-v2-m1) ═══
 // Heurística determinística sobre los stats de la partida. Sin IA, sin backend.
 // Detecta perfil (agresor, farmer, pacifista, sniper, etc.) + 2-4 alertas.
+// match-detail-m3a: helper que extrae los 3 bloques únicos del antiguo tab Resumen.
+// Combat summary y Tu equipo ya están cubiertos por Diag y Squad respectivamente;
+// aquí solo viaja lo que NO estaba en ningún otro sitio: Loot & Movimiento + botón Audit.
+// Top Killer warning se maneja como alerta en el bloque alerts de _mdRenderDiag.
+function _mdRenderPartidaExtras(ctx){
+  var ps=ctx.ps||{},pn=ctx.pn||'';
+  var out='';
+  // ───── Loot y Movimiento ─────
+  var lootItems=[];
+  if(ps.heals)lootItems.push({l:'Heals',v:ps.heals});
+  if(ps.boosts)lootItems.push({l:'Boosts',v:ps.boosts});
+  if(ps.weaponsAcquired)lootItems.push({l:'Armas',v:ps.weaponsAcquired});
+  if(ps.roadKills)lootItems.push({l:'Atropellos',v:ps.roadKills});
+  if(ps.vehicleDestroys)lootItems.push({l:'Veh\u00edculos',v:ps.vehicleDestroys});
+  if(ps.longestKill)lootItems.push({l:'Kill lejano',v:Math.round(ps.longestKill)+'m'});
+  if(ps.swimDistance>0)lootItems.push({l:'Nado',v:((ps.swimDistance)/1000).toFixed(2)+'km'});
+  var walkKm=((ps.walkDistance||0)/1000).toFixed(1);
+  var rideKm=((ps.rideDistance||0)/1000).toFixed(1);
+  if(lootItems.length>0||parseFloat(walkKm)>0||parseFloat(rideKm)>0){
+    out+='<div class="md-diag-extras">';
+    out+='<div class="md-diag-extras-title">Loot y movimiento</div>';
+    out+='<div class="md-diag-move">';
+    out+='<div class="md-diag-move-card"><div class="md-diag-move-v">'+walkKm+'km</div><div class="md-diag-move-l">A pie</div></div>';
+    out+='<div class="md-diag-move-card"><div class="md-diag-move-v">'+rideKm+'km</div><div class="md-diag-move-l">Veh\u00edculo</div></div>';
+    out+='</div>';
+    if(lootItems.length){
+      out+='<div class="md-diag-loot">';
+      lootItems.forEach(function(i){out+='<div class="md-diag-loot-item"><span class="md-diag-loot-v">'+esc(String(i.v))+'</span>'+esc(i.l)+'</div>';});
+      out+='</div>';
+    }
+    out+='</div>';
+  }
+  // ───── Botón Audit ─────
+  if(ctx.auditMatchId){
+    out+='<div class="md-diag-audit"><button class="audit-btn" onclick="requestTelemetryAudit(\''+escJs(ctx.auditMatchId)+'\',\''+escJs(pn)+'\',\''+escJs(currentPlatform||'psn')+'\',this)" style="max-width:420px;">&#x1F916; Auditar esta partida con IA</button>';
+    out+='<div class="md-diag-audit-hint">An\u00e1lisis profundo con IA \u2014 detecta patrones sospechosos y errores t\u00e1cticos (15-30s)</div>';
+    out+='<div id="auditResult" style="margin-top:12px;"></div>';
+    out+='</div>';
+  }
+  return out;
+}
 function _mdRenderDiag(ctx){
   var el=document.getElementById('mdTab-diag');if(!el)return;
   var ps=ctx.ps||{},pn=ctx.pn||'',match=ctx.match||{},pp=ctx.pp||{};
@@ -6504,6 +6626,17 @@ function _mdRenderDiag(ctx){
   if(vehDestroys>=1)alerts.push({type:'good',icon:'\uD83D\uDCA5',title:vehDestroys+' veh\u00edculo'+(vehDestroys>1?'s':'')+' destruido'+(vehDestroys>1?'s':''),detail:'Conseguiste destruir veh\u00edculos enemigos. Muy pocos jugadores lo hacen bien.'});
   // Squad wipe trader (muchos knocks vs kills)
   if(dbno>=3 && kills>=1 && (dbno-kills)>=1)alerts.push({type:'warn',icon:'\uD83D\uDD04',title:'Knocks sin convertir',detail:dbno+' knocks y solo '+kills+' kills. El squad te trade\u00f3 los finishes \u2014 revisa si te compensa o si deber\u00edas cerrar los DBNOs t\u00fa mismo.'});
+  // match-detail-m3a: Top Killer warning migrado desde el antiguo tab Resumen
+  try{
+    var allParts=(match.included||[]).filter(function(i){return i.type==='participant';});
+    var topK=null,topKills=0;
+    allParts.forEach(function(p){var k=(p.attributes&&p.attributes.stats&&p.attributes.stats.kills)||0;if(k>topKills){topKills=k;topK=p.attributes.stats.name;}});
+    if(topKills>=10 && topK && topK.toLowerCase()!==pn.toLowerCase()){
+      var atype=topKills>=15?'danger':'warn';
+      var aicon=topKills>=15?'\u26A0\uFE0F':'\uD83D\uDD25';
+      alerts.push({type:atype,icon:aicon,title:'Top killer de la partida',detail:esc(topK)+' hizo '+topKills+' kills en esta partida.'+(topKills>=15?' Vigila que no est\u00e9s en lobby sospechoso.':'')});
+    }
+  }catch(e){}
   if(alerts.length===0)alerts.push({type:'good',icon:'\u2139\uFE0F',title:'Partida dentro de lo normal',detail:'No hay alertas relevantes \u2014 stats y ratios dentro de los rangos esperados para esta partida.'});
   // Render
   var h='<div class="md-diag-grid">';
@@ -6533,6 +6666,8 @@ function _mdRenderDiag(ctx){
   });
   h+='</div>';
   h+='</div>';
+  // match-detail-m3a: inyectar Loot & Movimiento + botón Audit al final del Diagnóstico
+  h+=_mdRenderPartidaExtras(ctx);
   el.innerHTML=h;
 }
 // ═══ TAB: SQUAD (match-detail-mockup-v2-m2) ═══
