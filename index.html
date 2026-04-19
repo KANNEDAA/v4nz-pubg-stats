@@ -2440,6 +2440,48 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 /* ═══ END match-detail-m3a ═══ */
 
 /* ═══════════════════════════════════════════════════════════════
+   match-detail-m3b — Reskin Kill Log / Daño / Mapa con patrón M-1/M-2
+   ═══════════════════════════════════════════════════════════════ */
+/* ─── CHIPS PILL activos con acento por sección ─── */
+.md-subtabs .md-subtab.md-chip-killlog.active {
+  background: var(--accent-red, #ff3355);
+  border-color: var(--accent-red, #ff3355);
+  color: #1a0408;
+  box-shadow: 0 0 14px rgba(255,51,85,.22);
+}
+.md-subtabs .md-subtab.md-chip-damage.active {
+  background: var(--accent-purple, #a855f7);
+  border-color: var(--accent-purple, #a855f7);
+  color: #0f051a;
+  box-shadow: 0 0 14px rgba(168,85,247,.24);
+}
+.md-subtabs .md-subtab.md-chip-mapa.active {
+  background: var(--accent-blue, #0080ff);
+  border-color: var(--accent-blue, #0080ff);
+  color: #04101e;
+  box-shadow: 0 0 14px rgba(0,128,255,.22);
+}
+/* ─── SECCIÓN KILL LOG ─── */
+.md-section-killlog {
+  background: linear-gradient(135deg, rgba(255,51,85,.04), rgba(255,107,0,.03));
+  border: 1px solid rgba(255,51,85,.15);
+}
+.md-section-killlog .md-section-title { color: var(--accent-red, #ff3355); }
+/* ─── SECCIÓN DAÑO ─── */
+.md-section-damage {
+  background: linear-gradient(135deg, rgba(168,85,247,.04), rgba(0,240,255,.02));
+  border: 1px solid rgba(168,85,247,.15);
+}
+.md-section-damage .md-section-title { color: var(--accent-purple, #a855f7); }
+/* ─── SECCIÓN MAPA ─── */
+.md-section-mapa {
+  background: linear-gradient(135deg, rgba(0,128,255,.04), rgba(0,240,255,.03));
+  border: 1px solid rgba(0,128,255,.15);
+}
+.md-section-mapa .md-section-title { color: var(--accent-blue, #0080ff); }
+/* ═══ END match-detail-m3b ═══ */
+
+/* ═══════════════════════════════════════════════════════════════
    V4NZ CAPA 3 SPRINT 1 — marker: capa-3-sprint-1-v179
    Bottom nav móvil + Hero search mejorado
    ═══════════════════════════════════════════════════════════════ */
@@ -6242,9 +6284,10 @@ function showMatchDetail(idx){
   h+='<button class="md-subtab md-chip-insights" data-mdtab="insights" onclick="_mdSwitchTab(\'insights\')"><span class="md-subtab-icon">&#x1F9EC;</span>Radiograf\u00eda</button>';
   // match-detail-mockup-v2-m2: chip Timeline (requiere telemetry)
   h+='<button class="md-subtab md-chip-timeline" data-mdtab="timeline" onclick="_mdSwitchTab(\'timeline\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x23F1;</span>Timeline</button>';
-  h+='<button class="md-subtab" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
-  h+='<button class="md-subtab" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
-  h+='<button class="md-subtab" data-mdtab="mapa" onclick="_mdSwitchTab(\'mapa\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F5FA;</span>Mapa</button>';
+  // match-detail-m3b: chips con acento por sección (rojo/púrpura/azul)
+  h+='<button class="md-subtab md-chip-killlog" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
+  h+='<button class="md-subtab md-chip-damage" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
+  h+='<button class="md-subtab md-chip-mapa" data-mdtab="mapa" onclick="_mdSwitchTab(\'mapa\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F5FA;</span>Mapa</button>';
   // match-detail-m3a: chip "Auditoría" eliminado — botón "Auditar con IA" ahora vive al final de Diagnóstico
   h+='</div>';
   // ═══ TAB CONTENTS ═══
@@ -6260,9 +6303,10 @@ function showMatchDetail(idx){
   if(telemetryUrl){
     // match-detail-mockup-v2-m2: sección Timeline (narrativa cronológica de la partida)
     h+='<section class="md-section md-section-timeline" id="mdSec-timeline"><h3 class="md-section-title"><i class="md-sec-ico">&#x23F1;</i> Timeline del match <span class="md-sec-count">eventos cronol\u00f3gicos</span></h3><div class="md-section-hint">Kills, knocks, muertes y cierres de zona de tu squad \u2014 ordenados por minuto</div><div class="md-tab-content" id="mdTab-timeline"></div></section>';
-    h+='<section class="md-section" id="mdSec-killlog"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F52E;</i> Kill Log</h3><div class="md-tab-content" id="mdTab-killlog"></div></section>';
-    h+='<section class="md-section" id="mdSec-damage"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4A5;</i> Da\u00f1o</h3><div class="md-tab-content" id="mdTab-damage"></div></section>';
-    h+='<section class="md-section" id="mdSec-mapa"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F5FA;</i> Mapa</h3><div class="md-tab-content" id="mdTab-mapa"></div></section>';
+    // match-detail-m3b: secciones con wrapper temático + hint (coherente con Diag/Squad/Timeline)
+    h+='<section class="md-section md-section-killlog" id="mdSec-killlog"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F52E;</i> Kill Log <span class="md-sec-count">telemetr\u00eda</span></h3><div class="md-section-hint">Tus kills y knocks con arma, distancia y v\u00edctima \u2014 extra\u00eddos de la telemetr\u00eda oficial</div><div class="md-tab-content" id="mdTab-killlog"></div></section>';
+    h+='<section class="md-section md-section-damage" id="mdSec-damage"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4A5;</i> Da\u00f1o <span class="md-sec-count">por arma</span></h3><div class="md-section-hint">Desglose del da\u00f1o que hiciste por arma y por parte del cuerpo</div><div class="md-tab-content" id="mdTab-damage"></div></section>';
+    h+='<section class="md-section md-section-mapa" id="mdSec-mapa"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F5FA;</i> Mapa <span class="md-sec-count">recorrido + eventos</span></h3><div class="md-section-hint">Mapa de la partida con tu ruta, drop, kills y muerte</div><div class="md-tab-content" id="mdTab-mapa"></div></section>';
   } else {
     // Placeholders vacios por si alguna funcion los busca; no generan seccion visible
     h+='<div class="md-tab-content" id="mdTab-timeline" style="display:none"></div>';
