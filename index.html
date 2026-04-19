@@ -1925,6 +1925,154 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 /* ═══ END match-insights-ui-v1 ═══ */
 
 /* ═══════════════════════════════════════════════════════════════
+   match-detail-mockup-v2-m1 — Sección Diagnóstico + nav chips pill
+   Sprint M-1 · inspirado en match-detail-mockup-v2.html
+   ═══════════════════════════════════════════════════════════════ */
+/* ─── NAV CHIPS pill style (activo = accent color con texto oscuro) ─── */
+.md-subtabs .md-subtab {
+  border-radius: 20px;
+  font-size: .72rem;
+  padding: 6px 14px;
+  transition: all .15s ease;
+}
+.md-subtabs .md-subtab.active {
+  background: var(--accent, #00f0ff);
+  color: #061018;
+  border-color: var(--accent, #00f0ff);
+  font-weight: 700;
+}
+.md-subtabs .md-subtab.active .md-subtab-icon { filter: grayscale(0) brightness(.1); }
+.md-subtabs .md-subtab.md-chip-diag.active {
+  background: var(--accent-yellow, #ffc800);
+  border-color: var(--accent-yellow, #ffc800);
+  color: #1a1405;
+  box-shadow: 0 0 14px rgba(255,200,0,.22);
+}
+.md-subtabs .md-subtab.md-chip-insights.active {
+  background: var(--accent-purple, #a855f7);
+  border-color: var(--accent-purple, #a855f7);
+  color: #fff;
+}
+/* ─── SECCIÓN DIAGNÓSTICO ─── */
+.md-section-diag {
+  background: linear-gradient(135deg, rgba(255,200,0,.05), rgba(168,85,247,.04));
+  border: 1px solid rgba(255,200,0,.18);
+}
+.md-section-diag .md-section-title {
+  color: var(--accent-yellow, #ffc800);
+}
+.md-sec-count {
+  margin-left: 10px;
+  background: rgba(255,255,255,.06);
+  color: var(--text-dim, rgba(255,255,255,.55));
+  font-size: .55rem;
+  padding: 3px 9px;
+  border-radius: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+  vertical-align: middle;
+}
+.md-section-hint {
+  color: var(--text-dim, rgba(255,255,255,.55));
+  font-size: .72rem;
+  margin-top: -4px;
+  margin-bottom: 14px;
+}
+.md-diag-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 18px;
+}
+.md-diag-profile {
+  padding: 16px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+}
+.md-diag-tag {
+  color: var(--accent-yellow, #ffc800);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 6px;
+}
+.md-diag-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.25;
+  color: var(--text-primary, #fff);
+}
+.md-diag-desc {
+  font-size: .8rem;
+  color: var(--text-secondary, rgba(255,255,255,.75));
+  line-height: 1.55;
+}
+.md-diag-metrics {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  font-size: .72rem;
+}
+.md-diag-m {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--text-dim, rgba(255,255,255,.55));
+  padding: 4px 0;
+  border-bottom: 1px dashed rgba(255,255,255,.05);
+}
+.md-diag-m:last-child { border-bottom: none; }
+.md-diag-m strong {
+  color: var(--text-primary, #fff);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+.md-diag-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.md-alert {
+  background: rgba(255,255,255,.03);
+  padding: 11px 13px;
+  border-radius: 10px;
+  border-left: 4px solid var(--text-dim, rgba(255,255,255,.55));
+  font-size: .78rem;
+}
+.md-alert-good   { border-left-color: var(--accent-green, #3cd07a); }
+.md-alert-warn   { border-left-color: var(--accent-yellow, #ffc800); }
+.md-alert-danger { border-left-color: var(--accent-red, #ff3355); }
+.md-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  color: var(--text-primary, #fff);
+  font-size: .82rem;
+}
+.md-alert-ico { font-size: 1rem; }
+.md-alert-detail {
+  color: var(--text-dim, rgba(255,255,255,.55));
+  font-size: .72rem;
+  line-height: 1.45;
+}
+@media (max-width: 768px) {
+  .md-diag-grid { grid-template-columns: 1fr; gap: 14px; }
+  .md-diag-metrics { grid-template-columns: 1fr; gap: 4px; }
+  .md-diag-name { font-size: 1rem; }
+  .md-section-hint { font-size: .68rem; }
+}
+/* ═══ END match-detail-mockup-v2-m1 ═══ */
+
+/* ═══════════════════════════════════════════════════════════════
    V4NZ CAPA 3 SPRINT 1 — marker: capa-3-sprint-1-v179
    Bottom nav móvil + Hero search mejorado
    ═══════════════════════════════════════════════════════════════ */
@@ -5718,8 +5866,10 @@ function showMatchDetail(idx){
   h+='<span style="display:block;color:var(--text-secondary);font-size:.78rem;">'+gm.toUpperCase()+' &mdash; '+new Date(a.createdAt).toLocaleString('es-ES')+'</span>';
   h+='<span style="display:block;color:var(--text-dim);font-size:.68rem;margin-top:2px;">Duracion partida: '+matchDur+'</span></div>';
   // ═══ SUB-TABS BAR ═══
+  // match-detail-mockup-v2-m1: chip Diagnóstico como primer item
   h+='<div class="md-subtabs" id="mdSubtabs">';
-  h+='<button class="md-subtab active" data-mdtab="resumen" onclick="_mdSwitchTab(\'resumen\')"><span class="md-subtab-icon">&#x1F4CA;</span>Resumen</button>';
+  h+='<button class="md-subtab md-chip-diag active" data-mdtab="diag" onclick="_mdSwitchTab(\'diag\')"><span class="md-subtab-icon">&#x1F3AF;</span>Diagn\u00f3stico</button>';
+  h+='<button class="md-subtab" data-mdtab="resumen" onclick="_mdSwitchTab(\'resumen\')"><span class="md-subtab-icon">&#x1F4CA;</span>Resumen</button>';
   h+='<button class="md-subtab md-chip-insights" data-mdtab="insights" onclick="_mdSwitchTab(\'insights\')"><span class="md-subtab-icon">&#x1F9EC;</span>Radiograf\u00eda</button>';
   h+='<button class="md-subtab" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
   h+='<button class="md-subtab" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
@@ -5728,7 +5878,9 @@ function showMatchDetail(idx){
   h+='</div>';
   // ═══ TAB CONTENTS ═══
   // R-2a: wrappers mdSec-X contienen heading + mdTab-X (los render siguen escribiendo en mdTab-X sin tocar el heading)
-  h+='<section class="md-section" id="mdSec-resumen"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4CA;</i> Resumen</h3><div class="md-tab-content active" id="mdTab-resumen"></div></section>';
+  // match-detail-mockup-v2-m1: sección Diagnóstico del match (primera sección, heurística sobre stats)
+  h+='<section class="md-section md-section-diag" id="mdSec-diag"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F3AF;</i> Diagn\u00f3stico del match <span class="md-sec-count">auto \u00b7 '+esc(pn)+'</span></h3><div class="md-section-hint">Le\u00eddo autom\u00e1ticamente de las stats de esta partida \u2014 perfil detectado + alertas</div><div class="md-tab-content active" id="mdTab-diag"></div></section>';
+  h+='<section class="md-section" id="mdSec-resumen"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4CA;</i> Resumen</h3><div class="md-tab-content" id="mdTab-resumen"></div></section>';
   // I-0b: Radiografia del match — seccion nueva con chip dorado
   h+='<section class="md-section" id="mdSec-insights"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F9EC;</i> Radiograf\u00eda del match</h3><div class="md-tab-content" id="mdTab-insights"></div></section>';
   if(telemetryUrl){
@@ -5757,7 +5909,8 @@ function showMatchDetail(idx){
   h+='<button class="match-back-btn" onclick="closeMatchDetail()" style="flex:1;min-width:140px;margin-top:0;">&#x2190; Volver</button>';
   h+='</div>';
   document.getElementById('matchDetailContent').innerHTML=h;
-  // R-2a: cargar resumen inmediato (sincrono para ver stats basicos YA), los demas en siguiente tick
+  // match-detail-mockup-v2-m1: cargar 'diag' inmediato (primera sección visible), luego el resto en next tick
+  _mdLoadTab('diag');
   _mdLoadTab('resumen');
   setTimeout(function(){
     _mdLoadTab('insights');
@@ -5800,7 +5953,8 @@ function _mdSetupScrollspy(){
   // Limpiar observer anterior si existe (al reabrir el popup en otra partida)
   if(window._mdScrollspyObs){try{window._mdScrollspyObs.disconnect();}catch(e){}window._mdScrollspyObs=null;}
   if(!('IntersectionObserver' in window))return;
-  var ids=['resumen','insights','killlog','damage','mapa','audit'];
+  // match-detail-mockup-v2-m1: 'diag' primero para scrollspy
+  var ids=['diag','resumen','insights','killlog','damage','mapa','audit'];
   // rootMargin negativo arriba = compensa header (64px) + sticky chips (~48px) = -132px
   // rootMargin negativo abajo = zona "muerta" de 55% para que la seccion activa sea la del centro
   var obs=new IntersectionObserver(function(entries){
@@ -5824,7 +5978,8 @@ function _mdLoadTab(tab){
   if(_mdTabLoaded[tab])return;
   _mdTabLoaded[tab]=true;
   var ctx=window._mdCtx;if(!ctx)return;
-  if(tab==='resumen')_mdRenderResumen(ctx);
+  if(tab==='diag')_mdRenderDiag(ctx);
+  else if(tab==='resumen')_mdRenderResumen(ctx);
   else if(tab==='insights')_mdRenderInsights(ctx);
   else if(tab==='killlog')_mdRenderKillLog(ctx);
   else if(tab==='damage')_mdRenderDamage(ctx);
@@ -5988,6 +6143,100 @@ function _mdRenderInsights(ctx){
 // v178: Reset tab cache when opening new match detail
 var _origShowMatchDetail_reset=true;
 function _mdResetTabs(){_mdTabLoaded={};window._mdCtx=null;}
+// ═══ TAB: DIAGNÓSTICO (match-detail-mockup-v2-m1) ═══
+// Heurística determinística sobre los stats de la partida. Sin IA, sin backend.
+// Detecta perfil (agresor, farmer, pacifista, sniper, etc.) + 2-4 alertas.
+function _mdRenderDiag(ctx){
+  var el=document.getElementById('mdTab-diag');if(!el)return;
+  var ps=ctx.ps||{},pn=ctx.pn||'',match=ctx.match||{},pp=ctx.pp||{};
+  var a=(match.data&&match.data.attributes)||{};
+  var kills=ps.kills||0;
+  var dmg=Math.round(ps.damageDealt||0);
+  var hs=ps.headshotKills||0;
+  var hsPct=kills>0?Math.round((hs/kills)*100):0;
+  var assists=ps.assists||0;
+  var dbno=ps.DBNOs||0;
+  var revives=ps.revives||0;
+  var boosts=ps.boosts||0;
+  var heals=ps.heals||0;
+  var longest=Math.round(ps.longestKill||0);
+  var timeSurv=ps.timeSurvived||0;
+  var winPlace=ps.winPlace||99;
+  var rideDist=Math.round(ps.rideDistance||0);
+  var walkDist=Math.round(ps.walkDistance||0);
+  var vehDestroys=ps.vehicleDestroys||0;
+  var dmgPerKill=kills>0?Math.round(dmg/kills):0;
+  var dmgPerMin=timeSurv>0?(dmg/(timeSurv/60)).toFixed(1):'0';
+  var survMin=Math.floor(timeSurv/60);
+  var survSec=Math.round(timeSurv%60);
+  var matchDur=a.duration||0;
+  var matchDurMin=Math.floor(matchDur/60);
+  var gameMode=(a.gameMode||'').toUpperCase();
+  // Perfil heurístico
+  var profileName='Explorador', profileDesc='Partida de perfil normal.';
+  if(kills===0 && dmg<100){profileName='Pacifista / Loot farmer';profileDesc='Partida de exploración. '+dmg+' de daño sin kills \u2014 probablemente lootear zonas tranquilas o cayeron pronto sin pelear.';}
+  else if(kills>=5 && hsPct>=35){profileName='Agresor \u00b7 Precision shooter';profileDesc=kills+' kills con '+hsPct+'% de headshots. Perfil de tirador preciso que busca el duelo cuando lo tiene claro.';}
+  else if(kills>=5 && dmgPerKill<=180){profileName='Agresor \u00b7 Trade farmer';profileDesc=kills+' kills con solo '+dmgPerKill+' dmg/kill. Muchos finishes sobre knocks del squad o enemigos que llegaron tocados \u2014 rol de cleaner.';}
+  else if(kills>=3 && longest>=200){profileName='Sniper \u00b7 Long range';profileDesc=kills+' kills con longest de '+longest+'m. Prefieres el rango largo al CQC.';}
+  else if(kills>=3){profileName='Agresor \u00b7 CQC-Midrange';profileDesc=kills+' kills con '+dmg+' daño. Perfil de fragger que coge los duelos que aparecen.';}
+  else if(kills<=1 && assists>=2){profileName='Support \u00b7 IGL solidario';profileDesc=assists+' asistencias y '+revives+' revives. Rol de apoyo \u2014 aguantas al squad más que fraguear.';}
+  else if(kills<=2 && timeSurv>=1500){profileName='Superviviente \u00b7 Survivor';profileDesc='Survivor puro: '+survMin+':'+(survSec<10?'0':'')+survSec+' min de superviviencia con solo '+kills+' kill'+(kills===1?'':'s')+'. Priorizaste el círculo sobre las peleas.';}
+  else if(kills>=1){profileName='Combat \u00b7 Mid pack';profileDesc=kills+' kill'+(kills===1?'':'s')+' y '+dmg+' daño. Partida estándar \u2014 participaste en combate sin dominar.';}
+  // Alertas
+  var alerts=[];
+  // Chicken dinner
+  if(winPlace===1)alerts.push({type:'good',icon:'\uD83C\uDFC6',title:'Chicken dinner',detail:'Ganaste esta partida. Top 1 de '+(ctx.totalP||'?')+'.'});
+  else if(winPlace<=3)alerts.push({type:'good',icon:'\uD83E\uDD47',title:'Top '+winPlace,detail:'Terminaste en posici\u00f3n '+winPlace+'. Partida fuerte.'});
+  // Damage vs kills ratio
+  if(kills>=3 && dmgPerKill>=280)alerts.push({type:'good',icon:'\u2705',title:'Damage trading s\u00f3lido',detail:'Hiciste '+dmgPerKill+' dmg por kill. Peleas limpias \u2014 daño efectivo.'});
+  else if(kills>=3 && dmgPerKill<=140)alerts.push({type:'warn',icon:'\u2696\uFE0F',title:'Ratio dmg/kill bajo',detail:'Solo '+dmgPerKill+' dmg por kill. Muchos finishes sobre trabajo del squad o enemigos en zona \u2014 revisa posicionamiento.'});
+  // HS% fuera de curva
+  if(kills>=3 && hsPct>=45)alerts.push({type:'warn',icon:'\uD83C\uDFAF',title:'HS% '+hsPct+'% fuera de la curva',detail:'En ranked el HS% t\u00edpico est\u00e1 entre 12-20% (\u00e9lite 28%+). Un '+hsPct+'% sugiere lobby de bots o matchups muy favorables.'});
+  // Zero damage but alive long
+  if(dmg<50 && timeSurv>=900)alerts.push({type:'warn',icon:'\uD83D\uDC40',title:'Partida sin combate',detail:'Solo '+dmg+' dmg en '+survMin+' min. Demasiado looteo \u2014 en ranked esto deja puntos sobre la mesa.'});
+  // Longest kill destacado
+  if(longest>=300)alerts.push({type:'good',icon:'\uD83C\uDFAF',title:'Longest kill '+longest+'m',detail:'Kill largo muy por encima de la media. Buena lectura de distancia.'});
+  // Muerto pronto
+  if(timeSurv<=300 && winPlace>10)alerts.push({type:'danger',icon:'\u26A1',title:'Ca\u00edste en '+survMin+':'+(survSec<10?'0':'')+survSec,detail:'Moriste temprano. Si fue hot drop revisa el ritmo de entrada; si fue rotaci\u00f3n, repasa el timing del c\u00edrculo.'});
+  // No heals y daño recibido alto inferido (no hay dmgTaken en stats, usamos boosts+heals como proxy de cuidados)
+  if(heals===0 && boosts===0 && timeSurv>=600 && kills>=1)alerts.push({type:'warn',icon:'\uD83D\uDC89',title:'Cero curaciones',detail:'No usaste heals ni boosts en '+survMin+' min de partida con kills. Peleaste sin regen \u2014 riesgo alto.'});
+  // Revives heróicos
+  if(revives>=2)alerts.push({type:'good',icon:'\uD83E\uDE79',title:revives+' revives',detail:'Levantaste al squad '+revives+' veces. Rol de IGL que sostiene al equipo.'});
+  // Vehículo destruido
+  if(vehDestroys>=1)alerts.push({type:'good',icon:'\uD83D\uDCA5',title:vehDestroys+' veh\u00edculo'+(vehDestroys>1?'s':'')+' destruido'+(vehDestroys>1?'s':''),detail:'Conseguiste destruir veh\u00edculos enemigos. Muy pocos jugadores lo hacen bien.'});
+  // Squad wipe trader (muchos knocks vs kills)
+  if(dbno>=3 && kills>=1 && (dbno-kills)>=1)alerts.push({type:'warn',icon:'\uD83D\uDD04',title:'Knocks sin convertir',detail:dbno+' knocks y solo '+kills+' kills. El squad te trade\u00f3 los finishes \u2014 revisa si te compensa o si deber\u00edas cerrar los DBNOs t\u00fa mismo.'});
+  if(alerts.length===0)alerts.push({type:'good',icon:'\u2139\uFE0F',title:'Partida dentro de lo normal',detail:'No hay alertas relevantes \u2014 stats y ratios dentro de los rangos esperados para esta partida.'});
+  // Render
+  var h='<div class="md-diag-grid">';
+  // Profile
+  h+='<div class="md-diag-profile">';
+  h+='<div class="md-diag-tag">Perfil detectado</div>';
+  h+='<div class="md-diag-name">'+esc(profileName)+'</div>';
+  h+='<div class="md-diag-desc">'+esc(profileDesc)+'</div>';
+  h+='<div class="md-diag-metrics">';
+  h+='<div class="md-diag-m"><span>Kills / dmg</span><strong>'+kills+' \u00b7 '+dmg+'</strong></div>';
+  h+='<div class="md-diag-m"><span>Dmg / kill</span><strong>'+(kills>0?dmgPerKill:'\u2014')+'</strong></div>';
+  h+='<div class="md-diag-m"><span>Dmg / min</span><strong>'+dmgPerMin+'</strong></div>';
+  h+='<div class="md-diag-m"><span>HS%</span><strong>'+(kills>0?hsPct+'%':'\u2014')+'</strong></div>';
+  h+='<div class="md-diag-m"><span>Supervivencia</span><strong>'+survMin+':'+(survSec<10?'0':'')+survSec+(matchDurMin>0?' / '+matchDurMin+'m':'')+'</strong></div>';
+  h+='<div class="md-diag-m"><span>Longest kill</span><strong>'+(longest>0?longest+' m':'\u2014')+'</strong></div>';
+  h+='<div class="md-diag-m"><span>Assists / revives</span><strong>'+assists+' \u00b7 '+revives+'</strong></div>';
+  h+='<div class="md-diag-m"><span>Placement</span><strong>#'+winPlace+' / '+(ctx.totalP||'?')+'</strong></div>';
+  h+='</div>';
+  h+='</div>';
+  // Alerts
+  h+='<div class="md-diag-alerts">';
+  alerts.forEach(function(al){
+    h+='<div class="md-alert md-alert-'+al.type+'">';
+    h+='<div class="md-alert-title"><span class="md-alert-ico">'+al.icon+'</span>'+esc(al.title)+'</div>';
+    h+='<div class="md-alert-detail">'+esc(al.detail)+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='</div>';
+  el.innerHTML=h;
+}
 // ═══ TAB: RESUMEN ═══
 function _mdRenderResumen(ctx){
   var ps=ctx.ps,pn=ctx.pn,match=ctx.match,pp=ctx.pp;
