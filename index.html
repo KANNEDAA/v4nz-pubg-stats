@@ -2482,6 +2482,189 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
 /* ═══ END match-detail-m3b ═══ */
 
 /* ═══════════════════════════════════════════════════════════════
+   match-detail-m4 — Body damage (SVG corporal) + Distance histogram
+   ═══════════════════════════════════════════════════════════════ */
+/* ─── CHIPS PILL activos con acento por sección ─── */
+.md-subtabs .md-subtab.md-chip-body.active {
+  background: #ff4d8c;
+  border-color: #ff4d8c;
+  color: #1a0410;
+  box-shadow: 0 0 14px rgba(255,77,140,.25);
+}
+.md-subtabs .md-subtab.md-chip-distance.active {
+  background: #00d9b4;
+  border-color: #00d9b4;
+  color: #04130f;
+  box-shadow: 0 0 14px rgba(0,217,180,.24);
+}
+/* ─── SECCIÓN BODY ─── */
+.md-section-body {
+  background: linear-gradient(135deg, rgba(255,77,140,.04), rgba(255,107,0,.03));
+  border: 1px solid rgba(255,77,140,.15);
+}
+.md-section-body .md-section-title { color: #ff4d8c; }
+.md-body-section {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 22px;
+  align-items: start;
+  margin-top: 10px;
+}
+.md-body-svg-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.md-body-svg { width: 100%; max-width: 160px; height: auto; }
+.md-body-svg .body-part {
+  fill: rgba(255,255,255,.06);
+  stroke: rgba(255,255,255,.18);
+  stroke-width: 1.2;
+  transition: fill .25s ease;
+}
+.md-body-svg .body-part.pct-high { fill: rgba(255,77,140,.85); stroke: rgba(255,77,140,1); }
+.md-body-svg .body-part.pct-mid { fill: rgba(255,127,63,.7); stroke: rgba(255,127,63,.95); }
+.md-body-svg .body-part.pct-low { fill: rgba(255,211,105,.5); stroke: rgba(255,211,105,.8); }
+.md-body-svg .body-part.pct-vlow { fill: rgba(255,255,255,.1); stroke: rgba(255,255,255,.25); }
+.md-body-svg .body-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.6);
+  stroke-width: 2.5px;
+}
+.md-body-data { display: flex; flex-direction: column; gap: 10px; }
+.md-body-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 90px;
+  gap: 10px;
+  align-items: center;
+  font-size: .82rem;
+}
+.md-body-row .name { color: var(--text-dim, #888); font-weight: 600; }
+.md-body-row .bar-container {
+  height: 10px;
+  background: rgba(255,255,255,.06);
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+.md-body-row .bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width .6s ease;
+}
+.md-body-row .bar-fill.head { background: linear-gradient(90deg, #ff4757, #ff4d8c); }
+.md-body-row .bar-fill.torso { background: linear-gradient(90deg, #ff7f3f, #ff4d8c); }
+.md-body-row .bar-fill.arms { background: linear-gradient(90deg, #ffd369, #ff7f3f); }
+.md-body-row .bar-fill.legs { background: linear-gradient(90deg, rgba(255,255,255,.4), #ffd369); }
+.md-body-row .pct {
+  text-align: right;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: .78rem;
+  color: #fff;
+}
+.md-body-lectura {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(255,77,140,.06);
+  border-left: 3px solid #ff4d8c;
+  border-radius: 6px;
+  font-size: .78rem;
+  color: var(--text-dim, #aaa);
+  line-height: 1.55;
+}
+.md-body-lectura strong { color: #ff4d8c; }
+/* ─── SECCIÓN DISTANCE ─── */
+.md-section-distance {
+  background: linear-gradient(135deg, rgba(0,217,180,.04), rgba(0,240,255,.02));
+  border: 1px solid rgba(0,217,180,.15);
+}
+.md-section-distance .md-section-title { color: #00d9b4; }
+.md-dist-hist { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.md-dist-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 140px;
+  gap: 12px;
+  align-items: center;
+  font-size: .82rem;
+}
+.md-dist-row .range {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: .78rem;
+  color: #fff;
+}
+.md-dist-row .bar-outer {
+  height: 24px;
+  background: rgba(255,255,255,.05);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.md-dist-row .bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, #00d9b4, #00f0ff);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: .72rem;
+  font-weight: 700;
+  color: #04130f;
+  transition: width .6s ease;
+  min-width: 0;
+  white-space: nowrap;
+}
+.md-dist-row .bar-inner.empty {
+  background: rgba(255,255,255,.05);
+  color: var(--text-dim, #888);
+  padding: 0 10px;
+}
+.md-dist-row .count-txt {
+  text-align: right;
+  font-size: .74rem;
+  color: var(--text-dim, #aaa);
+  font-weight: 600;
+}
+.md-dist-row .count-txt .tag-profile {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0,217,180,.12);
+  color: #00d9b4;
+  font-size: .68rem;
+  margin-left: 4px;
+  font-weight: 700;
+}
+.md-dist-lectura {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(0,217,180,.06);
+  border-left: 3px solid #00d9b4;
+  border-radius: 6px;
+  font-size: .78rem;
+  color: var(--text-dim, #aaa);
+  line-height: 1.55;
+}
+.md-dist-lectura strong { color: #00d9b4; }
+/* ─── MOBILE ─── */
+@media (max-width: 768px) {
+  .md-body-section { grid-template-columns: 1fr; gap: 14px; }
+  .md-body-svg-wrap { max-width: 140px; margin: 0 auto; }
+  .md-body-row { grid-template-columns: 60px 1fr 80px; font-size: .76rem; }
+  .md-dist-row { grid-template-columns: 80px 1fr 100px; font-size: .76rem; }
+  .md-dist-row .range { font-size: .72rem; }
+}
+/* ═══ END match-detail-m4 ═══ */
+
+/* ═══════════════════════════════════════════════════════════════
    V4NZ CAPA 3 SPRINT 1 — marker: capa-3-sprint-1-v179
    Bottom nav móvil + Hero search mejorado
    ═══════════════════════════════════════════════════════════════ */
@@ -6284,6 +6467,9 @@ function showMatchDetail(idx){
   h+='<button class="md-subtab md-chip-insights" data-mdtab="insights" onclick="_mdSwitchTab(\'insights\')"><span class="md-subtab-icon">&#x1F9EC;</span>Radiograf\u00eda</button>';
   // match-detail-mockup-v2-m2: chip Timeline (requiere telemetry)
   h+='<button class="md-subtab md-chip-timeline" data-mdtab="timeline" onclick="_mdSwitchTab(\'timeline\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x23F1;</span>Timeline</button>';
+  // match-detail-m4: chips Body (rosa) + Distance (teal) — análisis telemétrico de daño y rango
+  h+='<button class="md-subtab md-chip-body" data-mdtab="body" onclick="_mdSwitchTab(\'body\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F3AF;</span>Impactos</button>';
+  h+='<button class="md-subtab md-chip-distance" data-mdtab="distance" onclick="_mdSwitchTab(\'distance\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4CF;</span>Distancia</button>';
   // match-detail-m3b: chips con acento por sección (rojo/púrpura/azul)
   h+='<button class="md-subtab md-chip-killlog" data-mdtab="killlog" onclick="_mdSwitchTab(\'killlog\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F52E;</span>Kill Log</button>';
   h+='<button class="md-subtab md-chip-damage" data-mdtab="damage" onclick="_mdSwitchTab(\'damage\')"'+(telemetryUrl?'':' style="display:none;"')+'><span class="md-subtab-icon">&#x1F4A5;</span>Da\u00f1o</button>';
@@ -6303,6 +6489,10 @@ function showMatchDetail(idx){
   if(telemetryUrl){
     // match-detail-mockup-v2-m2: sección Timeline (narrativa cronológica de la partida)
     h+='<section class="md-section md-section-timeline" id="mdSec-timeline"><h3 class="md-section-title"><i class="md-sec-ico">&#x23F1;</i> Timeline del match <span class="md-sec-count">eventos cronol\u00f3gicos</span></h3><div class="md-section-hint">Kills, knocks, muertes y cierres de zona de tu squad \u2014 ordenados por minuto</div><div class="md-tab-content" id="mdTab-timeline"></div></section>';
+    // match-detail-m4: sección Body (SVG corporal + desglose por zona) — revela HS% real vs aim assist
+    h+='<section class="md-section md-section-body" id="mdSec-body"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F3AF;</i> Impactos por zona <span class="md-sec-count">d\u00f1o corporal</span></h3><div class="md-section-hint">D\u00f3nde cay\u00f3 tu da\u00f1o \u2014 revela si forzaste headshots o farmeaste torso con aim assist</div><div class="md-tab-content" id="mdTab-body"></div></section>';
+    // match-detail-m4: sección Distance (histograma 4 buckets) — define perfil CQC/Mid/Long/Sniper
+    h+='<section class="md-section md-section-distance" id="mdSec-distance"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4CF;</i> Distancia de engagement <span class="md-sec-count">histograma de kills</span></h3><div class="md-section-hint">A qu\u00e9 rango mataste \u2014 define tu perfil CQC, mid-range, long o sniper</div><div class="md-tab-content" id="mdTab-distance"></div></section>';
     // match-detail-m3b: secciones con wrapper temático + hint (coherente con Diag/Squad/Timeline)
     h+='<section class="md-section md-section-killlog" id="mdSec-killlog"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F52E;</i> Kill Log <span class="md-sec-count">telemetr\u00eda</span></h3><div class="md-section-hint">Tus kills y knocks con arma, distancia y v\u00edctima \u2014 extra\u00eddos de la telemetr\u00eda oficial</div><div class="md-tab-content" id="mdTab-killlog"></div></section>';
     h+='<section class="md-section md-section-damage" id="mdSec-damage"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F4A5;</i> Da\u00f1o <span class="md-sec-count">por arma</span></h3><div class="md-section-hint">Desglose del da\u00f1o que hiciste por arma y por parte del cuerpo</div><div class="md-tab-content" id="mdTab-damage"></div></section>';
@@ -6310,6 +6500,8 @@ function showMatchDetail(idx){
   } else {
     // Placeholders vacios por si alguna funcion los busca; no generan seccion visible
     h+='<div class="md-tab-content" id="mdTab-timeline" style="display:none"></div>';
+    h+='<div class="md-tab-content" id="mdTab-body" style="display:none"></div>';
+    h+='<div class="md-tab-content" id="mdTab-distance" style="display:none"></div>';
     h+='<div class="md-tab-content" id="mdTab-killlog" style="display:none"></div>';
     h+='<div class="md-tab-content" id="mdTab-damage" style="display:none"></div>';
     h+='<div class="md-tab-content" id="mdTab-mapa" style="display:none"></div>';
@@ -6335,7 +6527,7 @@ function showMatchDetail(idx){
   setTimeout(function(){
     _mdLoadTab('insights');
     // match-detail-mockup-v2-m2: timeline pinta solo el botón "Cargar timeline" (lazy, requiere telemetry)
-    if(telemetryUrl){_mdLoadTab('timeline');_mdLoadTab('killlog');_mdLoadTab('damage');_mdLoadTab('mapa');}
+    if(telemetryUrl){_mdLoadTab('timeline');_mdLoadTab('body');_mdLoadTab('distance');_mdLoadTab('killlog');_mdLoadTab('damage');_mdLoadTab('mapa');}
     _mdSetupScrollspy();
   },0);
   // Map image lazy upgrade
@@ -6376,7 +6568,8 @@ function _mdSetupScrollspy(){
   // match-detail-mockup-v2-m1: 'diag' primero para scrollspy
   // match-detail-mockup-v2-m2: incluir 'squad' y 'timeline' en el scrollspy
   // match-detail-m3a: eliminados 'resumen' y 'audit' (fusionados en Diagnóstico)
-  var ids=['diag','squad','insights','timeline','killlog','damage','mapa'];
+  // match-detail-m4: añadidos 'body' y 'distance' entre timeline y killlog
+  var ids=['diag','squad','insights','timeline','body','distance','killlog','damage','mapa'];
   // rootMargin negativo arriba = compensa header (64px) + sticky chips (~48px) = -132px
   // rootMargin negativo abajo = zona "muerta" de 55% para que la seccion activa sea la del centro
   var obs=new IntersectionObserver(function(entries){
@@ -6404,6 +6597,8 @@ function _mdLoadTab(tab){
   else if(tab==='squad')_mdRenderSquad(ctx);
   else if(tab==='timeline')_mdRenderTimeline(ctx);
   else if(tab==='insights')_mdRenderInsights(ctx);
+  else if(tab==='body')_mdRenderBody(ctx);         // match-detail-m4
+  else if(tab==='distance')_mdRenderDistance(ctx); // match-detail-m4
   else if(tab==='killlog')_mdRenderKillLog(ctx);
   else if(tab==='damage')_mdRenderDamage(ctx);
   else if(tab==='mapa')_mdRenderMapa(ctx);
@@ -7121,6 +7316,129 @@ function _mdRenderDamage(ctx){
       });
       h+='</div>';
     }
+    el.innerHTML=h;
+  }).catch(function(e){el.innerHTML='<div class="md-tab-loading" style="color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message||'')+'</div>';});
+}
+// ═══ match-detail-m4 · TAB: BODY (daño por zona corporal) ═══
+function _mdRenderBody(ctx){
+  var el=document.getElementById('mdTab-body');if(!el)return;
+  if(!ctx.telemetryUrl){el.innerHTML='<div class="md-tab-loading">Sin telemetria disponible</div>';return;}
+  el.innerHTML='<div class="md-tab-loading"><div class="tab-spinner"></div><div>Analizando zonas de impacto...</div></div>';
+  fetch(ctx.telemetryUrl).then(function(r){if(!r.ok)throw new Error('Telemetry fetch failed');return r.json();}).then(function(telem){
+    var pnL=ctx.pn.toLowerCase();
+    var head=0,torso=0,arms=0,legs=0,other=0,total=0;
+    telem.forEach(function(ev){
+      if(ev._T!=='LogPlayerTakeDamage'&&ev._T!=='LogPlayerMakeDamage')return;
+      var atkName=(ev.attacker&&ev.attacker.name||'').toLowerCase();
+      var vicName=(ev.victim&&ev.victim.name||'').toLowerCase();
+      var dmg=ev.damage||0;
+      if(atkName!==pnL||vicName===pnL||dmg<=0)return;
+      var reason=ev.damageReason||'';
+      total+=dmg;
+      if(reason==='HeadShot')head+=dmg;
+      else if(reason==='TorsoShot'||reason==='ChestShot')torso+=dmg;
+      else if(reason==='ArmShot'||reason==='HandShot')arms+=dmg;
+      else if(reason==='LegShot'||reason==='PelvisShot')legs+=dmg;
+      else other+=dmg;
+    });
+    if(total===0){el.innerHTML='<div class="md-tab-loading" style="color:var(--text-dim);">No se encontraron impactos registrados en la telemetria.</div>';return;}
+    // Si hay daño sin zona reportada, repartirlo proporcional (fallback común cuando damageReason='NonSpecific')
+    // Mantener en "other" solo como nota, no inflar zonas
+    var headPct=total?head/total*100:0;
+    var torsoPct=total?torso/total*100:0;
+    var armsPct=total?arms/total*100:0;
+    var legsPct=total?legs/total*100:0;
+    var otherPct=total?other/total*100:0;
+    function cls(pct){if(pct>=30)return 'pct-high';if(pct>=15)return 'pct-mid';if(pct>=5)return 'pct-low';return 'pct-vlow';}
+    function fmtPct(p){return p<1?p.toFixed(1):Math.round(p);}
+    // Lectura contextual
+    var lectura='';
+    if(headPct>=35)lectura='<strong>💡 Lectura:</strong> '+fmtPct(headPct)+'% a cabeza. En consola con aim assist lo normal es 12–20%. Estás forzando el click manual, jugando contra bots, o llevas un mando con aim boost descalibrado.';
+    else if(headPct>=22)lectura='<strong>💡 Lectura:</strong> '+fmtPct(headPct)+'% a cabeza — por encima de la media. Bien apuntado, controlas el retroceso vertical.';
+    else if(torsoPct>=55)lectura='<strong>💡 Lectura:</strong> '+fmtPct(torsoPct)+'% al torso. Te estás apoyando mucho en el aim assist, que magnetiza al centro. Si subes HS% mejoras el TTK.';
+    else if(legsPct>=15)lectura='<strong>💡 Lectura:</strong> '+fmtPct(legsPct)+'% a piernas — mucha dispersión vertical. Baja el ratio horizontal del mando o practica el control del AK/Beryl.';
+    else lectura='<strong>💡 Lectura:</strong> Reparto equilibrado. '+fmtPct(headPct)+'% cabeza · '+fmtPct(torsoPct)+'% torso — perfil consistente.';
+    var h='<div class="md-body-section">';
+    h+='<div class="md-body-svg-wrap">';
+    h+='<svg class="md-body-svg" viewBox="0 0 140 220" xmlns="http://www.w3.org/2000/svg">';
+    h+='<circle class="body-part '+cls(headPct)+'" cx="70" cy="28" r="16"/>';
+    h+='<text class="body-label" x="70" y="30">'+fmtPct(headPct)+'%</text>';
+    h+='<rect class="body-part '+cls(torsoPct)+'" x="48" y="50" width="44" height="70" rx="6"/>';
+    h+='<text class="body-label" x="70" y="88">'+fmtPct(torsoPct)+'%</text>';
+    h+='<rect class="body-part '+cls(armsPct/2)+'" x="26" y="55" width="16" height="60" rx="5"/>';
+    h+='<text class="body-label" x="34" y="88" style="font-size:9px;">'+fmtPct(armsPct/2)+'%</text>';
+    h+='<rect class="body-part '+cls(armsPct/2)+'" x="98" y="55" width="16" height="60" rx="5"/>';
+    h+='<text class="body-label" x="106" y="88" style="font-size:9px;">'+fmtPct(armsPct/2)+'%</text>';
+    h+='<rect class="body-part '+cls(legsPct/2)+'" x="52" y="125" width="16" height="75" rx="5"/>';
+    h+='<text class="body-label" x="60" y="165" style="font-size:9px;">'+fmtPct(legsPct/2)+'%</text>';
+    h+='<rect class="body-part '+cls(legsPct/2)+'" x="72" y="125" width="16" height="75" rx="5"/>';
+    h+='<text class="body-label" x="80" y="165" style="font-size:9px;">'+fmtPct(legsPct/2)+'%</text>';
+    h+='</svg></div>';
+    h+='<div class="md-body-data">';
+    h+='<div class="md-body-row"><span class="name">Cabeza</span><div class="bar-container"><div class="bar-fill head" style="width:'+Math.min(100,headPct*2)+'%;"></div></div><span class="pct">'+Math.round(head)+' · '+fmtPct(headPct)+'%</span></div>';
+    h+='<div class="md-body-row"><span class="name">Torso</span><div class="bar-container"><div class="bar-fill torso" style="width:'+Math.min(100,torsoPct*1.3)+'%;"></div></div><span class="pct">'+Math.round(torso)+' · '+fmtPct(torsoPct)+'%</span></div>';
+    h+='<div class="md-body-row"><span class="name">Brazos</span><div class="bar-container"><div class="bar-fill arms" style="width:'+Math.min(100,armsPct*3)+'%;"></div></div><span class="pct">'+Math.round(arms)+' · '+fmtPct(armsPct)+'%</span></div>';
+    h+='<div class="md-body-row"><span class="name">Piernas</span><div class="bar-container"><div class="bar-fill legs" style="width:'+Math.min(100,legsPct*3)+'%;"></div></div><span class="pct">'+Math.round(legs)+' · '+fmtPct(legsPct)+'%</span></div>';
+    if(otherPct>=5)h+='<div class="md-body-row" style="opacity:.7;"><span class="name">Otros</span><div class="bar-container"><div class="bar-fill" style="width:'+Math.min(100,otherPct*2)+'%;background:rgba(255,255,255,.2);"></div></div><span class="pct">'+Math.round(other)+' · '+fmtPct(otherPct)+'%</span></div>';
+    h+='<div class="md-body-lectura">'+lectura+'</div>';
+    h+='</div></div>';
+    el.innerHTML=h;
+  }).catch(function(e){el.innerHTML='<div class="md-tab-loading" style="color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message||'')+'</div>';});
+}
+// ═══ match-detail-m4 · TAB: DISTANCE (histograma de engagement) ═══
+function _mdRenderDistance(ctx){
+  var el=document.getElementById('mdTab-distance');if(!el)return;
+  if(!ctx.telemetryUrl){el.innerHTML='<div class="md-tab-loading">Sin telemetria disponible</div>';return;}
+  el.innerHTML='<div class="md-tab-loading"><div class="tab-spinner"></div><div>Calculando distancias de engagement...</div></div>';
+  fetch(ctx.telemetryUrl).then(function(r){if(!r.ok)throw new Error('Telemetry fetch failed');return r.json();}).then(function(telem){
+    var pnL=ctx.pn.toLowerCase();
+    var cqc=0,mid=0,lng=0,snp=0,totalKills=0,avgDist=0;
+    telem.forEach(function(ev){
+      if(ev._T!=='LogPlayerKillV2'&&ev._T!=='LogPlayerKill')return;
+      var killerName=(ev.killer&&ev.killer.name||'').toLowerCase();
+      if(killerName!==pnL)return;
+      var distCm=null;
+      if(ev.killerDamageInfo&&typeof ev.killerDamageInfo.distance==='number')distCm=ev.killerDamageInfo.distance;
+      else if(typeof ev.distance==='number')distCm=ev.distance;
+      if(distCm==null)return;
+      var m=distCm/100;
+      totalKills++;avgDist+=m;
+      if(m<50)cqc++;
+      else if(m<150)mid++;
+      else if(m<300)lng++;
+      else snp++;
+    });
+    if(totalKills===0){el.innerHTML='<div class="md-tab-loading" style="color:var(--text-dim);">No hubo kills con distancia registrada en esta partida.</div>';return;}
+    avgDist=Math.round(avgDist/totalKills);
+    function pct(n){return Math.round(n/totalKills*100);}
+    var cqcP=pct(cqc),midP=pct(mid),lngP=pct(lng),snpP=pct(snp);
+    function tag(p,threshold,label){return p>=threshold?'<span class="tag-profile">'+label+'</span>':'';}
+    // Perfil dominante
+    var maxBucket='';var maxP=0;
+    if(cqcP>maxP){maxP=cqcP;maxBucket='CQC';}
+    if(midP>maxP){maxP=midP;maxBucket='Mid';}
+    if(lngP>maxP){maxP=lngP;maxBucket='Long';}
+    if(snpP>maxP){maxP=snpP;maxBucket='Sniper';}
+    var lectura='';
+    if(cqcP+midP>=75)lectura='<strong>💡 Perfil:</strong> '+(cqcP+midP)+'% de tus kills bajo los 150m. Eres <strong>CQC-midranger</strong>. Si llevas rifles de cerrojo son casi decorativos — considera M416/Beryl con 3x para matches más consistentes.';
+    else if(lngP+snpP>=50)lectura='<strong>💡 Perfil:</strong> '+(lngP+snpP)+'% de tus kills por encima de 150m. <strong>Francotirador puro</strong>. Asegúrate de llevar SR + DMR y jugar rotaciones con cover, en final circles te pueden rushear.';
+    else if(cqcP>=60)lectura='<strong>💡 Perfil:</strong> '+cqcP+'% de kills bajo 50m. <strong>Rushster CQC</strong>. Escopetas y SMGs son tu meta. Suelta el Kar98k y mete UMP/Vector o DBS para hot drops.';
+    else lectura='<strong>💡 Perfil:</strong> Perfil equilibrado — distancia media '+avgDist+'m. Adaptable a distintos mapas y fases del match.';
+    var h='<div style="text-align:center;margin:10px 0 16px 0;"><span style="font-family:Orbitron,sans-serif;font-size:1.6rem;font-weight:800;color:#00d9b4;">'+totalKills+'</span><span style="font-size:.72rem;color:var(--text-dim);margin-left:6px;">kills</span><span style="margin-left:18px;font-family:Orbitron,sans-serif;font-size:1.2rem;font-weight:700;color:#fff;">'+avgDist+'m</span><span style="font-size:.72rem;color:var(--text-dim);margin-left:6px;">distancia media</span></div>';
+    h+='<div class="md-dist-hist">';
+    function row(range,count,p,label){
+      var isEmpty=count===0;
+      var barClass=isEmpty?'bar-inner empty':'bar-inner';
+      var width=isEmpty?100:Math.max(p,8);
+      var text=isEmpty?'–':count+(count===1?' kill':' kills');
+      return '<div class="md-dist-row"><span class="range">'+range+'</span><div class="bar-outer"><div class="'+barClass+'" style="width:'+width+'%;">'+text+'</div></div><span class="count-txt">'+p+'% <span class="tag-profile">'+label+'</span></span></div>';
+    }
+    h+=row('0 – 50 m',cqc,cqcP,'CQC');
+    h+=row('50 – 150 m',mid,midP,'Mid');
+    h+=row('150 – 300 m',lng,lngP,'Long');
+    h+=row('300 m +',snp,snpP,'Sniper');
+    h+='</div>';
+    h+='<div class="md-dist-lectura">'+lectura+'</div>';
     el.innerHTML=h;
   }).catch(function(e){el.innerHTML='<div class="md-tab-loading" style="color:var(--accent-red);">Error al cargar telemetria: '+esc(e.message||'')+'</div>';});
 }
