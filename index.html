@@ -3927,14 +3927,23 @@ body.telem-open { overflow:hidden; }
           <span class="sep">&middot;</span>
           <a href="mailto:kanneda@kanneda.com">&#x2709;&#xFE0F; kanneda@kanneda.com</a>
         </div>
+        <!-- hv2-fixes-v1: Podcast El Drop de KANNEDA integrado en Creator Card (banner suelto eliminado) -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--accent-green);margin-bottom:10px;">&#x1F399;&#xFE0F; El Drop de KANNEDA &middot; Podcast PUBG</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <a href="https://open.spotify.com/show/0C2hMGCheSgdOttbTYF844" target="_blank" rel="noopener" style="background:#1DB954;color:#fff;padding:7px 13px;border-radius:8px;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>Spotify</a>
+            <a href="https://podcasts.apple.com/es/podcast/el-drop-de-kanneda-pubg-podcast/id1869009436" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#9933FF,#FC3C44);color:#fff;padding:7px 13px;border-radius:8px;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M5.34 0A5.328 5.328 0 0 0 0 5.34v13.32A5.328 5.328 0 0 0 5.34 24h13.32A5.328 5.328 0 0 0 24 18.66V5.34A5.328 5.328 0 0 0 18.66 0zm6.525 2.568c4.415 0 7.941 3.67 7.941 7.882 0 4.422-3.526 7.882-7.94 7.882-4.416 0-7.942-3.46-7.942-7.882 0-4.212 3.526-7.882 7.941-7.882zM11.8 6.04a4.451 4.451 0 0 0-4.453 4.45 4.451 4.451 0 0 0 4.452 4.45 4.451 4.451 0 0 0 4.453-4.45A4.451 4.451 0 0 0 11.8 6.04zm-.048 1.616c1.544 0 2.834 1.29 2.834 2.834s-1.29 2.834-2.834 2.834-2.834-1.29-2.834-2.834 1.29-2.834 2.834-2.834z"/></svg>Apple</a>
+          </div>
+          <iframe style="border-radius:10px;border:none;width:100%;height:152px;background:transparent;" src="https://open.spotify.com/embed/show/0C2hMGCheSgdOttbTYF844?utm_source=generator&amp;theme=0" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </div>
       </div>
     </div>
   </div>
 </section>
 <!-- HOME-V2 END -->
 
-<!-- KANNEDA BANNER — Podcast + Codigo Creador (fix tildes 44g-h2) -->
-<div style="max-width:1400px;margin:0 auto;padding:0 2rem;">
+<!-- KANNEDA BANNER — Podcast + Codigo Creador (hv2-fixes-v1: banner+podcast ocultos de todas las tabs, movidos a "Sobre el creador" al final del home) -->
+<div id="streamerBannerWrap" style="max-width:1400px;margin:0 auto;padding:0 2rem;display:none;">
 <div class="streamer-banner" id="streamerBanner">
   <div class="streamer-banner-avatar" style="padding:0;overflow:hidden;background:#000;"><img src="v4nz-logo.png" alt="V4NZ" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';this.parentElement.style.background='var(--gradient-orange)';this.parentElement.textContent='K';"></div>
   <div class="streamer-banner-info">
@@ -6380,8 +6389,8 @@ function switchTab(t){
     _evo.style.display=(_evo.innerHTML.trim().length>0)?'':'none';
     _ft.style.display=(_ftList&&_ftList.children.length>0)?'':'none';
   })();
-  const _sb=document.querySelector('.streamer-banner');if(_sb)_sb.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
-  const _pod=document.getElementById('podcastPlayer');if(_pod)_pod.style.display=playerTabs.includes(t)||t==='clans'?'':'none';
+  // hv2-fixes-v1: banner KANNEDA + podcast ocultos de todas las tabs (opción C). Quedan solo en sección "Sobre el creador" dentro del home.
+  var _sbw=document.getElementById('streamerBannerWrap'); if(_sbw) _sbw.style.display='none';
   // URL management: push friendly URLs for main sections
   if(mainSections.includes(t)){
     // Don't clobber /clan/TAG → /clans (preserve clan deep-links)
@@ -12849,39 +12858,62 @@ switchTab=function(t){
     if(statsEl) statsEl.innerHTML = '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">\u2014</div><div class="hv2l-mp-stat-lbl">cargando</div></div>';
     empty.style.display = 'none';
     body.style.display = '';
-    // Fetch stats reales
-    var url = '/api/player/' + shard + '/' + encodeURIComponent(last.name);
-    fetch(url, { credentials:'same-origin' })
+    // hv2-fixes-v1 — Fetch stats reales: snapshot cache primero, fallback a PUBG API (2 pasos)
+    function _hv2RenderStats(kdVal, winPct, adr, rounds){
+      if(kd) kd.textContent = 'K/D ' + (isFinite(kdVal) ? kdVal.toFixed(2) : '\u2014');
+      if(statsEl){
+        statsEl.innerHTML =
+          '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + (isFinite(kdVal)?kdVal.toFixed(2):'\u2014') + '</div><div class="hv2l-mp-stat-lbl">K/D</div></div>' +
+          '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + (isFinite(winPct)?winPct.toFixed(1):'\u2014') + '%</div><div class="hv2l-mp-stat-lbl">Wins</div></div>' +
+          '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + (isFinite(adr)?Math.round(adr):'\u2014') + '</div><div class="hv2l-mp-stat-lbl">ADR</div></div>' +
+          '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + (rounds||0) + '</div><div class="hv2l-mp-stat-lbl">Partidas</div></div>';
+      }
+    }
+    function _hv2SetEmpty(){
+      if(statsEl){ statsEl.innerHTML = '<div class="hv2l-mp-stat" style="grid-column:1/-1;text-align:center;color:var(--text-dim);font-size:11px;">Busca tu perfil para ver tus stats</div>'; }
+      if(kd) kd.textContent = 'K/D \u2014';
+    }
+    // Intento 1: snapshot cache (endpoint local, rápido)
+    var snapUrl = '/api/snapshots/' + shard + '/' + encodeURIComponent(last.name) + '?squad_mode=squad&game_mode=tpp';
+    fetch(snapUrl, { credentials:'same-origin' })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data){
-        if(!data) return;
-        var stats = (data.stats && data.stats.gameModeStats) || data.gameModeStats || null;
-        // Mezcla squad-fpp + squad para mostrar algo
-        var agg = { kills:0, wins:0, roundsPlayed:0, damageDealt:0 };
-        var modes = ['squad-fpp','squad','duo-fpp','duo','solo-fpp','solo'];
-        if(stats){
-          modes.forEach(function(m){
-            var s = stats[m];
-            if(!s) return;
-            agg.kills += Number(s.kills||0);
-            agg.wins += Number(s.wins||0);
-            agg.roundsPlayed += Number(s.roundsPlayed||0);
-            agg.damageDealt += Number(s.damageDealt||0);
+        var snaps = (data && data.snapshots) || [];
+        if(snaps.length){
+          var s = snaps[snaps.length - 1];
+          _hv2RenderStats(Number(s.kd||0), Number(s.win_rate||0), Number(s.avg_damage||0), Number(s.rounds||0));
+          return null; // ya renderizado
+        }
+        // Intento 2: PUBG API 2-pasos (search → lifetime)
+        var apiBase = (typeof API_BASE !== 'undefined') ? API_BASE : '/api/shards';
+        return fetch(apiBase + '/' + shard + '/players?filter[playerNames]=' + encodeURIComponent(last.name), { credentials:'same-origin' })
+          .then(function(r){ return r.ok ? r.json() : null; })
+          .then(function(pd){
+            if(!pd || !pd.data || !pd.data.length) { _hv2SetEmpty(); return null; }
+            var accountId = pd.data[0].id;
+            return fetch(apiBase + '/' + shard + '/players/' + accountId + '/seasons/lifetime', { credentials:'same-origin' })
+              .then(function(r){ return r.ok ? r.json() : null; });
+          })
+          .then(function(ld){
+            if(!ld) return;
+            var gms = (ld.data && ld.data.attributes && ld.data.attributes.gameModeStats) || null;
+            if(!gms){ _hv2SetEmpty(); return; }
+            var agg = { kills:0, wins:0, roundsPlayed:0, damageDealt:0 };
+            ['squad-fpp','squad','duo-fpp','duo','solo-fpp','solo'].forEach(function(m){
+              var s = gms[m]; if(!s) return;
+              agg.kills += Number(s.kills||0);
+              agg.wins += Number(s.wins||0);
+              agg.roundsPlayed += Number(s.roundsPlayed||0);
+              agg.damageDealt += Number(s.damageDealt||0);
+            });
+            if(!agg.roundsPlayed){ _hv2SetEmpty(); return; }
+            var kdVal = (agg.roundsPlayed > agg.wins) ? (agg.kills / (agg.roundsPlayed - agg.wins)) : (agg.kills || 0);
+            var winPct = (agg.wins / agg.roundsPlayed) * 100;
+            var adr = agg.damageDealt / agg.roundsPlayed;
+            _hv2RenderStats(kdVal, winPct, adr, agg.roundsPlayed);
           });
-        }
-        var kdVal = (agg.roundsPlayed > agg.wins) ? (agg.kills / (agg.roundsPlayed - agg.wins)) : (agg.kills || 0);
-        var winPct = agg.roundsPlayed ? ((agg.wins / agg.roundsPlayed) * 100) : 0;
-        var adr = agg.roundsPlayed ? (agg.damageDealt / agg.roundsPlayed) : 0;
-        if(kd) kd.textContent = 'K/D ' + (isFinite(kdVal) ? kdVal.toFixed(2) : '\u2014');
-        if(statsEl){
-          statsEl.innerHTML =
-            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + (isFinite(kdVal)?kdVal.toFixed(2):'\u2014') + '</div><div class="hv2l-mp-stat-lbl">K/D</div></div>' +
-            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + winPct.toFixed(1) + '%</div><div class="hv2l-mp-stat-lbl">Wins</div></div>' +
-            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + Math.round(adr) + '</div><div class="hv2l-mp-stat-lbl">ADR</div></div>' +
-            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + agg.roundsPlayed + '</div><div class="hv2l-mp-stat-lbl">Partidas</div></div>';
-        }
       })
-      .catch(function(){});
+      .catch(function(){ _hv2SetEmpty(); });
   }
 
   function _hv2LoadMyClan(){
@@ -12930,7 +12962,14 @@ switchTab=function(t){
           link.style.display = '';
           link.onclick = function(e){ e.preventDefault(); if(typeof loadClanPage==='function') loadClanPage(tag); else location.href='/clan/'+encodeURIComponent(tag); };
         }
-        var members = clan.active_members || clan.member_count || clan.members || 0;
+        // hv2-fixes-v1 — `clan.members` puede ser array de objetos (el endpoint lo devuelve así);
+        // envolver en length cuando toque para que no salga "[object Object],[object Object]..."
+        var members = 0;
+        if(typeof clan.active_members === 'number') members = clan.active_members;
+        else if(Array.isArray(clan.active_members)) members = clan.active_members.length;
+        else if(typeof clan.member_count === 'number') members = clan.member_count;
+        else if(Array.isArray(clan.members)) members = clan.members.length;
+        else if(typeof clan.members === 'number') members = clan.members;
         var kdRaw = (clan.avg_kd != null ? clan.avg_kd : (clan.kd_ratio || 0));
         var kd = parseFloat(kdRaw); if(!isFinite(kd)) kd = 0;
         var kills = _hv2Fmt(clan.total_kills || clan.kills || 0);
