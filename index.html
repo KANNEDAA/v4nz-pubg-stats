@@ -3253,10 +3253,11 @@ body.telem-open { overflow:hidden; }
 .home-v2 .vp-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-glow)}
 .home-v2 .vp-icon{width:40px;height:40px;border-radius:8px;display:grid;place-items:center;font-size:20px;margin-bottom:10px}
 @media(min-width:600px){.home-v2 .vp-icon{width:48px;height:48px;font-size:24px;margin-bottom:14px}}
-.home-v2 .vp-card.c1 .vp-icon{background:rgba(0,240,255,.12)}
-.home-v2 .vp-card.c2 .vp-icon{background:rgba(168,85,247,.12)}
-.home-v2 .vp-card.c3 .vp-icon{background:rgba(74,158,255,.12)}
-.home-v2 .vp-card.c4 .vp-icon{background:rgba(255,107,107,.12)}
+/* fix 44g-h4: value-props alineadas a la paleta (c3 verde squad, c4 naranja clanes) */
+.home-v2 .vp-card.c1 .vp-icon{background:rgba(0,240,255,.12);color:var(--accent)}
+.home-v2 .vp-card.c2 .vp-icon{background:rgba(168,85,247,.12);color:var(--accent-purple)}
+.home-v2 .vp-card.c3 .vp-icon{background:rgba(0,255,136,.12);color:var(--accent-green)}
+.home-v2 .vp-card.c4 .vp-icon{background:rgba(255,107,0,.12);color:var(--accent-orange)}
 .home-v2 .vp-card h3{font-size:13px;font-weight:800;margin:0 0 6px 0;text-transform:uppercase;letter-spacing:.3px;color:var(--text-primary)}
 @media(min-width:600px){.home-v2 .vp-card h3{font-size:15px}}
 .home-v2 .vp-card p{font-size:12px;color:var(--text-secondary);line-height:1.45;margin:0}
@@ -3313,6 +3314,10 @@ body.telem-open { overflow:hidden; }
 .home-v2 .podio-name .tag{color:var(--accent);font-family:'SF Mono',Menlo,monospace;font-size:12px;margin-right:6px}
 .home-v2 .podio-sub{font-size:11px;color:var(--text-secondary);margin-top:2px}
 .home-v2 .podio-kd{font-size:15px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;flex-shrink:0}
+/* fix 44g-h4: K/D semantico por valor — elite>=2, alto>=1.5, medio>=1 (default cyan), bajo<1 */
+.home-v2 .podio-kd.kd-elite{color:#ffd34d}
+.home-v2 .podio-kd.kd-high{color:var(--accent-green)}
+.home-v2 .podio-kd.kd-low{color:var(--text-dim)}
 
 /* Top500 banner */
 .home-v2 .top500{padding:16px 0 28px}
@@ -12458,11 +12463,13 @@ switchTab=function(t){
           var wins = c.total_wins || c.wins || 0;
           var kd = (c.avg_kd != null ? c.avg_kd : (c.kd_ratio || c.kd || 0));
           var kdStr = (typeof kd === 'number') ? kd.toFixed(2) : (kd || '—');
+          /* fix 44g-h4: K/D semantico — elite>=2 oro, alto>=1.5 verde, bajo<1 dim */
+          var _kdCls = (typeof kd === 'number' && isFinite(kd)) ? (kd >= 2 ? ' kd-elite' : kd >= 1.5 ? ' kd-high' : kd < 1 ? ' kd-low' : '') : '';
           var sub = members + ' miembros · ' + _hv2Fmt(kills) + ' kills' + (wins ? ' · ' + wins + ' wins' : '');
           return '<div class="podio-item'+rankCls+'" data-tag="'+_hv2Esc(tag)+'" role="button" tabindex="0">'
             + '<div class="podio-rank">'+rank+'</div>'
             + '<div class="podio-main"><div class="podio-name"><span class="tag">['+_hv2Esc(tag)+']</span>'+_hv2Esc(name)+'</div><div class="podio-sub">'+_hv2Esc(sub)+'</div></div>'
-            + '<div class="podio-kd">'+kdStr+'</div>'
+            + '<div class="podio-kd'+_kdCls+'">'+kdStr+'</div>'
             + '</div>';
         }).join('');
         panelClanes.querySelectorAll('.podio-item').forEach(function(it){
@@ -12497,6 +12504,8 @@ switchTab=function(t){
           var wins = st.wins || 0;
           var kd = games > wins ? (kills / (games - wins)) : (kills || 0);
           var kdStr = (typeof kd === 'number' && isFinite(kd)) ? kd.toFixed(2) : '0.00';
+          /* fix 44g-h4: K/D semantico — mismo criterio que clanes */
+          var _kdCls = (typeof kd === 'number' && isFinite(kd)) ? (kd >= 2 ? ' kd-elite' : kd >= 1.5 ? ' kd-high' : kd < 1 ? ' kd-low' : '') : '';
           var platformArr = p.platforms || [];
           var platform = (platformArr[0] || 'PSN').toString();
           var platformLower = platform.toLowerCase().indexOf('xbox') >= 0 ? 'xbox' : 'psn';
@@ -12505,7 +12514,7 @@ switchTab=function(t){
           return '<div class="podio-item'+rankCls+'" data-player="'+_hv2Esc(name)+'" data-platform="'+platformLower+'" role="button" tabindex="0">'
             + '<div class="podio-rank">'+rank+'</div>'
             + '<div class="podio-main"><div class="podio-name">'+_hv2Esc(name)+'</div><div class="podio-sub">'+_hv2Esc(sub)+'</div></div>'
-            + '<div class="podio-kd">'+kdStr+'</div>'
+            + '<div class="podio-kd'+_kdCls+'">'+kdStr+'</div>'
             + '</div>';
         }).join('');
         panelJugadores.querySelectorAll('.podio-item').forEach(function(it){
