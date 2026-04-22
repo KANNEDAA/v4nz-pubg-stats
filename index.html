@@ -12385,6 +12385,25 @@ switchTab=function(t){
   var section = document.getElementById('homeV2Section');
   if(!section) return;
 
+  // --- 0. Visibility sync (hotfix 44g-h1) — homeV2Section quedó hermano de #homepageContent
+  //     dentro de #mainContent, por lo que sin sync se ve en /stats/:p, /clan/:t, /ranking, /compare.
+  //     Solucion: seguir el display de #homepageContent (la SPA solo toggles ese).
+  var hp = document.getElementById('homepageContent');
+  if(hp){
+    var _syncHv2 = function(){
+      var disp = window.getComputedStyle(hp).display;
+      section.style.display = (disp === 'none') ? 'none' : '';
+    };
+    _syncHv2();
+    // Observar cambios de style/class en #homepageContent
+    try {
+      var mo = new MutationObserver(_syncHv2);
+      mo.observe(hp, { attributes:true, attributeFilter:['style','class','hidden'] });
+    } catch(e){}
+    // Fallback: también re-sync en navegaciones del router SPA
+    window.addEventListener('popstate', function(){ setTimeout(_syncHv2, 50); });
+  }
+
   // --- 1. IntersectionObserver reveal (.animate) ---
   if('IntersectionObserver' in window){
     var io = new IntersectionObserver(function(entries){
