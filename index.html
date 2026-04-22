@@ -12461,10 +12461,12 @@ switchTab=function(t){
           var members = c.active_members || c.member_count || c.members || 0;
           var kills = c.total_kills || c.kills || 0;
           var wins = c.total_wins || c.wins || 0;
-          var kd = (c.avg_kd != null ? c.avg_kd : (c.kd_ratio || c.kd || 0));
-          var kdStr = (typeof kd === 'number') ? kd.toFixed(2) : (kd || '—');
-          /* fix 44g-h4: K/D semantico — elite>=2 oro, alto>=1.5 verde, bajo<1 dim */
-          var _kdCls = (typeof kd === 'number' && isFinite(kd)) ? (kd >= 2 ? ' kd-elite' : kd >= 1.5 ? ' kd-high' : kd < 1 ? ' kd-low' : '') : '';
+          /* fix 44g-h4b: avg_kd viene como STRING desde PG NUMERIC — parseFloat antes de comparar */
+          var kdRaw = (c.avg_kd != null ? c.avg_kd : (c.kd_ratio || c.kd || 0));
+          var kd = typeof kdRaw === 'number' ? kdRaw : parseFloat(kdRaw);
+          var kdStr = isFinite(kd) ? kd.toFixed(2) : '—';
+          /* K/D semantico — elite>=2 oro, alto>=1.5 verde, bajo<1 dim */
+          var _kdCls = isFinite(kd) ? (kd >= 2 ? ' kd-elite' : kd >= 1.5 ? ' kd-high' : kd < 1 ? ' kd-low' : '') : '';
           var sub = members + ' miembros · ' + _hv2Fmt(kills) + ' kills' + (wins ? ' · ' + wins + ' wins' : '');
           return '<div class="podio-item'+rankCls+'" data-tag="'+_hv2Esc(tag)+'" role="button" tabindex="0">'
             + '<div class="podio-rank">'+rank+'</div>'
