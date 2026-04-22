@@ -3409,6 +3409,86 @@ body.telem-open { overflow:hidden; }
 #searchHero #heroFeatures{display:none}
 #homepageContent > .home-grid{display:none}
 /* HOME-V2 END */
+
+/* home-v2-logged-v1: panel logueado consolidado (scoped bajo .hv2l-* para no chocar con nada) */
+.hv2l-wrap{max-width:1280px;margin:0 auto 24px;padding:20px 16px;display:flex;flex-direction:column;gap:14px}
+@media(min-width:768px){.hv2l-wrap{padding:24px;gap:16px}}
+.hv2l-header{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+@media(min-width:768px){.hv2l-header{flex-direction:row;align-items:center;justify-content:space-between;gap:20px}}
+.hv2l-greet h2{font-size:22px;font-weight:700;margin:0 0 2px;color:var(--text-primary);line-height:1.2}
+.hv2l-greet h2 #hv2lUsername{background:linear-gradient(135deg,var(--accent),var(--accent-purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.hv2l-sub{font-size:12px;color:var(--text-secondary)}
+.hv2l-minibar{display:flex;gap:6px;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:4px 4px 4px 6px}
+.hv2l-platgroup{display:flex;gap:4px;flex-shrink:0}
+.hv2l-chip{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.hv2l-chip.active{background:rgba(0,240,255,.15);border-color:var(--accent);color:var(--accent)}
+.hv2l-minibar input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text-primary);font-size:13px;padding:6px 4px}
+.hv2l-minibar input::placeholder{color:var(--text-dim)}
+.hv2l-minibar input:focus{font-size:16px}
+@media(min-width:768px){.hv2l-minibar input:focus{font-size:13px}}
+.hv2l-minigo{background:var(--accent);color:#000;border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;flex-shrink:0}
+
+.hv2l-myprofile{background:linear-gradient(135deg,rgba(0,240,255,.1),rgba(168,85,247,.08));border:2px solid rgba(0,240,255,.35);border-radius:14px;padding:16px}
+.hv2l-mp-empty{text-align:center;padding:18px 8px}
+.hv2l-mp-icon{font-size:32px;margin-bottom:8px;opacity:.7}
+.hv2l-mp-title{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.hv2l-mp-desc{font-size:12px;color:var(--text-secondary);line-height:1.5;max-width:420px;margin:0 auto}
+.hv2l-mp-body{display:flex;flex-direction:column;gap:12px}
+.hv2l-mp-head{display:flex;align-items:center;gap:12px}
+.hv2l-mp-avatar{width:42px;height:42px;border-radius:50%;background:rgba(0,240,255,.15);color:var(--accent);display:grid;place-items:center;font-size:18px;font-weight:700;flex-shrink:0}
+.hv2l-mp-meta{flex:1;min-width:0}
+.hv2l-mp-name{font-size:15px;font-weight:700;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hv2l-mp-sub{font-size:11px;color:var(--text-secondary)}
+.hv2l-mp-kd{padding:4px 10px;background:rgba(0,255,136,.12);color:var(--accent-green);border-radius:12px;font-size:12px;font-weight:700;flex-shrink:0}
+.hv2l-mp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.hv2l-mp-stat{text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px}
+.hv2l-mp-stat-val{font-size:14px;font-weight:700;color:var(--text-primary)}
+.hv2l-mp-stat-lbl{font-size:9px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.hv2l-mp-cta{width:100%;padding:11px;background:var(--accent);color:#000;border:0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.hv2l-mp-cta:hover{background:#26d9f0;transform:translateY(-1px)}
+
+.hv2l-row2{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:768px){.hv2l-row2{grid-template-columns:1fr 1fr;gap:16px}}
+.hv2l-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.hv2l-card-clan{border-color:rgba(255,215,0,.18)}
+.hv2l-cardh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.hv2l-cardt{font-size:12px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.3px}
+.hv2l-cardl{font-size:11px;color:var(--accent);text-decoration:none;cursor:pointer}
+.hv2l-dot{display:inline-block;width:7px;height:7px;background:var(--accent-green);border-radius:50%;animation:hv2lPulse 1.4s ease-in-out infinite}
+@keyframes hv2lPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hv2l-empty{text-align:center;padding:12px 0 8px}
+.hv2l-empty p{margin:0 0 10px;color:var(--text-secondary);font-size:12px}
+.hv2l-btn-sec{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:7px 14px;border-radius:8px;font-size:11px;cursor:pointer;transition:all .15s}
+.hv2l-btn-sec:hover{border-color:var(--accent);color:var(--accent)}
+
+.hv2l-deep{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(0,240,255,.1));border:1px solid rgba(168,85,247,.4);border-radius:12px;padding:14px;flex-wrap:wrap;position:relative}
+.hv2l-deep-badge{position:absolute;top:-10px;left:14px;padding:3px 10px;background:var(--accent-purple);color:#fff;font-size:10px;font-weight:700;border-radius:12px;letter-spacing:.5px}
+.hv2l-deep-body{flex:1;min-width:200px}
+.hv2l-deep-body h3{margin:0 0 2px;font-size:15px;color:var(--text-primary);font-weight:700}
+.hv2l-deep-body p{margin:0;font-size:11px;color:#c4b5fd;line-height:1.5}
+.hv2l-deep-btn{padding:10px 16px;background:var(--accent-purple);color:#fff;border:0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
+.hv2l-deep-btn:hover{background:#9333ea;transform:translateY(-1px)}
+@media(max-width:600px){.hv2l-deep-btn{width:100%}}
+
+.hv2l-tools{margin-top:4px}
+.hv2l-toolsh{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.hv2l-toolsgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:640px){.hv2l-toolsgrid{grid-template-columns:repeat(4,1fr)}}
+.hv2l-tool{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;text-align:left;transition:all .15s;min-height:56px}
+.hv2l-tool:hover{border-color:var(--accent);transform:translateY(-1px)}
+.hv2l-tool-icon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.hv2l-tool-orange{background:rgba(255,107,0,.12);color:var(--accent-orange)}
+.hv2l-tool-cyan{background:rgba(0,240,255,.12);color:var(--accent)}
+.hv2l-tool-green{background:rgba(0,255,136,.12);color:var(--accent-green)}
+.hv2l-tool-red{background:rgba(255,51,85,.12);color:var(--accent-red)}
+.hv2l-tool-txt{flex:1;min-width:0}
+.hv2l-tool-name{font-size:12px;font-weight:700;color:var(--text-primary);line-height:1.2}
+.hv2l-tool-desc{font-size:10px;color:var(--text-secondary);margin-top:2px}
+
+/* Cuando el panel logueado esta activo, el JS ocultara value-props, bot-index-teaser y cta-register via style inline */
+.hv2l-wrap #whoPlayingCard{display:block!important;background:transparent;border:0;padding:0;margin:0;box-shadow:none}
+.hv2l-wrap #whoPlayingCard .home-card-header{display:none}
+/* home-v2-logged-v1 END */
 </style>
 </head>
 <body>
@@ -3556,6 +3636,110 @@ body.telem-open { overflow:hidden; }
 
 <!-- HOME-V2 START — Bloques nuevos home anónima (sesión 44g): value-props, bot index, podios, top500, CTA, comunidad, follow, creator -->
 <section class="home-v2" id="homeV2Section">
+
+  <!-- home-v2-logged-v1: panel consolidado SOLO visible si currentUser. JS lo activa en _hv2ShowLoggedPanel y mueve whoPlayingCard al host hv2lLiveFavsHost. Si se tocan estos ids romper la conexion con el JS. -->
+  <div class="hv2l-wrap" id="homeV2Logged" style="display:none;">
+    <div class="hv2l-header">
+      <div class="hv2l-greet">
+        <h2>Hola, <span id="hv2lUsername">jugador</span></h2>
+        <div class="hv2l-sub" id="hv2lSubtitle">Tu panel V4NZ</div>
+      </div>
+      <div class="hv2l-minibar">
+        <div class="hv2l-platgroup">
+          <button class="hv2l-chip active" data-platform="psn" type="button">PS</button>
+          <button class="hv2l-chip" data-platform="xbox" type="button">Xbox</button>
+        </div>
+        <input type="text" id="hv2lMiniSearch" placeholder="Buscar a otro jugador..." aria-label="Buscar a otro jugador" />
+        <button class="hv2l-minigo" id="hv2lMiniGo" type="button" aria-label="Buscar">&rarr;</button>
+      </div>
+    </div>
+
+    <div class="hv2l-myprofile" id="hv2lMyProfile">
+      <div class="hv2l-mp-empty" id="hv2lMpEmpty">
+        <div class="hv2l-mp-icon">&#x1F464;</div>
+        <div class="hv2l-mp-title">B&uacute;scate para desbloquear tu perfil</div>
+        <div class="hv2l-mp-desc">Tu historial, partidas, armas y ADN aparecer&aacute;n aqu&iacute; una vez te busques por primera vez.</div>
+      </div>
+      <div class="hv2l-mp-body" id="hv2lMpBody" style="display:none;">
+        <div class="hv2l-mp-head">
+          <div class="hv2l-mp-avatar" id="hv2lMpAvatar">L</div>
+          <div class="hv2l-mp-meta">
+            <div class="hv2l-mp-name" id="hv2lMpName">&mdash;</div>
+            <div class="hv2l-mp-sub" id="hv2lMpSub">&mdash;</div>
+          </div>
+          <div class="hv2l-mp-kd" id="hv2lMpKdBadge">K/D &mdash;</div>
+        </div>
+        <div class="hv2l-mp-stats" id="hv2lMpStats"></div>
+        <button class="hv2l-mp-cta" id="hv2lMpCta" type="button">Ver mi an&aacute;lisis completo &rarr;</button>
+      </div>
+    </div>
+
+    <div class="hv2l-row2">
+      <div class="hv2l-card hv2l-card-clan" id="hv2lMyClanCard">
+        <div class="hv2l-cardh">
+          <span class="hv2l-cardt">&#x1F6E1; Mi clan</span>
+          <a class="hv2l-cardl" id="hv2lMyClanLink" href="#" style="display:none;">Ver detalle &rarr;</a>
+        </div>
+        <div class="hv2l-cardb" id="hv2lMyClanBody">
+          <div class="hv2l-empty" id="hv2lMyClanEmpty">
+            <p>A&uacute;n no has a&ntilde;adido un clan favorito.</p>
+            <button class="hv2l-btn-sec" type="button" onclick="switchTab('clans')">Explorar clanes</button>
+          </div>
+        </div>
+      </div>
+      <div class="hv2l-card hv2l-card-live" id="hv2lLiveFavsHost">
+        <div class="hv2l-cardh">
+          <span class="hv2l-cardt"><span class="hv2l-dot"></span> En vivo &middot; tus favoritos</span>
+        </div>
+        <div class="hv2l-cardb" id="hv2lLiveFavsPlaceholder" style="color:var(--text-secondary);font-size:12px;padding:8px 0;">Cargando favoritos...</div>
+      </div>
+    </div>
+
+    <div class="hv2l-deep" id="hv2lDeepCta">
+      <div class="hv2l-deep-badge">AN&Aacute;LISIS PRO</div>
+      <div class="hv2l-deep-body">
+        <h3>Deep Analysis con IA</h3>
+        <p>&Uacute;ltimos 90 d&iacute;as &middot; plan de entrenamiento personalizado &middot; claude-sonnet</p>
+      </div>
+      <button class="hv2l-deep-btn" id="hv2lDeepBtn" type="button">Analizar mi juego &rarr;</button>
+    </div>
+
+    <div class="hv2l-tools">
+      <div class="hv2l-toolsh">&#x26A1; Acciones r&aacute;pidas</div>
+      <div class="hv2l-toolsgrid">
+        <button class="hv2l-tool" id="hv2lToolWrapped" type="button">
+          <div class="hv2l-tool-icon hv2l-tool-orange">&#x1F3AC;</div>
+          <div class="hv2l-tool-txt">
+            <div class="hv2l-tool-name">Mi temporada</div>
+            <div class="hv2l-tool-desc">Wrapped &mdash; tu a&ntilde;o PUBG</div>
+          </div>
+        </button>
+        <button class="hv2l-tool" id="hv2lToolStatsCard" type="button">
+          <div class="hv2l-tool-icon hv2l-tool-cyan">&#x1F4F7;</div>
+          <div class="hv2l-tool-txt">
+            <div class="hv2l-tool-name">Stats card</div>
+            <div class="hv2l-tool-desc">PNG para compartir</div>
+          </div>
+        </button>
+        <button class="hv2l-tool" id="hv2lToolCompare" type="button">
+          <div class="hv2l-tool-icon hv2l-tool-green">&#x2694;&#xFE0F;</div>
+          <div class="hv2l-tool-txt">
+            <div class="hv2l-tool-name">Comparar</div>
+            <div class="hv2l-tool-desc">Yo vs otro jugador</div>
+          </div>
+        </button>
+        <button class="hv2l-tool" id="hv2lToolPubgReport" type="button">
+          <div class="hv2l-tool-icon hv2l-tool-red">&#x1F3AF;</div>
+          <div class="hv2l-tool-txt">
+            <div class="hv2l-tool-name">PUBG Report</div>
+            <div class="hv2l-tool-desc">Abrir mi perfil externo</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- home-v2-logged-v1 END -->
+
   <!-- Value Props -->
   <div class="value-props">
     <div class="section-header"><h2>Qu&eacute; tiene V4NZ</h2></div>
@@ -12583,6 +12767,297 @@ switchTab=function(t){
   // --- Helpers ---
   function _hv2Esc(s){ s = (s==null?'':String(s)); return s.replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
   function _hv2Fmt(n){ n = Number(n)||0; if(n>=1000000) return (n/1000000).toFixed(1)+'M'; if(n>=1000) return (n/1000).toFixed(1)+'K'; return String(n); }
+
+  // --- 10. Logged panel consolidation (home-v2-logged-v1) ---
+  function _hv2IsLogged(){
+    try { return !!(typeof currentUser !== 'undefined' && currentUser) || !!localStorage.getItem('v4nz_token'); } catch(e){ return false; }
+  }
+  function _hv2GetUsername(){
+    try {
+      if(typeof currentUser !== 'undefined' && currentUser){
+        var n = currentUser.username || currentUser.discord_username || currentUser.display_name || '';
+        if(!n && currentUser.email){ n = String(currentUser.email).split('@')[0]; }
+        if(n) return n;
+      }
+    } catch(e){}
+    return 'jugador';
+  }
+  function _hv2GetLastPlayer(){
+    try {
+      var rec = JSON.parse(localStorage.getItem('recent_searches') || '[]');
+      if(Array.isArray(rec) && rec.length && rec[0] && rec[0].name){ return rec[0]; }
+    } catch(e){}
+    return null;
+  }
+  function _hv2Platform2Shard(p){ return (p==='xbox' || p==='xboxone' || p==='xbox-one') ? 'xbox' : 'psn'; }
+
+  function _hv2ShowLoggedPanel(){
+    try {
+      var panel = document.getElementById('homeV2Logged');
+      if(!panel) return;
+      var logged = _hv2IsLogged();
+      if(!logged){ panel.style.display = 'none'; return; }
+      panel.style.display = '';
+      // Ocultar bloques que estorban al logueado
+      var toHide = ['.value-props','.bot-index-teaser','#hv2CtaRegister'];
+      toHide.forEach(function(sel){ var el = section.querySelector(sel); if(el) el.style.display = 'none'; });
+      // Saludo
+      var u = document.getElementById('hv2lUsername');
+      if(u) u.textContent = _hv2GetUsername();
+      var sub = document.getElementById('hv2lSubtitle');
+      if(sub){
+        try {
+          var plat = '';
+          if(typeof currentUser !== 'undefined' && currentUser){
+            plat = currentUser.platform || currentUser.discord_username ? 'Discord' : 'email';
+          }
+          sub.textContent = plat ? ('Conectado via ' + plat) : 'Tu panel V4NZ';
+        } catch(e){}
+      }
+      // Mover whoPlayingCard al host en vivo
+      var wpc = document.getElementById('whoPlayingCard');
+      var host = document.getElementById('hv2lLiveFavsHost');
+      var ph = document.getElementById('hv2lLiveFavsPlaceholder');
+      if(wpc && host && !host.contains(wpc)){
+        if(ph && ph.parentNode) ph.style.display = 'none';
+        host.appendChild(wpc);
+        wpc.style.display = 'block';
+        if(typeof loadWhoIsPlaying === 'function'){ setTimeout(function(){ try { loadWhoIsPlaying(false); } catch(e){} }, 300); }
+      }
+      _hv2LoadMyProfile();
+      _hv2LoadMyClan();
+    } catch(e){ try { console.error('_hv2ShowLoggedPanel', e); } catch(_){} }
+  }
+
+  function _hv2LoadMyProfile(){
+    var empty = document.getElementById('hv2lMpEmpty');
+    var body = document.getElementById('hv2lMpBody');
+    if(!empty || !body) return;
+    var last = _hv2GetLastPlayer();
+    if(!last){ empty.style.display = ''; body.style.display = 'none'; return; }
+    // Resetear avatar y nombre con lo que tenemos
+    var av = document.getElementById('hv2lMpAvatar');
+    var name = document.getElementById('hv2lMpName');
+    var subEl = document.getElementById('hv2lMpSub');
+    var kd = document.getElementById('hv2lMpKdBadge');
+    var statsEl = document.getElementById('hv2lMpStats');
+    if(av) av.textContent = (last.name||'?').charAt(0).toUpperCase();
+    if(name) name.textContent = last.name || '';
+    var shard = _hv2Platform2Shard(last.platform);
+    if(subEl) subEl.textContent = (shard==='xbox'?'Xbox':'PlayStation') + ' \u00b7 \u00daltimo buscado';
+    if(kd) kd.textContent = 'K/D \u2014';
+    if(statsEl) statsEl.innerHTML = '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">\u2014</div><div class="hv2l-mp-stat-lbl">cargando</div></div>';
+    empty.style.display = 'none';
+    body.style.display = '';
+    // Fetch stats reales
+    var url = '/api/player/' + shard + '/' + encodeURIComponent(last.name);
+    fetch(url, { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if(!data) return;
+        var stats = (data.stats && data.stats.gameModeStats) || data.gameModeStats || null;
+        // Mezcla squad-fpp + squad para mostrar algo
+        var agg = { kills:0, wins:0, roundsPlayed:0, damageDealt:0 };
+        var modes = ['squad-fpp','squad','duo-fpp','duo','solo-fpp','solo'];
+        if(stats){
+          modes.forEach(function(m){
+            var s = stats[m];
+            if(!s) return;
+            agg.kills += Number(s.kills||0);
+            agg.wins += Number(s.wins||0);
+            agg.roundsPlayed += Number(s.roundsPlayed||0);
+            agg.damageDealt += Number(s.damageDealt||0);
+          });
+        }
+        var kdVal = (agg.roundsPlayed > agg.wins) ? (agg.kills / (agg.roundsPlayed - agg.wins)) : (agg.kills || 0);
+        var winPct = agg.roundsPlayed ? ((agg.wins / agg.roundsPlayed) * 100) : 0;
+        var adr = agg.roundsPlayed ? (agg.damageDealt / agg.roundsPlayed) : 0;
+        if(kd) kd.textContent = 'K/D ' + (isFinite(kdVal) ? kdVal.toFixed(2) : '\u2014');
+        if(statsEl){
+          statsEl.innerHTML =
+            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + (isFinite(kdVal)?kdVal.toFixed(2):'\u2014') + '</div><div class="hv2l-mp-stat-lbl">K/D</div></div>' +
+            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + winPct.toFixed(1) + '%</div><div class="hv2l-mp-stat-lbl">Wins</div></div>' +
+            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + Math.round(adr) + '</div><div class="hv2l-mp-stat-lbl">ADR</div></div>' +
+            '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">' + agg.roundsPlayed + '</div><div class="hv2l-mp-stat-lbl">Partidas</div></div>';
+        }
+      })
+      .catch(function(){});
+  }
+
+  function _hv2LoadMyClan(){
+    var body = document.getElementById('hv2lMyClanBody');
+    var empty = document.getElementById('hv2lMyClanEmpty');
+    var link = document.getElementById('hv2lMyClanLink');
+    if(!body) return;
+    // Fuente 1: clanFavorites global (localStorage pubg_clan_favorites)
+    var tag = '';
+    try {
+      var arr = JSON.parse(localStorage.getItem('pubg_clan_favorites') || '[]');
+      if(Array.isArray(arr) && arr.length){ tag = arr[0].tag || arr[0].clan_tag || arr[0]; }
+    } catch(e){}
+    if(!tag){
+      // Fuente 2: /auth/favorites si hay token
+      var token = '';
+      try { token = localStorage.getItem('v4nz_token') || ''; } catch(e){}
+      if(token){
+        fetch('/auth/favorites', { headers:{ 'Authorization':'Bearer '+token } })
+          .then(function(r){ return r.ok ? r.json() : {favorites:[]}; })
+          .then(function(data){
+            var favs = (data && (data.favorites || data.clanFavorites)) || [];
+            var found = favs.find(function(f){ return f && (f.type === 'clan' || f.kind === 'clan' || (f.tag && !f.player_name && !f.name_lower)); });
+            if(found){ _hv2RenderClan(found.tag || found.clan_tag || ''); }
+            else { if(empty) empty.style.display = ''; }
+          })
+          .catch(function(){ if(empty) empty.style.display = ''; });
+        return;
+      }
+      if(empty) empty.style.display = '';
+      return;
+    }
+    _hv2RenderClan(tag);
+  }
+  function _hv2RenderClan(tag){
+    var body = document.getElementById('hv2lMyClanBody');
+    var empty = document.getElementById('hv2lMyClanEmpty');
+    var link = document.getElementById('hv2lMyClanLink');
+    if(!tag || !body){ if(empty) empty.style.display=''; return; }
+    fetch('/clans/' + encodeURIComponent(tag), { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(clan){
+        if(!clan){ if(empty) empty.style.display=''; return; }
+        if(empty) empty.style.display = 'none';
+        if(link){
+          link.style.display = '';
+          link.onclick = function(e){ e.preventDefault(); if(typeof loadClanPage==='function') loadClanPage(tag); else location.href='/clan/'+encodeURIComponent(tag); };
+        }
+        var members = clan.active_members || clan.member_count || clan.members || 0;
+        var kdRaw = (clan.avg_kd != null ? clan.avg_kd : (clan.kd_ratio || 0));
+        var kd = parseFloat(kdRaw); if(!isFinite(kd)) kd = 0;
+        var kills = _hv2Fmt(clan.total_kills || clan.kills || 0);
+        var rank = clan.rank ? ('#' + clan.rank) : '';
+        body.innerHTML = ''
+          + '<div style="display:flex;align-items:center;gap:10px;">'
+          +   '<div style="font-size:16px;font-weight:800;color:var(--accent-yellow);letter-spacing:.5px;">[' + _hv2Esc(tag) + ']</div>'
+          +   '<div style="flex:1;min-width:0;">'
+          +     '<div style="font-weight:700;color:var(--text-primary);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _hv2Esc(clan.name || tag) + '</div>'
+          +     '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">' + members + ' activos \u00b7 K/D ' + kd.toFixed(2) + ' \u00b7 ' + kills + ' kills</div>'
+          +   '</div>'
+          +   (rank ? '<div style="padding:3px 8px;background:rgba(255,215,0,.15);border-radius:12px;color:var(--accent-yellow);font-size:11px;font-weight:700;">' + rank + '</div>' : '')
+          + '</div>'
+          + '<div style="display:flex;gap:6px;margin-top:10px;">'
+          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + _hv2Esc(tag) + '\');" style="flex:1;">Radiograf\u00eda</button>'
+          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + _hv2Esc(tag) + '\');setTimeout(function(){var b=document.querySelector(\'[onclick*=analyzeClanWithAI]\');if(b)b.click();},400);" style="flex:1;border-color:rgba(168,85,247,.35);color:var(--accent-purple);">Analizar IA</button>'
+          + '</div>';
+      })
+      .catch(function(){ if(empty) empty.style.display=''; });
+  }
+
+  // Mini search
+  (function(){
+    var miniSearch = document.getElementById('hv2lMiniSearch');
+    var miniGo = document.getElementById('hv2lMiniGo');
+    var chips = section.querySelectorAll('.hv2l-chip');
+    var _plat = 'psn';
+    chips.forEach(function(c){
+      c.addEventListener('click', function(){
+        chips.forEach(function(x){ x.classList.remove('active'); });
+        c.classList.add('active');
+        _plat = c.getAttribute('data-platform') || 'psn';
+      });
+    });
+    function go(){
+      var q = miniSearch && miniSearch.value.trim();
+      if(!q) return;
+      try { if(typeof setPlatform === 'function') setPlatform(_plat); } catch(e){}
+      if(typeof searchPlayer === 'function') searchPlayer(q);
+      else location.href = '/stats/' + _plat + '/' + encodeURIComponent(q);
+    }
+    if(miniGo) miniGo.addEventListener('click', go);
+    if(miniSearch) miniSearch.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); go(); } });
+  })();
+
+  // Card "Mi perfil" CTA
+  (function(){
+    var cta = document.getElementById('hv2lMpCta');
+    if(!cta) return;
+    cta.addEventListener('click', function(){
+      var last = _hv2GetLastPlayer();
+      if(!last){
+        var input = document.getElementById('hv2lMiniSearch');
+        if(input) input.focus();
+        return;
+      }
+      try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
+      if(typeof searchPlayer === 'function') searchPlayer(last.name);
+      else location.href = '/stats/' + _hv2Platform2Shard(last.platform) + '/' + encodeURIComponent(last.name);
+    });
+  })();
+
+  // Deep Analysis Pro
+  (function(){
+    var btn = document.getElementById('hv2lDeepBtn');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      var last = _hv2GetLastPlayer();
+      if(!last){
+        if(typeof openAuthPopup === 'function'){ openAuthPopup(); }
+        alert('Primero b\u00fascate a ti mismo. El an\u00e1lisis IA usa los datos de tu perfil.');
+        return;
+      }
+      try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
+      if(typeof searchPlayer === 'function') searchPlayer(last.name);
+      // Dar tiempo al perfil a cargar, abrir popup y disparar Deep Analysis
+      setTimeout(function(){
+        try { if(typeof openAuthPopup === 'function') openAuthPopup(); } catch(e){}
+        setTimeout(function(){ try { if(typeof loadDeepAnalysis === 'function') loadDeepAnalysis(); } catch(e){} }, 600);
+      }, 1200);
+    });
+  })();
+
+  // Quick tools
+  (function(){
+    function _withProfile(thenFn, msg){
+      var last = _hv2GetLastPlayer();
+      if(!last){ alert(msg || 'B\u00fascate primero en la barra de arriba para usar esta acci\u00f3n.'); return; }
+      try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
+      if(typeof currentPlayerData !== 'undefined' && currentPlayerData && currentPlayerData.name && currentPlayerData.name.toLowerCase() === last.name.toLowerCase()){
+        setTimeout(thenFn, 150);
+        return;
+      }
+      if(typeof searchPlayer === 'function') searchPlayer(last.name);
+      setTimeout(thenFn, 1400);
+    }
+    var bW = document.getElementById('hv2lToolWrapped');
+    if(bW) bW.addEventListener('click', function(){ _withProfile(function(){ try { if(typeof generateSeasonWrapped === 'function') generateSeasonWrapped(); } catch(e){} }); });
+    var bS = document.getElementById('hv2lToolStatsCard');
+    if(bS) bS.addEventListener('click', function(){ _withProfile(function(){ try { if(typeof generateStatsCard === 'function') generateStatsCard(); } catch(e){} }); });
+    var bC = document.getElementById('hv2lToolCompare');
+    if(bC) bC.addEventListener('click', function(){
+      var last = _hv2GetLastPlayer();
+      if(last){
+        try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
+        if(typeof searchPlayer === 'function') searchPlayer(last.name);
+        setTimeout(function(){ try { if(typeof _goCompareWithMe === 'function') _goCompareWithMe(); else if(typeof switchTab === 'function') switchTab('compare'); } catch(e){} }, 1200);
+      } else {
+        try { if(typeof switchTab === 'function') switchTab('compare'); } catch(e){}
+      }
+    });
+    var bP = document.getElementById('hv2lToolPubgReport');
+    if(bP) bP.addEventListener('click', function(){
+      _withProfile(function(){
+        var pr = document.getElementById('pubgReportBtn');
+        if(pr && pr.href && pr.href.indexOf('pubg.report') > -1){ window.open(pr.href, '_blank', 'noopener'); }
+        else { alert('El enlace PUBG Report estar\u00e1 disponible cuando cargue tu perfil.'); }
+      });
+    });
+  })();
+
+  // Trigger inicial + hooks auth
+  _hv2ShowLoggedPanel();
+  setTimeout(_hv2ShowLoggedPanel, 600);
+  setTimeout(_hv2ShowLoggedPanel, 2000);
+  window.addEventListener('storage', function(e){ if(e && (e.key === 'v4nz_token' || e.key === 'recent_searches' || e.key === 'pubg_clan_favorites')) _hv2ShowLoggedPanel(); });
+  document.addEventListener('v4nz-auth-changed', _hv2ShowLoggedPanel);
 
   // --- Kick off ---
   _hv2LoadTopClans();
