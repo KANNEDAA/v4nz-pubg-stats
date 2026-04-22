@@ -3226,6 +3226,180 @@ body.telem-open { overflow:hidden; }
   .clan-stat .cs-val{font-size:.9rem}
   .clan-stat .cs-label{font-size:.5rem}
 }
+
+/* HOME-V2 START — Home anónima v2: value-props + bot index + podios + top500 + CTA + comunidad + follow + creator (sesión 44g) */
+.home-v2{max-width:1280px;margin:0 auto;padding:0 16px}
+@media(min-width:768px){.home-v2{padding:0 24px}}
+.home-v2 .section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;padding:0 4px}
+.home-v2 .section-header h2{font-size:18px;font-weight:800;letter-spacing:.3px;margin:0}
+@media(min-width:768px){.home-v2 .section-header h2{font-size:22px}}
+.home-v2 .section-header .link{color:var(--text-secondary);font-size:12px;font-weight:600;background:none;border:none;cursor:pointer}
+.home-v2 .section-header .link:hover{color:var(--accent)}
+.home-v2 .section-header .emoji{margin-right:6px}
+
+/* Btns home v2 */
+.home-v2 .btn{padding:9px 14px;border-radius:8px;border:1px solid rgba(0,240,255,0.18);background:var(--bg-card-hover);color:var(--text-primary);font-size:13px;font-weight:700;transition:all .15s;cursor:pointer;font-family:inherit}
+.home-v2 .btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.home-v2 .btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,240,255,.35)}
+.home-v2 .btn:hover{border-color:var(--accent)}
+.home-v2 .btn.discord{background:#5865F2;color:#fff;border-color:#5865F2}
+.home-v2 .btn.full{width:100%;padding:14px;font-size:15px}
+
+/* Value props (Qué tiene V4NZ) */
+.home-v2 .value-props{padding:28px 0 20px}
+.home-v2 .vp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:960px){.home-v2 .vp-grid{grid-template-columns:repeat(4,1fr);gap:16px}}
+.home-v2 .vp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;transition:all .2s}
+.home-v2 .vp-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-glow)}
+.home-v2 .vp-icon{width:40px;height:40px;border-radius:8px;display:grid;place-items:center;font-size:20px;margin-bottom:10px}
+@media(min-width:600px){.home-v2 .vp-icon{width:48px;height:48px;font-size:24px;margin-bottom:14px}}
+.home-v2 .vp-card.c1 .vp-icon{background:rgba(0,240,255,.12)}
+.home-v2 .vp-card.c2 .vp-icon{background:rgba(168,85,247,.12)}
+.home-v2 .vp-card.c3 .vp-icon{background:rgba(74,158,255,.12)}
+.home-v2 .vp-card.c4 .vp-icon{background:rgba(255,107,107,.12)}
+.home-v2 .vp-card h3{font-size:13px;font-weight:800;margin:0 0 6px 0;text-transform:uppercase;letter-spacing:.3px;color:var(--text-primary)}
+@media(min-width:600px){.home-v2 .vp-card h3{font-size:15px}}
+.home-v2 .vp-card p{font-size:12px;color:var(--text-secondary);line-height:1.45;margin:0}
+@media(min-width:600px){.home-v2 .vp-card p{font-size:13px}}
+.home-v2 .vp-preview{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.home-v2 .vp-preview .chip{padding:2px 7px;border-radius:5px;background:var(--bg-card-hover);color:var(--text-secondary);font-size:10px;font-weight:600}
+
+/* Bot Index Teaser */
+.home-v2 .bot-index-teaser{padding:20px 0}
+.home-v2 .bi-card{background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(74,158,255,.08));border:1px solid rgba(0,240,255,0.25);border-radius:16px;padding:20px;position:relative;overflow:hidden}
+.home-v2 .bi-card .exclusive-badge{position:absolute;top:12px;right:12px;padding:4px 10px;border-radius:100px;background:var(--accent);color:#000;font-size:10px;font-weight:800;letter-spacing:.5px;overflow:hidden}
+.home-v2 .bi-card .exclusive-badge::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);animation:biShine 3.5s infinite}
+@keyframes biShine{0%,70%{left:-100%}90%,100%{left:200%}}
+.home-v2 .bi-card h3{font-size:18px;font-weight:900;margin:0 0 6px 0;max-width:85%;line-height:1.2;color:var(--text-primary)}
+.home-v2 .bi-card h3 .robot{display:inline-block;font-size:22px;margin-right:4px}
+.home-v2 .bi-card p{color:var(--text-secondary);font-size:13px;margin:0 0 12px 0}
+.home-v2 .bi-example{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.home-v2 .bi-example .ex-av{width:32px;height:32px;border-radius:8px;background:rgba(74,158,255,.2);color:#4a9eff;display:grid;place-items:center;font-weight:900;font-size:14px;flex-shrink:0}
+.home-v2 .bi-example .ex-info{flex:1;min-width:0}
+.home-v2 .bi-example .ex-name{font-weight:800;font-size:13px;color:var(--text-primary)}
+.home-v2 .bi-example .ex-stat{font-size:11px;color:var(--text-secondary)}
+.home-v2 .bi-example .ex-verdict{padding:6px 10px;border-radius:8px;background:rgba(74,158,255,.15);border:1px solid rgba(74,158,255,.35);color:#4a9eff;font-weight:800;font-size:11px;white-space:nowrap}
+.home-v2 .bi-profiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.home-v2 .bi-profile{padding:10px 8px;border-radius:12px;background:var(--bg);border:1px solid var(--border);text-align:center}
+.home-v2 .bi-profile .p-icon{font-size:18px;margin-bottom:4px}
+.home-v2 .bi-profile .p-name{font-size:11px;font-weight:800;margin-bottom:2px}
+.home-v2 .bi-profile .p-desc{font-size:10px;color:var(--text-secondary);line-height:1.3}
+.home-v2 .bi-profile.cazador{border-color:rgba(0,255,136,.3)}
+.home-v2 .bi-profile.cazador .p-name{color:var(--accent-green)}
+.home-v2 .bi-profile.equilibrado{border-color:rgba(74,158,255,.3)}
+.home-v2 .bi-profile.equilibrado .p-name{color:#4a9eff}
+.home-v2 .bi-profile.volumen{border-color:rgba(168,85,247,.3)}
+.home-v2 .bi-profile.volumen .p-name{color:var(--accent-purple)}
+.home-v2 .bi-disclaimer{margin-top:10px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.4}
+
+/* Podios (Top de la comunidad) */
+.home-v2 .podios{padding:28px 0 20px}
+.home-v2 .podios-tabs{display:flex;gap:6px;margin-bottom:12px;background:var(--bg-card);padding:4px;border-radius:100px;border:1px solid var(--border);width:fit-content}
+.home-v2 .podios-tabs button{padding:8px 16px;border-radius:100px;background:transparent;border:none;color:var(--text-secondary);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.home-v2 .podios-tabs button.active{background:var(--accent);color:#000}
+.home-v2 .podios-grid{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:960px){.home-v2 .podios-grid{grid-template-columns:1fr 1fr}}
+.home-v2 .podio-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px}
+.home-v2 .podio-card.hidden{display:none}
+.home-v2 .podio-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s}
+.home-v2 .podio-item:hover{opacity:.85}
+.home-v2 .podio-item:last-child{border-bottom:none}
+.home-v2 .podio-rank{width:28px;font-size:16px;font-weight:900;color:var(--text-secondary);text-align:center;flex-shrink:0}
+.home-v2 .podio-item.p1 .podio-rank{color:#ffd34d;font-size:20px}
+.home-v2 .podio-item.p2 .podio-rank{color:#d4d4d4}
+.home-v2 .podio-item.p3 .podio-rank{color:#cd7f32}
+.home-v2 .podio-main{flex:1;min-width:0}
+.home-v2 .podio-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary)}
+.home-v2 .podio-name .tag{color:var(--accent);font-family:'SF Mono',Menlo,monospace;font-size:12px;margin-right:6px}
+.home-v2 .podio-sub{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.home-v2 .podio-kd{font-size:15px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;flex-shrink:0}
+
+/* Top500 banner */
+.home-v2 .top500{padding:16px 0 28px}
+.home-v2 .top500-banner{background:linear-gradient(135deg,rgba(0,240,255,.08),rgba(168,85,247,.08));border:1px solid rgba(0,240,255,0.25);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.home-v2 .top500-banner .icon{font-size:32px}
+.home-v2 .top500-banner .text{flex:1;min-width:180px}
+.home-v2 .top500-banner h3{font-size:15px;font-weight:800;margin:0 0 2px 0;color:var(--text-primary)}
+.home-v2 .top500-banner p{font-size:12px;color:var(--text-secondary);margin:0}
+@media(min-width:768px){.home-v2 .top500-banner h3{font-size:17px}.home-v2 .top500-banner p{font-size:13px}}
+
+/* CTA Registro */
+.home-v2 .cta-register{padding:16px 0 28px}
+.home-v2 .cta-card{background:linear-gradient(135deg,rgba(168,85,247,.12),rgba(74,158,255,.08));border:1px solid rgba(0,240,255,0.25);border-radius:16px;padding:20px;position:relative;overflow:hidden}
+.home-v2 .cta-card h3{font-size:18px;font-weight:900;margin:0 0 14px 0;line-height:1.2;color:var(--text-primary)}
+.home-v2 .cta-card h3 .accent{color:var(--accent)}
+.home-v2 .cta-benefits{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px;margin:0 0 16px 0}
+.home-v2 .cta-benefits li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text-primary)}
+.home-v2 .cta-benefits li .check{width:20px;height:20px;border-radius:50%;background:var(--accent-green);color:#000;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.home-v2 .cta-benefits li strong{color:var(--accent)}
+.home-v2 .cta-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.home-v2 .cta-card .fineprint{margin-top:10px;font-size:11px;color:var(--text-dim);text-align:center}
+
+/* Comunidad V4NZ (Discord) */
+.home-v2 .comunidad{padding:24px 0 20px}
+.home-v2 .com-card{background:linear-gradient(135deg,rgba(88,101,242,.10),rgba(88,101,242,.02));border:1px solid rgba(88,101,242,.25);border-radius:16px;padding:20px;text-align:center}
+.home-v2 .com-card .disc-icon{width:56px;height:56px;border-radius:16px;background:#5865F2;display:grid;place-items:center;margin:0 auto 12px;font-size:26px;box-shadow:0 6px 20px rgba(88,101,242,.35)}
+.home-v2 .com-card h3{font-size:18px;font-weight:900;margin:0 0 6px 0;color:var(--text-primary)}
+.home-v2 .com-card p{font-size:13px;color:var(--text-secondary);margin:0 0 14px 0;max-width:480px;margin-left:auto;margin-right:auto}
+.home-v2 .com-card .discord-btn{display:inline-flex;align-items:center;gap:8px;background:#5865F2;color:#fff;padding:12px 22px;border:none;border-radius:12px;font-size:14px;font-weight:800;box-shadow:0 4px 14px rgba(88,101,242,.4);transition:transform .15s;text-decoration:none;min-height:44px}
+.home-v2 .com-card .discord-btn:hover{transform:translateY(-1px)}
+.home-v2 .com-card .secondary-link{margin-top:12px;font-size:12px;color:var(--text-secondary)}
+.home-v2 .com-card .secondary-link a{color:var(--accent);font-weight:700;text-decoration:none}
+.home-v2 .com-card .secondary-link .sep{margin:0 6px;color:var(--text-dim)}
+
+/* Sigue a KANNEDA (social grid) */
+.home-v2 .follow-kanneda{padding:24px 0 12px}
+.home-v2 .follow-head{text-align:center;margin-bottom:14px}
+.home-v2 .follow-head h3{font-size:18px;font-weight:900;margin:0 0 4px 0;color:var(--text-primary)}
+.home-v2 .follow-head p{font-size:12px;color:var(--text-secondary);margin:0}
+.home-v2 .social-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:600px){.home-v2 .social-grid{grid-template-columns:repeat(5,1fr)}}
+.home-v2 .social-tile{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;transition:transform .15s,border-color .15s;display:block;text-decoration:none;color:inherit;min-height:44px}
+.home-v2 .social-tile:hover{transform:translateY(-2px)}
+.home-v2 .social-tile .s-icon{font-size:22px;margin-bottom:6px;display:block}
+.home-v2 .social-tile .s-name{font-size:12px;font-weight:800;margin-bottom:2px}
+.home-v2 .social-tile .s-desc{font-size:10px;color:var(--text-secondary);line-height:1.3}
+.home-v2 .social-tile.yt{border-color:rgba(255,0,0,.25)}
+.home-v2 .social-tile.yt:hover{border-color:#ff0000}
+.home-v2 .social-tile.yt .s-name{color:#ff4444}
+.home-v2 .social-tile.tw{border-color:rgba(145,70,255,.25)}
+.home-v2 .social-tile.tw:hover{border-color:#9146FF}
+.home-v2 .social-tile.tw .s-name{color:#b47aff}
+.home-v2 .social-tile.tt{border-color:rgba(255,255,255,.18)}
+.home-v2 .social-tile.tt:hover{border-color:#fff}
+.home-v2 .social-tile.tt .s-name{color:var(--text-primary)}
+.home-v2 .social-tile.ig{border-color:rgba(225,48,108,.25)}
+.home-v2 .social-tile.ig:hover{border-color:#E1306C}
+.home-v2 .social-tile.ig .s-name{color:#E1306C}
+.home-v2 .social-tile.xt{border-color:rgba(255,255,255,.18)}
+.home-v2 .social-tile.xt:hover{border-color:#fff}
+.home-v2 .social-tile.xt .s-name{color:var(--text-primary)}
+
+/* Creator card */
+.home-v2 .creator{padding:24px 0 8px}
+.home-v2 .creator-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:grid;grid-template-columns:72px 1fr;gap:16px;align-items:center}
+@media(min-width:600px){.home-v2 .creator-card{grid-template-columns:96px 1fr;padding:24px;gap:20px}}
+.home-v2 .creator-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-orange));display:grid;place-items:center;font-size:32px;font-weight:900;color:#000;align-self:start;overflow:hidden;position:relative;box-shadow:0 4px 16px rgba(0,240,255,.25)}
+.home-v2 .creator-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+@media(min-width:600px){.home-v2 .creator-avatar{width:96px;height:96px;font-size:40px}}
+.home-v2 .creator-info h3{font-size:18px;font-weight:900;letter-spacing:1px;margin:0 0 2px 0;color:var(--text-primary)}
+.home-v2 .creator-info .role{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:10px}
+.home-v2 .creator-info .bio{font-size:13px;color:var(--text-secondary);line-height:1.55;margin:0 0 12px 0}
+.home-v2 .creator-info .bio strong{color:var(--text-primary);font-weight:700}
+.home-v2 .creator-info .bio a{color:var(--accent);text-decoration:none}
+.home-v2 .creator-info .bio a:hover{text-decoration:underline}
+.home-v2 .creator-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:12px}
+.home-v2 .creator-meta a{color:var(--text-secondary);display:inline-flex;align-items:center;gap:5px;text-decoration:none}
+.home-v2 .creator-meta a:hover{color:var(--accent)}
+.home-v2 .creator-meta .sep{color:var(--text-dim)}
+
+/* Anim fadeInUp reveal on scroll */
+.home-v2 .animate{opacity:0;transform:translateY(16px);transition:opacity .55s ease-out,transform .55s ease-out}
+.home-v2 .animate.in{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){.home-v2 .animate{opacity:1;transform:none;transition:none}.home-v2 .bi-card .exclusive-badge::after{animation:none}}
+/* Hide old features grid (replaced by value-props) */
+#homepageContent .home-features{display:none}
+/* HOME-V2 END */
 </style>
 </head>
 <body>
@@ -3346,7 +3520,7 @@ body.telem-open { overflow:hidden; }
     </div>
   </div>
 
-  <!-- Features showcase -->
+  <!-- Features showcase (legacy — oculto via CSS; value-props nueva abajo) -->
   <div class="home-features">
     <div class="home-feature">
       <div class="home-feature-icon">&#x1F50D;</div>
@@ -3370,6 +3544,200 @@ body.telem-open { overflow:hidden; }
     </div>
   </div>
 </section>
+
+<!-- HOME-V2 START — Bloques nuevos home anónima (sesión 44g): value-props, bot index, podios, top500, CTA, comunidad, follow, creator -->
+<section class="home-v2" id="homeV2Section">
+  <!-- Value Props -->
+  <div class="value-props">
+    <div class="section-header"><h2>Qu&eacute; tiene V4NZ</h2></div>
+    <div class="vp-grid">
+      <div class="vp-card c1 animate">
+        <div class="vp-icon">&#x1F4CA;</div>
+        <h3>Stats reales</h3>
+        <p>Datos directos de la PUBG Official API. Sin delays.</p>
+        <div class="vp-preview"><span class="chip">K/D</span><span class="chip">ADR</span><span class="chip">HS%</span></div>
+      </div>
+      <div class="vp-card c2 animate">
+        <div class="vp-icon">&#x1F9EC;</div>
+        <h3>ADN con IA</h3>
+        <p>Rol, radar de 6 ejes, fortalezas y debilidades.</p>
+        <div class="vp-preview"><span class="chip">Fragger</span><span class="chip">84% agro</span></div>
+      </div>
+      <div class="vp-card c3 animate">
+        <div class="vp-icon">&#x1F465;</div>
+        <h3>Squad + roles</h3>
+        <p>IGL, entry, support, sniper &mdash; an&aacute;lisis de grupo.</p>
+        <div class="vp-preview"><span class="chip">IGL</span><span class="chip">Entry</span><span class="chip">+2</span></div>
+      </div>
+      <div class="vp-card c4 animate">
+        <div class="vp-icon">&#x1F6E1;</div>
+        <h3>Clanes</h3>
+        <p>&Uacute;nico ranking real de clanes de consola en espa&ntilde;ol.</p>
+        <div class="vp-preview"><span class="chip" id="hv2ClanCount">51 clanes</span><span class="chip">IA</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bot Index Teaser -->
+  <div class="bot-index-teaser">
+    <div class="bi-card animate">
+      <div class="exclusive-badge">SOLO V4NZ</div>
+      <h3><span class="robot">&#x1F3AF;</span> Compara peras con peras</h3>
+      <p>En consola hay bots. Lo sabe todo el mundo. Te decimos exactamente cu&aacute;ntos matas t&uacute; y cu&aacute;ntos los dem&aacute;s, sin juicios &mdash; as&iacute; tus stats y las de tu rival se leen con el mismo contexto.</p>
+      <div class="bi-example">
+        <div class="ex-av">J</div>
+        <div class="ex-info">
+          <div class="ex-name">Jugador ejemplo</div>
+          <div class="ex-stat">K/D 4.8 &middot; 68% kills contra humanos</div>
+        </div>
+        <div class="ex-verdict">&#x1F3AF; Cazador</div>
+      </div>
+      <div class="bi-profiles">
+        <div class="bi-profile cazador">
+          <div class="p-icon">&#x1F3AF;</div>
+          <div class="p-name">Cazador</div>
+          <div class="p-desc">Mayor&iacute;a kills a humanos</div>
+        </div>
+        <div class="bi-profile equilibrado">
+          <div class="p-icon">&#x2696;&#xFE0F;</div>
+          <div class="p-name">Equilibrado</div>
+          <div class="p-desc">Mezcla parecida a la media</div>
+        </div>
+        <div class="bi-profile volumen">
+          <div class="p-icon">&#x1F4CA;</div>
+          <div class="p-name">Volumen</div>
+          <div class="p-desc">Farmeo alto de kills f&aacute;ciles</div>
+        </div>
+      </div>
+      <button class="btn primary full" id="hv2BotIndexCta" type="button">Ver mi perfil</button>
+      <div class="bi-disclaimer">Todos los perfiles son v&aacute;lidos. Solo te damos contexto &mdash; cada uno juega a su manera.</div>
+    </div>
+  </div>
+
+  <!-- Podios -->
+  <div class="podios">
+    <div class="section-header">
+      <h2><span class="emoji">&#x1F3C6;</span> Top de la comunidad</h2>
+      <button class="link" id="hv2PodiosSeeAll" type="button">Ver ranking &rarr;</button>
+    </div>
+    <div class="podios-tabs" role="tablist">
+      <button class="active" data-podio="clanes" type="button" role="tab" aria-selected="true">Clanes</button>
+      <button data-podio="jugadores" type="button" role="tab" aria-selected="false">Jugadores</button>
+    </div>
+    <div class="podios-grid">
+      <div class="podio-card animate" id="hv2PodioClanes" role="tabpanel">
+        <div class="podio-item" style="color:var(--text-secondary);padding:10px 0;">Cargando clanes...</div>
+      </div>
+      <div class="podio-card animate hidden" id="hv2PodioJugadores" role="tabpanel">
+        <div class="podio-item" style="color:var(--text-secondary);padding:10px 0;">Cargando Top 500...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 500 Banner -->
+  <div class="top500">
+    <div class="top500-banner animate">
+      <div class="icon">&#x1F451;</div>
+      <div class="text">
+        <h3>Top 500 oficial PUBG</h3>
+        <p>EU &middot; NA &mdash; leaderboard global en directo</p>
+      </div>
+      <button class="btn primary" id="hv2Top500Cta" type="button">Ver Top 500</button>
+    </div>
+  </div>
+
+  <!-- CTA Registro -->
+  <div class="cta-register" id="hv2CtaRegister">
+    <div class="cta-card animate">
+      <h3>Reg&iacute;strate gratis y desbloquea <span class="accent">lo bueno</span></h3>
+      <ul class="cta-benefits">
+        <li><span class="check">&#x2713;</span><div><strong>Deep Analysis con IA</strong> &mdash; &uacute;ltimos 90 d&iacute;as &middot; plan de entrenamiento personalizado</div></li>
+        <li><span class="check">&#x2713;</span><div><strong>Favoritos con grupos</strong> &mdash; Mi Squad &middot; Rivales &middot; Amigos</div></li>
+        <li><span class="check">&#x2713;</span><div><strong>ADN nivel 3</strong> &mdash; balance de rivales y badges privados</div></li>
+        <li><span class="check">&#x2713;</span><div><strong>Evoluci&oacute;n semanal</strong> &mdash; K/D esta semana vs pasada, compara con tu squad</div></li>
+      </ul>
+      <div class="cta-buttons">
+        <button class="btn discord full" id="hv2CtaDiscord" type="button">&#x1F4AC; Discord</button>
+        <button class="btn primary full" id="hv2CtaEmail" type="button">&#x1F4E7; Email</button>
+      </div>
+      <div class="fineprint">Gratis siempre &middot; Sin anuncios &middot; Tus datos son tuyos</div>
+    </div>
+  </div>
+
+  <!-- Comunidad Discord -->
+  <div class="comunidad">
+    <div class="com-card animate">
+      <div class="disc-icon">&#x1F4AC;</div>
+      <h3>Comunidad V4NZ</h3>
+      <p>El Discord es el punto de encuentro: jugadores, conversaci&oacute;n, avisos, contenido nuevo y estar cerca del proyecto.</p>
+      <a href="https://discord.gg/UcbxTyFf" class="discord-btn" target="_blank" rel="noopener">
+        <span>&#x1F4AC;</span> &Uacute;nete al Discord
+      </a>
+      <div class="secondary-link">
+        Proyecto aliado del creador
+        <span class="sep">&middot;</span>
+        <a href="#kanneda-card">Conoce KANNEDA &darr;</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sigue a KANNEDA -->
+  <div class="follow-kanneda">
+    <div class="follow-head">
+      <h3>Sigue a KANNEDA</h3>
+      <p>Contenido, directos, clips y novedades de PUBG y V4NZ</p>
+    </div>
+    <div class="social-grid">
+      <a class="social-tile yt animate" href="https://youtube.com/@Kanneda" target="_blank" rel="noopener">
+        <span class="s-icon">&#x25B6;&#xFE0F;</span>
+        <div class="s-name">YouTube</div>
+        <div class="s-desc">Gu&iacute;as, an&aacute;lisis y novedades</div>
+      </a>
+      <a class="social-tile tw animate" href="https://twitch.tv/kanneda" target="_blank" rel="noopener">
+        <span class="s-icon">&#x1F3AE;</span>
+        <div class="s-name">Twitch</div>
+        <div class="s-desc">Directos y comunidad</div>
+      </a>
+      <a class="social-tile tt animate" href="https://tiktok.com/@kanneda" target="_blank" rel="noopener">
+        <span class="s-icon">&#x1F3B5;</span>
+        <div class="s-name">TikTok</div>
+        <div class="s-desc">Clips y contenido r&aacute;pido</div>
+      </a>
+      <a class="social-tile ig animate" href="https://instagram.com/agustinfc7" target="_blank" rel="noopener">
+        <span class="s-icon">&#x1F4F7;</span>
+        <div class="s-name">Instagram</div>
+        <div class="s-desc">Publicaciones y visuales</div>
+      </a>
+      <a class="social-tile xt animate" href="https://twitter.com/Kanneda" target="_blank" rel="noopener">
+        <span class="s-icon">&#x2716;&#xFE0F;</span>
+        <div class="s-name">X / Twitter</div>
+        <div class="s-desc">Noticias y actualizaciones</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Creator Card -->
+  <div class="creator" id="kanneda-card">
+    <div class="creator-card animate">
+      <div class="creator-avatar">
+        <img src="kanneda-avatar.jpg" alt="KANNEDA" onerror="this.style.display='none';this.parentNode.textContent='K';">
+      </div>
+      <div class="creator-info">
+        <h3>KANNEDA</h3>
+        <div class="role">Creador de V4NZ y contenido de PUBG en espa&ntilde;ol</div>
+        <p class="bio">
+          <strong>V4NZ lo hago yo solo</strong> y est&aacute; pensado para jugadores y clanes que quieren entender mejor sus datos en PUBG. Llevo tiempo creando contenido, gu&iacute;as y an&aacute;lisis para la comunidad hispana. Tambi&eacute;n he creado <a href="https://kanneda.com" target="_blank" rel="noopener">Kanneda.com</a>, donde re&uacute;no mis proyectos y presencia online.
+        </p>
+        <div class="creator-meta">
+          <a href="https://kanneda.com" target="_blank" rel="noopener">&#x1F310; kanneda.com</a>
+          <span class="sep">&middot;</span>
+          <a href="mailto:kanneda@kanneda.com">&#x2709;&#xFE0F; kanneda@kanneda.com</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- HOME-V2 END -->
 
 <!-- KANNEDA BANNER — Podcast + Codigo Creador -->
 <div style="max-width:1400px;margin:0 auto;padding:0 2rem;">
@@ -12011,6 +12379,174 @@ switchTab=function(t){
   _origSwitchTab(t);
   _bnUpdateActive(t);
 };
+
+// HOME-V2-JS START (sesión 44g) — interacciones de los bloques nuevos de la home anónima
+(function(){
+  var section = document.getElementById('homeV2Section');
+  if(!section) return;
+
+  // --- 1. IntersectionObserver reveal (.animate) ---
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { rootMargin:'0px 0px -8% 0px', threshold: 0.1 });
+    section.querySelectorAll('.animate').forEach(function(el){ io.observe(el); });
+  } else {
+    section.querySelectorAll('.animate').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // --- 2. Podios tabs toggle ---
+  var tabs = section.querySelectorAll('.podios-tabs button');
+  var panelClanes = section.querySelector('#hv2PodioClanes');
+  var panelJugadores = section.querySelector('#hv2PodioJugadores');
+  tabs.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabs.forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+      var target = btn.getAttribute('data-podio');
+      if(target === 'clanes'){ panelClanes.classList.remove('hidden'); panelJugadores.classList.add('hidden'); }
+      else { panelClanes.classList.add('hidden'); panelJugadores.classList.remove('hidden'); _hv2LoadTopPlayers(); }
+    });
+  });
+
+  // --- 3. Load top clanes en podios ---
+  function _hv2LoadTopClans(){
+    if(!panelClanes) return;
+    fetch('/clans/leaderboard?limit=5', { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(data){
+        var clans = Array.isArray(data) ? data : (data && data.clans) || [];
+        if(!clans.length){ panelClanes.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">Sin datos todav&iacute;a</div>'; return; }
+        panelClanes.innerHTML = clans.slice(0,5).map(function(c,i){
+          var rank = i+1;
+          var rankCls = rank<=3 ? ' p'+rank : '';
+          var tag = c.tag || c.clan_tag || '';
+          var name = c.name || c.clan_name || tag;
+          var members = c.active_members || c.member_count || c.members || 0;
+          var kills = c.total_kills || c.kills || 0;
+          var wins = c.total_wins || c.wins || 0;
+          var kd = (c.avg_kd != null ? c.avg_kd : (c.kd_ratio || c.kd || 0));
+          var kdStr = (typeof kd === 'number') ? kd.toFixed(2) : (kd || '—');
+          var sub = members + ' miembros · ' + _hv2Fmt(kills) + ' kills' + (wins ? ' · ' + wins + ' wins' : '');
+          return '<div class="podio-item'+rankCls+'" data-tag="'+_hv2Esc(tag)+'" role="button" tabindex="0">'
+            + '<div class="podio-rank">'+rank+'</div>'
+            + '<div class="podio-main"><div class="podio-name"><span class="tag">['+_hv2Esc(tag)+']</span>'+_hv2Esc(name)+'</div><div class="podio-sub">'+_hv2Esc(sub)+'</div></div>'
+            + '<div class="podio-kd">'+kdStr+'</div>'
+            + '</div>';
+        }).join('');
+        panelClanes.querySelectorAll('.podio-item').forEach(function(it){
+          it.addEventListener('click', function(){
+            var t = it.getAttribute('data-tag');
+            if(t && typeof loadClanPage === 'function'){ loadClanPage(t); }
+            else if(t){ location.href = '/clan/' + encodeURIComponent(t); }
+          });
+          it.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') it.click(); });
+        });
+      })
+      .catch(function(){ panelClanes.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">Sin datos todav&iacute;a</div>'; });
+  }
+
+  function _hv2LoadTopPlayers(){
+    if(!panelJugadores || panelJugadores.dataset.loaded === '1') return;
+    panelJugadores.dataset.loaded = '1';
+    // Usamos el endpoint real de PUBG leaderboards que ya tiene el backend:
+    // devuelve { players:[{name,stats:{kills,wins,roundsPlayed,averageDamage},platforms:[]}] }
+    fetch('/api/leaderboard?platform=console&region=eu&mode=squad-fpp', { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        var players = (data && data.players) || [];
+        if(!players.length){ panelJugadores.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">Sin datos todav&iacute;a</div>'; return; }
+        panelJugadores.innerHTML = players.slice(0,5).map(function(p,i){
+          var rank = i+1;
+          var rankCls = rank<=3 ? ' p'+rank : '';
+          var name = p.name || '—';
+          var st = p.stats || {};
+          var kills = st.kills || 0;
+          var games = st.roundsPlayed || 0;
+          var wins = st.wins || 0;
+          var kd = games > wins ? (kills / (games - wins)) : (kills || 0);
+          var kdStr = (typeof kd === 'number' && isFinite(kd)) ? kd.toFixed(2) : '0.00';
+          var platformArr = p.platforms || [];
+          var platform = (platformArr[0] || 'PSN').toString();
+          var platformLower = platform.toLowerCase().indexOf('xbox') >= 0 ? 'xbox' : 'psn';
+          var platformShow = platformLower === 'xbox' ? 'Xbox' : 'PSN';
+          var sub = platformShow + ' · ' + _hv2Fmt(kills) + ' kills · ' + games + ' partidas';
+          return '<div class="podio-item'+rankCls+'" data-player="'+_hv2Esc(name)+'" data-platform="'+platformLower+'" role="button" tabindex="0">'
+            + '<div class="podio-rank">'+rank+'</div>'
+            + '<div class="podio-main"><div class="podio-name">'+_hv2Esc(name)+'</div><div class="podio-sub">'+_hv2Esc(sub)+'</div></div>'
+            + '<div class="podio-kd">'+kdStr+'</div>'
+            + '</div>';
+        }).join('');
+        panelJugadores.querySelectorAll('.podio-item').forEach(function(it){
+          it.addEventListener('click', function(){
+            var n = it.getAttribute('data-player');
+            var pf = it.getAttribute('data-platform') || 'psn';
+            if(n && typeof searchPlayer === 'function'){ if(typeof setPlatform==='function') setPlatform(pf); searchPlayer(n); }
+            else if(n){ location.href = '/stats/' + pf + '/' + encodeURIComponent(n); }
+          });
+          it.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') it.click(); });
+        });
+      })
+      .catch(function(){ panelJugadores.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">Sin datos todav&iacute;a</div>'; });
+  }
+
+  // --- 4. Podios header "Ver ranking →" ---
+  var seeAll = section.querySelector('#hv2PodiosSeeAll');
+  if(seeAll){ seeAll.addEventListener('click', function(){ if(typeof switchTab==='function') switchTab('ranking'); }); }
+
+  // --- 5. Top500 banner CTA ---
+  var top500Cta = section.querySelector('#hv2Top500Cta');
+  if(top500Cta){ top500Cta.addEventListener('click', function(){ if(typeof switchTab==='function') switchTab('ranking'); }); }
+
+  // --- 6. CTA Registro ---
+  var ctaDiscord = section.querySelector('#hv2CtaDiscord');
+  if(ctaDiscord){ ctaDiscord.addEventListener('click', function(){ if(typeof openAuthPopup==='function') openAuthPopup(); }); }
+  var ctaEmail = section.querySelector('#hv2CtaEmail');
+  if(ctaEmail){ ctaEmail.addEventListener('click', function(){ if(typeof openAuthPopup==='function') openAuthPopup('email'); else if(typeof openAuthPopup==='function') openAuthPopup(); }); }
+
+  // --- 7. Bot Index CTA → focus en hero search ---
+  var biCta = section.querySelector('#hv2BotIndexCta');
+  if(biCta){
+    biCta.addEventListener('click', function(){
+      var si = document.getElementById('searchInput');
+      if(si){ si.focus(); si.scrollIntoView({ behavior:'smooth', block:'center' }); }
+    });
+  }
+
+  // --- 8. Clan count en vp-card c4 (sincronizado con counter global) ---
+  function _hv2SyncClanCount(){
+    var target = document.getElementById('hv2ClanCount');
+    var src = document.getElementById('hcClans');
+    if(!target || !src) return;
+    var v = (src.textContent||'').trim();
+    if(v && v !== '--'){ target.textContent = v + ' clanes'; }
+  }
+  setTimeout(_hv2SyncClanCount, 1500);
+  setTimeout(_hv2SyncClanCount, 4000);
+
+  // --- 9. Ocultar CTA Registro cuando user logged ---
+  function _hv2HideCtaIfLogged(){
+    try {
+      var logged = (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('v4nz_token');
+      if(logged){
+        var cta = document.getElementById('hv2CtaRegister');
+        if(cta) cta.style.display = 'none';
+      }
+    } catch(e){}
+  }
+  setTimeout(_hv2HideCtaIfLogged, 500);
+  setTimeout(_hv2HideCtaIfLogged, 2500);
+
+  // --- Helpers ---
+  function _hv2Esc(s){ s = (s==null?'':String(s)); return s.replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  function _hv2Fmt(n){ n = Number(n)||0; if(n>=1000000) return (n/1000000).toFixed(1)+'M'; if(n>=1000) return (n/1000).toFixed(1)+'K'; return String(n); }
+
+  // --- Kick off ---
+  _hv2LoadTopClans();
+})();
+// HOME-V2-JS END
 </script>
 </body>
 </html>
