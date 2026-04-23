@@ -13962,7 +13962,15 @@ switchTab=function(t){
     var empty = document.getElementById('hv2lMpEmpty');
     var body = document.getElementById('hv2lMpBody');
     if(!empty || !body) return;
-    var last = _hv2GetLastPlayer();
+    // hv2-owner-fix: priorizar el jugador DEL USUARIO LOGUEADO sobre el último buscado.
+    // El panel se llama "Mi Perfil" → tiene que ser del user, no del último jugador que haya buscado.
+    var last = null;
+    try {
+      if(typeof currentUser !== 'undefined' && currentUser && currentUser.gamertag){
+        last = { name: currentUser.gamertag, platform: currentUser.platform || 'psn', owner: true };
+      }
+    } catch(e){}
+    if(!last) last = _hv2GetLastPlayer();
     if(!last){ empty.style.display = ''; body.style.display = 'none'; return; }
     // Resetear avatar y nombre con lo que tenemos
     var av = document.getElementById('hv2lMpAvatar');
@@ -13973,7 +13981,8 @@ switchTab=function(t){
     if(av) av.textContent = (last.name||'?').charAt(0).toUpperCase();
     if(name) name.textContent = last.name || '';
     var shard = _hv2Platform2Shard(last.platform);
-    if(subEl) subEl.textContent = (shard==='xbox'?'Xbox':'PlayStation') + ' \u00b7 \u00daltimo buscado';
+    var subLabel = last.owner ? 'Tu perfil' : '\u00daltimo buscado';
+    if(subEl) subEl.textContent = (shard==='xbox'?'Xbox':'PlayStation') + ' \u00b7 ' + subLabel;
     if(kd) kd.textContent = 'K/D \u2014';
     if(statsEl) statsEl.innerHTML = '<div class="hv2l-mp-stat"><div class="hv2l-mp-stat-val">\u2014</div><div class="hv2l-mp-stat-lbl">cargando</div></div>';
     empty.style.display = 'none';
@@ -14041,32 +14050,50 @@ switchTab=function(t){
     var empty = document.getElementById('hv2lMyClanEmpty');
     var link = document.getElementById('hv2lMyClanLink');
     if(!body) return;
-    // Fuente 1: clanFavorites global (localStorage pubg_clan_favorites)
-    var tag = '';
-    try {
-      var arr = JSON.parse(localStorage.getItem('pubg_clan_favorites') || '[]');
-      if(Array.isArray(arr) && arr.length){ tag = arr[0].tag || arr[0].clan_tag || arr[0]; }
-    } catch(e){}
-    if(!tag){
-      // Fuente 2: /auth/favorites si hay token
-      var token = '';
-      try { token = localStorage.getItem('v4nz_token') || ''; } catch(e){}
-      if(token){
-        fetch('/auth/favorites', { headers:{ 'Authorization':'Bearer '+token } })
-          .then(function(r){ return r.ok ? r.json() : {favorites:[]}; })
-          .then(function(data){
-            var favs = (data && (data.favorites || data.clanFavorites)) || [];
-            var found = favs.find(function(f){ return f && (f.type === 'clan' || f.kind === 'clan' || (f.tag && !f.player_name && !f.name_lower)); });
-            if(found){ _hv2RenderClan(found.tag || found.clan_tag || ''); }
-            else { if(empty) empty.style.display = ''; }
-          })
-          .catch(function(){ if(empty) empty.style.display = ''; });
+
+    // hv2-myclan-fix: prioridad 1 — si el user está logueado, buscar SU clan real.
+    // Antes leíamos `pubg_clan_favorites[0]` que mostraba el primer favorito (ej JOJO)
+    // aunque el clan real del user fuera otro (ej V4NZ).
+    function _fallbackFavs(){
+      var tag = '';
+      try {
+        var arr = JSON.parse(localStorage.getItem('pubg_clan_favorites') || '[]');
+        if(Array.isArray(arr) && arr.length){ tag = arr[0].tag || arr[0].clan_tag || arr[0]; }
+      } catch(e){}
+      if(!tag){
+        var token = '';
+        try { token = localStorage.getItem('v4nz_token') || ''; } catch(e){}
+        if(token){
+          fetch('/auth/favorites', { headers:{ 'Authorization':'Bearer '+token } })
+            .then(function(r){ return r.ok ? r.json() : {favorites:[]}; })
+            .then(function(data){
+              var favs = (data && (data.favorites || data.clanFavorites)) || [];
+              var found = favs.find(function(f){ return f && (f.type === 'clan' || f.kind === 'clan' || (f.tag && !f.player_name && !f.name_lower)); });
+              if(found){ _hv2RenderClan(found.tag || found.clan_tag || ''); }
+              else { if(empty) empty.style.display = ''; }
+            })
+            .catch(function(){ if(empty) empty.style.display = ''; });
+          return;
+        }
+        if(empty) empty.style.display = '';
         return;
       }
-      if(empty) empty.style.display = '';
+      _hv2RenderClan(tag);
+    }
+
+    var gt = '';
+    try { if(typeof currentUser !== 'undefined' && currentUser && currentUser.gamertag) gt = currentUser.gamertag; } catch(e){}
+    if(gt){
+      fetch('/api/player-clan?name=' + encodeURIComponent(gt), { credentials:'same-origin' })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d){
+          if(d && d.tag){ _hv2RenderClan(d.tag); return; }
+          _fallbackFavs();
+        })
+        .catch(_fallbackFavs);
       return;
     }
-    _hv2RenderClan(tag);
+    _fallbackFavs();
   }
   function _hv2RenderClan(tag){
     var body = document.getElementById('hv2lMyClanBody');
