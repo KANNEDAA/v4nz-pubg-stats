@@ -6488,7 +6488,10 @@ async function searchPlayer(){
     setLoaderStep('Cargando partidas...');
     const _allMids=(currentPlayerData.relationships&&currentPlayerData.relationships.matches&&currentPlayerData.relationships.matches.data||[]);
     window._allMatchIds=_allMids.map(m=>m.id);
-    const mids=_allMids.slice(0,20);
+    // pv2-lazy-matches: en modo v2 solo cargamos 5 matches iniciales (para W/L grid + charts básicos).
+    // Las otras 15 se cargan al expandir el acordeón "Últimas 20 partidas" (ver _pv2LazyLoadMoreMatches).
+    const _pv2Lazy = (typeof _pv2Enabled === 'function') && _pv2Enabled();
+    const mids=_allMids.slice(0, _pv2Lazy ? 5 : 20);
     window._matchesLoaded=mids.length;
     // Load matches in batches of 5 to avoid rate limits
     currentMatchData=[];
@@ -6499,8 +6502,12 @@ async function searchPlayer(){
       if(b+5<mids.length)setLoaderStep('Cargando partidas ('+(b+5)+'/'+mids.length+')...');
     }
     setLoaderStep('Casi listo...');
-    try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
-    try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
+    if(!_pv2Lazy){
+      try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
+      try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
+    } else {
+      currentWeaponData=null;currentSurvivalData=null;
+    }
     showSkeletons(false);autoBestMode();renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
     // v174 GT-24: show banner if current season was empty
     try{const _esBanner=document.getElementById('emptySeasonBanner');if(_esBanner)_esBanner.remove();}catch(e){}
@@ -12801,7 +12808,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-js-v4) — Próximo paso heurístico (IA opcional si _lastAiDnaData)
+// PLAYER-V2-JS START (player-v2-js-v5) — Lazy load real (matches/weapons/survival bajo demanda)
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   function _pv2Enabled(){
@@ -12823,7 +12830,15 @@ switchTab=function(t){
     var head = ev.target.closest && ev.target.closest('.pv2-acc-head');
     if(head){
       var acc = head.closest('.pv2-acc');
-      if(acc) acc.classList.toggle('open');
+      if(!acc) return;
+      acc.classList.toggle('open');
+      // Lazy load: solo disparar si el acordeón se acaba de abrir
+      if(acc.classList.contains('open')){
+        var which = acc.getAttribute('data-acc');
+        if(which === 'matches')  _pv2LazyLoadMoreMatches();
+        else if(which === 'weapons') _pv2LazyLoadWeapons();
+        else if(which === 'adn-full') _pv2LazyLoadSurvival();
+      }
       return;
     }
     var btn = ev.target.closest && ev.target.closest('.pv2-mode-chips button');
@@ -12836,6 +12851,62 @@ switchTab=function(t){
       return;
     }
   });
+
+  // ── Lazy loaders — solo ejecutan en modo pv2 cuando el user abre el acordeón ──
+  var _pv2MoreMatchesInflight = false;
+  async function _pv2LazyLoadMoreMatches(){
+    if(_pv2MoreMatchesInflight) return;
+    if(!window._allMatchIds || !window._matchesLoaded || !currentPlayerData) return;
+    var loaded = window._matchesLoaded;
+    var total = window._allMatchIds.length;
+    if(loaded >= total) return;
+    _pv2MoreMatchesInflight = true;
+    var nextIds = window._allMatchIds.slice(loaded, Math.min(loaded + 15, total));
+    try {
+      var newMatches = [];
+      for(var b=0; b<nextIds.length; b+=5){
+        var batch = nextIds.slice(b, b+5);
+        var results = await Promise.all(batch.map(function(id){
+          return apiGet(API_BASE + '/' + currentPlatform + '/matches/' + id).catch(function(){ return null; });
+        }));
+        newMatches.push.apply(newMatches, results.filter(Boolean));
+      }
+      if(Array.isArray(currentMatchData)){
+        currentMatchData.push.apply(currentMatchData, newMatches);
+      } else {
+        currentMatchData = newMatches;
+      }
+      window._matchesLoaded = loaded + nextIds.length;
+      if(typeof renderMatchHistory === 'function') try { renderMatchHistory(); } catch(e){}
+      if(typeof renderWLGrid === 'function') try { renderWLGrid(); } catch(e){}
+      if(typeof renderCharts === 'function') try { renderCharts(); } catch(e){}
+      // Refrescar el W/L grid del wrapper v2 también
+      if(typeof currentPlayerData !== 'undefined' && currentPlayerData) _pv2LoadStats(currentPlayerData);
+    } catch(e){ console.error('pv2 lazy matches error:', e.message || e); }
+    finally { _pv2MoreMatchesInflight = false; }
+  }
+
+  var _pv2WeaponsInflight = false;
+  async function _pv2LazyLoadWeapons(){
+    if(_pv2WeaponsInflight || currentWeaponData || !currentPlayerData) return;
+    _pv2WeaponsInflight = true;
+    try {
+      currentWeaponData = await apiGet(API_BASE + '/' + currentPlatform + '/players/' + currentPlayerData.id + '/weapon_mastery');
+      if(typeof renderWeaponStats === 'function') try { renderWeaponStats(); } catch(e){}
+    } catch(e){ console.error('pv2 lazy weapons error:', e.message || e); }
+    finally { _pv2WeaponsInflight = false; }
+  }
+
+  var _pv2SurvivalInflight = false;
+  async function _pv2LazyLoadSurvival(){
+    if(_pv2SurvivalInflight || currentSurvivalData || !currentPlayerData) return;
+    _pv2SurvivalInflight = true;
+    try {
+      currentSurvivalData = await apiGet(API_BASE + '/' + currentPlatform + '/players/' + currentPlayerData.id + '/survival_mastery');
+      if(typeof renderFunStats === 'function') try { renderFunStats(); } catch(e){}
+    } catch(e){ console.error('pv2 lazy survival error:', e.message || e); }
+    finally { _pv2SurvivalInflight = false; }
+  }
 
   // ── 3. Helpers ─────────────────────────────────────────────────────
   function _pv2Qs(sel){ return document.querySelector(sel); }
