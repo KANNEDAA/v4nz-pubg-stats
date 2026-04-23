@@ -2749,6 +2749,32 @@ Genera el análisis JSON:
   }
 });
 
+// ============ Player clan lookup ============
+// player-clan-lookup-v1 — devuelve el clan_tag y name del jugador buscando en clan_members.
+// Usado por el panel homeV2Logged "Mi Clan" para mostrar el clan REAL del user logueado
+// (antes leía pubg_clan_favorites[0] que era solo el primer clan favorito, no el del jugador).
+app.get('/api/player-clan', async (req, res) => {
+  try {
+    const name = (req.query.name || '').toString().trim();
+    if (!name) return res.status(400).json({ error: 'Missing name' });
+    if (!pool) return res.status(503).json({ error: 'DB no disponible' });
+    const result = await pool.query(
+      `SELECT cm.clan_tag, c.name AS clan_name
+       FROM clan_members cm
+       LEFT JOIN clans c ON c.tag = cm.clan_tag
+       WHERE LOWER(cm.player_name) = LOWER($1) AND cm.active = true
+       ORDER BY cm.kills DESC NULLS LAST
+       LIMIT 1`,
+      [name]
+    );
+    if (!result.rows.length) return res.json({ tag: null });
+    res.json({ tag: result.rows[0].clan_tag, name: result.rows[0].clan_name || result.rows[0].clan_tag });
+  } catch (e) {
+    console.error('player-clan error:', e.message || e);
+    res.status(500).json({ error: 'query failed' });
+  }
+});
+
 // ============ AI Clan DNA (análisis IA de un clan individual) ============
 // ai-clan-dna-v1 — sustituye el 404 del botón "ANALIZAR CLAN CON IA".
 // Patrón identico a /api/ai-compare-clans: cache api_cache 7d + Claude API con
