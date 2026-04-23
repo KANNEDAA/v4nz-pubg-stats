@@ -3489,6 +3489,118 @@ body.telem-open { overflow:hidden; }
 .hv2l-wrap #whoPlayingCard{display:block!important;background:transparent;border:0;padding:0;margin:0;box-shadow:none}
 .hv2l-wrap #whoPlayingCard .home-card-header{display:none}
 /* home-v2-logged-v1 END */
+
+/* ══════════════════════════════════════════════════════════════════════
+   PLAYER V2 — ficha rediseñada (player-v2-css-v1)
+   Activación: body.pv2-active. Sin esa clase, el wrapper #playerV2Wrap
+   no se muestra (style="display:none;" inline) y nada de aquí aplica.
+   ══════════════════════════════════════════════════════════════════════ */
+body.pv2-active #playerV2Wrap{display:block!important}
+body.pv2-active #playerHeader,
+body.pv2-active #quickStats,
+body.pv2-active #narrativeInsights,
+body.pv2-active #frequentTeammates{display:none!important}
+/* Diff self/other */
+body:not(.pv2-self) .pv2-only-self{display:none!important}
+body.pv2-self .pv2-only-other{display:none!important}
+
+.pv2-wrap{max-width:1100px;margin:0 auto;padding:0 16px;color:var(--text-primary)}
+@media (min-width:768px){.pv2-wrap{padding:0 24px}}
+
+/* Hero */
+.pv2-hero{padding:20px 0 28px;background:radial-gradient(ellipse at top,rgba(74,158,255,.08),transparent 60%)}
+.pv2-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(95,217,127,.1);border:1px solid rgba(95,217,127,.3);color:#5fd97f;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;margin-bottom:16px;letter-spacing:.5px}
+.pv2-dot{width:7px;height:7px;border-radius:50%;background:#5fd97f;box-shadow:0 0 8px #5fd97f;animation:pv2Pulse 2s ease-in-out infinite}
+@keyframes pv2Pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media (prefers-reduced-motion:reduce){.pv2-dot{animation:none}}
+.pv2-top{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.pv2-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-orange,#ff9f43));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:26px;color:#000;flex-shrink:0}
+.pv2-ident h1{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;letter-spacing:1px;line-height:1.1;margin-bottom:4px}
+.pv2-wave{display:inline-block;animation:pv2Wave 2.5s ease-in-out infinite}
+@keyframes pv2Wave{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(-12deg)}20%{transform:rotate(14deg)}}
+@media (prefers-reduced-motion:reduce){.pv2-wave{animation:none}}
+.pv2-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--text-dim)}
+.pv2-plat-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:4px;font-weight:700;font-size:11px;letter-spacing:.5px;background:rgba(0,111,205,.18);color:#4aa8ff;border:1px solid rgba(0,111,205,.4)}
+.pv2-plat-badge.xbox{background:rgba(16,124,16,.18);color:#6fd06f;border-color:rgba(16,124,16,.4)}
+.pv2-clan-badge{display:inline-flex;align-items:center;gap:4px;background:var(--bg-card);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;color:var(--text-primary)}
+.pv2-rank-pill{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(180,122,255,.2),rgba(74,158,255,.15));border:1px solid rgba(180,122,255,.4);padding:3px 10px;border-radius:999px;font-weight:700;font-size:11px;color:#d1b3ff}
+
+/* Hero CTAs */
+.pv2-hero-ctas{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pv2-cta{display:inline-flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--border,#2a3350);padding:8px 12px;border-radius:12px;font-size:12px;font-weight:600;color:var(--text-primary);min-height:40px;transition:all .15s;cursor:pointer}
+.pv2-cta:hover{filter:brightness(1.1)}
+
+/* Última partida */
+.pv2-last-match{margin-top:20px;background:linear-gradient(135deg,var(--bg-secondary,#131829),var(--bg-card,#1c2340));border:1px solid var(--border,#2a3350);border-top:3px solid var(--accent);border-radius:16px;padding:18px;position:relative;overflow:hidden}
+.pv2-last-match::before{content:'';position:absolute;top:-30%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(245,213,71,.15),transparent 70%);pointer-events:none}
+.pv2-lm-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.pv2-lm-pill{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#ffd24a,#ff9f43);color:#1a1400;padding:4px 12px;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:.5px}
+.pv2-lm-meta{font-size:12px;color:var(--text-dim)}
+.pv2-lm-meta strong{color:var(--text-primary);font-weight:600}
+.pv2-lm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.pv2-lm-stat{background:rgba(10,14,26,.5);border:1px solid var(--border,#2a3350);padding:10px 8px;border-radius:12px;text-align:center}
+.pv2-lm-stat .v{font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;color:var(--text-primary)}
+.pv2-lm-stat .l{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.pv2-lm-deltas{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pv2-delta{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.pv2-delta.up{background:rgba(95,217,127,.15);color:#5fd97f;border:1px solid rgba(95,217,127,.3)}
+.pv2-delta.down{background:rgba(255,87,87,.15);color:#ff5757;border:1px solid rgba(255,87,87,.3)}
+.pv2-lm-detail{display:inline-flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--border,#2a3350);padding:9px 14px;border-radius:12px;font-size:12px;font-weight:600;color:var(--text-primary)}
+
+/* Sections */
+.pv2-section{padding:28px 0;border-top:1px solid var(--border,#2a3350)}
+.pv2-sectitle{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* ADN */
+.pv2-adn-grid{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:768px){.pv2-adn-grid{grid-template-columns:1fr 1fr}}
+.pv2-adn-card{background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;padding:18px}
+
+/* Stats */
+.pv2-mode-chips{display:inline-flex;background:var(--bg-card);border:1px solid var(--border,#2a3350);border-radius:999px;padding:3px;gap:2px;margin-bottom:16px}
+.pv2-mode-chips button{background:transparent;border:0;color:var(--text-dim);padding:6px 14px;font-size:12px;font-weight:700;border-radius:999px;transition:all .15s;cursor:pointer}
+.pv2-mode-chips button.active{background:var(--accent);color:#000}
+.pv2-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+@media (min-width:768px){.pv2-stat-grid{grid-template-columns:repeat(4,1fr)}}
+.pv2-stat-card{background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;padding:16px 14px}
+.pv2-sc-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.pv2-sc-value{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:var(--text-primary);margin-bottom:6px;line-height:1}
+.pv2-sc-bench{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.pv2-sc-bench.elite{background:rgba(180,122,255,.2);color:#b47aff}
+.pv2-sc-bench.good{background:rgba(95,217,127,.2);color:#5fd97f}
+.pv2-sc-bench.normal{background:rgba(255,159,67,.2);color:#ff9f43}
+.pv2-sc-bench.low{background:rgba(255,87,87,.2);color:#ff5757}
+.pv2-sc-delta{margin-top:8px;font-size:11px;font-weight:700}
+.pv2-sc-delta.up{color:#5fd97f}
+.pv2-sc-delta.down{color:#ff5757}
+.pv2-wl-grid{display:flex;flex-wrap:wrap;gap:4px;padding:12px;background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;margin-bottom:12px}
+.pv2-wl-cell{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+.pv2-wl-cell.w{background:rgba(95,217,127,.2);color:#5fd97f}
+.pv2-wl-cell.l{background:rgba(255,87,87,.12);color:#ff5757}
+.pv2-wl-cell.ww{background:linear-gradient(135deg,#ffd24a,#ff9f43);color:#000}
+.pv2-stat-footlinks{font-size:12px;color:var(--text-dim);display:flex;gap:14px}
+.pv2-stat-footlinks a{color:var(--accent);font-weight:600;text-decoration:none}
+
+/* Próximo paso */
+.pv2-next-step{background:linear-gradient(135deg,rgba(180,122,255,.08),rgba(74,158,255,.05));border:1px solid rgba(180,122,255,.25);border-radius:16px;padding:20px}
+.pv2-ns-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#b47aff;letter-spacing:1px;margin-bottom:14px}
+.pv2-ns-item{display:flex;gap:12px;margin-bottom:12px}
+.pv2-ns-item:last-child{margin-bottom:0}
+.pv2-ns-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#b47aff;color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px}
+.pv2-ns-text{font-size:13px;line-height:1.5;color:var(--text-primary)}
+.pv2-ns-text strong{color:var(--accent)}
+.pv2-ns-placeholder{font-size:12px;color:var(--text-dim);font-style:italic;text-align:center;padding:18px}
+
+/* Acordeones */
+.pv2-acc{background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;overflow:hidden;margin-bottom:10px}
+.pv2-acc-head{background:transparent;border:0;width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 18px;color:var(--text-primary);font-size:14px;font-weight:700;transition:background .15s;cursor:pointer}
+.pv2-acc-head:hover{filter:brightness(1.15)}
+.pv2-caret{transition:transform .2s;color:var(--text-dim)}
+.pv2-acc.open .pv2-caret{transform:rotate(180deg)}
+.pv2-acc-body{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 18px}
+.pv2-acc.open .pv2-acc-body{max-height:6000px;padding:8px 18px 18px;border-top:1px solid var(--border,#2a3350)}
+.pv2-acc-host{min-height:40px}
+/* player-v2-css-v1 END */
 </style>
 </head>
 <body>
@@ -3974,6 +4086,107 @@ body.telem-open { overflow:hidden; }
 
 <div class="main-content">
   <div class="error-msg" id="errorMsg"></div>
+  <!-- player-v2-markup — wrapper rediseñado de la ficha (estructura de player-mockup-v2.html).
+       Feature flag: solo visible cuando body.pv2-active. Mientras esté off,
+       toda la ficha vieja sigue renderizando normalmente. -->
+  <div id="playerV2Wrap" class="pv2-wrap" style="display:none;">
+    <!-- HERO V2 -->
+    <header class="pv2-hero">
+      <div class="pv2-eyebrow"><span class="pv2-dot"></span><span id="pv2Eyebrow">PUBG OFFICIAL API · cargando...</span></div>
+      <div class="pv2-top">
+        <div class="pv2-avatar" id="pv2Avatar">?</div>
+        <div class="pv2-ident">
+          <h1 id="pv2Name">
+            <span class="pv2-only-self">Hola, <span id="pv2NameSelf">jugador</span> <span class="pv2-wave">&#x1F44B;</span></span>
+            <span class="pv2-only-other" id="pv2NameOther">?</span>
+          </h1>
+          <div class="pv2-meta">
+            <span class="pv2-plat-badge" id="pv2Plat">&#x1F3AE; ?</span>
+            <span class="pv2-clan-badge" id="pv2Clan" style="display:none;"></span>
+            <span class="pv2-rank-pill" id="pv2Rank">&#x2B50; ?</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÚLTIMA PARTIDA -->
+      <div class="pv2-last-match" id="pv2LastMatch" style="display:none;">
+        <div class="pv2-lm-head">
+          <span class="pv2-lm-pill" id="pv2LmPill">&#x1F3C6; ?</span>
+          <span class="pv2-lm-meta"><strong id="pv2LmMap">?</strong> &middot; <span id="pv2LmMode">?</span> &middot; <span id="pv2LmWhen">?</span></span>
+        </div>
+        <div class="pv2-lm-stats">
+          <div class="pv2-lm-stat"><div class="v" id="pv2LmKills">?</div><div class="l">Kills</div></div>
+          <div class="pv2-lm-stat"><div class="v" id="pv2LmDmg">?</div><div class="l">Damage</div></div>
+          <div class="pv2-lm-stat"><div class="v" id="pv2LmPos">?</div><div class="l">Posici&oacute;n</div></div>
+          <div class="pv2-lm-stat"><div class="v" id="pv2LmTime">?</div><div class="l">T. vivo</div></div>
+        </div>
+        <div class="pv2-lm-deltas pv2-only-self" id="pv2LmDeltas"></div>
+        <a href="#" class="pv2-lm-detail" id="pv2LmDetail">Ver detalle de la partida &rarr;</a>
+      </div>
+
+      <div class="pv2-hero-ctas" id="pv2HeroCtas">
+        <button type="button" class="pv2-cta pv2-only-self" onclick="if(typeof generateStatsCard==='function')generateStatsCard()">&#x1F4F7; Stats Card</button>
+        <button type="button" class="pv2-cta pv2-only-self" onclick="if(typeof generateSeasonWrapped==='function')generateSeasonWrapped()">&#x1F3C6; Mi Wrapped</button>
+        <button type="button" class="pv2-cta" onclick="if(typeof _goCompareWithMe==='function')_goCompareWithMe();else if(typeof switchTab==='function')switchTab('compare')">&#x1F50D; Comparar</button>
+        <button type="button" class="pv2-cta pv2-only-other" id="pv2FavBtn">&#x2B50; Favorito</button>
+      </div>
+    </header>
+
+    <!-- IDENTIDAD ADN (placeholder, se rellena desde ADN existente) -->
+    <section class="pv2-section" id="pv2AdnSection" style="display:none;">
+      <h2 class="pv2-sectitle">&#x1F9EC; TU ADN PUBG</h2>
+      <div class="pv2-adn-grid" id="pv2AdnGrid"><!-- populate --></div>
+    </section>
+
+    <!-- STATS PRINCIPALES -->
+    <section class="pv2-section" id="pv2StatsSection" style="display:none;">
+      <h2 class="pv2-sectitle" id="pv2StatsTitle">&#x1F4CA; STATS</h2>
+      <div class="pv2-mode-chips" id="pv2ModeChips">
+        <button type="button" class="active" data-mode="squad">Squad</button>
+        <button type="button" data-mode="duo">Duo</button>
+        <button type="button" data-mode="solo">Solo</button>
+      </div>
+      <div class="pv2-stat-grid" id="pv2StatGrid"><!-- populate --></div>
+      <div class="pv2-wl-grid" id="pv2WlGrid"><!-- populate --></div>
+      <div class="pv2-stat-footlinks">
+        <a href="#" onclick="if(typeof setSeasonType==='function')setSeasonType('ranked');return false;">&#x1F4C8; Ver Ranked &rarr;</a>
+        <a href="#" onclick="if(typeof setSeasonType==='function')setSeasonType('lifetime');return false;">&#x1F4DA; Ver Lifetime &rarr;</a>
+      </div>
+    </section>
+
+    <!-- PRÓXIMO PASO (solo self) -->
+    <section class="pv2-section pv2-only-self" id="pv2NextStepSection" style="display:none;">
+      <div class="pv2-next-step" id="pv2NextStepCard">
+        <div class="pv2-ns-title">&#x1F3AF; PR&Oacute;XIMO PASO</div>
+        <div id="pv2NextStepItems">
+          <div class="pv2-ns-placeholder">Analizando tu juego...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACORDEONES — se poblan con los panel-* viejos por JS -->
+    <section class="pv2-section" id="pv2AccordionsSection" style="display:none;">
+      <h2 class="pv2-sectitle">&#x26A1; VER M&Aacute;S</h2>
+      <div class="pv2-acc" data-acc="evolution">
+        <button type="button" class="pv2-acc-head"><span>&#x1F4C8; Evoluci&oacute;n temporal</span><span class="pv2-caret">&#x25BE;</span></button>
+        <div class="pv2-acc-body"><div class="pv2-acc-host" id="pv2AccEvoHost"></div></div>
+      </div>
+      <div class="pv2-acc" data-acc="matches">
+        <button type="button" class="pv2-acc-head"><span>&#x1F3AE; &Uacute;ltimas 20 partidas</span><span class="pv2-caret">&#x25BE;</span></button>
+        <div class="pv2-acc-body"><div class="pv2-acc-host" id="pv2AccMatchesHost"></div></div>
+      </div>
+      <div class="pv2-acc" data-acc="weapons">
+        <button type="button" class="pv2-acc-head"><span>&#x1F52B; Armas top</span><span class="pv2-caret">&#x25BE;</span></button>
+        <div class="pv2-acc-body"><div class="pv2-acc-host" id="pv2AccWeaponsHost"></div></div>
+      </div>
+      <div class="pv2-acc" data-acc="adn-full">
+        <button type="button" class="pv2-acc-head"><span>&#x1F9EC; ADN completo</span><span class="pv2-caret">&#x25BE;</span></button>
+        <div class="pv2-acc-body"><div class="pv2-acc-host" id="pv2AccAdnHost"></div></div>
+      </div>
+    </section>
+  </div>
+  <!-- /player-v2-markup -->
+
   <div class="player-header" id="playerHeader">
     <div class="player-header-row1">
       <div class="player-avatar" id="playerAvatar"></div>
@@ -4448,7 +4661,7 @@ body.telem-open { overflow:hidden; }
         <div class="auth-error" id="authRegError"></div>
         <input class="auth-input" id="regName" type="text" placeholder="Tu nombre o gamertag" maxlength="50">
         <input class="auth-input" id="regEmail" type="email" placeholder="Email">
-        <input class="auth-input" id="regPass" type="password" placeholder="Contrase&ntilde;a (m&iacute;nimo 10 caracteres, letras + n&uacute;meros)">
+        <input class="auth-input" id="regPass" type="password" placeholder="Contrase&ntilde;a (m&iacute;nimo 4 caracteres)">
         <input class="auth-input" id="regGamertag" type="text" placeholder="Gamertag PUBG (opcional)" maxlength="50">
         <label style="display:flex;align-items:center;gap:8px;margin:12px 0 4px;cursor:pointer;font-size:.75rem;color:var(--text-secondary);">
           <input type="checkbox" id="regNewsOptIn" checked style="accent-color:var(--accent);width:16px;height:16px;cursor:pointer;">
@@ -4680,8 +4893,7 @@ async function doRegister(){
   const gt=document.getElementById('regGamertag').value.trim();
   const newsOptIn=document.getElementById('regNewsOptIn').checked;
   if(!name||!email||!pass){showAuthError('authRegError','Nombre, email y contrasena son obligatorios');return;}
-  if(pass.length<10){showAuthError('authRegError','La contrasena debe tener al menos 10 caracteres');return;}
-  if(!/[A-Za-z]/.test(pass)||!/[0-9]/.test(pass)){showAuthError('authRegError','La contrasena debe incluir letras y numeros');return;}
+  if(pass.length<4){showAuthError('authRegError','La contrasena debe tener al menos 4 caracteres');return;}
   try{
     const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({email,password:pass,displayName:name,gamertag:gt,platform:currentPlatform,newsOptIn})});
     const d=await r.json();
@@ -4736,18 +4948,28 @@ async function syncFavoritesToServer(){
   }catch(e){console.error('Sync error:',e);}
 }
 
-// Auth bootstrap — cookie HttpOnly only. JWTs are never in URLs (history/referrer leak).
+// Check for Discord OAuth callback token in hash fragment (secure — not sent to server)
 (function(){
-  // Clean up any legacy auth_token left in the URL fragment from older clients
-  if(location.hash && location.hash.indexOf('auth_token')!==-1){
-    history.replaceState(null,'',location.pathname+location.search);
+  const hash=location.hash.substring(1);
+  const params=new URLSearchParams(hash);
+  const token=params.get('auth_token');
+  if(token){
+    authToken=token;localStorage.setItem('v4nz_token',token);
+    history.replaceState(null,'',location.pathname);
   }
-  // Purge any legacy JWT in localStorage — cookie is the only source of truth now
-  try{localStorage.removeItem('v4nz_token');}catch(e){}
-  fetch('/auth/me',{credentials:'include'})
-    .then(r=>{if(!r.ok)throw new Error();return r.json();})
-    .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
-    .catch(()=>{});
+  // Auto-login: try cookie first, then localStorage token
+  if(authToken){
+    fetch('/auth/me',{headers:{'Authorization':'Bearer '+authToken},credentials:'include'})
+      .then(r=>{if(!r.ok)throw new Error();return r.json();})
+      .then(d=>{currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
+      .catch(()=>{authToken=null;localStorage.removeItem('v4nz_token');updateAuthUI();});
+  }else{
+    // No localStorage token — maybe there's an HttpOnly cookie from previous session
+    fetch('/auth/me',{credentials:'include'})
+      .then(r=>{if(!r.ok)throw new Error();return r.json();})
+      .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
+      .catch(()=>{});
+  }
 })();
 
 const IS_PROXIED=location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname.includes('railway.app')||location.hostname.includes('v4nz.com');
@@ -4909,11 +5131,11 @@ async function loadClanFromHistory(tag){
           const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
           const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
           const opacity=isActive?'1':'0.4';
-          mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">';
+          mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
           mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
           mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
           if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
-          mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
+          mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
           mh+='</div>';
           mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
           mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -5098,13 +5320,13 @@ async function toggleClanMembers(tag,cardEl){
     activeMembers.forEach((m,i)=>{
       const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
       const barW=Math.max(5,Math.round(((m.kills||0)/maxK)*100));
-      mh+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;position:relative;overflow:hidden;cursor:pointer;" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(d.clan.platform)+'\');switchTab(\'overview\');searchPlayer();">';
+      mh+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;position:relative;overflow:hidden;cursor:pointer;" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+d.clan.platform+'\');switchTab(\'overview\');searchPlayer();">';
       mh+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:8px;"></div>';
       mh+='<div style="position:relative;z-index:1;">';
       mh+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
       mh+='<span style="font-family:Orbitron;font-size:.6rem;color:var(--text-dim);">'+(i+1)+'</span>';
       if(medal)mh+='<span style="font-size:.75rem;">'+medal+'</span>';
-      mh+='<span style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:.8rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
+      mh+='<span style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:.8rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
       mh+='</div>';
       mh+='<div style="display:flex;gap:10px;font-size:.65rem;color:var(--text-secondary);">';
       mh+='<span>K: <b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -5254,7 +5476,7 @@ async function loadClanPage(tag,subtab){
         h+='<div style="display:flex;align-items:center;gap:8px;z-index:1;position:relative;flex-wrap:wrap;">';
         h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;width:24px;text-align:center;color:var(--text-dim);">'+(i+1)+'</span>';
         h+=medal?'<span>'+medal+'</span>':'';
-        h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">'+esc(m.player_name)+'</span>';
+        h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">'+m.player_name+'</span>';
         h+=clBadge;
         h+='<span id="alias-'+escJs(m.player_name.toLowerCase())+'" style="font-size:.55rem;color:var(--accent-orange);opacity:.7;margin-left:6px;"></span>';
         h+='</div>';
@@ -11525,11 +11747,11 @@ async function searchClan(){
             const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
             const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
             const opacity=isActive?'1':'0.4';
-            mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'transparent\'" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">';
+            mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'transparent\'" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
             mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
             mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
             if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
-            mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
+            mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
             mh+='</div>';
             mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
             mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -11589,11 +11811,11 @@ async function searchClan(){
                   const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
                   const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
                   const opacity=isActive?'1':'0.4';
-                  mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">';
+                  mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
                   mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
                   mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
                   if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
-                  mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
+                  mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
                   mh+='</div>';
                   mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
                   mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -12020,7 +12242,7 @@ async function compareClans(){
         h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
         h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
         if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
-        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
         h+='<span style="color:var(--accent-orange);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
         h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
         h+='</div>';
@@ -12031,7 +12253,7 @@ async function compareClans(){
         h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
         h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
         if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
-        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
         h+='<span style="color:var(--accent);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
         h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
         h+='</div>';
@@ -12579,6 +12801,30 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
+// PLAYER-V2-JS START (player-v2-js-v1) — wrapper nuevo de la ficha, inactivo hasta body.pv2-active
+(function(){
+  // Listener de acordeones (único JS que necesitamos por ahora; el resto
+  // llega cuando se active la feature flag en H-P.2+).
+  document.addEventListener('click', function(ev){
+    var head = ev.target.closest && ev.target.closest('.pv2-acc-head');
+    if(!head) return;
+    var acc = head.closest('.pv2-acc');
+    if(!acc) return;
+    acc.classList.toggle('open');
+    // TODO H-P.3: aquí disparar lazy load del panel correspondiente si no está poblado aún.
+  });
+  // Listener de chips Squad/Duo/Solo (demo visual; JS real llega en H-P.2).
+  document.addEventListener('click', function(ev){
+    var btn = ev.target.closest && ev.target.closest('.pv2-mode-chips button');
+    if(!btn) return;
+    var parent = btn.parentElement;
+    if(!parent) return;
+    parent.querySelectorAll('button').forEach(function(x){ x.classList.remove('active'); });
+    btn.classList.add('active');
+  });
+})();
+// PLAYER-V2-JS END
+
 // HOME-V2-JS START (sesión 44g) — interacciones de los bloques nuevos de la home anónima
 (function(){
   var section = document.getElementById('homeV2Section');
@@ -12759,7 +13005,7 @@ switchTab=function(t){
   // --- 9. Ocultar CTA Registro cuando user logged ---
   function _hv2HideCtaIfLogged(){
     try {
-      var logged = (typeof currentUser !== 'undefined' && currentUser) || (typeof authToken !== 'undefined' && authToken);
+      var logged = (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('v4nz_token');
       if(logged){
         var cta = document.getElementById('hv2CtaRegister');
         if(cta) cta.style.display = 'none';
@@ -12775,7 +13021,7 @@ switchTab=function(t){
 
   // --- 10. Logged panel consolidation (home-v2-logged-v1) ---
   function _hv2IsLogged(){
-    try { return !!(typeof currentUser !== 'undefined' && currentUser) || !!(typeof authToken !== 'undefined' && authToken); } catch(e){ return false; }
+    try { return !!(typeof currentUser !== 'undefined' && currentUser) || !!localStorage.getItem('v4nz_token'); } catch(e){ return false; }
   }
   function _hv2GetUsername(){
     try {
@@ -12924,10 +13170,11 @@ switchTab=function(t){
       if(Array.isArray(arr) && arr.length){ tag = arr[0].tag || arr[0].clan_tag || arr[0]; }
     } catch(e){}
     if(!tag){
-      // Fuente 2: /favorites via cookie HttpOnly (o Bearer si hay token)
-      var isLogged = (typeof currentUser !== 'undefined' && currentUser) || (typeof authToken !== 'undefined' && authToken);
-      if(isLogged){
-        fetch('/favorites', { credentials:'include' })
+      // Fuente 2: /auth/favorites si hay token
+      var token = '';
+      try { token = localStorage.getItem('v4nz_token') || ''; } catch(e){}
+      if(token){
+        fetch('/auth/favorites', { headers:{ 'Authorization':'Bearer '+token } })
           .then(function(r){ return r.ok ? r.json() : {favorites:[]}; })
           .then(function(data){
             var favs = (data && (data.favorites || data.clanFavorites)) || [];
