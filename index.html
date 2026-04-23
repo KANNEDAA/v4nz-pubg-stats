@@ -5436,6 +5436,7 @@ function v4nzShareToast(btn, msg){
 
 // Clan page rendering for /clan/:tag URLs
 async function loadClanPage(tag,subtab){
+  const _si=document.getElementById('searchInput');if(_si)_si.value='';
   switchTab('clans');
   const cr=document.getElementById('clanResults');
   cr.innerHTML='<div style="text-align:center;padding:40px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando clan '+tag+'...</div></div></div>';
@@ -13603,13 +13604,12 @@ switchTab=function(t){
       }
     };
     _syncHv2();
-    // Observar cambios de style/class en #homepageContent
+    // Observar cambios de style/class en #homepageContent (el MutationObserver cubre todas las transiciones,
+    // incluidas las disparadas por Router.dispatch en popstate — no hace falta listener extra).
     try {
       var mo = new MutationObserver(_syncHv2);
       mo.observe(hp, { attributes:true, attributeFilter:['style','class','hidden'] });
     } catch(e){}
-    // Fallback: también re-sync en navegaciones del router SPA
-    window.addEventListener('popstate', function(){ setTimeout(_syncHv2, 50); });
   }
 
   // --- 1. IntersectionObserver reveal (.animate) ---
