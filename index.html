@@ -3603,12 +3603,21 @@ body.pv2-self .pv2-only-other{display:none!important}
 /* player-v2-css-v1 END */
 
 /* ══════════════════════════════════════════════════════════════════════
-   PLAYER V2 POLISH (player-v2-polish-1) — cierre visual
+   PLAYER V2 POLISH (player-v2-polish-3) — searchHero compacto en vez de oculto
    ══════════════════════════════════════════════════════════════════════ */
 
-/* 1. Ocultar searchHero viejo cuando la ficha v2 está activa — el hero v2
-      ya pone nombre + saludo, no necesitamos el buscador monstruoso arriba. */
-body.pv2-active #searchHero{display:none!important}
+/* 1. Compactar searchHero cuando la ficha v2 está activa:
+      - MANTENER `.search-box` (input de búsqueda — necesario para buscar otro jugador)
+      - OCULTAR textos hero grandes + favoritos + recientes (400+px que empujan el hero abajo)
+      Estructura real de #searchHero: .hero-glow, .hero-claim, h1, .hero-tagline,
+      .hero-powered, .search-box, #heroFeatures, #searchClanResults, #recentSearches */
+body.pv2-active #searchHero{padding-top:10px!important;padding-bottom:10px!important;min-height:0!important}
+body.pv2-active #searchHero .hero-claim,
+body.pv2-active #searchHero > h1,
+body.pv2-active #searchHero .hero-tagline,
+body.pv2-active #searchHero .hero-powered,
+body.pv2-active #searchHero #heroFeatures,
+body.pv2-active #searchHero #recentSearches{display:none!important}
 
 /* 2. CTA principal del hero con acento amarillo (primer botón, "Stats Card") */
 body.pv2-active .pv2-hero-ctas .pv2-cta:first-child{
