@@ -12801,7 +12801,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-js-v3b) — fallback modo con más rounds + banner si temporada vacía
+// PLAYER-V2-JS START (player-v2-js-v4) — Próximo paso heurístico (IA opcional si _lastAiDnaData)
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   function _pv2Enabled(){
@@ -12926,6 +12926,12 @@ switchTab=function(t){
 
     // ── ADN — radar + rol ──
     _pv2LoadAdn();
+
+    // ── Próximo paso (solo self) ──
+    if(isSelf){
+      _pv2LoadNextStep();
+      setTimeout(_pv2LoadNextStep, 2000);
+    }
 
     // ── Mover paneles viejos a los acordeones ──
     _pv2MigratePanels();
@@ -13119,6 +13125,92 @@ switchTab=function(t){
         }
       })
       .catch(function(){});
+  }
+
+  // ── Escape HTML mínimo ──
+  function _pv2Esc(s){
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ── 6.5 Próximo paso — heurística sobre DNA + fallback IA si ya cargada ──
+  function _pv2LoadNextStep(){
+    var container = document.getElementById('pv2NextStepItems');
+    if(!container) return;
+
+    // Si el user ya generó análisis IA (requestAiDna), usar esos insights
+    try {
+      var ai = window._lastAiDnaData;
+      if(ai && Array.isArray(ai.insights) && ai.insights.length >= 2 && ai.tip){
+        var debilidad = ai.insights[1] || ai.insights[0];
+        container.innerHTML =
+          '<div class="pv2-ns-item"><div class="pv2-ns-num">1</div><div class="pv2-ns-text">' + _pv2Esc(debilidad) + '</div></div>' +
+          '<div class="pv2-ns-item"><div class="pv2-ns-num">2</div><div class="pv2-ns-text">' + _pv2Esc(ai.tip) + '</div></div>' +
+          '<a href="#" class="pv2-ns-deep" style="display:block;margin-top:14px;text-align:center;background:var(--bg-card);border:1px solid rgba(180,122,255,.3);padding:10px;border-radius:12px;font-size:12px;font-weight:700;color:#b47aff;text-decoration:none;">\u2728 Analizado por V4NZ AI \u00B7 act. cada 7 d\u00EDas</a>';
+        return;
+      }
+    } catch(e){}
+
+    // Heurística — elegir el eje más bajo del radar + dar consejo estándar
+    var scores = null;
+    try {
+      var s = (typeof getActiveStats === 'function') ? getActiveStats() : null;
+      if(s && s.roundsPlayed && typeof calcDnaScores === 'function'){
+        scores = calcDnaScores(s);
+      }
+    } catch(e){}
+
+    if(!scores || (scores.agresividad === 0 && scores.precision === 0 && scores.supervivencia === 0)){
+      container.innerHTML = '<div class="pv2-ns-placeholder">Juega m\u00E1s partidas esta temporada y volver\u00E1s a ver recomendaciones aqu\u00ED.</div>';
+      return;
+    }
+
+    var axes = ['agresividad','precision','supervivencia','movilidad','soporte'];
+    var low = axes[0], lowVal = scores[axes[0]] || 0;
+    var high = axes[0], highVal = scores[axes[0]] || 0;
+    axes.forEach(function(k){
+      var v = scores[k] || 0;
+      if(v < lowVal){ low = k; lowVal = v; }
+      if(v > highVal){ high = k; highVal = v; }
+    });
+
+    var tips = {
+      agresividad: {
+        weak: 'Tu <strong>agresividad</strong> est\u00E1 en <strong>' + lowVal + '/100</strong>. Est\u00E1s dejando pasar peleas favorables \u2014 la iniciativa gana duelos.',
+        action: '<strong>Consejo</strong>: al landear, pushea el edificio m\u00E1s cercano aunque haya enemigos. El entry-frag te da la info que define la partida.'
+      },
+      precision: {
+        weak: 'Tu <strong>precisi\u00F3n</strong> est\u00E1 en <strong>' + lowVal + '/100</strong>. Pierdes da\u00F1o por tiros fallidos.',
+        action: '<strong>Consejo</strong>: baja la sensibilidad ADS al 100\u2013120%, ajusta el dead zone del stick derecho al m\u00EDnimo y entrena 10 min/d\u00EDa en la zona de tiro.'
+      },
+      supervivencia: {
+        weak: 'Tu <strong>supervivencia</strong> est\u00E1 en <strong>' + lowVal + '/100</strong>. Mueres pronto en muchas partidas.',
+        action: '<strong>Consejo</strong>: rota con la zona una fase antes, usa humos en reanimaciones y evita peleas innecesarias en el early.'
+      },
+      movilidad: {
+        weak: 'Tu <strong>movilidad</strong> est\u00E1 en <strong>' + lowVal + '/100</strong>. Te quedas est\u00E1tico demasiado tiempo.',
+        action: '<strong>Consejo</strong>: aprende 2\u20133 rutas de veh\u00EDculo por mapa y rota siempre con al menos un Dacia/UAZ en c\u00EDrculo 3+.'
+      },
+      soporte: {
+        weak: 'Tu <strong>soporte</strong> est\u00E1 en <strong>' + lowVal + '/100</strong>. Tu squad podr\u00EDa aprovecharte m\u00E1s.',
+        action: '<strong>Consejo</strong>: prioriza revives sobre kills, usa humos defensivos en reanimaciones y comparte healing/boosts con el equipo.'
+      }
+    };
+
+    var highLabels = {
+      agresividad: 'AGRESIVIDAD',
+      precision: 'PRECISI\u00D3N',
+      supervivencia: 'SUPERVIVENCIA',
+      movilidad: 'MOVILIDAD',
+      soporte: 'SOPORTE'
+    };
+
+    var fix = tips[low] || tips.agresividad;
+    var brillaLine = '\u2728 Tu fuerte es <strong>' + (highLabels[high] || high.toUpperCase()) + ' (' + highVal + '/100)</strong>. Juega alrededor de esa fortaleza.';
+
+    container.innerHTML =
+      '<div class="pv2-ns-item"><div class="pv2-ns-num">1</div><div class="pv2-ns-text">' + fix.weak + '<br>' + fix.action + '</div></div>' +
+      '<div class="pv2-ns-item"><div class="pv2-ns-num">2</div><div class="pv2-ns-text">' + brillaLine + '</div></div>' +
+      '<a href="#" class="pv2-ns-deep" onclick="var b=document.getElementById(\'aiDnaBtn\');if(b){b.click();}return false;" style="display:block;margin-top:14px;text-align:center;background:var(--bg-card);border:1px solid rgba(180,122,255,.3);padding:10px;border-radius:12px;font-size:12px;font-weight:700;color:#b47aff;text-decoration:none;">\uD83D\uDC8E An\u00E1lisis IA profundo (actualiza cada 7 d\u00EDas) \u2192</a>';
   }
 
   // ── 6. Stats principales con benchmarks + deltas ───────────────────
