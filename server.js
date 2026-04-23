@@ -32,16 +32,7 @@ if (!process.env.RAILWAY_ENVIRONMENT) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
-const IS_PRODUCTION = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
-if (IS_PRODUCTION && !process.env.JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET environment variable is required in production.');
-  process.exit(1);
-}
-const JWT_SECRET = process.env.JWT_SECRET || (() => {
-  const ephemeral = crypto.randomBytes(32).toString('hex');
-  console.warn('⚠️  JWT_SECRET not set — using ephemeral dev secret. Sessions will be invalidated on restart.');
-  return ephemeral;
-})();
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://v4nz.com/auth/discord/callback';
@@ -82,45 +73,22 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
   // Content Security Policy
-  // NOTE: 'unsafe-inline' in script-src is required by ~330 inline event handlers in index.html
-  // (onclick=, onerror=, etc). Removing it requires refactoring those to addEventListener.
-  // Tracked as tech-debt — see review notes (P1 refactor).
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://cdn.discordapp.com https://v4nz.com https://www.googletagmanager.com https://www.google-analytics.com",
     "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://api.pubg.report https://discord.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://region1.google-analytics.com",
     "frame-src https://open.spotify.com https://discord.com",
-    "frame-ancestors 'none'",
     "media-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self' https://discord.com",
-    "upgrade-insecure-requests"
+    "form-action 'self' https://discord.com"
   ].join('; ');
   res.setHeader('Content-Security-Policy', csp);
   next();
 });
-
-// ═══ INPUT VALIDATION ═══
-// PUBG player names: ASCII letters/digits/underscore/hyphen/dot (covers "account.xxx" IDs).
-// Keeps XSS, log-injection, URL-smuggling and control chars out of downstream PUBG API / DB / logs.
-const PUBG_NAME_RE = /^[A-Za-z0-9_.\-]{1,50}$/;
-function validPubgName(raw) {
-  if (typeof raw !== 'string') return null;
-  const clean = raw.trim();
-  if (!PUBG_NAME_RE.test(clean)) return null;
-  return clean;
-}
-// Clan tags: uppercase alphanumeric + underscore, 1-20 chars.
-const CLAN_TAG_RE = /^[A-Z0-9_]{1,20}$/;
-function validClanTag(raw) {
-  if (typeof raw !== 'string') return null;
-  const clean = raw.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
-  return CLAN_TAG_RE.test(clean) ? clean : null;
-}
 
 // ═══ COOKIE HELPER ═══
 function parseCookies(req) {
@@ -132,10 +100,12 @@ function parseCookies(req) {
   return cookies;
 }
 function setAuthCookie(res, token) {
-  res.append('Set-Cookie', `v4nz_token=${token}; HttpOnly; ${IS_PRODUCTION ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=${30 * 24 * 3600}`);
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+  res.append('Set-Cookie', `v4nz_token=${token}; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=${30 * 24 * 3600}`);
 }
 function clearAuthCookie(res) {
-  res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${IS_PRODUCTION ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+  res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
 }
 
 // ═══ WHITELIST de estáticos (rivalidades-v1-sec) ═══
@@ -580,10 +550,8 @@ app.post('/clans/request-member', rateLimit, async (req, res) => {
   try {
     const { clanTag, playerName, requestedBy } = req.body;
     if (!clanTag || !playerName) return res.status(400).json({ error: 'clanTag and playerName required' });
-    const cleanTag = validClanTag(clanTag);
-    const cleanName = validPubgName(playerName);
-    if (!cleanTag) return res.status(400).json({ error: 'clanTag invalido' });
-    if (!cleanName) return res.status(400).json({ error: 'playerName invalido' });
+    const cleanTag = clanTag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
+    const cleanName = playerName.trim().slice(0, 50);
     // Check if player already exists in clan
     const existing = await pool.query('SELECT id FROM clan_members WHERE clan_tag = $1 AND player_name = $2', [cleanTag, cleanName]);
     if (existing.rows.length) return res.json({ ok: true, message: 'Este jugador ya esta en el clan', autoAdded: false });
@@ -1463,30 +1431,13 @@ function generateToken(user) {
   return jwt.sign({ id: user.id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '7d' });
 }
 
-// Password policy: >=10 chars, must include letter + digit. Rejects top-N trivial
-// passwords. Catches low-effort passwords; bcrypt handles the rest.
-const WEAK_PASSWORDS = new Set([
-  'password','password1','12345678','123456789','1234567890','qwerty123',
-  'qwertyuiop','abc12345','letmein1','iloveyou1','passw0rd','1q2w3e4r5t',
-  'welcome1','admin1234','password!','qwerty1234'
-]);
-function validatePassword(pw) {
-  if (typeof pw !== 'string') return 'La contrasena es obligatoria';
-  if (pw.length < 10) return 'La contrasena debe tener al menos 10 caracteres';
-  if (pw.length > 200) return 'La contrasena es demasiado larga';
-  if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return 'La contrasena debe incluir letras y numeros';
-  if (WEAK_PASSWORDS.has(pw.toLowerCase())) return 'Esta contrasena es demasiado comun';
-  return null;
-}
-
 // POST /auth/register — Email + password registration
 app.post('/auth/register', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password, displayName, gamertag, platform, newsOptIn } = req.body;
   if (!email || !password || !displayName) return res.status(400).json({ error: 'Email, contrasena y nombre son obligatorios' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email no valido' });
-  const pwError = validatePassword(password);
-  if (pwError) return res.status(400).json({ error: pwError });
+  if (password.length < 8) return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
   try {
     const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
     if (exists.rows.length) return res.status(409).json({ error: 'Este email ya esta registrado' });
@@ -1595,12 +1546,12 @@ app.get('/auth/discord/callback', async (req, res) => {
       user = result.rows[0];
     }
     const jwtToken = generateToken(user);
-    // HttpOnly cookie only — never expose JWT in URL (browser history / referrer leak)
+    // Set HttpOnly cookie (primary) + URL token (for frontend state init)
     setAuthCookie(res, jwtToken);
-    res.redirect('/?auth=discord_ok');
+    res.redirect('/#auth_token=' + jwtToken);
   } catch (e) {
     console.error('Discord OAuth error:', e.message);
-    res.redirect('/?auth_error=server_error');
+    res.redirect('/#auth_error=server_error');
   }
 });
 
@@ -1837,9 +1788,7 @@ app.get('/api/leaderboard', async (req, res) => {
 app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
   const { platform, playerName } = req.params;
   const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
-  const cleanName = validPubgName(playerName);
-  if (!cleanName) return res.status(400).json({ error: 'playerName invalido' });
-  const cacheKey = `bot_index_${shard}_${cleanName.toLowerCase()}`;
+  const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
 
   // Check cache (6 hours) — skip stale entries with botKills=0 (old buggy data)
   if (pool) {
@@ -1864,13 +1813,13 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
 
   try {
     // 1. Get player + match IDs
-    const pRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(cleanName)}`, { headers }, 12000);
+    const pRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(playerName)}`, { headers }, 12000);
     const pData = await pRes.json();
     if (!pData.data || !pData.data[0]) return res.json({ error: 'player_not_found' });
 
     const playerId = pData.data[0].id;
     const matchIds = (pData.data[0].relationships?.matches?.data || []).slice(0, 5).map(m => m.id);
-    if (!matchIds.length) return res.json({ error: 'no_matches', playerName: cleanName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
+    if (!matchIds.length) return res.json({ error: 'no_matches', playerName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
 
     let totalKills = 0, botKills = 0, analyzed = 0;
 
@@ -1928,7 +1877,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
     }
 
     const result = {
-      playerName: cleanName, platform: shard, totalKills, botKills,
+      playerName, platform: shard, totalKills, botKills,
       humanKills: totalKills - botKills,
       botRatio: totalKills > 0 ? Math.round((botKills / totalKills) * 100) : 0,
       matchesAnalyzed: analyzed,
@@ -2019,11 +1968,8 @@ app.post('/api/snapshots', async (req, res) => {
 app.get('/api/snapshots/:platform/:player', async (req, res) => {
   if (!pool) return res.json({ snapshots: [] });
   const { platform, player } = req.params;
-  const cleanPlayer = validPubgName(player);
-  if (!cleanPlayer) return res.status(400).json({ error: 'player invalido' });
-  const cleanPlat = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
-  const squad_mode = ['solo','duo','squad'].includes(req.query.squad_mode) ? req.query.squad_mode : 'squad';
-  const game_mode = ['tpp','fpp'].includes(req.query.game_mode) ? req.query.game_mode : 'tpp';
+  const squad_mode = req.query.squad_mode || 'squad';
+  const game_mode = req.query.game_mode || 'tpp';
   try {
     const { rows } = await pool.query(
       `SELECT kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill, created_at
@@ -2031,7 +1977,7 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
        WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
        ORDER BY created_at ASC
        LIMIT 12`,
-      [cleanPlayer, cleanPlat, squad_mode, game_mode]
+      [player, platform, squad_mode, game_mode]
     );
     res.json({ snapshots: rows });
   } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
@@ -2095,12 +2041,10 @@ app.get('/api/v4nz-leaderboard', async (req, res) => {
 });
 
 // ============ Clear AI DNA cache for a player (admin use) ============
-app.delete('/api/ai-dna-cache', requireAdmin, async (req, res) => {
+app.delete('/api/ai-dna-cache', async (req, res) => {
   const { playerName, platform } = req.query;
-  const cleanName = validPubgName(playerName);
-  if (!cleanName || !pool) return res.status(400).json({ error: 'playerName invalido' });
-  const cleanPlat = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
-  const cacheKey = `ai-dna:${cleanName.toLowerCase()}:${cleanPlat}`;
+  if (!playerName || !pool) return res.status(400).json({ error: 'Missing playerName' });
+  const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;
   try {
     const result = await pool.query('DELETE FROM api_cache WHERE cache_key = $1', [cacheKey]);
     res.json({ ok: true, deleted: result.rowCount });
@@ -2108,17 +2052,14 @@ app.delete('/api/ai-dna-cache', requireAdmin, async (req, res) => {
 });
 
 // ============ AI DNA Analysis (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-dna', rateLimit, async (req, res) => {
+app.get('/api/ai-dna', async (req, res) => {
   try {
-    const { playerName: pnRaw, platform: platRaw, stats: statsParam } = req.query;
-    const playerName = validPubgName(pnRaw);
-    if (!playerName) return res.status(400).json({ error: 'playerName invalido' });
-    const platform = ['psn','xbox','steam'].includes(platRaw) ? platRaw : 'psn';
+    const { playerName, platform, stats: statsParam } = req.query;
     let stats;
     try { stats = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { stats = null; }
-    if (!stats) return res.status(400).json({ error: 'Missing stats' });
+    if (!playerName || !stats) return res.status(400).json({ error: 'Missing playerName or stats' });
 
-    const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform}`;
+    const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;
 
     // Check cache
     try {
@@ -2200,7 +2141,7 @@ Fórmula: Si K/D > 3.5 Y ADR < 200 Y Longest Kill < 200m → MUY probable bot fa
 
     const userPrompt = `Analiza este jugador de PUBG consola:
 
-Nombre: ${playerName} (${platform})
+Nombre: ${playerName} (${platform || 'psn'})
 
 STATS PRINCIPALES:
 • K/D: ${stats.kd} | ADR (Daño medio/partida): ${stats.avgDamage}
@@ -2295,21 +2236,16 @@ Genera el análisis JSON:
 });
 
 // ============ AI Compare Players (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-compare-players', rateLimit, async (req, res) => {
+app.get('/api/ai-compare-players', async (req, res) => {
   try {
-    const { p1: p1Raw, p2: p2Raw, platform: platRaw, mode: modeRaw, stats: statsParam } = req.query;
-    const p1 = validPubgName(p1Raw);
-    const p2 = validPubgName(p2Raw);
-    if (!p1 || !p2) return res.status(400).json({ error: 'players invalidos' });
-    const platform = ['psn','xbox','steam'].includes(platRaw) ? platRaw : 'psn';
-    const mode = ['solo','duo','squad'].includes(modeRaw) ? modeRaw : 'squad';
+    const { p1, p2, platform, mode, stats: statsParam } = req.query;
     let payload;
     try { payload = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { payload = null; }
-    if (!payload || !payload.s1 || !payload.s2) return res.status(400).json({ error: 'Missing stats' });
+    if (!p1 || !p2 || !payload || !payload.s1 || !payload.s2) return res.status(400).json({ error: 'Missing players or stats' });
 
     // Normalise cache key: order players alphabetically so A-vs-B and B-vs-A share cache
     const [a, b] = [p1.toLowerCase(), p2.toLowerCase()].sort();
-    const cacheKey = `ai-compare:${a}:${b}:${platform}:${mode}`;
+    const cacheKey = `ai-compare:${a}:${b}:${platform || 'psn'}:${mode || 'squad'}`;
 
     // Check cache
     if (pool) {
@@ -2446,7 +2382,7 @@ Genera el análisis JSON:
 });
 
 // ============ AI Deep Analysis (Pro) — usuario logueado con historial (v154) ============
-app.get('/api/ai-deep-analysis', requireAuth, rateLimit, async (req, res) => {
+app.get('/api/ai-deep-analysis', requireAuth, async (req, res) => {
   try {
     if (!pool) return res.status(503).json({ error: 'DB not available' });
     const userId = req.user.id;
@@ -2660,17 +2596,14 @@ Genera el análisis JSON:
 });
 
 // ============ AI Compare Clans (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-compare-clans', rateLimit, async (req, res) => {
+app.get('/api/ai-compare-clans', async (req, res) => {
   try {
-    const { tag1: t1Raw, tag2: t2Raw, stats: statsParam } = req.query;
-    const tag1 = validClanTag(t1Raw);
-    const tag2 = validClanTag(t2Raw);
-    if (!tag1 || !tag2) return res.status(400).json({ error: 'tags invalidos' });
+    const { tag1, tag2, stats: statsParam } = req.query;
     let payload;
     try { payload = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { payload = null; }
-    if (!payload || !payload.c1 || !payload.c2) return res.status(400).json({ error: 'Missing stats' });
+    if (!tag1 || !tag2 || !payload || !payload.c1 || !payload.c2) return res.status(400).json({ error: 'Missing clans or stats' });
 
-    const [a, b] = [tag1, tag2].sort();
+    const [a, b] = [tag1.toUpperCase(), tag2.toUpperCase()].sort();
     const cacheKey = `ai-compare-clans:${a}:${b}`;
 
     if (pool) {
@@ -2813,6 +2746,193 @@ Genera el análisis JSON:
   } catch (e) {
     console.error('AI compare clans error:', e.status || e.code || '', e.message || e);
     res.status(500).json({ error: 'AI compare clans failed', detail: e.message || 'Unknown error' });
+  }
+});
+
+// ============ AI Clan DNA (análisis IA de un clan individual) ============
+// ai-clan-dna-v1 — sustituye el 404 del botón "ANALIZAR CLAN CON IA".
+// Patrón identico a /api/ai-compare-clans: cache api_cache 7d + Claude API con
+// retry en 5xx transitorios. Se alimenta de clans + clan_members (stats agregadas).
+app.get('/api/ai-clan-dna', async (req, res) => {
+  try {
+    const rawTag = (req.query.tag || '').toString().trim();
+    if (!rawTag) return res.status(400).json({ error: 'Falta tag del clan' });
+    const tag = rawTag.toUpperCase();
+    const cacheKey = `ai-clan-dna:${tag}`;
+
+    if (pool) {
+      try {
+        const cached = await pool.query(
+          `SELECT data FROM api_cache WHERE cache_key = $1 AND created_at + (ttl_seconds || ' seconds')::interval > NOW()`,
+          [cacheKey]
+        );
+        if (cached.rows.length > 0) return res.json(cached.rows[0].data);
+      } catch (e) { console.error('AI clan DNA cache check error:', e); }
+    }
+
+    if (!pool) return res.status(503).json({ error: 'DB no disponible' });
+
+    // 1. Datos del clan
+    const clanRow = await pool.query(
+      'SELECT tag, name, level, platform, active_members, total_kills, total_wins, avg_kd FROM clans WHERE tag = $1',
+      [tag]
+    );
+    if (!clanRow.rows.length) return res.status(404).json({ error: 'Clan no registrado en V4NZ. Búscalo primero desde la pestaña Clanes.' });
+    const clan = clanRow.rows[0];
+
+    // 2. Miembros + agregados
+    const membersRow = await pool.query(
+      'SELECT player_name, kills, wins, kd, damage, rounds, active FROM clan_members WHERE clan_tag = $1 ORDER BY kills DESC NULLS LAST',
+      [tag]
+    );
+    const members = membersRow.rows || [];
+    const total = members.length;
+    const activos = members.filter(m => m.active).length;
+    const activePct = total ? Math.round(activos / total * 100) : 0;
+    const withRounds = members.filter(m => (m.rounds || 0) > 0);
+    const avgKD = withRounds.length ? (withRounds.reduce((s, m) => s + (parseFloat(m.kd) || 0), 0) / withRounds.length) : 0;
+    const avgADR = withRounds.length ? (withRounds.reduce((s, m) => s + (parseFloat(m.damage) || 0), 0) / withRounds.length) : 0;
+    const totalKills = members.reduce((s, m) => s + (m.kills || 0), 0);
+    const totalWins = members.reduce((s, m) => s + (m.wins || 0), 0);
+    const totalRounds = members.reduce((s, m) => s + (m.rounds || 0), 0);
+    const winRate = totalRounds ? (totalWins / totalRounds * 100) : 0;
+    const kdVariance = withRounds.length > 1
+      ? (withRounds.reduce((s, m) => s + Math.pow((parseFloat(m.kd) || 0) - avgKD, 2), 0) / withRounds.length)
+      : 0;
+    const kdStdDev = Math.sqrt(kdVariance);
+    const topMembers = members.slice(0, 5).map(m => `${m.player_name} (K/D ${Number(m.kd || 0).toFixed(2)}, ${m.kills} kills, ${m.wins} wins)`);
+    const mvp = members[0]?.player_name || null;
+
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'AI no disponible' });
+
+    let AnthropicSDK;
+    try { AnthropicSDK = await import('@anthropic-ai/sdk'); }
+    catch (e) { console.error('Anthropic SDK import failed:', e); return res.status(503).json({ error: 'AI SDK no disponible' }); }
+    const Anthropic = AnthropicSDK.default || AnthropicSDK.Anthropic;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const systemPrompt = `Eres V4NZ AI, el analista experto de clanes PUBG consola (PSN/Xbox) de v4nz.com. Analizas el ADN colectivo de un clan: su arquetipo, sus fortalezas, sus debilidades y qué le distingue. Tono técnico, justo, sin insultos.
+
+═══ BENCHMARKS CLANES CONSOLA (Temporada 40+) ═══
+K/D medio clan: Elite 2.0+ | Bueno 1.5-2.0 | Normal 1.0-1.5 | Bajo <1.0
+Win Rate clan: Elite 10%+ | Bueno 6-10% | Normal 3-6% | Bajo <3%
+ADR medio clan: Elite 200+ | Bueno 150-200 | Normal 100-150 | Bajo <100
+Actividad (% miembros con rounds>0): Sano 70%+ | Medio 40-70% | Fantasma <40%
+Desviación K/D alta (>0.6) = clan dispar, baja (<0.3) = clan homogéneo
+
+═══ 5 DIMENSIONES A PUNTUAR (0-100) ═══
+1. COMPETITIVIDAD — skill medio: K/D + ADR + Win Rate combinados.
+2. COHESIÓN — homogeneidad: desviación K/D baja + balance activos/fantasmas.
+3. AGRESIVIDAD — kills/miembro alto + ADR alto (más ruido, más tiros).
+4. CONSISTENCIA — Win Rate + rounds jugados (partidas consistentes, no solo carries puntuales).
+5. ACTIVIDAD — % activos sobre total. Fantasmas bajan esta puntuación.
+
+═══ ARQUETIPOS SUGERIDOS ═══
+- ELITE QUIRÚRGICO · rojo #ff3355 (pocos miembros, todos top)
+- MASTODONTE ACTIVO · naranja #ff6b00 (muchos miembros, volumen bruto alto)
+- AGRESIVO HIPER · magenta #ff2d92 (kills bestiales, win rate normal)
+- CANTERA EN ALZA · verde #00ff88 (nivel medio, muchos activos con rounds)
+- FANTASMA INFLADO · gris #6b7280 (>60% inactivos)
+- METÓDICO FRÍO · cyan #00f0ff (win rate alto, consistente, no explosivo)
+- CLAN DISPAR · amarillo #f5c842 (3 cracks + 50 pasivos, desviación K/D alta)
+
+═══ REGLAS ESTRICTAS ═══
+- Si <40% activos, debe aparecer como debilidad aunque las medias sean buenas.
+- Strengths y weaknesses: 3-4 bullets cada uno, concretos, con números.
+- MVP: el jugador que mejor define el arquetipo (no siempre el de más kills).
+- Tip: 1 frase accionable para mejorar la debilidad más urgente del clan.
+- Responde SOLO con JSON válido, sin markdown ni explicaciones fuera del JSON.`;
+
+    const userPrompt = `Analiza este clan PUBG consola:
+
+═══ CLAN [${tag}] ${clan.name || tag} ═══
+• Nivel del clan: ${clan.level || '?'}
+• Plataforma: ${clan.platform || 'console'}
+• Miembros totales: ${total} | Activos (rounds>0): ${activos} (${activePct}%)
+• Kills totales: ${totalKills} | Wins totales: ${totalWins} | Rounds totales: ${totalRounds}
+• K/D medio (solo activos): ${avgKD.toFixed(2)}
+• ADR medio (solo activos): ${Math.round(avgADR)}
+• Win Rate: ${winRate.toFixed(2)}%
+• Kills/miembro activo: ${activos ? (totalKills / activos).toFixed(1) : 0}
+• Desviación K/D entre activos: ${kdStdDev.toFixed(2)} (${kdStdDev > 0.6 ? 'DISPAR' : kdStdDev < 0.3 ? 'HOMOGÉNEO' : 'normal'})
+
+═══ TOP 5 POR KILLS ═══
+${topMembers.map((l, i) => `${i + 1}. ${l}`).join('\n') || '(sin datos)'}
+
+Devuelve JSON exactamente así (nada fuera del objeto):
+{
+  "archetype": "NOMBRE DEL ARQUETIPO EN MAYÚSCULAS",
+  "archetypeColor": "#hex",
+  "description": "2-3 frases explicando qué tipo de clan es y qué lo define",
+  "scores": {
+    "competitividad": 0-100,
+    "cohesion": 0-100,
+    "agresividad": 0-100,
+    "consistencia": 0-100,
+    "actividad": ${activePct}
+  },
+  "strengths": ["3-4 fortalezas concretas con números"],
+  "weaknesses": ["3-4 debilidades concretas con números"],
+  "mvp": "nombre del jugador MVP",
+  "tip": "1 frase accionable para mejorar la debilidad principal",
+  "tag": "${tag}"
+}`;
+
+    let response, lastErr;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        response = await client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1500,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        });
+        break;
+      } catch (apiErr) {
+        lastErr = apiErr;
+        console.error(`AI clan DNA API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
+        if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        throw apiErr;
+      }
+    }
+    if (!response) throw lastErr || new Error('AI API failed after retries');
+
+    const text = response.content[0]?.text || '';
+    let aiResult;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      aiResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    } catch (e) {
+      console.error('AI clan DNA parse error, raw text:', text.substring(0, 500));
+      return res.status(500).json({ error: 'Failed to parse AI response' });
+    }
+
+    if (!aiResult.archetype || !aiResult.scores || !aiResult.description) {
+      console.error('AI clan DNA incomplete response, keys:', Object.keys(aiResult));
+      return res.status(500).json({ error: 'Incomplete AI response' });
+    }
+
+    aiResult.tag = tag;
+    aiResult.generatedAt = new Date().toISOString();
+    if (mvp && !aiResult.mvp) aiResult.mvp = mvp;
+
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO api_cache (cache_key, data, ttl_seconds) VALUES ($1, $2, $3) ON CONFLICT (cache_key) DO UPDATE SET data = $2, created_at = NOW(), ttl_seconds = $3`,
+          [cacheKey, JSON.stringify(aiResult), 604800]
+        );
+      } catch (e) { console.error('AI clan DNA cache save error:', e); }
+    }
+
+    res.json(aiResult);
+
+  } catch (e) {
+    console.error('AI clan DNA error:', e.status || e.code || '', e.message || e);
+    res.status(500).json({ error: 'AI clan DNA failed', detail: e.message || 'Unknown error' });
   }
 });
 
@@ -3900,11 +4020,8 @@ async function svgToPng(svgStr) {
 // Player OG image — with real stats from PUBG API
 app.get('/og-image/stats/:platform/:player.png', async (req, res) => {
   try {
-    const platformRaw = (req.params.platform || '').toLowerCase();
-    if (!['psn','xbox','steam'].includes(platformRaw)) return res.status(400).send('platform invalido');
-    const platform = platformRaw.toUpperCase();
-    const player = validPubgName(decodeURIComponent(req.params.player));
-    if (!player) return res.status(400).send('player invalido');
+    const platform = req.params.platform.toUpperCase();
+    const player = decodeURIComponent(req.params.player);
     let stats = null;
 
     // Try to fetch real stats (cached via api_cache)
@@ -4072,8 +4189,7 @@ app.post('/players/track-name', async (req, res) => {
 app.get('/players/:name/aliases', async (req, res) => {
   if (!pool) return res.json({ aliases: [] });
   try {
-    const name = validPubgName(req.params.name);
-    if (!name) return res.status(400).json({ error: 'name invalido' });
+    const name = req.params.name;
     // Find account ID for this player
     const account = await pool.query('SELECT account_id FROM player_accounts WHERE LOWER(player_name) = LOWER($1)', [name]);
     if (!account.rows.length) return res.json({ aliases: [] });
