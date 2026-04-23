@@ -12801,7 +12801,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-js-v3) — preview activable con ?pv2=1, + ADN radar + clan retry + deltas
+// PLAYER-V2-JS START (player-v2-js-v3a) — + retry stats/rank/clan para vencer race de searchPlayer
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   function _pv2Enabled(){
@@ -12897,12 +12897,10 @@ switchTab=function(t){
     setTimeout(_pv2RefreshClan, 1500);
     setTimeout(_pv2RefreshClan, 3000);
 
-    // Rank
-    try {
-      var rankOld = document.getElementById('rankBadge');
-      var rankText = rankOld ? rankOld.textContent.trim().replace(/\s+/g,' ').slice(0, 40) : '';
-      _pv2Text('pv2Rank', rankText ? ('\u2B50 ' + rankText) : '\u2B50 Sin rango');
-    } catch(e){}
+    // Rank (con retry — se rellena tarde)
+    _pv2RefreshRank();
+    setTimeout(_pv2RefreshRank, 1500);
+    setTimeout(_pv2RefreshRank, 3000);
 
     // Eyebrow: API actualizada (placeholder hora actual)
     _pv2Text('pv2Eyebrow', 'PUBG OFFICIAL API \u00B7 actualizado ahora mismo');
@@ -12921,8 +12919,10 @@ switchTab=function(t){
     // ── Última partida ──
     _pv2LoadLastMatch(name, plat);
 
-    // ── Stats principales ──
+    // ── Stats principales (con retry si aún no hay datos) ──
     _pv2LoadStats(pd);
+    setTimeout(function(){ _pv2LoadStats(pd); }, 1500);
+    setTimeout(function(){ _pv2LoadStats(pd); }, 3500);
 
     // ── ADN — radar + rol ──
     _pv2LoadAdn();
@@ -12948,6 +12948,19 @@ switchTab=function(t){
     }
     if(text){ clanEl.textContent = text; clanEl.style.display = ''; }
     else { clanEl.style.display = 'none'; }
+  }
+
+  // ── Rank retry ──
+  function _pv2RefreshRank(){
+    try {
+      var rankEl = document.getElementById('pv2Rank');
+      if(!rankEl) return;
+      var rankOld = document.getElementById('rankBadge');
+      var rankText = rankOld ? rankOld.textContent.trim().replace(/\s+/g,' ').slice(0, 40) : '';
+      if(rankText){
+        rankEl.textContent = '\u2B50 ' + rankText;
+      }
+    } catch(e){}
   }
 
   // ── ADN — radar SVG + rol + "brillas en X" ──
@@ -13121,7 +13134,16 @@ switchTab=function(t){
     var s = sd[modeKey] || sd['squad-fpp'] || sd['squad'];
     if(!s || !s.roundsPlayed) return;
 
-    // Preferir helpers oficiales si existen (consistencia con el resto del app)
+    // Preferir `getActiveStats()` que ya respeta temporada/modo/tipo activo del resto del app.
+    // Si _pv2LoadStats corre antes de que getActiveStats tenga datos, abortar para evitar pintar 0s
+    // (retry posterior rellenará cuando estén listos).
+    if(typeof getActiveStats === 'function'){
+      var actS = null;
+      try { actS = getActiveStats(); } catch(e){}
+      if(actS && actS.roundsPlayed) s = actS;
+    }
+    if(!s || !s.roundsPlayed) return;
+
     var kd = (typeof calcKD === 'function') ? parseFloat(calcKD(s)) : (s.kills / Math.max(1, s.roundsPlayed - s.wins));
     var wr = (typeof calcWinRate === 'function') ? parseFloat(calcWinRate(s)) : (s.roundsPlayed ? s.wins / s.roundsPlayed * 100 : 0);
     var adr = (typeof calcAvgDmg === 'function') ? parseFloat(calcAvgDmg(s)) : (s.roundsPlayed ? s.damageDealt / s.roundsPlayed : 0);
