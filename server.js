@@ -353,6 +353,25 @@ async function initDB() {
       );
       CREATE INDEX IF NOT EXISTS idx_match_insights_inflight ON match_insights(status) WHERE status IN ('pending','computing');
       CREATE INDEX IF NOT EXISTS idx_match_insights_created ON match_insights(created_at);
+
+      -- audit-logging-v1: registro de acciones sensibles (auth, admin, clan ops)
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id           BIGSERIAL PRIMARY KEY,
+        user_id      INT,
+        actor_role   VARCHAR(20),
+        action       VARCHAR(60) NOT NULL,
+        entity_type  VARCHAR(30),
+        entity_id    VARCHAR(100),
+        status       VARCHAR(16) NOT NULL DEFAULT 'ok',
+        ip           VARCHAR(64),
+        user_agent   VARCHAR(255),
+        details      JSONB,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_log_created  ON audit_log(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_action   ON audit_log(action, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_user     ON audit_log(user_id, created_at DESC) WHERE user_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_audit_log_ip       ON audit_log(ip, created_at DESC) WHERE ip IS NOT NULL;
     `);
     // Cleanup old cache entries on startup (older than 1 hour) — EXCLUYE telemetry_* que tiene vida de 30 días (rivalidades-v1)
     await pool.query("DELETE FROM api_cache WHERE created_at < NOW() - INTERVAL '1 hour' AND cache_key NOT LIKE 'telemetry\\_%' ESCAPE '\\'").catch(() => {});
@@ -370,6 +389,35 @@ async function initDB() {
     await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS pubg_clan_id VARCHAR(100)`).catch(() => {});
     console.log('✓ Database tables ready');
   } catch (e) { console.error('DB init error:', e.message); }
+}
+
+// ═══ AUDIT LOG ═══
+// Fire-and-forget registro en DB de acciones sensibles (auth, admin, clan ops).
+// Nunca lanza: si falla el insert, sólo se loguea un warn y la petición sigue.
+function getClientIp(req) {
+  if (!req) return null;
+  const xff = req.headers && req.headers['x-forwarded-for'];
+  if (typeof xff === 'string' && xff.length) return xff.split(',')[0].trim().slice(0, 64);
+  return (req.ip || '').slice(0, 64) || null;
+}
+function auditLog(req, entry) {
+  if (!pool || !entry || !entry.action) return;
+  const ip = getClientIp(req);
+  const ua = ((req && req.headers && req.headers['user-agent']) || '').slice(0, 255) || null;
+  const userId = (entry.userId != null) ? entry.userId : (req && req.user && req.user.id) || null;
+  const actorRole = entry.actorRole || (req && req.user && req.user.role) || null;
+  let details = null;
+  if (entry.details && typeof entry.details === 'object') {
+    try { details = JSON.stringify(entry.details).slice(0, 4000); } catch (_) { details = null; }
+  }
+  pool.query(
+    `INSERT INTO audit_log (user_id, actor_role, action, entity_type, entity_id, status, ip, user_agent, details)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
+    [userId, actorRole, String(entry.action).slice(0, 60),
+     entry.entityType ? String(entry.entityType).slice(0, 30) : null,
+     entry.entityId != null ? String(entry.entityId).slice(0, 100) : null,
+     entry.status || 'ok', ip, ua, details]
+  ).catch(e => console.warn('[audit] write failed:', e.message));
 }
 
 // ═══ CLAN API ENDPOINTS ═══
@@ -538,6 +586,7 @@ app.post('/clans/register', rateLimit, async (req, res) => {
           m.active !== false, registeredBy || 'anon']);
     }
 
+    auditLog(req, { action: 'clan.register', entityType: 'clan', entityId: cleanTag, details: { name: cleanName, members: validMembers.length, platform: platform || 'psn', registeredBy: (registeredBy || 'anon').slice(0, 50) } });
     res.json({ ok: true, tag: cleanTag, members: validMembers.length, url: `/clan/${cleanTag}` });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
@@ -627,6 +676,7 @@ app.post('/clans/requests/:id/approve', requireAdmin, async (req, res) => {
     // Mark request as approved
     await pool.query("UPDATE member_requests SET status = 'approved', reviewed_at = NOW() WHERE id = $1", [requestId]);
     console.log(`[request] Approved: ${r.player_name} -> [${r.clan_tag}]`);
+    auditLog(req, { actorRole: 'admin', action: 'clan.member_request.approve', entityType: 'member_request', entityId: requestId, details: { clanTag: r.clan_tag, playerName: r.player_name } });
     res.json({ ok: true, playerName: r.player_name, clanTag: r.clan_tag });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
@@ -635,7 +685,9 @@ app.post('/clans/requests/:id/approve', requireAdmin, async (req, res) => {
 app.post('/clans/requests/:id/reject', requireAdmin, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   try {
-    await pool.query("UPDATE member_requests SET status = 'rejected', reviewed_at = NOW() WHERE id = $1", [parseInt(req.params.id)]);
+    const requestId = parseInt(req.params.id);
+    await pool.query("UPDATE member_requests SET status = 'rejected', reviewed_at = NOW() WHERE id = $1", [requestId]);
+    auditLog(req, { actorRole: 'admin', action: 'clan.member_request.reject', entityType: 'member_request', entityId: requestId });
     res.json({ ok: true });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
@@ -880,9 +932,11 @@ app.post('/clans/import-members', rateLimit, async (req, res) => {
   if (!clanId) return res.status(400).json({ error: 'clanId required (e.g. clan.bc03cc7f04a347ef81e48070f004283c)' });
   try {
     const result = await importClanByPubgId(clanId);
+    auditLog(req, { action: 'clan.import', entityType: 'clan', entityId: result?.tag || null, details: { clanId: String(clanId).slice(0, 100), members: result?.members || 0 } });
     res.json(result);
   } catch (e) {
     console.error('[import] Error:', e.message);
+    auditLog(req, { action: 'clan.import', status: 'fail', details: { clanId: String(clanId).slice(0, 100), error: e.message?.slice(0, 200) } });
     res.status(e.message.includes('not found') ? 404 : 500).json({ error: e.message || 'Error interno del servidor' });
   }
 });
@@ -1097,9 +1151,11 @@ app.post('/clans/discover-members', requireAdmin, async (req, res) => {
       total: members.length,
       totalIncludingRandoms: allTeammates.length
     });
+    auditLog(req, { actorRole: 'admin', action: 'clan.discover_members', entityType: 'player', entityId: String(gamertag).slice(0, 50), details: { platform: shard, matchesAnalyzed: matchesProcessed, found: members.length } });
 
   } catch (e) {
     console.error('[discover] Error:', e.message);
+    auditLog(req, { actorRole: 'admin', action: 'clan.discover_members', status: 'fail', entityId: String(gamertag).slice(0, 50), details: { platform: shard, error: e.message?.slice(0, 200) } });
     console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -1449,6 +1505,7 @@ app.post('/auth/register', rateLimit, async (req, res) => {
     const user = result.rows[0];
     const token = generateToken(user);
     setAuthCookie(res, token);
+    auditLog(req, { userId: user.id, action: 'auth.register', entityType: 'user', entityId: user.id, details: { method: 'password', hasGamertag: !!user.gamertag, platform: user.platform } });
     res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
@@ -1460,21 +1517,35 @@ app.post('/auth/login', rateLimit, async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'Email y contrasena son obligatorios' });
   try {
     const result = await pool.query('SELECT id, display_name, password_hash, gamertag, platform FROM users WHERE email = $1', [email.toLowerCase()]);
-    if (!result.rows.length) return res.status(401).json({ error: 'Email o contrasena incorrectos' });
+    if (!result.rows.length) {
+      auditLog(req, { action: 'auth.login', status: 'fail', details: { reason: 'unknown_email' } });
+      return res.status(401).json({ error: 'Email o contrasena incorrectos' });
+    }
     const user = result.rows[0];
-    if (!user.password_hash) return res.status(401).json({ error: 'Esta cuenta usa Discord para entrar' });
+    if (!user.password_hash) {
+      auditLog(req, { userId: user.id, action: 'auth.login', status: 'fail', entityType: 'user', entityId: user.id, details: { reason: 'discord_only' } });
+      return res.status(401).json({ error: 'Esta cuenta usa Discord para entrar' });
+    }
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.status(401).json({ error: 'Email o contrasena incorrectos' });
+    if (!valid) {
+      auditLog(req, { userId: user.id, action: 'auth.login', status: 'fail', entityType: 'user', entityId: user.id, details: { reason: 'bad_password' } });
+      return res.status(401).json({ error: 'Email o contrasena incorrectos' });
+    }
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     const token = generateToken(user);
     setAuthCookie(res, token);
+    auditLog(req, { userId: user.id, action: 'auth.login', entityType: 'user', entityId: user.id, details: { method: 'password' } });
     res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
 // POST /auth/logout — Clear cookie
 app.post('/auth/logout', (req, res) => {
+  const token = getTokenFromRequest(req);
+  let userId = null;
+  if (token) { try { userId = jwt.verify(token, JWT_SECRET).id || null; } catch (_) {} }
   clearAuthCookie(res);
+  auditLog(req, { userId, action: 'auth.logout' });
   res.json({ ok: true });
 });
 
@@ -1504,6 +1575,7 @@ app.get('/auth/discord/callback', async (req, res) => {
   const cookies = parseCookies(req);
   if (!state || !cookies.oauth_state || state !== cookies.oauth_state) {
     console.warn('Discord OAuth state mismatch — possible CSRF attempt');
+    auditLog(req, { action: 'auth.discord_callback', status: 'fail', details: { reason: 'invalid_state' } });
     return res.redirect('/#auth_error=invalid_state');
   }
   // Clear the state cookie
@@ -1531,6 +1603,7 @@ app.get('/auth/discord/callback', async (req, res) => {
 
     // Upsert user in DB
     let user;
+    let isNewUser = false;
     const existing = await pool.query('SELECT id, display_name, gamertag, platform FROM users WHERE discord_id = $1', [discordUser.id]);
     if (existing.rows.length) {
       user = existing.rows[0];
@@ -1544,13 +1617,16 @@ app.get('/auth/discord/callback', async (req, res) => {
          discordUser.email || null]
       );
       user = result.rows[0];
+      isNewUser = true;
     }
     const jwtToken = generateToken(user);
     // Set HttpOnly cookie (primary) + URL token (for frontend state init)
     setAuthCookie(res, jwtToken);
+    auditLog(req, { userId: user.id, action: isNewUser ? 'auth.register' : 'auth.login', entityType: 'user', entityId: user.id, details: { method: 'discord', discordId: discordUser.id } });
     res.redirect('/#auth_token=' + jwtToken);
   } catch (e) {
     console.error('Discord OAuth error:', e.message);
+    auditLog(req, { action: 'auth.discord_callback', status: 'fail', details: { reason: 'server_error', error: e.message?.slice(0, 200) } });
     res.redirect('/#auth_error=server_error');
   }
 });
@@ -1577,6 +1653,7 @@ app.put('/auth/profile', requireAuth, async (req, res) => {
         [!!newsOptIn, req.user.id]
       );
       if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
+      auditLog(req, { action: 'auth.profile_update', entityType: 'user', entityId: req.user.id, details: { fields: ['news_opt_in'], newsOptIn: !!newsOptIn } });
       return res.json({ user: result.rows[0] });
     }
     const cleanGT = (gamertag || '').trim().slice(0, 50);
@@ -1586,6 +1663,7 @@ app.put('/auth/profile', requireAuth, async (req, res) => {
       [cleanGT || null, cleanPlat, req.user.id]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
+    auditLog(req, { action: 'auth.profile_update', entityType: 'user', entityId: req.user.id, details: { fields: ['gamertag', 'platform'], platform: cleanPlat, hasGamertag: !!cleanGT } });
     res.json({ user: result.rows[0] });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
@@ -3805,10 +3883,44 @@ app.post('/auth/admin', rateLimit, (req, res) => {
   if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
     const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '4h' });
     console.log('[admin] Login exitoso desde', req.ip);
+    auditLog(req, { action: 'admin.login', actorRole: 'admin' });
     res.json({ ok: true, token });
   } else {
     console.warn('[admin] Intento fallido desde', req.ip);
+    auditLog(req, { action: 'admin.login', status: 'fail' });
     res.status(401).json({ error: 'Contraseña incorrecta' });
+  }
+});
+
+// ═══ AUDIT LOG (admin only) — paginated, filterable ═══
+app.get('/admin/audit-log', requireAdmin, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
+  const limit  = Math.min(parseInt(req.query.limit) || 100, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+  const where = [];
+  const params = [];
+  if (req.query.action)     { params.push(String(req.query.action).slice(0, 60));    where.push(`action = $${params.length}`); }
+  if (req.query.status)     { params.push(String(req.query.status).slice(0, 16));    where.push(`status = $${params.length}`); }
+  if (req.query.userId)     { params.push(parseInt(req.query.userId));                where.push(`user_id = $${params.length}`); }
+  if (req.query.entityType) { params.push(String(req.query.entityType).slice(0, 30)); where.push(`entity_type = $${params.length}`); }
+  if (req.query.entityId)   { params.push(String(req.query.entityId).slice(0, 100));  where.push(`entity_id = $${params.length}`); }
+  if (req.query.ip)         { params.push(String(req.query.ip).slice(0, 64));         where.push(`ip = $${params.length}`); }
+  if (req.query.since)      { params.push(new Date(req.query.since));                 where.push(`created_at >= $${params.length}`); }
+  const whereSQL = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  try {
+    const sqlRows = `SELECT id, user_id, actor_role, action, entity_type, entity_id, status, ip, user_agent, details, created_at
+                     FROM audit_log ${whereSQL}
+                     ORDER BY id DESC
+                     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    const sqlCount = `SELECT COUNT(*)::int AS total FROM audit_log ${whereSQL}`;
+    const [rowsRes, countRes] = await Promise.all([
+      pool.query(sqlRows, [...params, limit, offset]),
+      pool.query(sqlCount, params)
+    ]);
+    res.json({ total: countRes.rows[0].total, limit, offset, entries: rowsRes.rows });
+  } catch (e) {
+    console.error('[audit] read failed:', e.message);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
