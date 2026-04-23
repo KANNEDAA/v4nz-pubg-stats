@@ -3601,6 +3601,43 @@ body.pv2-self .pv2-only-other{display:none!important}
 .pv2-acc.open .pv2-acc-body{max-height:6000px;padding:8px 18px 18px;border-top:1px solid var(--border,#2a3350)}
 .pv2-acc-host{min-height:40px}
 /* player-v2-css-v1 END */
+
+/* ══════════════════════════════════════════════════════════════════════
+   PLAYER V2 POLISH (player-v2-polish-1) — cierre visual
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* 1. Ocultar searchHero viejo cuando la ficha v2 está activa — el hero v2
+      ya pone nombre + saludo, no necesitamos el buscador monstruoso arriba. */
+body.pv2-active #searchHero{display:none!important}
+
+/* 2. CTA principal del hero con acento amarillo (primer botón, "Stats Card") */
+body.pv2-active .pv2-hero-ctas .pv2-cta:first-child{
+  background:linear-gradient(135deg,var(--accent,#f5d547),var(--accent-orange,#ff9f43));
+  color:#000;border:0;font-weight:700;
+}
+body.pv2-active .pv2-hero-ctas .pv2-cta:first-child:hover{filter:brightness(1.08)}
+
+/* 3. Cuando el grid de stats tiene el banner "temporada vacía", no ensuciar
+      con título y chips de modo que no sirven de nada */
+body.pv2-active #pv2StatGrid:has([data-pv2-empty]) ~ *{/* reservado si añadimos indicador futuro */}
+body.pv2-active #pv2StatGrid[data-state="empty"] + .pv2-mode-chips,
+body.pv2-active #pv2StatGrid[data-state="empty"] ~ .pv2-stat-footlinks{display:none}
+body.pv2-active #pv2StatsSection:has(#pv2StatGrid[data-state="empty"]) .pv2-mode-chips{display:none}
+
+/* 4. Mobile — hero más compacto, stats en 1 col, radar más pequeño */
+@media (max-width: 600px){
+  body.pv2-active .pv2-wrap{padding:0 12px}
+  body.pv2-active .pv2-hero{padding:14px 0 20px}
+  body.pv2-active .pv2-avatar{width:52px;height:52px;font-size:22px}
+  body.pv2-active .pv2-ident h1{font-size:22px}
+  body.pv2-active .pv2-lm-stats{grid-template-columns:repeat(2,1fr);gap:8px}
+  body.pv2-active .pv2-lm-stat .v{font-size:18px}
+  body.pv2-active .pv2-section{padding:20px 0}
+  body.pv2-active .pv2-sectitle{font-size:12px}
+  body.pv2-active .pv2-sc-value{font-size:22px}
+  body.pv2-active .pv2-stat-card{padding:12px 10px}
+}
+/* player-v2-polish-1 END */
 </style>
 </head>
 <body>
@@ -12808,7 +12845,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-live) — ACTIVADO por defecto. Desactivar con ?pv2=0.
+// PLAYER-V2-JS START (player-v2-polish) — radar ampliado + hero last-match real + data-state banner
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   // player-v2-live: ACTIVO por defecto. El user puede desactivar con ?pv2=0
@@ -12989,8 +13026,10 @@ switchTab=function(t){
       };
     }
 
-    // ── Última partida ──
+    // ── Última partida (retry cuando currentMatchData termine de llegar) ──
     _pv2LoadLastMatch(name, plat);
+    setTimeout(_pv2RefreshLastMatch, 1200);
+    setTimeout(_pv2RefreshLastMatch, 3000);
 
     // ── Stats principales (con retry si aún no hay datos) ──
     _pv2LoadStats(pd);
@@ -13086,8 +13125,9 @@ switchTab=function(t){
     };
     var role = roleMap[maxAxis.k] || { name: 'JUGADOR', col: '#00f0ff' };
 
-    // Calcular puntos SVG del pentágono de datos (centro 100,110 radio 80)
-    var cx = 100, cy = 110, r = 80;
+    // Calcular puntos SVG del pentágono de datos (viewBox 240×260, centro 120,130 radio 78)
+    // viewBox ampliado vs v3b para que los labels (ej. "Precisión 91") no se corten en los bordes
+    var cx = 120, cy = 130, r = 78;
     var pts = axes.map(function(a, i){
       var v = Math.min(100, Math.max(0, scores[a.k] || 0));
       var ang = -Math.PI/2 + (i * 2*Math.PI / 5);
@@ -13106,12 +13146,15 @@ switchTab=function(t){
       return (cx + Math.cos(ang) * r * 0.5).toFixed(1) + ',' + (cy + Math.sin(ang) * r * 0.5).toFixed(1);
     }).join(' ');
 
-    // Labels en las 5 esquinas
+    // Labels en las 5 esquinas — usar text-anchor dinámico según cuadrante para evitar corte
     var labels = axes.map(function(a, i){
       var ang = -Math.PI/2 + (i * 2*Math.PI / 5);
-      var lx = cx + Math.cos(ang) * (r + 18);
-      var ly = cy + Math.sin(ang) * (r + 18) + 3;
-      return '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" fill="#8892b0" font-size="9" text-anchor="middle">' + a.lbl + ' ' + Math.round(scores[a.k] || 0) + '</text>';
+      var lx = cx + Math.cos(ang) * (r + 22);
+      var ly = cy + Math.sin(ang) * (r + 22) + 3;
+      var anchor = 'middle';
+      if(Math.cos(ang) > 0.3) anchor = 'start';
+      else if(Math.cos(ang) < -0.3) anchor = 'end';
+      return '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" fill="#8892b0" font-size="10" text-anchor="' + anchor + '">' + a.lbl + ' ' + Math.round(scores[a.k] || 0) + '</text>';
     }).join('');
 
     // Bot Index contextual
@@ -13141,7 +13184,7 @@ switchTab=function(t){
 
     grid.innerHTML =
       '<div class="pv2-adn-card">' +
-        '<svg viewBox="0 0 200 220" style="width:100%;max-width:280px;margin:0 auto;display:block;">' +
+        '<svg viewBox="0 0 240 260" style="width:100%;max-width:300px;margin:0 auto;display:block;">' +
           '<polygon points="' + refOuter + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
           '<polygon points="' + refInner + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
           '<polygon points="' + ptsStr + '" fill="rgba(245,213,71,.15)" stroke="' + role.col + '" stroke-width="2"/>' +
@@ -13157,29 +13200,87 @@ switchTab=function(t){
       (botHtml || '<div class="pv2-adn-card" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:12px;padding:24px;text-align:center;">Bot Index se calcula tras 3+ partidas analizadas</div>');
   }
 
-  // ── 5. Última partida desde snapshots cache o PUBG API ─────────────
+  // ── 5. Última partida — primero intenta partida real de currentMatchData[0],
+  //      si aún no está cargada, muestra snapshot agregado como fallback ──
   function _pv2LoadLastMatch(name, plat){
     var box = document.getElementById('pv2LastMatch');
     if(!box) return;
+
+    // Intentar con partida real si currentMatchData ya está cargada
+    function _tryRealMatch(){
+      if(typeof currentMatchData === 'undefined' || !Array.isArray(currentMatchData) || !currentMatchData.length) return false;
+      var m = currentMatchData[0];
+      if(!m || !m.data) return false;
+      var attr = m.data.attributes || {};
+      var included = m.included || [];
+      var partPlayer = included.find(function(i){ return i.type === 'participant' && i.attributes && i.attributes.stats && i.attributes.stats.name && i.attributes.stats.name.toLowerCase() === name.toLowerCase(); });
+      if(!partPlayer) return false;
+      var ps = partPlayer.attributes.stats || {};
+      var placement = ps.winPlace || 99;
+      var mapName = attr.mapName || 'Mapa';
+      // Traducción map names cortas
+      var mapMap = { Erangel_Main:'Erangel', Baltic_Main:'Erangel', Desert_Main:'Miramar', DihorOtok_Main:'Vikendi', Savage_Main:'Sanhok', Summerland_Main:'Karakin', Range_Main:'Camp Jackal', Chimera_Main:'Paramo', Heaven_Main:'Haven', Tiger_Main:'Taego', Kiki_Main:'Deston', Neon_Main:'Rondo' };
+      if(mapMap[mapName]) mapName = mapMap[mapName];
+      var gameMode = (attr.gameMode || '').replace(/-/g, ' ').toUpperCase();
+      var createdAt = attr.createdAt ? new Date(attr.createdAt).getTime() : 0;
+      var survMin = Math.floor((ps.timeSurvived || 0) / 60);
+      var survSec = (ps.timeSurvived || 0) % 60;
+
+      // Pill según resultado
+      var pillText, pillEmoji;
+      if(placement === 1){ pillEmoji = '\uD83C\uDFC6'; pillText = 'WWCD'; }
+      else if(placement <= 10){ pillEmoji = '\u2728'; pillText = 'Top ' + placement; }
+      else { pillEmoji = '\u2694\uFE0F'; pillText = '#' + placement; }
+
+      _pv2Text('pv2LmPill', pillEmoji + ' ' + pillText);
+      _pv2Text('pv2LmMap', mapName);
+      _pv2Text('pv2LmMode', gameMode || 'PUBG');
+      _pv2Text('pv2LmWhen', createdAt ? _pv2TimeAgo(createdAt) : '');
+      _pv2Text('pv2LmKills', ps.kills || 0);
+      _pv2Text('pv2LmDmg', Math.round(ps.damageDealt || 0));
+      _pv2Text('pv2LmPos', '#' + placement);
+      _pv2Text('pv2LmTime', survMin + ':' + String(survSec).padStart(2, '0'));
+      box.style.display = '';
+
+      // Enlace al detalle de la partida
+      var detailLink = document.getElementById('pv2LmDetail');
+      if(detailLink && m.data.id){
+        detailLink.onclick = function(ev){
+          ev.preventDefault();
+          try {
+            if(typeof showMatchDetail === 'function'){
+              var idx = currentMatchData.findIndex(function(x){ return x.data && x.data.id === m.data.id; });
+              if(idx >= 0) showMatchDetail(idx);
+            }
+          } catch(e){}
+        };
+      }
+      return true;
+    }
+
+    if(_tryRealMatch()) return;
+
+    // Fallback — snapshot agregado
     var url = '/api/snapshots/' + plat + '/' + encodeURIComponent(name) + '?squad_mode=squad&game_mode=tpp';
     fetch(url, { credentials:'same-origin' })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data){
+        // Re-intentar match real (puede haber llegado mientras)
+        if(_tryRealMatch()) return;
         var snaps = (data && data.snapshots) || [];
         if(!snaps.length) return;
         var s = snaps[snaps.length - 1];
-        // Los snapshots no son partidas individuales — mostramos stats agregadas del último snapshot como "actualización reciente"
-        _pv2Text('pv2LmPill', '\u2728 \u00DAltima actualizaci\u00F3n');
-        _pv2Text('pv2LmMap', 'Temporada actual');
+        _pv2Text('pv2LmPill', '\u2728 Resumen de temporada');
+        _pv2Text('pv2LmMap', 'Agregado');
         _pv2Text('pv2LmMode', (s.squad_mode || 'squad') + ' ' + (s.game_mode || 'tpp').toUpperCase());
         _pv2Text('pv2LmWhen', s.created_at ? _pv2TimeAgo(new Date(s.created_at).getTime()) : '');
-        _pv2Text('pv2LmKills', s.kills || '?');
-        _pv2Text('pv2LmDmg', s.avg_damage ? Math.round(s.avg_damage) : '?');
+        _pv2Text('pv2LmKills', s.kills || 0);
+        _pv2Text('pv2LmDmg', s.avg_damage ? Math.round(s.avg_damage) : 0);
         _pv2Text('pv2LmPos', s.wins ? (s.wins + 'W') : '-');
         _pv2Text('pv2LmTime', s.rounds ? (s.rounds + 'p') : '-');
         box.style.display = '';
 
-        // Deltas si hay snapshots previos
+        // Deltas sólo con snapshots
         if(snaps.length >= 2){
           var prev = snaps[snaps.length - 2];
           var deltas = document.getElementById('pv2LmDeltas');
@@ -13198,6 +13299,16 @@ switchTab=function(t){
         }
       })
       .catch(function(){});
+  }
+
+  // Helper para re-pintar hero last-match cuando currentMatchData termine de cargar
+  function _pv2RefreshLastMatch(){
+    try {
+      var pd = (typeof currentPlayerData !== 'undefined') ? currentPlayerData : null;
+      if(pd && pd.attributes && pd.attributes.name){
+        _pv2LoadLastMatch(pd.attributes.name, (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn');
+      }
+    } catch(e){}
   }
 
   // ── Escape HTML mínimo ──
@@ -13324,13 +13435,15 @@ switchTab=function(t){
 
     // Si aún no hay datos suficientes en NINGÚN modo de la temporada, mostrar banner amable en vez de 0s.
     if(!s || !s.roundsPlayed || s.roundsPlayed < 3){
+      grid.setAttribute('data-state', 'empty');
       grid.innerHTML =
-        '<div style="grid-column:1/-1;background:var(--bg-secondary,#131829);border:1px dashed rgba(180,122,255,.3);border-radius:16px;padding:20px;text-align:center;">' +
+        '<div data-pv2-empty style="grid-column:1/-1;background:var(--bg-secondary,#131829);border:1px dashed rgba(180,122,255,.3);border-radius:16px;padding:20px;text-align:center;">' +
         '<div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Apenas hay partidas en esta temporada</div>' +
         '<div style="font-size:13px;color:var(--text-primary);margin-bottom:12px;">Prueba el <a href="#" onclick="if(typeof setSeasonType===\'function\')setSeasonType(\'lifetime\');return false;" style="color:var(--accent);font-weight:700;">modo Lifetime</a> para ver las stats agregadas de siempre.</div>' +
         '</div>';
       return;
     }
+    grid.removeAttribute('data-state');
 
     // Actualizar el título con el modo que realmente estamos mostrando
     try {
