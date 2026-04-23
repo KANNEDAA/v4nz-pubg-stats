@@ -12866,7 +12866,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-collapse) — hero última partida colapsable con toggle + localStorage persist
+// PLAYER-V2-JS START (player-v2-panels-visible) — forzar display:block en panels migrados (partidas/armas/ADN)
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   // player-v2-live: ACTIVO por defecto. El user puede desactivar con ?pv2=0
@@ -12942,6 +12942,8 @@ switchTab=function(t){
       if(typeof renderCharts === 'function') try { renderCharts(); } catch(e){}
       // Refrescar el W/L grid del wrapper v2 también
       if(typeof currentPlayerData !== 'undefined' && currentPlayerData) _pv2LoadStats(currentPlayerData);
+      _pv2EnsurePanelsVisible();
+      _pv2RefreshLastMatch();
     } catch(e){ console.error('pv2 lazy matches error:', e.message || e); }
     finally { _pv2MoreMatchesInflight = false; }
   }
@@ -12953,6 +12955,7 @@ switchTab=function(t){
     try {
       currentWeaponData = await apiGet(API_BASE + '/' + currentPlatform + '/players/' + currentPlayerData.id + '/weapon_mastery');
       if(typeof renderWeaponStats === 'function') try { renderWeaponStats(); } catch(e){}
+      _pv2EnsurePanelsVisible();
     } catch(e){ console.error('pv2 lazy weapons error:', e.message || e); }
     finally { _pv2WeaponsInflight = false; }
   }
@@ -12964,6 +12967,7 @@ switchTab=function(t){
     try {
       currentSurvivalData = await apiGet(API_BASE + '/' + currentPlatform + '/players/' + currentPlayerData.id + '/survival_mastery');
       if(typeof renderFunStats === 'function') try { renderFunStats(); } catch(e){}
+      _pv2EnsurePanelsVisible();
     } catch(e){ console.error('pv2 lazy survival error:', e.message || e); }
     finally { _pv2SurvivalInflight = false; }
   }
@@ -13068,6 +13072,10 @@ switchTab=function(t){
 
     // ── Mover paneles viejos a los acordeones ──
     _pv2MigratePanels();
+    // Re-ejecutar tras 1s y 3s: algunos renderXxx del flow viejo (renderWeaponStats, renderFunStats)
+    // se llaman ASINCRONAMENTE tras el fetch y pueden volver a aplicar display:none.
+    setTimeout(_pv2EnsurePanelsVisible, 1000);
+    setTimeout(_pv2EnsurePanelsVisible, 3000);
 
     // Mostrar las secciones
     _pv2Show('pv2AdnSection', true);
@@ -13573,7 +13581,7 @@ switchTab=function(t){
     }
   }
 
-  // ── 7. Mover paneles viejos a los acordeones (lazy: solo referenciados) ──
+  // ── 7. Mover paneles viejos a los acordeones + forzar display:block (ignorar el tab activo viejo) ──
   function _pv2MigratePanels(){
     var map = [
       ['panel-overview', 'pv2AccEvoHost'],
@@ -13584,16 +13592,30 @@ switchTab=function(t){
     map.forEach(function(pair){
       var src = document.getElementById(pair[0]);
       var dst = document.getElementById(pair[1]);
-      if(src && dst && !dst.contains(src)){
-        // Forzar visible al mover (los panel-* tienen display:none si no son el activo)
-        src.style.display = '';
-        dst.appendChild(src);
+      if(src && dst){
+        if(!dst.contains(src)) dst.appendChild(src);
+        // Forzar visible SIEMPRE — la ficha vieja los pone display:none si no eran el tab activo.
+        // Con acordeones ya no hay "tab activo", cada panel vive dentro de su acordeón.
+        src.style.display = 'block';
+        src.classList.add('visible');
       }
     });
 
     // Ocultar el contenedor de tabs viejas (ya no se usa con acordeones)
     var tc = document.getElementById('tabsContainer');
     if(tc) tc.style.display = 'none';
+    // También ocultar el seasonBar viejo si sigue visible — se accede vía acordeón Evolución
+    // (opcional, lo dejamos si el user lo usa) — no lo tocamos.
+  }
+
+  // Idempotente: asegurar display:block en todos los panels migrados, por si
+  // algún renderXxx del flow viejo los vuelve a poner display:none.
+  function _pv2EnsurePanelsVisible(){
+    ['panel-overview','panel-matches','panel-weapons','panel-funstats'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && el.style && el.style.display === 'none') el.style.display = 'block';
+      if(el) el.classList.add('visible');
+    });
   }
 
   // ── 8. Hook al finalizar searchPlayer() ────────────────────────────
