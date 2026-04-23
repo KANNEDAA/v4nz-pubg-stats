@@ -4641,8 +4641,13 @@ function profileLoadMyStats(){
 }
 function autoLoadMyStats(){
   if(!currentUser||!currentUser.gamertag)return;
-  // Solo auto-cargar si estamos en la home, no si ya hay una URL de stats/clan/section
+  // hv2-home-logged-fix — NO auto-cargar en la home anónima: el panel homeV2Logged
+  // tiene su propio _hv2LoadMyProfile() que pinta stats en "Mi perfil" sin ocultar
+  // el resto de la home (podios, Top500, EN VIVO, Bot Index, etc.). Antes autoLoadMyStats
+  // disparaba searchPlayer() al restaurar sesion, lo que llamaba hideHomepageContent()
+  // y nunca se veía el panel logueado nuevo.
   const p=location.pathname;
+  if(p==='/'||p==='')return;
   if(p.startsWith('/stats/')||p.startsWith('/clan/')||p==='/ranking'||p==='/top500'||p==='/compare'||p==='/comparar'||p==='/clans'||p==='/clanes')return;
   // Solo si no hay ya un jugador cargado
   if(document.getElementById('searchInput').value.trim())return;
