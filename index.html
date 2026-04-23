@@ -12871,7 +12871,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-panels-visible) — forzar display:block en panels migrados (partidas/armas/ADN)
+// PLAYER-V2-JS START (player-v2-home-sync) — ocultar wrapper v2 cuando estás en la home (panel logueado visible)
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   // player-v2-live: ACTIVO por defecto. El user puede desactivar con ?pv2=0
@@ -12889,6 +12889,42 @@ switchTab=function(t){
       return localStorage.getItem('v4nz_pv2_off') !== '1';
     } catch(e){ return true; }
   }
+
+  // ── 1b. Sincronizar visibilidad del wrapper v2 con la home ───────────
+  // Cuando #homepageContent está visible (estás en /), el wrapper v2 NO debe mostrarse
+  // aunque tenga datos del último jugador buscado. Si no, aparece debajo del panel
+  // logueado y genera un scroll infinito con info que no pediste.
+  (function _pv2HomeSync(){
+    function _sync(){
+      if(!_pv2Enabled()) return;
+      var wrap = document.getElementById('playerV2Wrap');
+      var hp = document.getElementById('homepageContent');
+      if(!wrap || !hp) return;
+      var hpVisible = window.getComputedStyle(hp).display !== 'none';
+      if(hpVisible){
+        // Estamos en la home → ocultar wrapper v2 (panel logueado se encarga)
+        wrap.style.display = 'none';
+      }
+      // Si hp está oculto, searchPlayer() activará el wrapper vía _pv2Init
+    }
+    // Intento inicial + reintentos tras cargas asíncronas
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', _sync);
+    } else {
+      _sync();
+    }
+    setTimeout(_sync, 500);
+    setTimeout(_sync, 2000);
+    // Observer sobre style/class de #homepageContent (cuando la SPA navega)
+    try {
+      var hp = document.getElementById('homepageContent');
+      if(hp){
+        new MutationObserver(_sync).observe(hp, { attributes:true, attributeFilter:['style','class','hidden'] });
+      }
+    } catch(e){}
+    // Hook popstate (router SPA)
+    window.addEventListener('popstate', function(){ setTimeout(_sync, 80); });
+  })();
 
   // ── 2. Listeners (acordeones + chips) ──────────────────────────────
   document.addEventListener('click', function(ev){
