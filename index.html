@@ -12801,7 +12801,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-js-v3a) — + retry stats/rank/clan para vencer race de searchPlayer
+// PLAYER-V2-JS START (player-v2-js-v3b) — fallback modo con más rounds + banner si temporada vacía
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   function _pv2Enabled(){
@@ -13135,14 +13135,46 @@ switchTab=function(t){
     if(!s || !s.roundsPlayed) return;
 
     // Preferir `getActiveStats()` que ya respeta temporada/modo/tipo activo del resto del app.
-    // Si _pv2LoadStats corre antes de que getActiveStats tenga datos, abortar para evitar pintar 0s
-    // (retry posterior rellenará cuando estén listos).
     if(typeof getActiveStats === 'function'){
       var actS = null;
       try { actS = getActiveStats(); } catch(e){}
       if(actS && actS.roundsPlayed) s = actS;
     }
-    if(!s || !s.roundsPlayed) return;
+
+    // Si el modo activo tiene pocas partidas, buscar el modo con más partidas en la misma temporada.
+    var modeUsedKey = modeKey;
+    if(!s || !s.roundsPlayed || s.roundsPlayed < 5){
+      var bestMode = null, bestRounds = (s && s.roundsPlayed) || 0;
+      Object.keys(sd || {}).forEach(function(k){
+        var m = sd[k];
+        if(m && m.roundsPlayed > bestRounds){
+          bestRounds = m.roundsPlayed; bestMode = { key: k, stats: m };
+        }
+      });
+      if(bestMode && bestRounds >= 5){
+        s = bestMode.stats;
+        modeUsedKey = bestMode.key;
+      }
+    }
+
+    // Si aún no hay datos suficientes en NINGÚN modo de la temporada, mostrar banner amable en vez de 0s.
+    if(!s || !s.roundsPlayed || s.roundsPlayed < 3){
+      grid.innerHTML =
+        '<div style="grid-column:1/-1;background:var(--bg-secondary,#131829);border:1px dashed rgba(180,122,255,.3);border-radius:16px;padding:20px;text-align:center;">' +
+        '<div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Apenas hay partidas en esta temporada</div>' +
+        '<div style="font-size:13px;color:var(--text-primary);margin-bottom:12px;">Prueba el <a href="#" onclick="if(typeof setSeasonType===\'function\')setSeasonType(\'lifetime\');return false;" style="color:var(--accent);font-weight:700;">modo Lifetime</a> para ver las stats agregadas de siempre.</div>' +
+        '</div>';
+      return;
+    }
+
+    // Actualizar el título con el modo que realmente estamos mostrando
+    try {
+      var titleEl = document.getElementById('pv2StatsTitle');
+      if(titleEl){
+        var modeLabel = modeUsedKey.replace('-fpp',' FPP').replace('squad','Squad').replace('duo','Duo').replace('solo','Solo');
+        titleEl.innerHTML = '&#x1F4CA; STATS \u00B7 ' + modeLabel.toUpperCase();
+      }
+    } catch(e){}
 
     var kd = (typeof calcKD === 'function') ? parseFloat(calcKD(s)) : (s.kills / Math.max(1, s.roundsPlayed - s.wins));
     var wr = (typeof calcWinRate === 'function') ? parseFloat(calcWinRate(s)) : (s.roundsPlayed ? s.wins / s.roundsPlayed * 100 : 0);
