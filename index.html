@@ -13020,20 +13020,39 @@ switchTab=function(t){
     if(miniSearch) miniSearch.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); go(); } });
   })();
 
+  // hv2-cta-owner-fix — helper que prioriza el user logueado sobre recent_searches,
+  // y dispara searchPlayer rellenando el input (searchPlayer lee del DOM, ignora args).
+  function _hv2GetOwner(){
+    try {
+      if(typeof currentUser !== 'undefined' && currentUser && currentUser.gamertag){
+        return { name: currentUser.gamertag, platform: currentUser.platform || 'psn' };
+      }
+    } catch(e){}
+    return _hv2GetLastPlayer();
+  }
+  function _hv2FireSearch(target){
+    if(!target) return false;
+    var plat = _hv2Platform2Shard(target.platform);
+    try { if(typeof setPlatform === 'function') setPlatform(plat); } catch(e){}
+    var si = document.getElementById('searchInput');
+    if(si) si.value = target.name;
+    if(typeof searchPlayer === 'function'){ searchPlayer(); return true; }
+    location.href = '/stats/' + plat + '/' + encodeURIComponent(target.name);
+    return true;
+  }
+
   // Card "Mi perfil" CTA
   (function(){
     var cta = document.getElementById('hv2lMpCta');
     if(!cta) return;
     cta.addEventListener('click', function(){
-      var last = _hv2GetLastPlayer();
-      if(!last){
+      var target = _hv2GetOwner();
+      if(!target){
         var input = document.getElementById('hv2lMiniSearch');
         if(input) input.focus();
         return;
       }
-      try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
-      if(typeof searchPlayer === 'function') searchPlayer(last.name);
-      else location.href = '/stats/' + _hv2Platform2Shard(last.platform) + '/' + encodeURIComponent(last.name);
+      _hv2FireSearch(target);
     });
   })();
 
@@ -13042,14 +13061,13 @@ switchTab=function(t){
     var btn = document.getElementById('hv2lDeepBtn');
     if(!btn) return;
     btn.addEventListener('click', function(){
-      var last = _hv2GetLastPlayer();
-      if(!last){
+      var target = _hv2GetOwner();
+      if(!target){
         if(typeof openAuthPopup === 'function'){ openAuthPopup(); }
         alert('Primero b\u00fascate a ti mismo. El an\u00e1lisis IA usa los datos de tu perfil.');
         return;
       }
-      try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
-      if(typeof searchPlayer === 'function') searchPlayer(last.name);
+      _hv2FireSearch(target);
       // Dar tiempo al perfil a cargar, abrir popup y disparar Deep Analysis
       setTimeout(function(){
         try { if(typeof openAuthPopup === 'function') openAuthPopup(); } catch(e){}
@@ -13061,14 +13079,14 @@ switchTab=function(t){
   // Quick tools
   (function(){
     function _withProfile(thenFn, msg){
-      var last = _hv2GetLastPlayer();
-      if(!last){ alert(msg || 'B\u00fascate primero en la barra de arriba para usar esta acci\u00f3n.'); return; }
-      try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
-      if(typeof currentPlayerData !== 'undefined' && currentPlayerData && currentPlayerData.name && currentPlayerData.name.toLowerCase() === last.name.toLowerCase()){
+      var target = _hv2GetOwner();
+      if(!target){ alert(msg || 'B\u00fascate primero en la barra de arriba para usar esta acci\u00f3n.'); return; }
+      if(typeof currentPlayerData !== 'undefined' && currentPlayerData && currentPlayerData.name && currentPlayerData.name.toLowerCase() === target.name.toLowerCase()){
+        try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(target.platform)); } catch(e){}
         setTimeout(thenFn, 150);
         return;
       }
-      if(typeof searchPlayer === 'function') searchPlayer(last.name);
+      _hv2FireSearch(target);
       setTimeout(thenFn, 1400);
     }
     var bW = document.getElementById('hv2lToolWrapped');
@@ -13077,10 +13095,9 @@ switchTab=function(t){
     if(bS) bS.addEventListener('click', function(){ _withProfile(function(){ try { if(typeof generateStatsCard === 'function') generateStatsCard(); } catch(e){} }); });
     var bC = document.getElementById('hv2lToolCompare');
     if(bC) bC.addEventListener('click', function(){
-      var last = _hv2GetLastPlayer();
-      if(last){
-        try { if(typeof setPlatform === 'function') setPlatform(_hv2Platform2Shard(last.platform)); } catch(e){}
-        if(typeof searchPlayer === 'function') searchPlayer(last.name);
+      var target = _hv2GetOwner();
+      if(target){
+        _hv2FireSearch(target);
         setTimeout(function(){ try { if(typeof _goCompareWithMe === 'function') _goCompareWithMe(); else if(typeof switchTab === 'function') switchTab('compare'); } catch(e){} }, 1200);
       } else {
         try { if(typeof switchTab === 'function') switchTab('compare'); } catch(e){}
