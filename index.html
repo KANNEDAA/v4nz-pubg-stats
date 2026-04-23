@@ -12808,21 +12808,23 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-js-v5) — Lazy load real (matches/weapons/survival bajo demanda)
+// PLAYER-V2-JS START (player-v2-live) — ACTIVADO por defecto. Desactivar con ?pv2=0.
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
+  // player-v2-live: ACTIVO por defecto. El user puede desactivar con ?pv2=0
+  // (persiste en localStorage hasta que se ponga ?pv2=1).
   function _pv2Enabled(){
     try {
       if(/(?:^|[?&])pv2=(1|true|on)\b/i.test(location.search)) {
-        try { localStorage.setItem('v4nz_pv2','1'); } catch(e){}
+        try { localStorage.removeItem('v4nz_pv2_off'); } catch(e){}
         return true;
       }
       if(/(?:^|[?&])pv2=(0|false|off)\b/i.test(location.search)) {
-        try { localStorage.removeItem('v4nz_pv2'); } catch(e){}
+        try { localStorage.setItem('v4nz_pv2_off','1'); } catch(e){}
         return false;
       }
-      return localStorage.getItem('v4nz_pv2') === '1';
-    } catch(e){ return false; }
+      return localStorage.getItem('v4nz_pv2_off') !== '1';
+    } catch(e){ return true; }
   }
 
   // ── 2. Listeners (acordeones + chips) ──────────────────────────────
