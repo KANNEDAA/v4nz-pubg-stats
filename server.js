@@ -104,6 +104,24 @@ app.use((req, res, next) => {
   next();
 });
 
+// ═══ INPUT VALIDATION ═══
+// PUBG player names: ASCII letters/digits/underscore/hyphen/dot (covers "account.xxx" IDs).
+// Keeps XSS, log-injection, URL-smuggling and control chars out of downstream PUBG API / DB / logs.
+const PUBG_NAME_RE = /^[A-Za-z0-9_.\-]{1,50}$/;
+function validPubgName(raw) {
+  if (typeof raw !== 'string') return null;
+  const clean = raw.trim();
+  if (!PUBG_NAME_RE.test(clean)) return null;
+  return clean;
+}
+// Clan tags: uppercase alphanumeric + underscore, 1-20 chars.
+const CLAN_TAG_RE = /^[A-Z0-9_]{1,20}$/;
+function validClanTag(raw) {
+  if (typeof raw !== 'string') return null;
+  const clean = raw.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
+  return CLAN_TAG_RE.test(clean) ? clean : null;
+}
+
 // ═══ COOKIE HELPER ═══
 function parseCookies(req) {
   const cookies = {};
@@ -562,8 +580,10 @@ app.post('/clans/request-member', rateLimit, async (req, res) => {
   try {
     const { clanTag, playerName, requestedBy } = req.body;
     if (!clanTag || !playerName) return res.status(400).json({ error: 'clanTag and playerName required' });
-    const cleanTag = clanTag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
-    const cleanName = playerName.trim().slice(0, 50);
+    const cleanTag = validClanTag(clanTag);
+    const cleanName = validPubgName(playerName);
+    if (!cleanTag) return res.status(400).json({ error: 'clanTag invalido' });
+    if (!cleanName) return res.status(400).json({ error: 'playerName invalido' });
     // Check if player already exists in clan
     const existing = await pool.query('SELECT id FROM clan_members WHERE clan_tag = $1 AND player_name = $2', [cleanTag, cleanName]);
     if (existing.rows.length) return res.json({ ok: true, message: 'Este jugador ya esta en el clan', autoAdded: false });
@@ -1443,13 +1463,30 @@ function generateToken(user) {
   return jwt.sign({ id: user.id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '7d' });
 }
 
+// Password policy: >=10 chars, must include letter + digit. Rejects top-N trivial
+// passwords. Catches low-effort passwords; bcrypt handles the rest.
+const WEAK_PASSWORDS = new Set([
+  'password','password1','12345678','123456789','1234567890','qwerty123',
+  'qwertyuiop','abc12345','letmein1','iloveyou1','passw0rd','1q2w3e4r5t',
+  'welcome1','admin1234','password!','qwerty1234'
+]);
+function validatePassword(pw) {
+  if (typeof pw !== 'string') return 'La contrasena es obligatoria';
+  if (pw.length < 10) return 'La contrasena debe tener al menos 10 caracteres';
+  if (pw.length > 200) return 'La contrasena es demasiado larga';
+  if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return 'La contrasena debe incluir letras y numeros';
+  if (WEAK_PASSWORDS.has(pw.toLowerCase())) return 'Esta contrasena es demasiado comun';
+  return null;
+}
+
 // POST /auth/register — Email + password registration
 app.post('/auth/register', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password, displayName, gamertag, platform, newsOptIn } = req.body;
   if (!email || !password || !displayName) return res.status(400).json({ error: 'Email, contrasena y nombre son obligatorios' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email no valido' });
-  if (password.length < 8) return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
+  const pwError = validatePassword(password);
+  if (pwError) return res.status(400).json({ error: pwError });
   try {
     const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
     if (exists.rows.length) return res.status(409).json({ error: 'Este email ya esta registrado' });
@@ -1800,7 +1837,9 @@ app.get('/api/leaderboard', async (req, res) => {
 app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
   const { platform, playerName } = req.params;
   const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
-  const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
+  const cleanName = validPubgName(playerName);
+  if (!cleanName) return res.status(400).json({ error: 'playerName invalido' });
+  const cacheKey = `bot_index_${shard}_${cleanName.toLowerCase()}`;
 
   // Check cache (6 hours) — skip stale entries with botKills=0 (old buggy data)
   if (pool) {
@@ -1825,13 +1864,13 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
 
   try {
     // 1. Get player + match IDs
-    const pRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(playerName)}`, { headers }, 12000);
+    const pRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(cleanName)}`, { headers }, 12000);
     const pData = await pRes.json();
     if (!pData.data || !pData.data[0]) return res.json({ error: 'player_not_found' });
 
     const playerId = pData.data[0].id;
     const matchIds = (pData.data[0].relationships?.matches?.data || []).slice(0, 5).map(m => m.id);
-    if (!matchIds.length) return res.json({ error: 'no_matches', playerName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
+    if (!matchIds.length) return res.json({ error: 'no_matches', playerName: cleanName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
 
     let totalKills = 0, botKills = 0, analyzed = 0;
 
@@ -1889,7 +1928,7 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
     }
 
     const result = {
-      playerName, platform: shard, totalKills, botKills,
+      playerName: cleanName, platform: shard, totalKills, botKills,
       humanKills: totalKills - botKills,
       botRatio: totalKills > 0 ? Math.round((botKills / totalKills) * 100) : 0,
       matchesAnalyzed: analyzed,
@@ -1980,8 +2019,11 @@ app.post('/api/snapshots', async (req, res) => {
 app.get('/api/snapshots/:platform/:player', async (req, res) => {
   if (!pool) return res.json({ snapshots: [] });
   const { platform, player } = req.params;
-  const squad_mode = req.query.squad_mode || 'squad';
-  const game_mode = req.query.game_mode || 'tpp';
+  const cleanPlayer = validPubgName(player);
+  if (!cleanPlayer) return res.status(400).json({ error: 'player invalido' });
+  const cleanPlat = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
+  const squad_mode = ['solo','duo','squad'].includes(req.query.squad_mode) ? req.query.squad_mode : 'squad';
+  const game_mode = ['tpp','fpp'].includes(req.query.game_mode) ? req.query.game_mode : 'tpp';
   try {
     const { rows } = await pool.query(
       `SELECT kd, win_rate, avg_damage, hs_rate, kills, wins, rounds, top10_rate, longest_kill, created_at
@@ -1989,7 +2031,7 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
        WHERE player_name = $1 AND platform = $2 AND squad_mode = $3 AND game_mode = $4
        ORDER BY created_at ASC
        LIMIT 12`,
-      [player, platform, squad_mode, game_mode]
+      [cleanPlayer, cleanPlat, squad_mode, game_mode]
     );
     res.json({ snapshots: rows });
   } catch (e) { console.error('Snapshot fetch error:', e.message); res.status(500).json({ error: 'Error fetching snapshots' }); }
@@ -2053,10 +2095,12 @@ app.get('/api/v4nz-leaderboard', async (req, res) => {
 });
 
 // ============ Clear AI DNA cache for a player (admin use) ============
-app.delete('/api/ai-dna-cache', async (req, res) => {
+app.delete('/api/ai-dna-cache', requireAdmin, async (req, res) => {
   const { playerName, platform } = req.query;
-  if (!playerName || !pool) return res.status(400).json({ error: 'Missing playerName' });
-  const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;
+  const cleanName = validPubgName(playerName);
+  if (!cleanName || !pool) return res.status(400).json({ error: 'playerName invalido' });
+  const cleanPlat = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
+  const cacheKey = `ai-dna:${cleanName.toLowerCase()}:${cleanPlat}`;
   try {
     const result = await pool.query('DELETE FROM api_cache WHERE cache_key = $1', [cacheKey]);
     res.json({ ok: true, deleted: result.rowCount });
@@ -2064,14 +2108,17 @@ app.delete('/api/ai-dna-cache', async (req, res) => {
 });
 
 // ============ AI DNA Analysis (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-dna', async (req, res) => {
+app.get('/api/ai-dna', rateLimit, async (req, res) => {
   try {
-    const { playerName, platform, stats: statsParam } = req.query;
+    const { playerName: pnRaw, platform: platRaw, stats: statsParam } = req.query;
+    const playerName = validPubgName(pnRaw);
+    if (!playerName) return res.status(400).json({ error: 'playerName invalido' });
+    const platform = ['psn','xbox','steam'].includes(platRaw) ? platRaw : 'psn';
     let stats;
     try { stats = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { stats = null; }
-    if (!playerName || !stats) return res.status(400).json({ error: 'Missing playerName or stats' });
+    if (!stats) return res.status(400).json({ error: 'Missing stats' });
 
-    const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform || 'psn'}`;
+    const cacheKey = `ai-dna:${playerName.toLowerCase()}:${platform}`;
 
     // Check cache
     try {
@@ -2153,7 +2200,7 @@ Fórmula: Si K/D > 3.5 Y ADR < 200 Y Longest Kill < 200m → MUY probable bot fa
 
     const userPrompt = `Analiza este jugador de PUBG consola:
 
-Nombre: ${playerName} (${platform || 'psn'})
+Nombre: ${playerName} (${platform})
 
 STATS PRINCIPALES:
 • K/D: ${stats.kd} | ADR (Daño medio/partida): ${stats.avgDamage}
@@ -2248,16 +2295,21 @@ Genera el análisis JSON:
 });
 
 // ============ AI Compare Players (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-compare-players', async (req, res) => {
+app.get('/api/ai-compare-players', rateLimit, async (req, res) => {
   try {
-    const { p1, p2, platform, mode, stats: statsParam } = req.query;
+    const { p1: p1Raw, p2: p2Raw, platform: platRaw, mode: modeRaw, stats: statsParam } = req.query;
+    const p1 = validPubgName(p1Raw);
+    const p2 = validPubgName(p2Raw);
+    if (!p1 || !p2) return res.status(400).json({ error: 'players invalidos' });
+    const platform = ['psn','xbox','steam'].includes(platRaw) ? platRaw : 'psn';
+    const mode = ['solo','duo','squad'].includes(modeRaw) ? modeRaw : 'squad';
     let payload;
     try { payload = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { payload = null; }
-    if (!p1 || !p2 || !payload || !payload.s1 || !payload.s2) return res.status(400).json({ error: 'Missing players or stats' });
+    if (!payload || !payload.s1 || !payload.s2) return res.status(400).json({ error: 'Missing stats' });
 
     // Normalise cache key: order players alphabetically so A-vs-B and B-vs-A share cache
     const [a, b] = [p1.toLowerCase(), p2.toLowerCase()].sort();
-    const cacheKey = `ai-compare:${a}:${b}:${platform || 'psn'}:${mode || 'squad'}`;
+    const cacheKey = `ai-compare:${a}:${b}:${platform}:${mode}`;
 
     // Check cache
     if (pool) {
@@ -2394,7 +2446,7 @@ Genera el análisis JSON:
 });
 
 // ============ AI Deep Analysis (Pro) — usuario logueado con historial (v154) ============
-app.get('/api/ai-deep-analysis', requireAuth, async (req, res) => {
+app.get('/api/ai-deep-analysis', requireAuth, rateLimit, async (req, res) => {
   try {
     if (!pool) return res.status(503).json({ error: 'DB not available' });
     const userId = req.user.id;
@@ -2608,14 +2660,17 @@ Genera el análisis JSON:
 });
 
 // ============ AI Compare Clans (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-compare-clans', async (req, res) => {
+app.get('/api/ai-compare-clans', rateLimit, async (req, res) => {
   try {
-    const { tag1, tag2, stats: statsParam } = req.query;
+    const { tag1: t1Raw, tag2: t2Raw, stats: statsParam } = req.query;
+    const tag1 = validClanTag(t1Raw);
+    const tag2 = validClanTag(t2Raw);
+    if (!tag1 || !tag2) return res.status(400).json({ error: 'tags invalidos' });
     let payload;
     try { payload = JSON.parse(decodeURIComponent(statsParam || '{}')); } catch(e) { payload = null; }
-    if (!tag1 || !tag2 || !payload || !payload.c1 || !payload.c2) return res.status(400).json({ error: 'Missing clans or stats' });
+    if (!payload || !payload.c1 || !payload.c2) return res.status(400).json({ error: 'Missing stats' });
 
-    const [a, b] = [tag1.toUpperCase(), tag2.toUpperCase()].sort();
+    const [a, b] = [tag1, tag2].sort();
     const cacheKey = `ai-compare-clans:${a}:${b}`;
 
     if (pool) {
@@ -3845,8 +3900,11 @@ async function svgToPng(svgStr) {
 // Player OG image — with real stats from PUBG API
 app.get('/og-image/stats/:platform/:player.png', async (req, res) => {
   try {
-    const platform = req.params.platform.toUpperCase();
-    const player = decodeURIComponent(req.params.player);
+    const platformRaw = (req.params.platform || '').toLowerCase();
+    if (!['psn','xbox','steam'].includes(platformRaw)) return res.status(400).send('platform invalido');
+    const platform = platformRaw.toUpperCase();
+    const player = validPubgName(decodeURIComponent(req.params.player));
+    if (!player) return res.status(400).send('player invalido');
     let stats = null;
 
     // Try to fetch real stats (cached via api_cache)
@@ -4014,7 +4072,8 @@ app.post('/players/track-name', async (req, res) => {
 app.get('/players/:name/aliases', async (req, res) => {
   if (!pool) return res.json({ aliases: [] });
   try {
-    const name = req.params.name;
+    const name = validPubgName(req.params.name);
+    if (!name) return res.status(400).json({ error: 'name invalido' });
     // Find account ID for this player
     const account = await pool.query('SELECT account_id FROM player_accounts WHERE LOWER(player_name) = LOWER($1)', [name]);
     if (!account.rows.length) return res.json({ aliases: [] });
