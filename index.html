@@ -12801,27 +12801,299 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-js-v1) — wrapper nuevo de la ficha, inactivo hasta body.pv2-active
+// PLAYER-V2-JS START (player-v2-js-v2) — preview activable con ?pv2=1 o localStorage v4nz_pv2
 (function(){
-  // Listener de acordeones (único JS que necesitamos por ahora; el resto
-  // llega cuando se active la feature flag en H-P.2+).
+  // ── 1. Feature flag detection ──────────────────────────────────────
+  function _pv2Enabled(){
+    try {
+      if(/(?:^|[?&])pv2=(1|true|on)\b/i.test(location.search)) {
+        try { localStorage.setItem('v4nz_pv2','1'); } catch(e){}
+        return true;
+      }
+      if(/(?:^|[?&])pv2=(0|false|off)\b/i.test(location.search)) {
+        try { localStorage.removeItem('v4nz_pv2'); } catch(e){}
+        return false;
+      }
+      return localStorage.getItem('v4nz_pv2') === '1';
+    } catch(e){ return false; }
+  }
+
+  // ── 2. Listeners (acordeones + chips) ──────────────────────────────
   document.addEventListener('click', function(ev){
     var head = ev.target.closest && ev.target.closest('.pv2-acc-head');
-    if(!head) return;
-    var acc = head.closest('.pv2-acc');
-    if(!acc) return;
-    acc.classList.toggle('open');
-    // TODO H-P.3: aquí disparar lazy load del panel correspondiente si no está poblado aún.
-  });
-  // Listener de chips Squad/Duo/Solo (demo visual; JS real llega en H-P.2).
-  document.addEventListener('click', function(ev){
+    if(head){
+      var acc = head.closest('.pv2-acc');
+      if(acc) acc.classList.toggle('open');
+      return;
+    }
     var btn = ev.target.closest && ev.target.closest('.pv2-mode-chips button');
-    if(!btn) return;
-    var parent = btn.parentElement;
-    if(!parent) return;
-    parent.querySelectorAll('button').forEach(function(x){ x.classList.remove('active'); });
-    btn.classList.add('active');
+    if(btn){
+      var parent = btn.parentElement;
+      if(parent) {
+        parent.querySelectorAll('button').forEach(function(x){ x.classList.remove('active'); });
+        btn.classList.add('active');
+      }
+      return;
+    }
   });
+
+  // ── 3. Helpers ─────────────────────────────────────────────────────
+  function _pv2Qs(sel){ return document.querySelector(sel); }
+  function _pv2Text(id, text){ var el = document.getElementById(id); if(el) el.textContent = text; }
+  function _pv2Show(id, show){ var el = document.getElementById(id); if(el) el.style.display = show ? '' : 'none'; }
+  function _pv2Initial(name){ return (name || '?').charAt(0).toUpperCase(); }
+  function _pv2Bench(val, tiers){
+    // tiers: [eliteMin, goodMin, normalMin] — por ejemplo [2.0, 1.5, 1.0] para K/D
+    if(val >= tiers[0]) return { cls: 'elite', label: 'ÉLITE' };
+    if(val >= tiers[1]) return { cls: 'good',  label: 'BUENO' };
+    if(val >= tiers[2]) return { cls: 'normal',label: 'NORMAL' };
+    return { cls: 'low', label: 'BAJO' };
+  }
+  function _pv2TimeAgo(ms){
+    if(!ms) return '';
+    var diff = Date.now() - ms;
+    var min = Math.floor(diff/60000);
+    if(min < 1) return 'hace segundos';
+    if(min < 60) return 'hace ' + min + ' min';
+    var h = Math.floor(min/60);
+    if(h < 24) return 'hace ' + h + 'h';
+    return 'hace ' + Math.floor(h/24) + 'd';
+  }
+
+  // ── 4. Init principal — se dispara tras searchPlayer() completar ───
+  function _pv2Init(){
+    if(!_pv2Enabled()) return;
+    document.body.classList.add('pv2-active');
+
+    var pd = (typeof currentPlayerData !== 'undefined') ? currentPlayerData : null;
+    if(!pd || !pd.attributes) return;
+
+    var name = pd.attributes.name || '?';
+    var plat = (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn';
+
+    // Self/other
+    var isSelf = false;
+    try {
+      if(typeof currentUser !== 'undefined' && currentUser && currentUser.gamertag){
+        isSelf = (currentUser.gamertag.toLowerCase() === name.toLowerCase());
+      }
+    } catch(e){}
+    document.body.classList.toggle('pv2-self', isSelf);
+
+    // Hero — avatar + nombre
+    _pv2Text('pv2Avatar', _pv2Initial(name));
+    _pv2Text('pv2NameSelf', name);
+    _pv2Text('pv2NameOther', name);
+
+    // Plataforma
+    var platEl = document.getElementById('pv2Plat');
+    if(platEl){
+      platEl.className = 'pv2-plat-badge ' + (plat === 'xbox' ? 'xbox' : '');
+      platEl.innerHTML = (plat === 'xbox' ? '&#x1F3AE; XBOX' : '&#x1F3AE; PLAYSTATION');
+    }
+
+    // Clan
+    var clanEl = document.getElementById('pv2Clan');
+    try {
+      var clanText = '';
+      var clanBadgeOld = document.getElementById('playerClanBadge');
+      if(clanBadgeOld && clanBadgeOld.textContent && clanBadgeOld.textContent.trim()){
+        clanText = clanBadgeOld.textContent.trim();
+      }
+      if(clanEl){
+        if(clanText){ clanEl.textContent = clanText; clanEl.style.display = ''; }
+        else { clanEl.style.display = 'none'; }
+      }
+    } catch(e){}
+
+    // Rank
+    try {
+      var rankOld = document.getElementById('rankBadge');
+      var rankText = rankOld ? rankOld.textContent.trim().replace(/\s+/g,' ').slice(0, 40) : '';
+      _pv2Text('pv2Rank', rankText ? ('\u2B50 ' + rankText) : '\u2B50 Sin rango');
+    } catch(e){}
+
+    // Eyebrow: API actualizada (placeholder hora actual)
+    _pv2Text('pv2Eyebrow', 'PUBG OFFICIAL API \u00B7 actualizado ahora mismo');
+
+    // Fav button (other only)
+    var favBtn = document.getElementById('pv2FavBtn');
+    if(favBtn){
+      favBtn.onclick = function(){
+        try {
+          if(typeof toggleFavorite === 'function'){ toggleFavorite(name, plat); }
+          else if(typeof toggleFavoriteFromHeader === 'function'){ toggleFavoriteFromHeader(); }
+        } catch(e){}
+      };
+    }
+
+    // ── Última partida ──
+    _pv2LoadLastMatch(name, plat);
+
+    // ── Stats principales ──
+    _pv2LoadStats(pd);
+
+    // ── Mover paneles viejos a los acordeones ──
+    _pv2MigratePanels();
+
+    // Mostrar las secciones
+    _pv2Show('pv2AdnSection', true);
+    _pv2Show('pv2StatsSection', true);
+    _pv2Show('pv2AccordionsSection', true);
+    if(isSelf) _pv2Show('pv2NextStepSection', true);
+  }
+
+  // ── 5. Última partida desde snapshots cache o PUBG API ─────────────
+  function _pv2LoadLastMatch(name, plat){
+    var box = document.getElementById('pv2LastMatch');
+    if(!box) return;
+    var url = '/api/snapshots/' + plat + '/' + encodeURIComponent(name) + '?squad_mode=squad&game_mode=tpp';
+    fetch(url, { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        var snaps = (data && data.snapshots) || [];
+        if(!snaps.length) return;
+        var s = snaps[snaps.length - 1];
+        // Los snapshots no son partidas individuales — mostramos stats agregadas del último snapshot como "actualización reciente"
+        _pv2Text('pv2LmPill', '\u2728 \u00DAltima actualizaci\u00F3n');
+        _pv2Text('pv2LmMap', 'Temporada actual');
+        _pv2Text('pv2LmMode', (s.squad_mode || 'squad') + ' ' + (s.game_mode || 'tpp').toUpperCase());
+        _pv2Text('pv2LmWhen', s.created_at ? _pv2TimeAgo(new Date(s.created_at).getTime()) : '');
+        _pv2Text('pv2LmKills', s.kills || '?');
+        _pv2Text('pv2LmDmg', s.avg_damage ? Math.round(s.avg_damage) : '?');
+        _pv2Text('pv2LmPos', s.wins ? (s.wins + 'W') : '-');
+        _pv2Text('pv2LmTime', s.rounds ? (s.rounds + 'p') : '-');
+        box.style.display = '';
+
+        // Deltas si hay snapshots previos
+        if(snaps.length >= 2){
+          var prev = snaps[snaps.length - 2];
+          var deltas = document.getElementById('pv2LmDeltas');
+          if(deltas){
+            var diffs = [];
+            var kdDiff = (Number(s.kd||0) - Number(prev.kd||0));
+            if(Math.abs(kdDiff) >= 0.05) diffs.push(['K/D', kdDiff.toFixed(2), kdDiff > 0]);
+            var wrDiff = (Number(s.win_rate||0) - Number(prev.win_rate||0));
+            if(Math.abs(wrDiff) >= 0.5) diffs.push(['WR%', wrDiff.toFixed(1), wrDiff > 0]);
+            var hsDiff = (Number(s.hs_rate||0) - Number(prev.hs_rate||0));
+            if(Math.abs(hsDiff) >= 0.5) diffs.push(['HS%', hsDiff.toFixed(1), hsDiff > 0]);
+            deltas.innerHTML = diffs.map(function(d){
+              return '<span class="pv2-delta ' + (d[2]?'up':'down') + '">' + (d[2]?'\u2191':'\u2193') + ' ' + (d[2]?'+':'') + d[1] + ' ' + d[0] + '</span>';
+            }).join('');
+          }
+        }
+      })
+      .catch(function(){});
+  }
+
+  // ── 6. Stats principales con benchmarks + deltas ───────────────────
+  function _pv2LoadStats(pd){
+    var grid = document.getElementById('pv2StatGrid');
+    var wl = document.getElementById('pv2WlGrid');
+    if(!grid) return;
+
+    // Extraer stats desde currentSeasonData (squad tpp por defecto)
+    var sd = (typeof currentSeasonData !== 'undefined' && currentSeasonData && currentSeasonData.data && currentSeasonData.data.attributes && currentSeasonData.data.attributes.gameModeStats) || null;
+    if(!sd) return;
+    var modeKey = 'squad';
+    var s = sd[modeKey] || sd['squad-fpp'] || sd['squad'];
+    if(!s || !s.roundsPlayed) return;
+
+    var kd = s.kills && s.losses ? (s.kills / Math.max(1, s.losses)) : (s.kills / Math.max(1, s.roundsPlayed - s.wins));
+    var wr = s.roundsPlayed ? (s.wins / s.roundsPlayed * 100) : 0;
+    var adr = s.roundsPlayed ? (s.damageDealt / s.roundsPlayed) : 0;
+    var hs = s.kills ? (s.headshotKills / s.kills * 100) : 0;
+
+    var stats = [
+      { lbl: 'K/D', val: kd.toFixed(2), bench: _pv2Bench(kd, [2.0, 1.5, 1.0]) },
+      { lbl: 'Win %', val: wr.toFixed(1) + '%', bench: _pv2Bench(wr, [10, 6, 3]) },
+      { lbl: 'ADR', val: Math.round(adr), bench: _pv2Bench(adr, [250, 180, 120]) },
+      { lbl: 'HS %', val: hs.toFixed(0) + '%', bench: _pv2Bench(hs, [40, 25, 15]) }
+    ];
+
+    grid.innerHTML = stats.map(function(st){
+      return '<div class="pv2-stat-card">' +
+        '<div class="pv2-sc-label">' + st.lbl + '</div>' +
+        '<div class="pv2-sc-value">' + st.val + '</div>' +
+        '<span class="pv2-sc-bench ' + st.bench.cls + '">' + st.bench.label + '</span>' +
+        '</div>';
+    }).join('');
+
+    // WL grid de últimas partidas (si hay currentMatchData)
+    if(wl && typeof currentMatchData !== 'undefined' && Array.isArray(currentMatchData) && currentMatchData.length){
+      wl.innerHTML = currentMatchData.slice(0, 20).map(function(m){
+        var rank = (m && m.playerStats && m.playerStats.winPlace) || 99;
+        if(rank === 1) return '<span class="pv2-wl-cell ww">\u2605</span>';
+        if(rank <= 10) return '<span class="pv2-wl-cell w">W</span>';
+        return '<span class="pv2-wl-cell l">L</span>';
+      }).join('');
+    }
+  }
+
+  // ── 7. Mover paneles viejos a los acordeones (lazy: solo referenciados) ──
+  function _pv2MigratePanels(){
+    var map = [
+      ['panel-overview', 'pv2AccEvoHost'],
+      ['panel-matches',  'pv2AccMatchesHost'],
+      ['panel-weapons',  'pv2AccWeaponsHost'],
+      ['panel-funstats', 'pv2AccAdnHost']
+    ];
+    map.forEach(function(pair){
+      var src = document.getElementById(pair[0]);
+      var dst = document.getElementById(pair[1]);
+      if(src && dst && !dst.contains(src)){
+        // Forzar visible al mover (los panel-* tienen display:none si no son el activo)
+        src.style.display = '';
+        dst.appendChild(src);
+      }
+    });
+
+    // Ocultar el contenedor de tabs viejas (ya no se usa con acordeones)
+    var tc = document.getElementById('tabsContainer');
+    if(tc) tc.style.display = 'none';
+  }
+
+  // ── 8. Hook al finalizar searchPlayer() ────────────────────────────
+  // searchPlayer es async. Usamos MutationObserver sobre el título para detectar
+  // cuando cambia a "V4NZ — X | PUBG ...", que coincide con el final del flujo.
+  var _lastTitle = document.title;
+  var _retryInit = 0;
+  function _pv2TryInit(){
+    if(_retryInit > 10) return;
+    var pd = (typeof currentPlayerData !== 'undefined') ? currentPlayerData : null;
+    if(pd && pd.attributes){
+      _pv2Init();
+    } else {
+      _retryInit++;
+      setTimeout(_pv2TryInit, 500);
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    if(_pv2Enabled()){
+      // Si ya hay player cargado, init directo
+      _pv2TryInit();
+      // Observar cambios de título (searchPlayer cambia document.title)
+      try {
+        var titleObserver = new MutationObserver(function(){
+          if(document.title !== _lastTitle){
+            _lastTitle = document.title;
+            _retryInit = 0;
+            setTimeout(_pv2TryInit, 800);
+          }
+        });
+        var titleEl = document.querySelector('title');
+        if(titleEl) titleObserver.observe(titleEl, { childList: true });
+      } catch(e){}
+    }
+  });
+  // Si DOMContentLoaded ya disparó, lanzar igualmente
+  if(document.readyState !== 'loading' && _pv2Enabled()){
+    setTimeout(_pv2TryInit, 500);
+  }
+
+  // Expose para debug
+  window._pv2Init = _pv2Init;
+  window._pv2Enabled = _pv2Enabled;
 })();
 // PLAYER-V2-JS END
 
