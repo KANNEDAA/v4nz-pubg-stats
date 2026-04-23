@@ -4641,11 +4641,13 @@ function profileLoadMyStats(){
 }
 function autoLoadMyStats(){
   if(!currentUser||!currentUser.gamertag)return;
-  // hv2-home-logged-revert — patron tracker (op.gg/dak.gg/tracker.gg): al cargar
-  // logueado, ir directo a la ficha del jugador. El panel homeV2Logged sigue
-  // accesible via logo V4NZ o tab "Jugador" para quien quiera el hub consolidado.
-  // Solo se omite auto-load si el usuario navego explicitamente a otra seccion.
+  // hv2-home-logged-v2 — la home logueada es el destino principal (mockup v2): hero
+  // de partida reciente + deltas + rivales habituales + stats globales. El panel
+  // homeV2Logged se pinta con _hv2ShowLoggedPanel() y consume /api/snapshots + mas.
+  // Por eso se omite el auto-load en '/'. El auto-load sigue activo en otras rutas
+  // si se llega sin jugador explicito (login, register, primera visita sin ruta).
   const p=location.pathname;
+  if(p==='/'||p==='')return;
   if(p.startsWith('/stats/')||p.startsWith('/clan/')||p==='/ranking'||p==='/top500'||p==='/compare'||p==='/comparar'||p==='/clans'||p==='/clanes')return;
   // Solo si no hay ya un jugador cargado
   if(document.getElementById('searchInput').value.trim())return;
