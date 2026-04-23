@@ -3500,6 +3500,11 @@ body.pv2-active #playerHeader,
 body.pv2-active #quickStats,
 body.pv2-active #narrativeInsights,
 body.pv2-active #frequentTeammates{display:none!important}
+/* panel-opacity-fix: forzar opacity:1 en los panels migrados — el CSS viejo los ponía en opacity:0 hasta .visible */
+body.pv2-active #panel-overview,
+body.pv2-active #panel-matches,
+body.pv2-active #panel-weapons,
+body.pv2-active #panel-funstats{opacity:1!important;visibility:visible!important}
 /* Diff self/other */
 body:not(.pv2-self) .pv2-only-self{display:none!important}
 body.pv2-self .pv2-only-other{display:none!important}
