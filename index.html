@@ -4909,11 +4909,11 @@ async function loadClanFromHistory(tag){
           const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
           const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
           const opacity=isActive?'1':'0.4';
-          mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
+          mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">';
           mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
           mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
           if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
-          mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+          mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
           mh+='</div>';
           mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
           mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -5098,13 +5098,13 @@ async function toggleClanMembers(tag,cardEl){
     activeMembers.forEach((m,i)=>{
       const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
       const barW=Math.max(5,Math.round(((m.kills||0)/maxK)*100));
-      mh+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;position:relative;overflow:hidden;cursor:pointer;" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+d.clan.platform+'\');switchTab(\'overview\');searchPlayer();">';
+      mh+='<div style="background:var(--bg-secondary);border-radius:8px;padding:10px;position:relative;overflow:hidden;cursor:pointer;" onclick="event.stopPropagation();document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(d.clan.platform)+'\');switchTab(\'overview\');searchPlayer();">';
       mh+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:8px;"></div>';
       mh+='<div style="position:relative;z-index:1;">';
       mh+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
       mh+='<span style="font-family:Orbitron;font-size:.6rem;color:var(--text-dim);">'+(i+1)+'</span>';
       if(medal)mh+='<span style="font-size:.75rem;">'+medal+'</span>';
-      mh+='<span style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:.8rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+      mh+='<span style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:.8rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
       mh+='</div>';
       mh+='<div style="display:flex;gap:10px;font-size:.65rem;color:var(--text-secondary);">';
       mh+='<span>K: <b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -5254,7 +5254,7 @@ async function loadClanPage(tag,subtab){
         h+='<div style="display:flex;align-items:center;gap:8px;z-index:1;position:relative;flex-wrap:wrap;">';
         h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;width:24px;text-align:center;color:var(--text-dim);">'+(i+1)+'</span>';
         h+=medal?'<span>'+medal+'</span>':'';
-        h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">'+m.player_name+'</span>';
+        h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">'+esc(m.player_name)+'</span>';
         h+=clBadge;
         h+='<span id="alias-'+escJs(m.player_name.toLowerCase())+'" style="font-size:.55rem;color:var(--accent-orange);opacity:.7;margin-left:6px;"></span>';
         h+='</div>';
@@ -11525,11 +11525,11 @@ async function searchClan(){
             const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
             const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
             const opacity=isActive?'1':'0.4';
-            mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'transparent\'" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
+            mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'transparent\'" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">';
             mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
             mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
             if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
-            mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+            mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
             mh+='</div>';
             mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
             mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -11589,11 +11589,11 @@ async function searchClan(){
                   const medal=i===0?'&#x1F947; ':i===1?'&#x1F948; ':i===2?'&#x1F949; ':'';
                   const isActive=m.active!==false&&(m.kills>0||m.rounds>0);
                   const opacity=isActive?'1':'0.4';
-                  mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">';
+                  mh+='<div style="background:var(--bg-card);border-radius:6px;padding:8px;opacity:'+opacity+';cursor:pointer;transition:all .2s;" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+escJs(c.platform)+'\');switchTab(\'overview\');searchPlayer();">';
                   mh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
                   mh+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);min-width:16px;">'+(i+1)+'</span>';
                   if(medal)mh+='<span style="font-size:.7rem;">'+medal+'</span>';
-                  mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+                  mh+='<span style="font-family:Rajdhani;font-weight:600;font-size:.75rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
                   mh+='</div>';
                   mh+='<div style="display:flex;gap:8px;font-size:.6rem;color:var(--text-secondary);">';
                   mh+='<span>K:<b style="color:var(--accent);">'+(m.kills||0)+'</b></span>';
@@ -12020,7 +12020,7 @@ async function compareClans(){
         h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
         h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
         if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
-        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
         h+='<span style="color:var(--accent-orange);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
         h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
         h+='</div>';
@@ -12031,7 +12031,7 @@ async function compareClans(){
         h+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;margin-bottom:3px;font-size:.72rem;cursor:pointer;" onclick="goToPlayer(\''+escJs(m.player_name)+'\');">';
         h+='<span style="font-family:Orbitron;font-size:.55rem;color:var(--text-dim);width:14px;">'+(i+1)+'</span>';
         if(medal)h+='<span style="font-size:.65rem;">'+medal+'</span>';
-        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+m.player_name+'</span>';
+        h+='<span style="flex:1;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(m.player_name)+'</span>';
         h+='<span style="color:var(--accent);font-weight:700;font-size:.65rem;">'+(m.kills||0)+'k</span>';
         h+='<span style="color:var(--text-dim);font-size:.6rem;">'+(parseFloat(m.kd)||0).toFixed(2)+'kd</span>';
         h+='</div>';
@@ -12759,7 +12759,7 @@ switchTab=function(t){
   // --- 9. Ocultar CTA Registro cuando user logged ---
   function _hv2HideCtaIfLogged(){
     try {
-      var logged = (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('v4nz_token');
+      var logged = (typeof currentUser !== 'undefined' && currentUser) || (typeof authToken !== 'undefined' && authToken);
       if(logged){
         var cta = document.getElementById('hv2CtaRegister');
         if(cta) cta.style.display = 'none';
@@ -12775,7 +12775,7 @@ switchTab=function(t){
 
   // --- 10. Logged panel consolidation (home-v2-logged-v1) ---
   function _hv2IsLogged(){
-    try { return !!(typeof currentUser !== 'undefined' && currentUser) || !!localStorage.getItem('v4nz_token'); } catch(e){ return false; }
+    try { return !!(typeof currentUser !== 'undefined' && currentUser) || !!(typeof authToken !== 'undefined' && authToken); } catch(e){ return false; }
   }
   function _hv2GetUsername(){
     try {
@@ -12924,11 +12924,10 @@ switchTab=function(t){
       if(Array.isArray(arr) && arr.length){ tag = arr[0].tag || arr[0].clan_tag || arr[0]; }
     } catch(e){}
     if(!tag){
-      // Fuente 2: /auth/favorites si hay token
-      var token = '';
-      try { token = localStorage.getItem('v4nz_token') || ''; } catch(e){}
-      if(token){
-        fetch('/auth/favorites', { headers:{ 'Authorization':'Bearer '+token } })
+      // Fuente 2: /favorites via cookie HttpOnly (o Bearer si hay token)
+      var isLogged = (typeof currentUser !== 'undefined' && currentUser) || (typeof authToken !== 'undefined' && authToken);
+      if(isLogged){
+        fetch('/favorites', { credentials:'include' })
           .then(function(r){ return r.ok ? r.json() : {favorites:[]}; })
           .then(function(data){
             var favs = (data && (data.favorites || data.clanFavorites)) || [];
