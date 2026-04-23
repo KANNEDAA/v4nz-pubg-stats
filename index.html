@@ -12801,7 +12801,7 @@ switchTab=function(t){
   _bnUpdateActive(t);
 };
 
-// PLAYER-V2-JS START (player-v2-js-v2) — preview activable con ?pv2=1 o localStorage v4nz_pv2
+// PLAYER-V2-JS START (player-v2-js-v3) — preview activable con ?pv2=1, + ADN radar + clan retry + deltas
 (function(){
   // ── 1. Feature flag detection ──────────────────────────────────────
   function _pv2Enabled(){
@@ -12892,19 +12892,10 @@ switchTab=function(t){
       platEl.innerHTML = (plat === 'xbox' ? '&#x1F3AE; XBOX' : '&#x1F3AE; PLAYSTATION');
     }
 
-    // Clan
-    var clanEl = document.getElementById('pv2Clan');
-    try {
-      var clanText = '';
-      var clanBadgeOld = document.getElementById('playerClanBadge');
-      if(clanBadgeOld && clanBadgeOld.textContent && clanBadgeOld.textContent.trim()){
-        clanText = clanBadgeOld.textContent.trim();
-      }
-      if(clanEl){
-        if(clanText){ clanEl.textContent = clanText; clanEl.style.display = ''; }
-        else { clanEl.style.display = 'none'; }
-      }
-    } catch(e){}
+    // Clan (con retry — el badge se rellena tarde)
+    _pv2RefreshClan();
+    setTimeout(_pv2RefreshClan, 1500);
+    setTimeout(_pv2RefreshClan, 3000);
 
     // Rank
     try {
@@ -12933,6 +12924,9 @@ switchTab=function(t){
     // ── Stats principales ──
     _pv2LoadStats(pd);
 
+    // ── ADN — radar + rol ──
+    _pv2LoadAdn();
+
     // ── Mover paneles viejos a los acordeones ──
     _pv2MigratePanels();
 
@@ -12941,6 +12935,134 @@ switchTab=function(t){
     _pv2Show('pv2StatsSection', true);
     _pv2Show('pv2AccordionsSection', true);
     if(isSelf) _pv2Show('pv2NextStepSection', true);
+  }
+
+  // ── Clan retry ──
+  function _pv2RefreshClan(){
+    var clanEl = document.getElementById('pv2Clan');
+    if(!clanEl) return;
+    var clanBadgeOld = document.getElementById('playerClanBadge');
+    var text = '';
+    if(clanBadgeOld && clanBadgeOld.textContent){
+      text = clanBadgeOld.textContent.trim();
+    }
+    if(text){ clanEl.textContent = text; clanEl.style.display = ''; }
+    else { clanEl.style.display = 'none'; }
+  }
+
+  // ── ADN — radar SVG + rol + "brillas en X" ──
+  function _pv2LoadAdn(){
+    var grid = document.getElementById('pv2AdnGrid');
+    if(!grid) return;
+
+    var scores = null;
+    try {
+      var s = (typeof getActiveStats === 'function') ? getActiveStats() : null;
+      if(s && s.roundsPlayed && typeof calcDnaScores === 'function'){
+        scores = calcDnaScores(s);
+      }
+    } catch(e){}
+
+    if(!scores){
+      grid.innerHTML = '<div class="pv2-adn-card" style="text-align:center;color:var(--text-dim);padding:24px;">Jugando pocas partidas. El ADN se calcula con más rounds.</div>';
+      return;
+    }
+
+    // 5 ejes
+    var axes = [
+      { k: 'agresividad',   lbl: 'Agresiv.',    col: '#ff3355' },
+      { k: 'precision',     lbl: 'Precisi\u00F3n',col: '#a855f7' },
+      { k: 'supervivencia', lbl: 'Superv.',     col: '#00ff88' },
+      { k: 'movilidad',     lbl: 'Movil.',      col: '#ff6b00' },
+      { k: 'soporte',       lbl: 'Soporte',     col: '#00f0ff' }
+    ];
+
+    // Detectar el más alto
+    var maxAxis = axes[0], maxVal = scores[axes[0].k] || 0;
+    axes.forEach(function(a){
+      var v = scores[a.k] || 0;
+      if(v > maxVal){ maxVal = v; maxAxis = a; }
+    });
+
+    // Rol simple según el maxAxis
+    var roleMap = {
+      agresividad: { name: 'DEPREDADOR',   col: '#ff3355' },
+      precision:   { name: 'FRANCOTIRADOR',col: '#a855f7' },
+      supervivencia:{ name: 'SUPERVIVIENTE',col: '#00ff88' },
+      movilidad:   { name: 'PILOTO LOCO',  col: '#ff6b00' },
+      soporte:     { name: 'M\u00C9DICO DE COMBATE', col: '#00f0ff' }
+    };
+    var role = roleMap[maxAxis.k] || { name: 'JUGADOR', col: '#00f0ff' };
+
+    // Calcular puntos SVG del pentágono de datos (centro 100,110 radio 80)
+    var cx = 100, cy = 110, r = 80;
+    var pts = axes.map(function(a, i){
+      var v = Math.min(100, Math.max(0, scores[a.k] || 0));
+      var ang = -Math.PI/2 + (i * 2*Math.PI / 5);
+      var d = r * (v / 100);
+      return { x: cx + Math.cos(ang) * d, y: cy + Math.sin(ang) * d, ang: ang, v: v };
+    });
+    var ptsStr = pts.map(function(p){ return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+
+    // Pentágono de referencia 100%
+    var refOuter = axes.map(function(a, i){
+      var ang = -Math.PI/2 + (i * 2*Math.PI / 5);
+      return (cx + Math.cos(ang) * r).toFixed(1) + ',' + (cy + Math.sin(ang) * r).toFixed(1);
+    }).join(' ');
+    var refInner = axes.map(function(a, i){
+      var ang = -Math.PI/2 + (i * 2*Math.PI / 5);
+      return (cx + Math.cos(ang) * r * 0.5).toFixed(1) + ',' + (cy + Math.sin(ang) * r * 0.5).toFixed(1);
+    }).join(' ');
+
+    // Labels en las 5 esquinas
+    var labels = axes.map(function(a, i){
+      var ang = -Math.PI/2 + (i * 2*Math.PI / 5);
+      var lx = cx + Math.cos(ang) * (r + 18);
+      var ly = cy + Math.sin(ang) * (r + 18) + 3;
+      return '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" fill="#8892b0" font-size="9" text-anchor="middle">' + a.lbl + ' ' + Math.round(scores[a.k] || 0) + '</text>';
+    }).join('');
+
+    // Bot Index contextual
+    var botHtml = '';
+    try {
+      var bi = window._lastBotIndex;
+      if(bi && bi.matchesAnalyzed >= 3){
+        var humanPct = 100 - (bi.botRatio || 0);
+        var perfil;
+        if(bi.botRatio >= 60) perfil = 'Juegas sobre todo <strong style="color:#ff9f43">vs bots</strong> — t\u00EDpico de farming';
+        else if(bi.botRatio >= 30) perfil = 'Perfil <strong>mixto</strong> — mezcla humanos y bots';
+        else perfil = 'Juegas principalmente <strong style="color:#5fd97f">vs humanos</strong> — perfil competitivo';
+        botHtml = '<div class="pv2-adn-card">' +
+          '<div class="pv2-sectitle" style="font-size:12px;margin-bottom:12px;color:#4aa8ff;">&#x1F916; BOT INDEX</div>' +
+          '<div style="font-size:13px;margin-bottom:10px;">' +
+          'Juegas <strong style="color:#5fd97f">' + humanPct + '% vs humanos</strong>, ' +
+          '<strong style="color:#ff5757">' + (bi.botRatio || 0) + '% vs bots</strong>.' +
+          '</div>' +
+          '<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:10px;background:#2a3350;">' +
+          '<div style="background:#5fd97f;width:' + humanPct + '%;"></div>' +
+          '<div style="background:#ff5757;width:' + (bi.botRatio || 0) + '%;"></div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--text-dim);line-height:1.5;">' + perfil + '. An\u00E1lisis sobre ' + bi.matchesAnalyzed + ' partidas.</div>' +
+          '</div>';
+      }
+    } catch(e){}
+
+    grid.innerHTML =
+      '<div class="pv2-adn-card">' +
+        '<svg viewBox="0 0 200 220" style="width:100%;max-width:280px;margin:0 auto;display:block;">' +
+          '<polygon points="' + refOuter + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
+          '<polygon points="' + refInner + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
+          '<polygon points="' + ptsStr + '" fill="rgba(245,213,71,.15)" stroke="' + role.col + '" stroke-width="2"/>' +
+          pts.map(function(p){ return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + role.col + '"/>'; }).join('') +
+          labels +
+        '</svg>' +
+        '<div style="text-align:center;margin-top:8px;">' +
+          '<div style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:' + role.col + ';margin-bottom:4px;">' + role.name + '</div>' +
+          '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Tu estilo de juego en consola</div>' +
+          '<div style="font-size:13px;color:var(--accent);font-weight:600;">\u2728 Brillas en ' + maxAxis.lbl.toUpperCase().replace('.', '') + ' (' + Math.round(maxVal) + ')</div>' +
+        '</div>' +
+      '</div>' +
+      (botHtml || '<div class="pv2-adn-card" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:12px;padding:24px;text-align:center;">Bot Index se calcula tras 3+ partidas analizadas</div>');
   }
 
   // ── 5. Última partida desde snapshots cache o PUBG API ─────────────
@@ -12999,25 +13121,56 @@ switchTab=function(t){
     var s = sd[modeKey] || sd['squad-fpp'] || sd['squad'];
     if(!s || !s.roundsPlayed) return;
 
-    var kd = s.kills && s.losses ? (s.kills / Math.max(1, s.losses)) : (s.kills / Math.max(1, s.roundsPlayed - s.wins));
-    var wr = s.roundsPlayed ? (s.wins / s.roundsPlayed * 100) : 0;
-    var adr = s.roundsPlayed ? (s.damageDealt / s.roundsPlayed) : 0;
-    var hs = s.kills ? (s.headshotKills / s.kills * 100) : 0;
+    // Preferir helpers oficiales si existen (consistencia con el resto del app)
+    var kd = (typeof calcKD === 'function') ? parseFloat(calcKD(s)) : (s.kills / Math.max(1, s.roundsPlayed - s.wins));
+    var wr = (typeof calcWinRate === 'function') ? parseFloat(calcWinRate(s)) : (s.roundsPlayed ? s.wins / s.roundsPlayed * 100 : 0);
+    var adr = (typeof calcAvgDmg === 'function') ? parseFloat(calcAvgDmg(s)) : (s.roundsPlayed ? s.damageDealt / s.roundsPlayed : 0);
+    var hs = (typeof calcHSRate === 'function') ? parseFloat(calcHSRate(s)) : (s.kills ? s.headshotKills / s.kills * 100 : 0);
 
     var stats = [
-      { lbl: 'K/D', val: kd.toFixed(2), bench: _pv2Bench(kd, [2.0, 1.5, 1.0]) },
-      { lbl: 'Win %', val: wr.toFixed(1) + '%', bench: _pv2Bench(wr, [10, 6, 3]) },
-      { lbl: 'ADR', val: Math.round(adr), bench: _pv2Bench(adr, [250, 180, 120]) },
-      { lbl: 'HS %', val: hs.toFixed(0) + '%', bench: _pv2Bench(hs, [40, 25, 15]) }
+      { lbl: 'K/D',   key: 'kd',        val: kd.toFixed(2),         raw: kd,  bench: _pv2Bench(kd, [2.0, 1.5, 1.0]) },
+      { lbl: 'Win %', key: 'win_rate',  val: wr.toFixed(1) + '%',   raw: wr,  bench: _pv2Bench(wr, [10, 6, 3]) },
+      { lbl: 'ADR',   key: 'avg_damage',val: Math.round(adr),       raw: adr, bench: _pv2Bench(adr, [250, 180, 120]) },
+      { lbl: 'HS %',  key: 'hs_rate',   val: hs.toFixed(0) + '%',   raw: hs,  bench: _pv2Bench(hs, [40, 25, 15]) }
     ];
 
     grid.innerHTML = stats.map(function(st){
-      return '<div class="pv2-stat-card">' +
+      return '<div class="pv2-stat-card" data-stat="' + st.key + '">' +
         '<div class="pv2-sc-label">' + st.lbl + '</div>' +
         '<div class="pv2-sc-value">' + st.val + '</div>' +
         '<span class="pv2-sc-bench ' + st.bench.cls + '">' + st.bench.label + '</span>' +
+        '<div class="pv2-sc-delta" data-delta-slot="1"></div>' +
         '</div>';
     }).join('');
+
+    // Deltas — comparar con snapshot anterior si esMiFicha o currentUser == player
+    var playerName = pd.attributes && pd.attributes.name;
+    var plat = (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn';
+    if(playerName){
+      fetch('/api/snapshots/' + plat + '/' + encodeURIComponent(playerName) + '?squad_mode=squad&game_mode=tpp', { credentials:'same-origin' })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(data){
+          var snaps = (data && data.snapshots) || [];
+          if(snaps.length < 2) return;
+          var curr = snaps[snaps.length - 1];
+          var prev = snaps[snaps.length - 2];
+          stats.forEach(function(st){
+            var currV = Number(curr[st.key] || 0);
+            var prevV = Number(prev[st.key] || 0);
+            if(!prevV && !currV) return;
+            var diff = currV - prevV;
+            if(Math.abs(diff) < 0.01) return;
+            var card = grid.querySelector('[data-stat="' + st.key + '"] [data-delta-slot]');
+            if(!card) return;
+            var up = diff > 0;
+            var sign = up ? '+' : '';
+            var fmt = (st.key === 'avg_damage') ? Math.round(diff) : diff.toFixed(2);
+            card.className = 'pv2-sc-delta ' + (up ? 'up' : 'down');
+            card.textContent = (up ? '\u2191 ' : '\u2193 ') + sign + fmt + ' vs anterior';
+          });
+        })
+        .catch(function(){});
+    }
 
     // WL grid de últimas partidas (si hay currentMatchData)
     if(wl && typeof currentMatchData !== 'undefined' && Array.isArray(currentMatchData) && currentMatchData.length){
