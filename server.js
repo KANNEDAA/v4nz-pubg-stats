@@ -32,7 +32,16 @@ if (!process.env.RAILWAY_ENVIRONMENT) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+const IS_PRODUCTION = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
+if (IS_PRODUCTION && !process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required in production.');
+  process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  const ephemeral = crypto.randomBytes(32).toString('hex');
+  console.warn('⚠️  JWT_SECRET not set — using ephemeral dev secret. Sessions will be invalidated on restart.');
+  return ephemeral;
+})();
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://v4nz.com/auth/discord/callback';
@@ -73,18 +82,23 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
   // Content Security Policy
+  // NOTE: 'unsafe-inline' in script-src is required by ~330 inline event handlers in index.html
+  // (onclick=, onerror=, etc). Removing it requires refactoring those to addEventListener.
+  // Tracked as tech-debt — see review notes (P1 refactor).
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.googletagmanager.com",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://cdn.discordapp.com https://v4nz.com https://www.googletagmanager.com https://www.google-analytics.com",
     "connect-src 'self' https://api.pubg.com https://telemetry-cdn.pubg.com https://api.pubg.report https://discord.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://region1.google-analytics.com",
     "frame-src https://open.spotify.com https://discord.com",
+    "frame-ancestors 'none'",
     "media-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self' https://discord.com"
+    "form-action 'self' https://discord.com",
+    "upgrade-insecure-requests"
   ].join('; ');
   res.setHeader('Content-Security-Policy', csp);
   next();
@@ -100,12 +114,10 @@ function parseCookies(req) {
   return cookies;
 }
 function setAuthCookie(res, token) {
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
-  res.append('Set-Cookie', `v4nz_token=${token}; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=${30 * 24 * 3600}`);
+  res.append('Set-Cookie', `v4nz_token=${token}; HttpOnly; ${IS_PRODUCTION ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=${30 * 24 * 3600}`);
 }
 function clearAuthCookie(res) {
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
-  res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${isProduction ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
+  res.append('Set-Cookie', `v4nz_token=; HttpOnly; ${IS_PRODUCTION ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`);
 }
 
 // ═══ WHITELIST de estáticos (rivalidades-v1-sec) ═══
@@ -1546,12 +1558,12 @@ app.get('/auth/discord/callback', async (req, res) => {
       user = result.rows[0];
     }
     const jwtToken = generateToken(user);
-    // Set HttpOnly cookie (primary) + URL token (for frontend state init)
+    // HttpOnly cookie only — never expose JWT in URL (browser history / referrer leak)
     setAuthCookie(res, jwtToken);
-    res.redirect('/#auth_token=' + jwtToken);
+    res.redirect('/?auth=discord_ok');
   } catch (e) {
     console.error('Discord OAuth error:', e.message);
-    res.redirect('/#auth_error=server_error');
+    res.redirect('/?auth_error=server_error');
   }
 });
 

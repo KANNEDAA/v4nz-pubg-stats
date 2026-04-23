@@ -4735,28 +4735,18 @@ async function syncFavoritesToServer(){
   }catch(e){console.error('Sync error:',e);}
 }
 
-// Check for Discord OAuth callback token in hash fragment (secure — not sent to server)
+// Auth bootstrap — cookie HttpOnly only. JWTs are never in URLs (history/referrer leak).
 (function(){
-  const hash=location.hash.substring(1);
-  const params=new URLSearchParams(hash);
-  const token=params.get('auth_token');
-  if(token){
-    authToken=token;localStorage.setItem('v4nz_token',token);
-    history.replaceState(null,'',location.pathname);
+  // Clean up any legacy auth_token left in the URL fragment from older clients
+  if(location.hash && location.hash.indexOf('auth_token')!==-1){
+    history.replaceState(null,'',location.pathname+location.search);
   }
-  // Auto-login: try cookie first, then localStorage token
-  if(authToken){
-    fetch('/auth/me',{headers:{'Authorization':'Bearer '+authToken},credentials:'include'})
-      .then(r=>{if(!r.ok)throw new Error();return r.json();})
-      .then(d=>{currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
-      .catch(()=>{authToken=null;localStorage.removeItem('v4nz_token');updateAuthUI();});
-  }else{
-    // No localStorage token — maybe there's an HttpOnly cookie from previous session
-    fetch('/auth/me',{credentials:'include'})
-      .then(r=>{if(!r.ok)throw new Error();return r.json();})
-      .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
-      .catch(()=>{});
-  }
+  // Purge any legacy JWT in localStorage — cookie is the only source of truth now
+  try{localStorage.removeItem('v4nz_token');}catch(e){}
+  fetch('/auth/me',{credentials:'include'})
+    .then(r=>{if(!r.ok)throw new Error();return r.json();})
+    .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
+    .catch(()=>{});
 })();
 
 const IS_PROXIED=location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname.includes('railway.app')||location.hostname.includes('v4nz.com');
