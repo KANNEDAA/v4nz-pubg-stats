@@ -13408,14 +13408,16 @@ switchTab=function(t){
       mini.textContent = '\u00B7 ' + k + 'k \u00B7 ' + d + ' dmg \u00B7 ' + p;
     } catch(e){}
   }
+  // pv2-lm-key-per-viewport: keys separadas móvil vs desktop. Si el user tocó toggle en desktop
+  // (guardó "expandido"), en móvil sigue colapsado por defecto y viceversa.
+  function _pv2LmKey(){
+    return window.innerWidth < 600 ? 'v4nz_pv2_lm_collapsed_m' : 'v4nz_pv2_lm_collapsed';
+  }
   function _pv2ApplyLmCollapsedState(){
     try {
       var box = document.getElementById('pv2LastMatch');
       if(!box) return;
-      // pv2-mobile-collapse-default: si NO hay preferencia explícita del user,
-      // en móvil empezar colapsado (los 4 stats grandes ocupan demasiado).
-      // En desktop, empezar expandido. El toggle sigue funcionando igual.
-      var saved = localStorage.getItem('v4nz_pv2_lm_collapsed');
+      var saved = localStorage.getItem(_pv2LmKey());
       var collapsed;
       if(saved === '1') collapsed = true;
       else if(saved === '0') collapsed = false;
@@ -13429,7 +13431,7 @@ switchTab=function(t){
       if(!box) return;
       var nextCollapsed = !box.classList.contains('collapsed');
       box.classList.toggle('collapsed', nextCollapsed);
-      try { localStorage.setItem('v4nz_pv2_lm_collapsed', nextCollapsed ? '1' : '0'); } catch(e){}
+      try { localStorage.setItem(_pv2LmKey(), nextCollapsed ? '1' : '0'); } catch(e){}
       if(nextCollapsed) _pv2UpdateLmMini();
     } catch(e){}
   }
