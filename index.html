@@ -3660,6 +3660,9 @@ body.pv2-active #pv2StatsSection:has(#pv2StatGrid[data-state="empty"]) .pv2-mode
   body.pv2-active .pv2-sectitle{font-size:12px}
   body.pv2-active .pv2-sc-value{font-size:22px}
   body.pv2-active .pv2-stat-card{padding:12px 10px}
+  /* pv2-mobile-ctas-hide: ocultar CTAs del hero en móvil — ya están duplicados en el footer
+     y ocupaban una fila "fina" horizontal que aplastaba el contenido arriba. */
+  body.pv2-active .pv2-hero-ctas{display:none!important}
 }
 /* player-v2-polish-1 END */
 </style>
