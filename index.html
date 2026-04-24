@@ -13412,7 +13412,14 @@ switchTab=function(t){
     try {
       var box = document.getElementById('pv2LastMatch');
       if(!box) return;
-      var collapsed = localStorage.getItem('v4nz_pv2_lm_collapsed') === '1';
+      // pv2-mobile-collapse-default: si NO hay preferencia explícita del user,
+      // en móvil empezar colapsado (los 4 stats grandes ocupan demasiado).
+      // En desktop, empezar expandido. El toggle sigue funcionando igual.
+      var saved = localStorage.getItem('v4nz_pv2_lm_collapsed');
+      var collapsed;
+      if(saved === '1') collapsed = true;
+      else if(saved === '0') collapsed = false;
+      else collapsed = (window.innerWidth < 600);
       box.classList.toggle('collapsed', collapsed);
     } catch(e){}
   }
