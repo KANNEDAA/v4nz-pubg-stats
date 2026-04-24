@@ -6308,7 +6308,17 @@ const Router = {
     }],
     [/^\/(ranking|top500|compare|comparar|clans|clanes)\/?$/i, (m) => {
       const tabMap={'ranking':'ranking','top500':'top500','compare':'compare','comparar':'compare','clans':'clans','clanes':'clans'};
-      switchTab(tabMap[m[1].toLowerCase()]);
+      const mapped=tabMap[m[1].toLowerCase()];
+      switchTab(mapped);
+      // router-scroll-fix: al aterrizar directamente por URL (no click en nav), forzar scroll al panel.
+      // El click listener del nav ya hace scroll, pero Router.dispatch no lo llamaba.
+      setTimeout(()=>{
+        const panel=document.getElementById('panel-'+mapped);
+        if(panel){
+          const y=panel.getBoundingClientRect().top+window.scrollY-80;
+          window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+        }
+      },120);
     }],
     [/^\/admin\/?$/, () => { history.replaceState(null,'','/'); }]
   ],
