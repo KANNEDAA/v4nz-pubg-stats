@@ -12726,12 +12726,13 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catc
 })();
 /* ═══ END V4NZ VISUAL POLISH v148 JS ═══ */
 </script>
-<!-- v179: Bottom Nav Móvil -->
+<!-- bottom-nav-align: alineado con top-nav (Jugador/Clanes/Ranking/Comparar/Perfil).
+     Partidas eliminado del bottom-nav porque ya está dentro del acordeón del jugador. -->
 <nav class="bottom-nav" id="bottomNav">
-  <button class="bottom-nav-item active" data-bntab="overview" onclick="_bnSwitch('overview')"><span class="bn-icon">&#x1F4CA;</span>Stats</button>
-  <button class="bottom-nav-item" data-bntab="matches" onclick="_bnSwitch('matches')"><span class="bn-icon">&#x1F3AE;</span>Partidas</button>
+  <button class="bottom-nav-item active" data-bntab="overview" onclick="_bnSwitch('overview')"><span class="bn-icon">&#x1F4CA;</span>Jugador</button>
   <button class="bottom-nav-item" data-bntab="clans" onclick="_bnSwitch('clans')"><span class="bn-icon">&#x1F6E1;</span>Clanes</button>
   <button class="bottom-nav-item" data-bntab="ranking" onclick="_bnSwitch('ranking')"><span class="bn-icon">&#x1F3C6;</span>Ranking</button>
+  <button class="bottom-nav-item" data-bntab="compare" onclick="_bnSwitch('compare')"><span class="bn-icon">&#x1F50D;</span>Comparar</button>
   <button class="bottom-nav-item" data-bntab="profile" onclick="_bnProfile()"><span class="bn-icon" id="bnProfileIcon">&#x1F464;</span><span id="bnProfileLabel">Perfil</span></button>
 </nav>
 <script>
