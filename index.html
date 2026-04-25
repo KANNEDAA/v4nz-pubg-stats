@@ -3500,6 +3500,43 @@ body.telem-open { overflow:hidden; }
 .hv2l-toolsh{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
 .hv2l-toolsgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media(min-width:640px){.hv2l-toolsgrid{grid-template-columns:repeat(4,1fr)}}
+
+/* fav-players-block-v1: estilos del bloque "Mis jugadores guardados" */
+.hv2l-card-favs{border-color:rgba(245,213,71,.18)}
+.hv2l-fav-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:6px;margin-bottom:10px}
+.hv2l-fav-tabs::-webkit-scrollbar{display:none}
+.hv2l-fav-tab{flex-shrink:0;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.hv2l-fav-tab .fav-tab-count{background:rgba(255,255,255,.06);padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700}
+.hv2l-fav-tab:hover{color:var(--text-primary);border-color:var(--text-dim)}
+.hv2l-fav-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.hv2l-fav-tab.active.tab-rivales{background:rgba(255,87,87,.18);border-color:#ff5757;color:#ff5757}
+.hv2l-fav-tab.active.tab-amigos{background:rgba(95,217,127,.18);border-color:#5fd97f;color:#5fd97f}
+.hv2l-fav-tab.active.tab-seguimiento{background:rgba(168,85,247,.18);border-color:#a855f7;color:#a855f7}
+.hv2l-fav-tab.active.tab-tramposos{background:rgba(245,213,71,.18);border-color:var(--accent-yellow);color:var(--accent-yellow)}
+.hv2l-fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.hv2l-fav-card{background:var(--bg-secondary);border:1px solid var(--border);border-top:2px solid var(--accent);border-radius:10px;padding:11px;cursor:pointer;transition:all .15s;position:relative;display:flex;flex-direction:column;gap:8px;min-height:84px}
+.hv2l-fav-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.hv2l-fav-card.group-rivales{border-top-color:#ff5757}
+.hv2l-fav-card.group-amigos{border-top-color:#5fd97f}
+.hv2l-fav-card.group-seguimiento{border-top-color:#a855f7}
+.hv2l-fav-card.group-tramposos{border-top-color:var(--accent-yellow)}
+.hv2l-fav-top{display:flex;align-items:center;gap:8px}
+.hv2l-fav-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-orange));display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;font-size:12px;flex-shrink:0}
+.hv2l-fav-name{font-size:12px;font-weight:700;color:var(--text-primary);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hv2l-fav-plat{font-size:9px;background:rgba(0,111,205,.18);color:#4aa8ff;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.3px;flex-shrink:0}
+.hv2l-fav-plat.xbox{background:rgba(16,124,16,.18);color:#6fd06f}
+.hv2l-fav-group-tag{position:absolute;top:0;right:8px;font-size:8px;font-weight:800;padding:1px 6px;border-radius:0 0 4px 4px;background:var(--accent);color:#000;letter-spacing:.3px;text-transform:uppercase}
+.hv2l-fav-card.group-rivales .hv2l-fav-group-tag{background:#ff5757;color:#fff}
+.hv2l-fav-card.group-amigos .hv2l-fav-group-tag{background:#5fd97f;color:#000}
+.hv2l-fav-card.group-seguimiento .hv2l-fav-group-tag{background:#a855f7;color:#fff}
+.hv2l-fav-card.group-tramposos .hv2l-fav-group-tag{background:var(--accent-yellow);color:#000}
+.hv2l-fav-action{position:absolute;bottom:6px;right:6px;width:22px;height:22px;background:var(--bg-card);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:var(--text-dim);opacity:0;transition:all .15s}
+.hv2l-fav-card:hover .hv2l-fav-action{opacity:1}
+.hv2l-fav-action:hover{color:var(--accent-yellow);border-color:var(--accent-yellow)}
+.hv2l-fav-empty{text-align:center;padding:14px 0 6px;color:var(--text-secondary);font-size:12px}
+.hv2l-fav-empty p{margin:0}
+.hv2l-fav-more{display:flex;align-items:center;justify-content:center;background:transparent;border:1px dashed var(--border);border-radius:10px;padding:11px;color:var(--text-dim);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;min-height:84px}
+.hv2l-fav-more:hover{border-color:var(--accent);color:var(--accent)}
 .hv2l-tool{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;text-align:left;transition:all .15s;min-height:56px}
 .hv2l-tool:hover{border-color:var(--accent);transform:translateY(-1px)}
 .hv2l-tool-icon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
@@ -4076,6 +4113,23 @@ body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
           <span class="hv2l-cardt"><span class="hv2l-dot"></span> En vivo &middot; tus favoritos</span>
         </div>
         <div class="hv2l-cardb" id="hv2lLiveFavsPlaceholder" style="color:var(--text-secondary);font-size:12px;padding:8px 0;">Cargando favoritos...</div>
+      </div>
+    </div>
+
+    <!-- fav-players-block-v1: bloque "Mis jugadores guardados" — opción C completa.
+         Lee de pubg_favorites localStorage. Tabs por grupo. Grid de cards con avatar
+         + nombre + plat + 3 stats (K/D · WR · DMG si están cacheados en
+         player_snapshots, si no solo nombre). Sincronizado vía playerFavStar. -->
+    <div class="hv2l-card hv2l-card-favs" id="hv2lFavPlayersCard" style="display:none;">
+      <div class="hv2l-cardh">
+        <span class="hv2l-cardt">&#x2B50; Mis jugadores guardados <span id="hv2lFavCount" style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;"></span></span>
+        <a class="hv2l-cardl" id="hv2lFavManageLink" href="#" onclick="event.preventDefault();var i=document.getElementById('searchInput');if(i)i.focus();return false;">Gestionar &rarr;</a>
+      </div>
+      <div class="hv2l-fav-tabs" id="hv2lFavTabs"></div>
+      <div class="hv2l-fav-grid" id="hv2lFavGrid"></div>
+      <div class="hv2l-fav-empty" id="hv2lFavEmpty" style="display:none;">
+        <p>A&uacute;n no has guardado ning&uacute;n jugador.</p>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">Busca a alguien y pulsa la &#x2605; en su ficha o al lado de su nombre en cualquier lista.</p>
       </div>
     </div>
 
@@ -6178,6 +6232,7 @@ function renderClanIntelligence(members,clan){
     h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();">';
     h+='<span style="font-size:.9rem;">'+m.icon+'</span>';
     h+='<span style="font-size:.65rem;color:var(--text-dim);min-width:60px;">'+m.label+'</span>';
+    h+=playerFavStar(m.name,plat,'.65rem');
     h+='<span class="ci-member-name">'+esc(m.name)+'</span>';
     h+='<span class="ci-member-val" style="color:'+m.color+';">'+m.val+'</span>';
     h+='</div>';
@@ -6237,6 +6292,7 @@ function renderClanIntelligence(members,clan){
     h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();" style="position:relative;overflow:hidden;">';
     h+='<div style="position:absolute;top:0;left:0;bottom:0;width:'+barW+'%;background:rgba(0,240,255,0.04);border-radius:6px;"></div>';
     h+='<span style="font-family:Orbitron;font-weight:700;font-size:.6rem;width:20px;text-align:center;color:var(--text-dim);z-index:1;">'+(i+1)+'</span>';
+    h+=playerFavStar(m.player_name,plat,'.65rem');
     h+='<span class="ci-member-name" style="z-index:1;">'+esc(m.player_name)+'</span>';
     h+='<span class="ci-badge '+badgeCls+'" style="z-index:1;">'+badgeLabel+'</span>';
     h+='<span class="ci-member-val" style="color:'+deltaColor+';z-index:1;min-width:45px;text-align:right;">'+deltaStr+'</span>';
@@ -6254,7 +6310,7 @@ function renderClanIntelligence(members,clan){
       const polloColor=m.pollos<=10?'#39d98a':m.pollos<=30?'var(--accent-orange)':'#ff3355';
       h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();">';
       h+='<span style="font-size:.85rem;">&#x1F414;</span>';
-      h+='<span class="ci-member-name">'+esc(m.player_name)+'</span>';
+      h+=playerFavStar(m.player_name,plat,'.65rem');h+='<span class="ci-member-name">'+esc(m.player_name)+'</span>';
       h+='<span class="ci-member-val" style="color:'+polloColor+';">1 cada '+m.pollos+'</span>';
       h+='<span class="ci-member-val" style="color:var(--accent-yellow);min-width:40px;text-align:right;">'+m.wins+' wins</span>';
       h+='</div>';
@@ -6295,7 +6351,7 @@ function renderClanIntelligence(members,clan){
   ghostsSorted.forEach(m=>{
     const statusLabel=m.status==='ghost'?'&#x1F47B; FANTASMA':m.status==='occasional'?'&#x23F3; OCASIONAL':'&#x2705; ACTIVO';
     h+='<div class="ci-member-row" onclick="document.getElementById(\'searchInput\').value=\''+escJs(m.player_name)+'\';setPlatform(\''+plat+'\');switchTab(\'overview\');searchPlayer();">';
-    h+='<span class="ci-member-name">'+esc(m.player_name)+'</span>';
+    h+=playerFavStar(m.player_name,plat,'.65rem');h+='<span class="ci-member-name">'+esc(m.player_name)+'</span>';
     h+='<span class="ci-badge '+m.status+'">'+statusLabel+'</span>';
     h+='<span class="ci-member-val" style="color:var(--text-dim);min-width:60px;text-align:right;">'+(m.rounds||0)+' partidas</span>';
     h+='</div>';
@@ -7100,6 +7156,8 @@ function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const id
   // fav-star-everywhere-v1: refrescar estrellas inyectadas en kill log, ranking, miembros de clan, etc.
   if(typeof updateAllPlayerFavStars==='function')updateAllPlayerFavStars();
   if(typeof updateFavHeaderBtn==='function')updateFavHeaderBtn();
+  // fav-players-block-v1: refrescar el bloque "Mis jugadores guardados" en home logueada
+  if(typeof window._hv2LoadFavPlayers==='function')try{window._hv2LoadFavPlayers();}catch(e){}
 }
 function setFavGroup(name,group,evt){if(evt)evt.stopPropagation();const f=favorites.find(f=>f.name===name);if(f){f.group=f.group===group?'':group;localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}}
 function cycleFavGroup(name,evt){if(evt)evt.stopPropagation();const f=favorites.find(fv=>fv.name===name);if(!f)return;const groups=[''].concat(FAV_GROUPS);const cur=groups.indexOf(f.group||'');f.group=groups[(cur+1)%groups.length];localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
@@ -8063,7 +8121,9 @@ function _mdRenderDiag(ctx){
     if(topKills>=10 && topK && topK.toLowerCase()!==pn.toLowerCase()){
       var atype=topKills>=15?'danger':'warn';
       var aicon=topKills>=15?'\u26A0\uFE0F':'\uD83D\uDD25';
-      alerts.push({type:atype,icon:aicon,title:'Top killer de la partida',detail:esc(topK)+' hizo '+topKills+' kills en esta partida.'+(topKills>=15?' Vigila que no est\u00e9s en lobby sospechoso.':'')});
+      // fav-star-everywhere-v1: estrella al lado del nombre del top killer
+      var _topKHtml=playerFavStar(topK,currentPlatform,'.7rem')+' <strong>'+esc(topK)+'</strong>';
+      alerts.push({type:atype,icon:aicon,title:'Top killer de la partida',detail:_topKHtml+' hizo '+topKills+' kills en esta partida.'+(topKills>=15?' Vigila que no est\u00e9s en lobby sospechoso.':'')});
     }
   }catch(e){}
   if(alerts.length===0)alerts.push({type:'good',icon:'\u2139\uFE0F',title:'Partida dentro de lo normal',detail:'No hay alertas relevantes \u2014 stats y ratios dentro de los rangos esperados para esta partida.'});
@@ -12840,7 +12900,8 @@ async function renderLeaderboard(){
       const rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
       const searchPlat=(entry.platforms&&entry.platforms.includes('PSN'))?'psn':(entry.platforms&&entry.platforms.includes('Xbox')?'xbox':'console');
       const platBadge=(entry.platforms&&entry.platforms.length>1)?'Ambas':(entry.platforms?entry.platforms[0]:'');
-      h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+esc(entry.name)+'</td>';
+      // fav-star-everywhere-v1: estrella inline antes del nombre en Top 500
+      h+='<tr style="'+(ik?'background:rgba(0,240,255,0.05);':'')+'"><td class="rc '+rc+'">'+rank+'</td><td class="pc" style="'+(ik?'color:var(--accent);font-weight:700;':'')+'" onclick="goToPlayer(\''+escJs(entry.name)+'\',\''+searchPlat+'\')">'+playerFavStar(entry.name,searchPlat,'.7rem')+'<span style="margin-left:4px;">'+esc(entry.name)+'</span></td>';
       h+='<td class="sc" style="font-size:.65rem;">'+platBadge+'</td>';
       h+='<td class="sc">'+(stats.kills||0)+'</td><td class="sc">'+(stats.wins||0)+'</td><td class="sc">'+kd+'</td><td class="sc">'+Math.round(stats.averageDamage||0)+'</td></tr>';
       rank++;
@@ -14741,8 +14802,91 @@ switchTab=function(t){
       }
       _hv2LoadMyProfile();
       _hv2LoadMyClan();
+      _hv2LoadFavPlayers();  // fav-players-block-v1
     } catch(e){ try { console.error('_hv2ShowLoggedPanel', e); } catch(_){} }
   }
+
+  // fav-players-block-v1: renderiza el bloque "Mis jugadores guardados" (opción C completa).
+  // Lee de la global `favorites` (pubg_favorites localStorage), agrupa por grupo,
+  // muestra tabs filtrables y un grid de cards. Reusa playerFavStar para el botón
+  // ⭐ y queda sincronizado con el resto de estrellas inyectadas en kill log,
+  // ranking, miembros, etc. vía updateAllPlayerFavStars().
+  var _hv2FavTab = 'all';  // grupo activo: 'all' | nombre del grupo
+  function _hv2LoadFavPlayers(){
+    var card = document.getElementById('hv2lFavPlayersCard');
+    if(!card) return;
+    var favs = (typeof favorites !== 'undefined' && Array.isArray(favorites)) ? favorites : [];
+    var countEl = document.getElementById('hv2lFavCount');
+    if(countEl) countEl.textContent = favs.length ? '· ' + favs.length : '';
+    card.style.display = '';
+    var emptyEl = document.getElementById('hv2lFavEmpty');
+    var tabsEl = document.getElementById('hv2lFavTabs');
+    var gridEl = document.getElementById('hv2lFavGrid');
+    if(!tabsEl || !gridEl || !emptyEl) return;
+    if(!favs.length){
+      tabsEl.innerHTML = '';
+      gridEl.innerHTML = '';
+      emptyEl.style.display = '';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    // Construir lista de grupos con count
+    var groups = (typeof FAV_GROUPS !== 'undefined' && Array.isArray(FAV_GROUPS)) ? FAV_GROUPS : ['Mi Squad','Rivales','Amigos','Seguimiento','Tramposos'];
+    var counts = { all: favs.length };
+    groups.forEach(function(g){ counts[g] = 0; });
+    favs.forEach(function(f){ if(f.group && counts.hasOwnProperty(f.group)) counts[f.group]++; });
+    // Render tabs
+    var tabsHtml = '<button class="hv2l-fav-tab' + (_hv2FavTab==='all'?' active tab-all':'') + '" data-favtab="all" type="button">Todos<span class="fav-tab-count">' + counts.all + '</span></button>';
+    groups.forEach(function(g){
+      var c = counts[g] || 0;
+      if(c === 0 && _hv2FavTab !== g) return;  // ocultar grupos vacíos salvo el activo
+      var slug = g.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+      var active = (_hv2FavTab === g);
+      tabsHtml += '<button class="hv2l-fav-tab tab-' + slug + (active?' active':'') + '" data-favtab="' + esc(g) + '" type="button">' + esc(g) + '<span class="fav-tab-count">' + c + '</span></button>';
+    });
+    tabsEl.innerHTML = tabsHtml;
+    // Filtrar favoritos según tab activa
+    var visibleFavs = (_hv2FavTab === 'all') ? favs : favs.filter(function(f){ return f.group === _hv2FavTab; });
+    if(!visibleFavs.length){
+      gridEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:14px;color:var(--text-dim);font-size:12px;">Sin jugadores en este grupo todavía.</div>';
+      return;
+    }
+    var maxShown = 8;
+    var shown = visibleFavs.slice(0, maxShown);
+    var html = shown.map(function(f){
+      var name = f.name || '';
+      var plat = (f.platform || 'psn').toLowerCase();
+      var initial = (name.charAt(0) || '?').toUpperCase();
+      var groupSlug = f.group ? f.group.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') : '';
+      var tagHtml = f.group ? '<span class="hv2l-fav-group-tag">' + esc(f.group) + '</span>' : '';
+      return '<div class="hv2l-fav-card' + (groupSlug?' group-'+groupSlug:'') + '" onclick="goToPlayer(\'' + escJs(name) + '\',\'' + plat + '\')">' +
+        tagHtml +
+        '<div class="hv2l-fav-top">' +
+          '<div class="hv2l-fav-avatar">' + esc(initial) + '</div>' +
+          '<div class="hv2l-fav-name">' + esc(name) + '</div>' +
+          '<span class="hv2l-fav-plat ' + (plat==='xbox'?'xbox':'') + '">' + (plat==='xbox'?'XBL':'PSN') + '</span>' +
+        '</div>' +
+        '<div class="hv2l-fav-action" onclick="event.stopPropagation();toggleFavorite(\'' + escJs(name) + '\',\'' + plat + '\',event);" title="Quitar de favoritos">★</div>' +
+      '</div>';
+    }).join('');
+    if(visibleFavs.length > maxShown){
+      html += '<div class="hv2l-fav-more" onclick="if(typeof switchTab===\'function\')switchTab(\'overview\');">+ ' + (visibleFavs.length - maxShown) + ' más</div>';
+    }
+    gridEl.innerHTML = html;
+  }
+  // Cambiar de tab
+  document.addEventListener('click', function(ev){
+    var t = ev.target.closest && ev.target.closest('[data-favtab]');
+    if(!t) return;
+    var which = t.getAttribute('data-favtab');
+    if(!which) return;
+    _hv2FavTab = which;
+    _hv2LoadFavPlayers();
+  });
+  // Refrescar el bloque cuando cambia favoritos (escuchamos a través del helper)
+  // Como toggleFavorite ya llama a updateAllPlayerFavStars, hookeamos también
+  // _hv2LoadFavPlayers ahí si está disponible. Ver el wrap más abajo.
+  window._hv2LoadFavPlayers = _hv2LoadFavPlayers;
 
   function _hv2LoadMyProfile(){
     var empty = document.getElementById('hv2lMpEmpty');
