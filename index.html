@@ -7074,6 +7074,12 @@ function switchTab(t){
     const pName=currentPlayerData.attributes?.name||currentPlayerData.id;
     history.pushState(null,'','/stats/'+currentPlatform+'/'+encodeURIComponent(pName));
     document.title='V4NZ — '+pName+' | PUBG '+currentPlatform.toUpperCase()+' Stats';
+  } else if(playerTabs.includes(t)&&!currentPlayerData){
+    // switchtab-overview-no-player-fix: el user pulsó "Jugador" del top-nav SIN tener
+    // un player cargado (ej: estaba en /compare → click en Jugador). Antes la URL
+    // no se actualizaba y quedaba "/compare" aunque visualmente apareciera la home.
+    history.pushState(null,'','/');
+    document.title='V4NZ — PUBG Console Stats Tracker';
   } else if(!playerTabs.includes(t)&&!location.pathname.startsWith('/clan/')){
     history.pushState(null,'','/');
     document.title='V4NZ — PUBG Console Stats Tracker';
