@@ -14258,9 +14258,17 @@ switchTab=function(t){
     var box = document.getElementById('cv2MyClan');
     var empty = document.getElementById('cv2EmptyClan');
     if(!box) return;
-    empty.style.display = 'none';
+    var tag = (clan && clan.tag) || '';
+    // cv2-myclan-empty-fallback-v1: si la response del endpoint /clans/:tag llega
+    // incompleta (sin tag), fallback al empty state. Antes salía un bloque roto
+    // con `[ ]` y todo a 0. Pasaba con clanes registrados sin snapshot agregado.
+    if(!tag){
+      box.style.display = 'none';
+      if(empty) empty.style.display = '';
+      return;
+    }
+    if(empty) empty.style.display = 'none';
     box.style.display = '';
-    var tag = clan.tag || '';
     var name = clan.name || tag;
     var lvl = clan.level || '?';
     var members = (typeof clan.active_members === 'number') ? clan.active_members
@@ -14269,7 +14277,10 @@ switchTab=function(t){
     var totalKills = clan.total_kills || 0;
     var avgKd = parseFloat(clan.avg_kd) || 0;
     var totalWins = clan.total_wins || 0;
-    var rankStr = rank ? ('#' + rank + ' en V4NZ') : 'sin ranking';
+    // cv2-myclan-pending-stats-v1: si el clan tiene tag y miembros pero las stats
+    // agregadas son todas 0, marcamos como "calculándose" en vez de mostrar 0 kills/0 wins
+    var statsPending = (totalKills === 0 && totalWins === 0 && avgKd === 0 && typeof members === 'number' && members > 0);
+    var rankStr = rank ? ('#' + rank + ' en V4NZ') : (statsPending ? 'stats calculándose...' : 'sin ranking');
     var initial = (tag.charAt(0) || '?').toUpperCase();
     box.innerHTML =
       '<span class="cv2-mc-ribbon">🎖️ TU CLAN</span>' +
@@ -14284,11 +14295,12 @@ switchTab=function(t){
         '</div>' +
       '</div>' +
       '<div class="cv2-mc-stats">' +
-        '<div class="cv2-mc-stat"><div class="v">' + _cv2Esc(_cv2Fmt(totalKills)) + '</div><div class="l">Kills</div></div>' +
-        '<div class="cv2-mc-stat"><div class="v">' + (avgKd ? avgKd.toFixed(2) : '-') + '</div><div class="l">K/D medio</div></div>' +
-        '<div class="cv2-mc-stat"><div class="v">' + _cv2Esc(_cv2Fmt(totalWins)) + '</div><div class="l">Victorias</div></div>' +
+        '<div class="cv2-mc-stat"><div class="v">' + (statsPending ? '—' : _cv2Esc(_cv2Fmt(totalKills))) + '</div><div class="l">Kills</div></div>' +
+        '<div class="cv2-mc-stat"><div class="v">' + (statsPending ? '—' : (avgKd ? avgKd.toFixed(2) : '-')) + '</div><div class="l">K/D medio</div></div>' +
+        '<div class="cv2-mc-stat"><div class="v">' + (statsPending ? '—' : _cv2Esc(_cv2Fmt(totalWins))) + '</div><div class="l">Victorias</div></div>' +
         '<div class="cv2-mc-stat"><div class="v">' + _cv2Esc(String(members)) + '</div><div class="l">Activos</div></div>' +
       '</div>' +
+      (statsPending ? '<div style="text-align:center;font-size:11px;color:var(--text-dim);margin:4px 0 8px;font-style:italic;">⏳ Las stats agregadas se calculan tras el primer snapshot diario. Vuelve en unas horas.</div>' : '') +
       '<div class="cv2-mc-ctas">' +
         '<button type="button" class="cv2-mc-cta primary" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + escJs(tag) + '\')">🛡️ Ver clan completo</button>' +
         '<button type="button" class="cv2-mc-cta" onclick="loadClanPage(\'' + escJs(tag) + '\');setTimeout(function(){var b=document.getElementById(\'aiClanBtn\');if(b)b.click();},700);">🤖 Analizar con IA</button>' +
