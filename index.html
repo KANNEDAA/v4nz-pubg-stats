@@ -232,6 +232,13 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: v
 /* HEADER */
 header { position: sticky; top: 0; z-index: 100; background: rgba(11,11,18,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0 2rem; }
 .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+/* header-no-sticky-desktop: en desktop el header NO se queda fijo al scroll —
+   robaba ~60px de pantalla sin valor añadido (el nav ya es accesible desde
+   cualquier sitio con teclado o volviendo arriba). En móvil sigue sticky porque
+   ahí lleva el buscador compacto que sí es útil tener siempre visible. */
+@media (min-width: 769px){
+  header { position: relative; }
+}
 /* topbar-mobile-search-v1: el buscador del header solo aparece en móvil. En desktop
    ya tenemos el hero con su buscador grande, no haría falta duplicar. */
 .topbar-search { display: none; }
