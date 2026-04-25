@@ -14081,9 +14081,9 @@ switchTab=function(t){
         '<div class="cv2-mc-stat"><div class="v">' + _cv2Esc(String(members)) + '</div><div class="l">Activos</div></div>' +
       '</div>' +
       '<div class="cv2-mc-ctas">' +
-        '<button type="button" class="cv2-mc-cta primary" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + _cv2Esc(tag) + '\')">🛡️ Ver clan completo</button>' +
-        '<button type="button" class="cv2-mc-cta" onclick="loadClanPage(\'' + _cv2Esc(tag) + '\');setTimeout(function(){var b=document.getElementById(\'aiClanBtn\');if(b)b.click();},700);">🤖 Analizar con IA</button>' +
-        '<button type="button" class="cv2-mc-cta" onclick="if(navigator.share)navigator.share({title:\'V4NZ \\u00b7 Clan ' + _cv2Esc(tag) + '\',url:location.origin+\'/clan/' + _cv2Esc(tag) + '\'});else navigator.clipboard.writeText(location.origin+\'/clan/' + _cv2Esc(tag) + '\').then(function(){alert(\'Enlace copiado\')})">🔗 Compartir</button>' +
+        '<button type="button" class="cv2-mc-cta primary" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + escJs(tag) + '\')">🛡️ Ver clan completo</button>' +
+        '<button type="button" class="cv2-mc-cta" onclick="loadClanPage(\'' + escJs(tag) + '\');setTimeout(function(){var b=document.getElementById(\'aiClanBtn\');if(b)b.click();},700);">🤖 Analizar con IA</button>' +
+        '<button type="button" class="cv2-mc-cta" onclick="if(navigator.share)navigator.share({title:\'V4NZ \\u00b7 Clan ' + escJs(tag) + '\',url:location.origin+\'/clan/' + escJs(tag) + '\'});else navigator.clipboard.writeText(location.origin+\'/clan/' + escJs(tag) + '\').then(function(){alert(\'Enlace copiado\')})">🔗 Compartir</button>' +
         '<button type="button" class="cv2-mc-cta danger" onclick="if(typeof clearMyClan===\'function\')clearMyClan();_cv2LoadMyClan();">✕ Quitar</button>' +
       '</div>';
   }
@@ -14141,7 +14141,7 @@ switchTab=function(t){
           '</div>' +
           '<div class="cv2-cc-meta"><span>cargando stats…</span></div>' +
         '</div>' +
-        '<div class="cv2-cc-actions"><button title="Quitar" onclick="event.stopPropagation();if(typeof toggleClanFavorite===\'function\')toggleClanFavorite(\'' + _cv2Esc(c.tag) + '\',\'' + _cv2Esc(c.name) + '\',\'' + _cv2Esc(c.platform||'console') + '\',event);_cv2LoadFavorites();">✕</button></div>' +
+        '<div class="cv2-cc-actions"><button title="Quitar" onclick="event.stopPropagation();if(typeof toggleClanFavorite===\'function\')toggleClanFavorite(\'' + escJs(c.tag) + '\',\'' + escJs(c.name) + '\',\'' + escJs(c.platform||'console') + '\',event);_cv2LoadFavorites();">✕</button></div>' +
       '</div>';
     }).join('');
 
@@ -14212,7 +14212,7 @@ switchTab=function(t){
           var isMe = myTag && c.tag && c.tag.toLowerCase() === myTag.toLowerCase();
           var members = c.active_members || c.member_count || '?';
           var kd = parseFloat(c.avg_kd) || 0;
-          return '<div class="cv2-rk-row" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + _cv2Esc(c.tag) + '\')">' +
+          return '<div class="cv2-rk-row" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + escJs(c.tag) + '\')">' +
             '<span class="cv2-rk-pos">' + (i+1) + '</span>' +
             '<span class="cv2-rk-name">[' + _cv2Esc(c.tag) + '] ' + _cv2Esc(c.name || c.tag) +
               (isMe ? ' <span class="cv2-cc-chip mine" style="margin-left:6px;">🛡️ MÍO</span>' : '') +
@@ -14776,9 +14776,10 @@ switchTab=function(t){
           +   '</div>'
           +   (rank ? '<div style="padding:3px 8px;background:rgba(255,215,0,.15);border-radius:12px;color:var(--accent-yellow);font-size:11px;font-weight:700;">' + rank + '</div>' : '')
           + '</div>'
+          // audit-fixes-v1: escJs en lugar de _hv2Esc + querySelector apunta a requestAiClanDna (no analyzeClanWithAI inexistente)
           + '<div style="display:flex;gap:6px;margin-top:10px;">'
-          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + _hv2Esc(tag) + '\');" style="flex:1;">Radiograf\u00eda</button>'
-          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + _hv2Esc(tag) + '\');setTimeout(function(){var b=document.querySelector(\'[onclick*=analyzeClanWithAI]\');if(b)b.click();},400);" style="flex:1;border-color:rgba(168,85,247,.35);color:var(--accent-purple);">Analizar IA</button>'
+          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + escJs(tag) + '\');" style="flex:1;">Radiograf\u00eda</button>'
+          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + escJs(tag) + '\');setTimeout(function(){var b=document.querySelector(\'[onclick*=requestAiClanDna]\');if(b)b.click();},400);" style="flex:1;border-color:rgba(168,85,247,.35);color:var(--accent-purple);">Analizar IA</button>'
           + '</div>';
       })
       .catch(function(){ if(empty) empty.style.display=''; });
