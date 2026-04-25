@@ -232,6 +232,9 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: v
 /* HEADER */
 header { position: sticky; top: 0; z-index: 100; background: rgba(11,11,18,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0 2rem; }
 .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+/* topbar-mobile-search-v1: el buscador del header solo aparece en móvil. En desktop
+   ya tenemos el hero con su buscador grande, no haría falta duplicar. */
+.topbar-search { display: none; }
 .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
 .logo-area img { height: 44px; width: auto; border-radius: 8px; filter: drop-shadow(0 0 8px rgba(0,240,255,0.4)); }
 .logo-fallback { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 10px rgba(0,240,255,0.5)); }
@@ -2719,6 +2722,22 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
   }
   /* cleanup-v200: .hamburger ya eliminado. Mantener #mainNav display:none para ocultar nav desktop en móvil (bottom-nav lo reemplaza). */
   #mainNav { display: none !important; }
+  /* topbar-mobile-search-v1: en móvil/tablet el header pasa a fila compacta:
+     logo cuadrado + buscador (flex:1) + auth pill + tema. Inspirado en tracker.gg.
+     Permite buscar otro jugador desde cualquier pantalla sin volver a home. */
+  .header-inner { flex-direction: row !important; height: 56px !important; padding: 0 !important; gap: 8px; align-items: center; }
+  .logo-area { gap: 8px; flex-shrink: 0; }
+  .logo-area .logo-text, .logo-area .logo-sub { display: none; }
+  .logo-area #logoContainer { width: 38px !important; height: 38px !important; }
+  .logo-area #logoContainer img { width: 34px !important; height: 34px !important; }
+  .topbar-search { display: flex !important; flex: 1 1 auto; min-width: 0; align-items: center; gap: 6px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 6px 12px; height: 38px; }
+  .topbar-search-icon { font-size: .9rem; color: var(--text-dim); flex-shrink: 0; }
+  .topbar-search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text-primary); font-size: 16px; font-family: inherit; padding: 0; }
+  .topbar-search input::placeholder { color: var(--text-dim); font-size: 14px; }
+  .topbar-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+  /* Auth + tema más compactos en móvil para dejar sitio al buscador */
+  .auth-btn { padding: 6px 10px !important; font-size: .65rem !important; min-height: 36px; flex-shrink: 0; }
+  .theme-toggle { width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; padding: 0 !important; flex-shrink: 0; }
   /* Add bottom padding to main content so nothing hides behind bottom nav */
   main { padding-bottom: 64px !important; }
   /* Adjust fixed popups to account for bottom nav */
@@ -3877,6 +3896,14 @@ body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
       <a href="#" data-tab="ranking">Ranking</a>
       <a href="#" data-tab="compare">Comparar</a>
     </nav>
+    <!-- topbar-mobile-search-v1: buscador compacto en el header solo en móvil.
+         Inspirado en tracker.gg — siempre visible al hacer scroll, permite buscar
+         a otro jugador desde cualquier pantalla sin volver a home. En desktop está
+         oculto (el hero ya tiene su buscador grande). -->
+    <div class="topbar-search" role="search">
+      <span class="topbar-search-icon" aria-hidden="true">&#x1F50D;</span>
+      <input type="search" id="topbarSearchInput" placeholder="Buscar jugador..." aria-label="Buscar jugador" autocomplete="off" />
+    </div>
     <div style="display:flex;align-items:center;gap:6px;">
       <button class="auth-btn" id="authHeaderBtn" onclick="openAuthPopup()" aria-label="Iniciar sesión con Discord">Iniciar Sesi&oacute;n</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">&#x1F319;</button>
@@ -14371,6 +14398,30 @@ switchTab=function(t){
   window._cv2SwitchTab = _cv2SwitchTab;
 })();
 // CLANS-V2-JS END
+
+// TOPBAR-MOBILE-SEARCH-JS START (topbar-mobile-search-v1) — buscador del header en móvil
+(function(){
+  var inp = document.getElementById('topbarSearchInput');
+  if(!inp) return;
+  function go(){
+    var q = (inp.value || '').trim();
+    if(!q){ inp.focus(); return; }
+    // Sincronizar con el input grande del hero (searchPlayer lee del DOM)
+    var si = document.getElementById('searchInput');
+    if(si) si.value = q;
+    if(typeof searchPlayer === 'function'){ searchPlayer(); }
+    else { location.href = '/stats/psn/' + encodeURIComponent(q); }
+    inp.blur();  // cierra el teclado en móvil
+  }
+  inp.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); go(); }
+  });
+  // Limpiar el input al volver a home (para que no quede el último jugador buscado)
+  window.addEventListener('popstate', function(){
+    if(location.pathname === '/' || location.pathname === '') inp.value = '';
+  });
+})();
+// TOPBAR-MOBILE-SEARCH-JS END
 
 // HOME-V2-JS START (sesión 44g) — interacciones de los bloques nuevos de la home anónima
 (function(){
