@@ -3665,6 +3665,132 @@ body.pv2-active #pv2StatsSection:has(#pv2StatGrid[data-state="empty"]) .pv2-mode
   body.pv2-active .pv2-hero-ctas{display:none!important}
 }
 /* player-v2-polish-1 END */
+
+/* ══════════════════════════════════════════════════════════════════════
+   CLANS V2 (clans-v2-css) — rediseño /clans según mockup v2.1
+   Activación: body.cv2-active. Sin esa clase, el wrapper queda oculto y
+   el contenido viejo (search-mode/compare/analysis) renderiza igual que antes.
+   ══════════════════════════════════════════════════════════════════════ */
+body.cv2-active #clansV2Wrap{display:block!important}
+body.cv2-active #panel-clans > .section-title:first-of-type,
+body.cv2-active #panel-clans > p:first-of-type,
+body.cv2-active #panel-clans > .clan-mode-tabs,
+body.cv2-active #clanSearchMode{display:none!important}
+/* Compare/Analysis viejos se controlan vía sub-tabs del wrapper:
+   los oculto por defecto, los nuevos sub-tabs los muestran */
+body.cv2-active #clanCompareMode,
+body.cv2-active #clanAnalysisMode{display:none}
+body.cv2-active.cv2-show-compare #clanCompareMode{display:block!important}
+body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
+
+.cv2-wrap{color:var(--text-primary)}
+.cv2-header{padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.cv2-page-title{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;letter-spacing:1px;margin-bottom:4px}
+.cv2-page-sub{color:var(--text-dim);font-size:13px;margin-bottom:14px}
+
+/* Sub-tabs */
+.cv2-subtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:8px}
+.cv2-subtabs::-webkit-scrollbar{display:none}
+.cv2-subtab{background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .15s}
+.cv2-subtab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.cv2-subtab:hover:not(.active){border-color:var(--border-strong,#3a4668);color:var(--text-primary)}
+
+/* Panels */
+.cv2-panel{display:none}
+.cv2-panel.active{display:block}
+
+/* HERO Mi Clan */
+.cv2-my-clan{margin-top:6px;background:linear-gradient(135deg,var(--bg-secondary,#131829),var(--bg-card,#1c2340));border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:16px;padding:18px;position:relative;overflow:hidden}
+.cv2-my-clan::before{content:'';position:absolute;top:-20%;right:-10%;width:300px;height:300px;background:radial-gradient(circle,rgba(245,213,71,.12),transparent 70%);pointer-events:none}
+.cv2-mc-ribbon{display:inline-block;background:linear-gradient(135deg,var(--accent),#ff9f43);color:#000;padding:3px 10px;border-radius:999px;font-weight:800;font-size:10px;letter-spacing:1px;margin-bottom:12px}
+.cv2-mc-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.cv2-mc-avatar{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#ff9f43);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:20px;color:#000;flex-shrink:0}
+.cv2-mc-ident{flex:1;min-width:0}
+.cv2-mc-ident h2{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;letter-spacing:1px;line-height:1.1}
+.cv2-mc-sub{font-size:12px;color:var(--text-dim);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cv2-mc-rank{display:inline-flex;align-items:center;gap:6px;background:rgba(245,213,71,.15);border:1px solid rgba(245,213,71,.35);color:var(--accent);padding:3px 10px;border-radius:999px;font-weight:800;font-size:12px}
+.cv2-mc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media (max-width:600px){.cv2-mc-stats{grid-template-columns:repeat(2,1fr)}}
+.cv2-mc-stat{background:rgba(10,14,26,.5);border:1px solid var(--border);padding:10px;border-radius:12px;text-align:center}
+.cv2-mc-stat .v{font-family:'Orbitron',sans-serif;font-size:19px;font-weight:900}
+.cv2-mc-stat .l{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.cv2-mc-ctas{display:flex;gap:8px;flex-wrap:wrap}
+.cv2-mc-cta{flex:1;min-width:120px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--bg-card);border:1px solid var(--border);padding:10px 14px;border-radius:12px;font-size:12px;font-weight:700;color:var(--text-primary);min-height:40px;cursor:pointer;transition:all .15s}
+.cv2-mc-cta:hover{filter:brightness(1.1)}
+.cv2-mc-cta.primary{background:linear-gradient(135deg,var(--accent),#ff9f43);color:#000;border:0}
+.cv2-mc-cta.danger{color:#ff5757;border-color:rgba(255,87,87,.3)}
+
+/* Empty Mi Clan */
+.cv2-empty-clan{background:var(--bg-secondary,#131829);border:1px dashed rgba(245,213,71,.3);border-radius:14px;padding:22px;text-align:center;margin-top:6px}
+.cv2-em-title{font-weight:700;color:var(--text-primary);margin-bottom:6px}
+.cv2-em-sub{font-size:12px;color:var(--text-dim);margin-bottom:12px}
+.cv2-em-cta{background:linear-gradient(135deg,var(--accent),#ff9f43);color:#000;padding:10px 18px;border-radius:10px;border:0;font-weight:700;font-size:13px;cursor:pointer}
+
+/* Discord CTA */
+.cv2-discord{display:flex;align-items:center;gap:12px;margin-top:14px;background:linear-gradient(135deg,rgba(88,101,242,.12),rgba(88,101,242,.04));border:1px solid rgba(88,101,242,.35);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--text-primary)}
+.cv2-dc-icon{font-size:22px;color:#5865f2}
+.cv2-dc-body{flex:1}
+.cv2-dc-title{font-weight:700;font-size:13px}
+.cv2-dc-sub{font-size:11px;color:var(--text-dim);margin-top:2px}
+.cv2-dc-btn{background:#5865f2;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;font-size:11px}
+
+/* Sections */
+.cv2-section{padding:18px 0 0}
+.cv2-section-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+
+/* Grid de clanes */
+.cv2-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:700px){.cv2-grid{grid-template-columns:1fr 1fr}}
+.cv2-empty-fav{grid-column:1/-1;text-align:center;font-size:12px;color:var(--text-dim);padding:18px;font-style:italic}
+
+/* Clan card */
+.cv2-card{background:var(--bg-secondary,#131829);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;transition:all .2s;cursor:pointer}
+.cv2-card:hover{transform:translateY(-2px);border-color:var(--border-strong,#3a4668)}
+.cv2-card.tier-elite:hover{box-shadow:0 0 0 1px var(--accent),0 8px 24px rgba(245,213,71,.15)}
+.cv2-card.tier-high:hover{box-shadow:0 0 0 1px #5fd97f,0 8px 24px rgba(95,217,127,.15)}
+.cv2-card.tier-mid:hover{box-shadow:0 0 0 1px #00f0ff,0 8px 24px rgba(0,240,255,.15)}
+.cv2-cc-tag{flex-shrink:0;width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border)}
+.cv2-card.tier-elite .cv2-cc-tag{background:linear-gradient(135deg,rgba(245,213,71,.15),rgba(255,159,67,.1));color:var(--accent);border-color:rgba(245,213,71,.3)}
+.cv2-card.tier-high .cv2-cc-tag{background:rgba(95,217,127,.12);color:#5fd97f;border-color:rgba(95,217,127,.3)}
+.cv2-card.tier-mid .cv2-cc-tag{background:rgba(0,240,255,.08);color:#00f0ff;border-color:rgba(0,240,255,.2)}
+.cv2-card.tier-low .cv2-cc-tag{background:var(--bg-card);color:var(--text-dim);border-color:var(--border)}
+.cv2-cc-body{flex:1;min-width:0}
+.cv2-cc-name{font-family:'Orbitron',sans-serif;font-weight:800;font-size:14px;margin-bottom:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cv2-cc-chip{display:inline-flex;padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.cv2-cc-chip.elite{background:rgba(245,213,71,.2);color:var(--accent)}
+.cv2-cc-chip.high{background:rgba(95,217,127,.2);color:#5fd97f}
+.cv2-cc-chip.mid{background:rgba(0,240,255,.15);color:#00f0ff}
+.cv2-cc-chip.low{background:var(--bg-card);color:var(--text-dim)}
+.cv2-cc-chip.fav{background:rgba(245,213,71,.15);color:var(--accent)}
+.cv2-cc-chip.recent{background:rgba(74,158,255,.15);color:#4a9eff}
+.cv2-cc-chip.mine{background:rgba(180,122,255,.15);color:#b47aff}
+.cv2-cc-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text-dim)}
+.cv2-cc-meta strong{color:var(--text-primary);font-weight:700}
+.cv2-cc-actions{display:flex;flex-direction:column;gap:3px}
+.cv2-cc-actions button{background:transparent;border:0;color:var(--text-dim);cursor:pointer;padding:3px 5px;border-radius:4px;font-size:13px}
+.cv2-cc-actions button:hover{background:var(--bg-card);color:var(--accent)}
+
+/* Search */
+.cv2-search-box{background:var(--bg-secondary,#131829);border:1px solid var(--border);border-radius:14px;padding:16px}
+.cv2-search-tabs{display:flex;gap:6px;margin-bottom:12px}
+.cv2-search-tabs button{flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer}
+.cv2-search-tabs button.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.cv2-search-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.cv2-search-input{flex:1;min-width:200px;background:var(--bg-primary,#0a0e1a);border:1px solid var(--border-strong,#3a4668);color:var(--text-primary);padding:12px 14px;border-radius:10px;font-size:14px;outline:none}
+.cv2-search-input:focus{border-color:var(--accent)}
+.cv2-search-btn{background:linear-gradient(135deg,var(--accent),#ff9f43);color:#000;padding:12px 22px;border:0;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer}
+.cv2-search-hint{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5}
+.cv2-search-hint strong{color:var(--accent)}
+
+/* Ranking embed */
+.cv2-ranking-embed{background:var(--bg-secondary,#131829);border:1px solid var(--border);border-radius:14px;padding:14px}
+.cv2-rk-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.cv2-rk-row:last-child{border-bottom:0}
+.cv2-rk-row:hover{background:var(--bg-card)}
+.cv2-rk-pos{width:30px;font-family:'Orbitron',sans-serif;font-weight:900;color:var(--accent);text-align:center}
+.cv2-rk-name{flex:1;font-weight:700;font-size:13px}
+.cv2-rk-stat{color:var(--text-dim);font-size:11px}
+/* clans-v2-css END */
 </style>
 </head>
 <body>
@@ -4359,6 +4485,79 @@ body.pv2-active #pv2StatsSection:has(#pv2StatGrid[data-state="empty"]) .pv2-mode
     </div>
   </div>
   <div class="panel" id="panel-clans">
+    <!-- clans-v2-markup: wrapper rediseñado de /clans (mockup v2.1).
+         Feature flag: body.cv2-active. Sin esa clase, el wrapper #clansV2Wrap
+         está oculto y el contenido viejo (section-title + tabs Buscar/Comparar/Análisis)
+         renderiza normal. Compare y Análisis VIEJOS (#clanCompareMode, #clanAnalysisMode)
+         se mantienen y los nuevos sub-tabs los activan vía setClanMode(). -->
+    <div id="clansV2Wrap" class="cv2-wrap" style="display:none;">
+      <header class="cv2-header">
+        <h1 class="cv2-page-title">&#x1F6E1;&#xFE0F; CLANES</h1>
+        <p class="cv2-page-sub">Gestiona tu clan, sigue otros, descubre la liga V4NZ.</p>
+        <nav class="cv2-subtabs" role="tablist" aria-label="Modos de Clanes">
+          <button type="button" class="cv2-subtab active" data-cv2tab="feed">&#x2728; Mi feed</button>
+          <button type="button" class="cv2-subtab" data-cv2tab="search">&#x1F50D; Buscar</button>
+          <button type="button" class="cv2-subtab" data-cv2tab="compare">&#x2696;&#xFE0F; Comparar</button>
+          <button type="button" class="cv2-subtab" data-cv2tab="analysis">&#x1F9E0; An&aacute;lisis</button>
+          <button type="button" class="cv2-subtab" data-cv2tab="ranking">&#x1F3C6; Ranking</button>
+        </nav>
+      </header>
+
+      <!-- TAB Mi feed -->
+      <section class="cv2-panel active" data-cv2tab="feed">
+        <div class="cv2-my-clan" id="cv2MyClan" style="display:none;"></div>
+        <div class="cv2-empty-clan" id="cv2EmptyClan" style="display:none;">
+          <div class="cv2-em-title">&#x1F6E1;&#xFE0F; A&uacute;n no has marcado tu clan</div>
+          <div class="cv2-em-sub">B&uacute;scate a ti mismo y detectaremos tu clan autom&aacute;ticamente.</div>
+          <button type="button" class="cv2-em-cta" onclick="if(typeof openAuthPopup==='function')openAuthPopup()">&#x1F50D; Buscar mi jugador</button>
+        </div>
+        <a class="cv2-discord" href="https://discord.gg/dTdcvHs2kg" target="_blank" rel="noopener">
+          <span class="cv2-dc-icon">&#x1F4AC;</span>
+          <div class="cv2-dc-body">
+            <div class="cv2-dc-title">&iquest;Quieres unirte al clan V4NZ?</div>
+            <div class="cv2-dc-sub">Entra a nuestro Discord y solicita plaza con tu gamertag.</div>
+          </div>
+          <span class="cv2-dc-btn">ENTRAR</span>
+        </a>
+        <div class="cv2-section">
+          <div class="cv2-section-title">
+            <span>&#x2B50; CLANES GUARDADOS <span id="cv2FavCount" style="color:var(--text-dim);font-weight:400"></span></span>
+          </div>
+          <div class="cv2-grid" id="cv2FavGrid"><div class="cv2-empty-fav">A&uacute;n no has guardado clanes. B&uacute;scalos en la pesta&ntilde;a Buscar.</div></div>
+        </div>
+      </section>
+
+      <!-- TAB Buscar -->
+      <section class="cv2-panel" data-cv2tab="search" hidden>
+        <div class="cv2-search-box">
+          <div class="cv2-search-tabs">
+            <button type="button" class="active" id="cv2SearchByName" onclick="if(typeof setClanSearchTab==='function')setClanSearchTab('name'); _cv2HighlightSearchTab('name');">&#x1F6E1;&#xFE0F; Por nombre</button>
+            <button type="button" id="cv2SearchByPlayer" onclick="if(typeof setClanSearchTab==='function')setClanSearchTab('player'); _cv2HighlightSearchTab('player');">&#x1F464; Por gamertag</button>
+          </div>
+          <div class="cv2-search-row">
+            <input type="text" class="cv2-search-input" id="cv2SearchInput" placeholder="Tag o nombre del clan (ej. V4NZ, AVANZA, JOJO...)" />
+            <button type="button" class="cv2-search-btn" onclick="_cv2DoSearch()">BUSCAR</button>
+          </div>
+          <div class="cv2-search-hint">
+            &#x1F4A1; Si no encuentro un clan con ese nombre, <strong>busco autom&aacute;ticamente como gamertag</strong> y te llevo a su clan.
+          </div>
+        </div>
+        <!-- Results: cv2 reutiliza los containers viejos #clanResults y #clanNameResults -->
+        <div id="cv2SearchResults" style="margin-top:14px;"></div>
+      </section>
+
+      <!-- TAB Ranking embed -->
+      <section class="cv2-panel" data-cv2tab="ranking" hidden>
+        <div class="cv2-ranking-embed" id="cv2RankingEmbed">
+          <div style="text-align:center;color:var(--text-dim);padding:20px;">Cargando ranking...</div>
+        </div>
+      </section>
+
+      <!-- TAB Comparar / Análisis no tienen panel propio:
+           al clicar el sub-tab, se activan los modos viejos #clanCompareMode / #clanAnalysisMode -->
+    </div>
+    <!-- /clans-v2-markup -->
+
     <div class="section-title">Clanes de Consola</div>
     <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px;">Busca el clan de cualquier jugador. Si el clan ya esta registrado, veras a todos sus miembros con stats.</p>
     <div class="clan-mode-tabs">
@@ -13725,6 +13924,342 @@ switchTab=function(t){
   window._pv2Enabled = _pv2Enabled;
 })();
 // PLAYER-V2-JS END
+
+// CLANS-V2-JS START (clans-v2-js) — rediseño /clans según mockup v2.1
+// Activa con ?cv2=1 (default), desactiva con ?cv2=0. Convive con compare/analysis viejos.
+(function(){
+  function _cv2Enabled(){
+    try {
+      if(/(?:^|[?&])cv2=(1|true|on)\b/i.test(location.search)){ try{localStorage.removeItem('v4nz_cv2_off');}catch(e){} return true; }
+      if(/(?:^|[?&])cv2=(0|false|off)\b/i.test(location.search)){ try{localStorage.setItem('v4nz_cv2_off','1');}catch(e){} return false; }
+      return localStorage.getItem('v4nz_cv2_off') !== '1';
+    } catch(e){ return true; }
+  }
+  function _cv2Esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function _cv2Tier(kd){
+    var v = parseFloat(kd) || 0;
+    if(v >= 2.0) return 'elite';
+    if(v >= 1.5) return 'high';
+    if(v >= 1.0) return 'mid';
+    return 'low';
+  }
+  function _cv2TierLabel(t){ return ({elite:'ELITE', high:'ALTO', mid:'MEDIO', low:'BAJO'})[t] || ''; }
+
+  // Ranking interno V4NZ — cargado una vez para resolver posición de cada clan
+  var _cv2LeaderboardCache = null;
+  var _cv2LeaderboardPromise = null;
+  function _cv2GetLeaderboard(){
+    if(_cv2LeaderboardCache) return Promise.resolve(_cv2LeaderboardCache);
+    if(_cv2LeaderboardPromise) return _cv2LeaderboardPromise;
+    _cv2LeaderboardPromise = fetch('/clans/leaderboard?sort=kills&limit=100', { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(arr){ _cv2LeaderboardCache = Array.isArray(arr) ? arr : (arr && arr.clans) || []; return _cv2LeaderboardCache; })
+      .catch(function(){ _cv2LeaderboardCache = []; return []; });
+    return _cv2LeaderboardPromise;
+  }
+  function _cv2RankOf(tag, lb){
+    if(!lb || !lb.length) return null;
+    var idx = lb.findIndex(function(c){ return (c.tag||'').toLowerCase() === (tag||'').toLowerCase(); });
+    return idx >= 0 ? (idx + 1) : null;
+  }
+
+  // ── HERO Mi Clan ──
+  function _cv2LoadMyClan(){
+    var box = document.getElementById('cv2MyClan');
+    var empty = document.getElementById('cv2EmptyClan');
+    if(!box || !empty) return;
+    var gt = '';
+    try { if(typeof currentUser !== 'undefined' && currentUser && currentUser.gamertag) gt = currentUser.gamertag; } catch(e){}
+
+    function showEmpty(){ box.style.display = 'none'; empty.style.display = ''; }
+
+    if(!gt){ showEmpty(); return; }
+
+    fetch('/api/player-clan?name=' + encodeURIComponent(gt), { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(!d || !d.tag){ showEmpty(); return null; }
+        return Promise.all([
+          fetch('/clans/' + encodeURIComponent(d.tag), { credentials:'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }),
+          _cv2GetLeaderboard()
+        ]).then(function(res){
+          var clan = res[0]; var lb = res[1];
+          if(!clan){ showEmpty(); return; }
+          _cv2RenderHero(clan, _cv2RankOf(clan.tag, lb));
+        });
+      })
+      .catch(function(){ showEmpty(); });
+  }
+
+  function _cv2RenderHero(clan, rank){
+    var box = document.getElementById('cv2MyClan');
+    var empty = document.getElementById('cv2EmptyClan');
+    if(!box) return;
+    empty.style.display = 'none';
+    box.style.display = '';
+    var tag = clan.tag || '';
+    var name = clan.name || tag;
+    var lvl = clan.level || '?';
+    var members = (typeof clan.active_members === 'number') ? clan.active_members
+                 : (typeof clan.member_count === 'number') ? clan.member_count
+                 : (Array.isArray(clan.members) ? clan.members.length : '?');
+    var totalKills = clan.total_kills || 0;
+    var avgKd = parseFloat(clan.avg_kd) || 0;
+    var totalWins = clan.total_wins || 0;
+    var rankStr = rank ? ('#' + rank + ' en V4NZ') : 'sin ranking';
+    var initial = (tag.charAt(0) || '?').toUpperCase();
+    box.innerHTML =
+      '<span class="cv2-mc-ribbon">🎖️ TU CLAN</span>' +
+      '<div class="cv2-mc-head">' +
+        '<div class="cv2-mc-avatar">' + _cv2Esc(initial) + '</div>' +
+        '<div class="cv2-mc-ident">' +
+          '<h2>[' + _cv2Esc(tag) + '] ' + _cv2Esc(name) + '</h2>' +
+          '<div class="cv2-mc-sub">' +
+            '<span class="cv2-mc-rank">🏆 ' + _cv2Esc(rankStr) + '</span>' +
+            '<span>· Nivel ' + _cv2Esc(String(lvl)) + ' · ' + _cv2Esc(String(members)) + ' miembros</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cv2-mc-stats">' +
+        '<div class="cv2-mc-stat"><div class="v">' + _cv2Esc(_cv2Fmt(totalKills)) + '</div><div class="l">Kills</div></div>' +
+        '<div class="cv2-mc-stat"><div class="v">' + (avgKd ? avgKd.toFixed(2) : '-') + '</div><div class="l">K/D medio</div></div>' +
+        '<div class="cv2-mc-stat"><div class="v">' + _cv2Esc(_cv2Fmt(totalWins)) + '</div><div class="l">Victorias</div></div>' +
+        '<div class="cv2-mc-stat"><div class="v">' + _cv2Esc(String(members)) + '</div><div class="l">Activos</div></div>' +
+      '</div>' +
+      '<div class="cv2-mc-ctas">' +
+        '<button type="button" class="cv2-mc-cta primary" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + _cv2Esc(tag) + '\')">🛡️ Ver clan completo</button>' +
+        '<button type="button" class="cv2-mc-cta" onclick="loadClanPage(\'' + _cv2Esc(tag) + '\');setTimeout(function(){var b=document.getElementById(\'aiClanBtn\');if(b)b.click();},700);">🤖 Analizar con IA</button>' +
+        '<button type="button" class="cv2-mc-cta" onclick="if(navigator.share)navigator.share({title:\'V4NZ \\u00b7 Clan ' + _cv2Esc(tag) + '\',url:location.origin+\'/clan/' + _cv2Esc(tag) + '\'});else navigator.clipboard.writeText(location.origin+\'/clan/' + _cv2Esc(tag) + '\').then(function(){alert(\'Enlace copiado\')})">🔗 Compartir</button>' +
+        '<button type="button" class="cv2-mc-cta danger" onclick="if(typeof clearMyClan===\'function\')clearMyClan();_cv2LoadMyClan();">✕ Quitar</button>' +
+      '</div>';
+  }
+
+  function _cv2Fmt(n){
+    n = Number(n) || 0;
+    if(n >= 1000) return (n/1000).toFixed(1).replace(/\.0$/,'') + 'K';
+    return String(n);
+  }
+
+  // ── Clanes guardados — unifica favoritos + historial ──
+  function _cv2LoadFavorites(){
+    var grid = document.getElementById('cv2FavGrid');
+    var count = document.getElementById('cv2FavCount');
+    if(!grid) return;
+    var favs = []; var hist = [];
+    try { favs = JSON.parse(localStorage.getItem('pubg_clan_favorites') || '[]') || []; } catch(e){}
+    try { hist = JSON.parse(localStorage.getItem('pubg_clan_history') || '[]') || []; } catch(e){}
+    // Unificar dedupe por tag, marcar tipo
+    var seen = {};
+    var combined = [];
+    favs.forEach(function(f){
+      if(!f || !f.tag || seen[f.tag.toLowerCase()]) return;
+      seen[f.tag.toLowerCase()] = true;
+      combined.push({tag: f.tag, name: f.name || f.tag, platform: f.platform, isFav: true, isRecent: false, group: f.group || ''});
+    });
+    hist.forEach(function(h){
+      if(!h || !h.tag || seen[h.tag.toLowerCase()]) return;
+      seen[h.tag.toLowerCase()] = true;
+      combined.push({tag: h.tag, name: h.name || h.tag, platform: h.platform, isFav: false, isRecent: true});
+    });
+    // Excluir Mi Clan (ya está en hero)
+    try {
+      var gt = currentUser && currentUser.gamertag;
+      if(gt) {
+        // No fácil saber el tag del Mi Clan aquí sin fetch; el render no lo excluye, no es crítico
+      }
+    } catch(e){}
+    if(count) count.textContent = combined.length ? '· ' + combined.length : '';
+    if(!combined.length){
+      grid.innerHTML = '<div class="cv2-empty-fav">Aún no has guardado clanes. Búscalos en la pestaña Buscar.</div>';
+      return;
+    }
+
+    // Limitar a 20 para no abrumar y reducir requests
+    var slice = combined.slice(0, 20);
+    grid.innerHTML = slice.map(function(c, i){
+      return '<div class="cv2-card tier-mid" data-cv2-fav-tag="' + _cv2Esc(c.tag) + '" data-idx="' + i + '">' +
+        '<div class="cv2-cc-tag">' + _cv2Esc(c.tag) + '</div>' +
+        '<div class="cv2-cc-body">' +
+          '<div class="cv2-cc-name">' + _cv2Esc(c.name) +
+            (c.isFav ? '<span class="cv2-cc-chip fav">★ FAV</span>' : '') +
+            (c.isRecent ? '<span class="cv2-cc-chip recent">🕐 RECIENTE</span>' : '') +
+            (c.group ? '<span class="cv2-cc-chip" style="background:rgba(255,107,165,.12);color:#ff6ba5">' + _cv2Esc(c.group.toUpperCase()) + '</span>' : '') +
+          '</div>' +
+          '<div class="cv2-cc-meta"><span>cargando stats…</span></div>' +
+        '</div>' +
+        '<div class="cv2-cc-actions"><button title="Quitar" onclick="event.stopPropagation();if(typeof toggleClanFavorite===\'function\')toggleClanFavorite(\'' + _cv2Esc(c.tag) + '\',\'' + _cv2Esc(c.name) + '\',\'' + _cv2Esc(c.platform||'console') + '\',event);_cv2LoadFavorites();">✕</button></div>' +
+      '</div>';
+    }).join('');
+
+    // Click row → loadClanPage
+    grid.querySelectorAll('.cv2-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        var tag = card.getAttribute('data-cv2-fav-tag');
+        if(tag && typeof loadClanPage === 'function') loadClanPage(tag);
+      });
+    });
+
+    // Cargar stats reales para cada clan en paralelo
+    _cv2GetLeaderboard().then(function(lb){
+      slice.forEach(function(c, i){
+        fetch('/clans/' + encodeURIComponent(c.tag), { credentials:'same-origin' })
+          .then(function(r){ return r.ok ? r.json() : null; })
+          .then(function(clan){
+            if(!clan) return;
+            var card = grid.querySelector('[data-idx="' + i + '"]');
+            if(!card) return;
+            var kd = parseFloat(clan.avg_kd) || 0;
+            var tier = _cv2Tier(kd);
+            card.classList.remove('tier-mid');
+            card.classList.add('tier-' + tier);
+            // Tier chip antes del FAV chip
+            var nameEl = card.querySelector('.cv2-cc-name');
+            if(nameEl){
+              var tierChip = '<span class="cv2-cc-chip ' + tier + '">' + _cv2TierLabel(tier) + '</span>';
+              // Insertar tras el nombre, antes de los chips fav/recent
+              var firstChip = nameEl.querySelector('.cv2-cc-chip');
+              if(firstChip){
+                firstChip.insertAdjacentHTML('beforebegin', tierChip);
+              } else {
+                nameEl.insertAdjacentHTML('beforeend', tierChip);
+              }
+            }
+            var members = (typeof clan.active_members === 'number') ? clan.active_members
+                         : (Array.isArray(clan.members) ? clan.members.length : '?');
+            var rank = _cv2RankOf(c.tag, lb);
+            var meta = card.querySelector('.cv2-cc-meta');
+            if(meta){
+              meta.innerHTML =
+                '<span>👥 <strong>' + _cv2Esc(String(members)) + '</strong></span>' +
+                '<span>K/D <strong>' + (kd ? kd.toFixed(2) : '-') + '</strong></span>' +
+                (rank ? '<span>🏆 <strong>#' + rank + '</strong></span>' : '');
+            }
+          })
+          .catch(function(){});
+      });
+    });
+  }
+
+  // ── Ranking embed (top 5 clanes V4NZ) ──
+  function _cv2LoadRankingEmbed(){
+    var box = document.getElementById('cv2RankingEmbed');
+    if(!box) return;
+    _cv2GetLeaderboard().then(function(lb){
+      if(!lb.length){ box.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:18px;">No hay datos de ranking todavía.</div>'; return; }
+      var top = lb.slice(0, 10);
+      var myTag = '';
+      try { if(typeof myClan !== 'undefined' && myClan && myClan.tag) myTag = myClan.tag; } catch(e){}
+      box.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+          '<span style="font-family:Orbitron,sans-serif;font-weight:800;font-size:14px;">🏆 TOP CLANES V4NZ</span>' +
+          '<a href="/ranking" onclick="event.preventDefault();if(typeof Router!==\'undefined\')Router.navigate(\'/ranking\');else location.href=\'/ranking\'" style="font-size:12px;color:var(--accent);font-weight:700;">ver completo →</a>' +
+        '</div>' +
+        top.map(function(c, i){
+          var isMe = myTag && c.tag && c.tag.toLowerCase() === myTag.toLowerCase();
+          var members = c.active_members || c.member_count || '?';
+          var kd = parseFloat(c.avg_kd) || 0;
+          return '<div class="cv2-rk-row" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + _cv2Esc(c.tag) + '\')">' +
+            '<span class="cv2-rk-pos">' + (i+1) + '</span>' +
+            '<span class="cv2-rk-name">[' + _cv2Esc(c.tag) + '] ' + _cv2Esc(c.name || c.tag) +
+              (isMe ? ' <span class="cv2-cc-chip mine" style="margin-left:6px;">🛡️ MÍO</span>' : '') +
+            '</span>' +
+            '<span class="cv2-rk-stat">' + _cv2Fmt(c.total_kills || 0) + ' · K/D ' + (kd ? kd.toFixed(2) : '-') + ' · ' + _cv2Esc(String(members)) + ' activos</span>' +
+          '</div>';
+        }).join('');
+    });
+  }
+
+  // ── Búsqueda directa ──
+  window._cv2DoSearch = function(){
+    var inp = document.getElementById('cv2SearchInput');
+    if(!inp) return;
+    var q = (inp.value || '').trim();
+    if(!q){ inp.focus(); return; }
+    // Sincronizar con el input viejo y disparar la función real
+    var old = document.getElementById('clanNameInput');
+    if(old) old.value = q;
+    var oldP = document.getElementById('clanPlayerInput');
+    if(oldP) oldP.value = q;
+    if(typeof searchClanByName === 'function') searchClanByName();
+    // Mover resultados al contenedor v2
+    setTimeout(function(){
+      var dst = document.getElementById('cv2SearchResults');
+      var src = document.getElementById('clanResults') || document.getElementById('clanNameResults');
+      if(dst && src && src.innerHTML){ dst.innerHTML = src.innerHTML; }
+    }, 1500);
+  };
+  window._cv2HighlightSearchTab = function(mode){
+    var btnName = document.getElementById('cv2SearchByName');
+    var btnPlayer = document.getElementById('cv2SearchByPlayer');
+    if(btnName && btnPlayer){
+      btnName.classList.toggle('active', mode === 'name');
+      btnPlayer.classList.toggle('active', mode === 'player');
+    }
+  };
+
+  // ── Sub-tabs (Mi feed / Buscar / Comparar / Análisis / Ranking) ──
+  function _cv2SwitchTab(which){
+    document.querySelectorAll('.cv2-subtab').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-cv2tab') === which);
+    });
+    document.querySelectorAll('.cv2-panel').forEach(function(p){
+      var match = p.getAttribute('data-cv2tab') === which;
+      p.classList.toggle('active', match);
+      if(match){ p.removeAttribute('hidden'); } else { p.setAttribute('hidden', ''); }
+    });
+    // Compare / Analysis viejos: gestión directa de display (no llamar setClanMode que necesita btn)
+    var cmp = document.getElementById('clanCompareMode');
+    var ana = document.getElementById('clanAnalysisMode');
+    if(cmp) cmp.style.display = (which === 'compare') ? 'block' : 'none';
+    if(ana) ana.style.display = (which === 'analysis') ? 'block' : 'none';
+    // Disparar renders correspondientes
+    if(which === 'compare'){
+      try { if(typeof renderCCFavs === 'function') renderCCFavs(); } catch(e){}
+    }
+    if(which === 'analysis'){
+      try { if(typeof loadClanAnalysisHub === 'function') loadClanAnalysisHub(); } catch(e){}
+    }
+    if(which === 'ranking') _cv2LoadRankingEmbed();
+  }
+  document.addEventListener('click', function(ev){
+    var t = ev.target.closest && ev.target.closest('.cv2-subtab');
+    if(!t) return;
+    var which = t.getAttribute('data-cv2tab');
+    if(which) _cv2SwitchTab(which);
+  });
+
+  // ── Init ──
+  function _cv2Init(){
+    if(!_cv2Enabled()) return;
+    document.body.classList.add('cv2-active');
+    _cv2LoadMyClan();
+    _cv2LoadFavorites();
+    setTimeout(_cv2LoadMyClan, 1500);  // retry para currentUser tardío
+    setTimeout(_cv2LoadFavorites, 1500);
+  }
+
+  // Disparar en init + en cada navegación a /clans
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(_cv2Init, 200);
+  });
+  if(document.readyState !== 'loading'){
+    setTimeout(_cv2Init, 200);
+  }
+  // Re-inicializar en popstate si se navega a /clans
+  window.addEventListener('popstate', function(){
+    setTimeout(function(){
+      if(/\/clan(es|s)\/?$/i.test(location.pathname)) _cv2Init();
+    }, 100);
+  });
+
+  // Exponer para debug
+  window._cv2Init = _cv2Init;
+  window._cv2Enabled = _cv2Enabled;
+  window._cv2LoadMyClan = _cv2LoadMyClan;
+  window._cv2LoadFavorites = _cv2LoadFavorites;
+  window._cv2SwitchTab = _cv2SwitchTab;
+})();
+// CLANS-V2-JS END
 
 // HOME-V2-JS START (sesión 44g) — interacciones de los bloques nuevos de la home anónima
 (function(){
