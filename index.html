@@ -13657,26 +13657,23 @@ switchTab=function(t){
       mini.textContent = '\u00B7 ' + k + 'k \u00B7 ' + d + ' dmg \u00B7 ' + p;
     } catch(e){}
   }
-  // pv2-lm-key-per-viewport: keys separadas móvil vs desktop. Si el user tocó toggle en desktop
-  // (guardó "expandido"), en móvil sigue colapsado por defecto y viceversa.
-  function _pv2LmKey(){
-    return window.innerWidth < 600 ? 'v4nz_pv2_lm_collapsed_m' : 'v4nz_pv2_lm_collapsed';
-  }
+  // pv2-lm-always-collapsed-on-load: SIEMPRE colapsado al cargar la página (audit-fixes-v2).
+  // Antes leíamos localStorage para respetar la "preferencia" del usuario (key separada
+  // móvil/desktop). Eso causaba que si el user tocaba el toggle una vez, el bloque quedaba
+  // EXPANDIDO permanentemente cada vez que volvía al perfil — quitando pantalla y dando
+  // sensación de "anclado". Nueva filosofía: el toggle es TRANSITORIO. Si el user expande,
+  // dura solo durante esa visita; al refrescar vuelve a colapsado. También limpiamos las
+  // keys viejas para no dejar basura en localStorage de los users que ya tocaron el toggle.
   function _pv2ApplyLmCollapsedState(){
     try {
       var box = document.getElementById('pv2LastMatch');
       if(!box) return;
-      var saved = localStorage.getItem(_pv2LmKey());
-      var collapsed;
-      if(saved === '1') collapsed = true;
-      else if(saved === '0') collapsed = false;
-      // pv2-lm-collapsed-default-all: por defecto colapsado en TODOS los viewports
-      // (anónimos + logueados, móvil + desktop). El hero last-match ocupaba demasiada
-      // pantalla y dificultaba la lectura rápida. El toggle #pv2LmToggle sigue
-      // disponible y persiste la elección del usuario por viewport (key móvil
-      // vs key desktop separadas vía _pv2LmKey).
-      else collapsed = true;
-      box.classList.toggle('collapsed', collapsed);
+      // Limpiar keys viejas (idempotente: si no existen, no pasa nada)
+      try {
+        localStorage.removeItem('v4nz_pv2_lm_collapsed');
+        localStorage.removeItem('v4nz_pv2_lm_collapsed_m');
+      } catch(e){}
+      box.classList.add('collapsed');
     } catch(e){}
   }
   function _pv2ToggleLastMatch(){
@@ -13685,7 +13682,7 @@ switchTab=function(t){
       if(!box) return;
       var nextCollapsed = !box.classList.contains('collapsed');
       box.classList.toggle('collapsed', nextCollapsed);
-      try { localStorage.setItem(_pv2LmKey(), nextCollapsed ? '1' : '0'); } catch(e){}
+      // No persistimos en localStorage — toggle solo dura durante esta visita.
       if(nextCollapsed) _pv2UpdateLmMini();
     } catch(e){}
   }
