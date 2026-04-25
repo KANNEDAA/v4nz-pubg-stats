@@ -3676,6 +3676,10 @@ body.cv2-active #panel-clans > .section-title:first-of-type,
 body.cv2-active #panel-clans > p:first-of-type,
 body.cv2-active #panel-clans > .clan-mode-tabs,
 body.cv2-active #clanSearchMode{display:none!important}
+/* clans-v2-hide-search-hero: ocultar el hero anónimo grande arriba en /clans
+   (lo mismo que hacemos con body.pv2-active en ficha v2). El sub-tab Buscar
+   del wrapper tiene su propio input. */
+body.cv2-active #searchHero{display:none!important}
 /* Compare/Analysis viejos se controlan vía sub-tabs del wrapper:
    los oculto por defecto, los nuevos sub-tabs los muestran */
 body.cv2-active #clanCompareMode,
