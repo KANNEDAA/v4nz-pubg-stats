@@ -14403,6 +14403,8 @@ switchTab=function(t){
 (function(){
   var inp = document.getElementById('topbarSearchInput');
   if(!inp) return;
+  var box = inp.closest('.topbar-search');
+  var icon = box && box.querySelector('.topbar-search-icon');
   function go(){
     var q = (inp.value || '').trim();
     if(!q){ inp.focus(); return; }
@@ -14416,6 +14418,26 @@ switchTab=function(t){
   inp.addEventListener('keydown', function(e){
     if(e.key === 'Enter'){ e.preventDefault(); go(); }
   });
+  // topbar-search-icon-click-fix: tocar la lupa también dispara la acción.
+  // Si el input está vacío → poner foco (abre teclado en móvil).
+  // Si tiene texto → buscar directamente (gesto natural en móvil).
+  if(icon){
+    icon.style.cursor = 'pointer';
+    icon.addEventListener('click', function(ev){
+      ev.preventDefault();
+      var q = (inp.value || '').trim();
+      if(!q){ inp.focus(); }
+      else { go(); }
+    });
+  }
+  // También hacer clicable cualquier zona muerta del contenedor (entre lupa y input)
+  if(box){
+    box.addEventListener('click', function(ev){
+      // Si el click viene del input o de la lupa, dejar que sus propios handlers actúen
+      if(ev.target === inp || ev.target === icon) return;
+      inp.focus();
+    });
+  }
   // Limpiar el input al volver a home (para que no quede el último jugador buscado)
   window.addEventListener('popstate', function(){
     if(location.pathname === '/' || location.pathname === '') inp.value = '';
