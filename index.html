@@ -14275,9 +14275,26 @@ switchTab=function(t){
     if(which) _cv2SwitchTab(which);
   });
 
+  // cv2-route-scoped-fix: helper para detectar si estamos en /clans (cualquier sub-ruta)
+  function _cv2OnClansRoute(){
+    return /^\/clan(es|s)(\/.*)?$/i.test(location.pathname || '/');
+  }
+
   // ── Init ──
+  // BUG GRAVE arreglado: antes _cv2Init añadía body.cv2-active SIEMPRE al cargar
+  // la página, lo que hacía que la regla CSS `body.cv2-active #searchHero{display:none}`
+  // ocultara el buscador de jugadores en TODAS las rutas (home anónima, /ranking,
+  // /compare, /stats/...). Fix: solo aplicar la clase cuando la ruta es /clans;
+  // quitarla cuando se sale de /clans para que el buscador vuelva a aparecer.
   function _cv2Init(){
-    if(!_cv2Enabled()) return;
+    if(!_cv2Enabled()){
+      document.body.classList.remove('cv2-active');
+      return;
+    }
+    if(!_cv2OnClansRoute()){
+      document.body.classList.remove('cv2-active');
+      return;
+    }
     document.body.classList.add('cv2-active');
     _cv2LoadMyClan();
     _cv2LoadFavorites();
@@ -14292,12 +14309,29 @@ switchTab=function(t){
   if(document.readyState !== 'loading'){
     setTimeout(_cv2Init, 200);
   }
-  // Re-inicializar en popstate si se navega a /clans
+  // Re-evaluar en popstate (back/forward del navegador): _cv2Init se encarga
+  // de añadir o quitar la clase según la ruta nueva.
   window.addEventListener('popstate', function(){
-    setTimeout(function(){
-      if(/\/clan(es|s)\/?$/i.test(location.pathname)) _cv2Init();
-    }, 100);
+    setTimeout(_cv2Init, 100);
   });
+  // Re-evaluar en pushState — el SPA navega via pushState al cambiar tab y
+  // popstate solo dispara con back/forward. Wrapping del prototipo para que
+  // cualquier llamada a history.pushState dispare _cv2Init y la clase se
+  // sincronice con la ruta.
+  (function(){
+    var _ps = history.pushState;
+    history.pushState = function(){
+      var ret = _ps.apply(this, arguments);
+      try { setTimeout(_cv2Init, 50); } catch(e){}
+      return ret;
+    };
+    var _rs = history.replaceState;
+    history.replaceState = function(){
+      var ret = _rs.apply(this, arguments);
+      try { setTimeout(_cv2Init, 50); } catch(e){}
+      return ret;
+    };
+  })();
 
   // Exponer para debug
   window._cv2Init = _cv2Init;
