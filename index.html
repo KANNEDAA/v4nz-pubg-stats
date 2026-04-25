@@ -3656,6 +3656,15 @@ body.pv2-self .pv2-only-other{display:none!important}
 .pv2-wl-cell.w{background:rgba(95,217,127,.2);color:#5fd97f}
 .pv2-wl-cell.l{background:rgba(255,87,87,.12);color:#ff5757}
 .pv2-wl-cell.ww{background:linear-gradient(135deg,#ffd24a,#ff9f43);color:#000}
+/* pv2-wl-legend-v1: cabecera con título y leyenda inline encima del grid de últimas partidas.
+   Antes el grid salía pelado con "L L L L..." sin contexto y el user no sabía qué era. */
+.pv2-wl-section{background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;padding:12px;margin-bottom:12px}
+.pv2-wl-section .pv2-wl-grid{padding:0;background:transparent;border:0;border-radius:0;margin-bottom:0}
+.pv2-wl-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.pv2-wl-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase}
+.pv2-wl-legend{display:inline-flex;flex-wrap:wrap;gap:10px;font-size:10px;color:var(--text-dim);align-items:center}
+.pv2-wl-legend-item{display:inline-flex;align-items:center;gap:4px}
+.pv2-wl-legend .pv2-wl-cell{width:16px;height:16px;font-size:8px;border-radius:3px}
 .pv2-stat-footlinks{font-size:12px;color:var(--text-dim);display:flex;gap:14px}
 .pv2-stat-footlinks a{color:var(--accent);font-weight:600;text-decoration:none}
 
@@ -7088,13 +7097,20 @@ function setGameMode(m){currentGameMode=m;document.querySelectorAll('.mode-btn')
 function setSquadMode(m){currentSquadMode=m;document.querySelectorAll('#modeTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));renderRankBadge();renderOverviewStats();renderFunStats();renderPersonality();try{renderMatchStreaks();}catch(e){}}
 async function setSeasonType(type){
   seasonTypeMode=type;document.querySelectorAll('.season-type-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(type.substring(0,3))));
-  if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();try{renderMatchStreaks();}catch(e){}return;}
+  if(type==='season'){renderOverviewStats();renderFunStats();renderPersonality();try{renderMatchStreaks();}catch(e){}
+    // pv2-season-refresh-v1: re-renderizar también el bloque pv2 stats
+    try{ if(typeof window._pv2LoadStats==='function'&&typeof currentPlayerData!=='undefined') window._pv2LoadStats(currentPlayerData); }catch(e){}
+    return;
+  }
   try{
     showLoading(true);setLoaderStep('Cargando datos de '+type+'...');
     if(type==='ranked'&&!currentRankedData){const rd=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/'+currentSeasonId+'/ranked');currentRankedData=rd;}else if(type==='lifetime'&&!currentLifetimeData){const ld=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/seasons/lifetime');currentLifetimeData=ld;}
     const s=getActiveStats();
     if(!s.roundsPlayed){document.getElementById('overviewStats').innerHTML='<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px;"><p style="color:var(--text-secondary);font-size:.9rem;">No hay datos de '+(type==='ranked'?'Ranked':'Lifetime')+' para este modo. Prueba otro modo (Solo/Duo/Squad) o perspectiva (TPP/FPP).</p></div>';document.getElementById('funStatsGrid').innerHTML='';return;}
-    renderOverviewStats();renderFunStats();renderPersonality();  }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
+    renderOverviewStats();renderFunStats();renderPersonality();
+    // pv2-season-refresh-v1: re-renderizar también el bloque pv2 stats al cambiar a ranked/lifetime
+    try{ if(typeof window._pv2LoadStats==='function'&&typeof currentPlayerData!=='undefined') window._pv2LoadStats(currentPlayerData); }catch(e){}
+  }catch(e){console.error('Error loading '+type+' data:',e);showError('Error cargando datos de '+type);}finally{showLoading(false);}
 }
 function addRecentSearch(n,p){recentSearches=recentSearches.filter(s=>s.name!==n);recentSearches.unshift({name:n,platform:p});recentSearches=recentSearches.slice(0,12);localStorage.setItem('recent_searches',JSON.stringify(recentSearches));renderRecentSearches();}
 const DEFAULT_FAV_GROUPS=['Mi Squad','Rivales','Amigos','Seguimiento','Tramposos'];
@@ -14034,12 +14050,34 @@ switchTab=function(t){
 
     // WL grid de últimas partidas (si hay currentMatchData)
     if(wl && typeof currentMatchData !== 'undefined' && Array.isArray(currentMatchData) && currentMatchData.length){
-      wl.innerHTML = currentMatchData.slice(0, 20).map(function(m){
+      // pv2-wl-legend-v1: cabecera con t\u00edtulo y leyenda para que se entienda qu\u00e9 es el grid
+      var matches = currentMatchData.slice(0, 20);
+      var cells = matches.map(function(m){
         var rank = (m && m.playerStats && m.playerStats.winPlace) || 99;
-        if(rank === 1) return '<span class="pv2-wl-cell ww">\u2605</span>';
-        if(rank <= 10) return '<span class="pv2-wl-cell w">W</span>';
-        return '<span class="pv2-wl-cell l">L</span>';
+        if(rank === 1) return '<span class="pv2-wl-cell ww" title="WWCD - 1\u00aa posici\u00f3n">\u2605</span>';
+        if(rank <= 10) return '<span class="pv2-wl-cell w" title="Top 10 - posici\u00f3n '+rank+'">W</span>';
+        return '<span class="pv2-wl-cell l" title="Posici\u00f3n '+rank+'">L</span>';
       }).join('');
+      var section = wl.parentElement;
+      if(section && !section.classList.contains('pv2-wl-section')){
+        var newSection = document.createElement('div');
+        newSection.className = 'pv2-wl-section';
+        newSection.innerHTML =
+          '<div class="pv2-wl-header">' +
+            '<span class="pv2-wl-title">\ud83d\udcca \u00daltimas '+matches.length+' partidas</span>' +
+            '<span class="pv2-wl-legend">' +
+              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell ww">\u2605</span>WWCD</span>' +
+              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell w">W</span>Top 10</span>' +
+              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell l">L</span>+10</span>' +
+            '</span>' +
+          '</div>';
+        wl.parentNode.insertBefore(newSection, wl);
+        newSection.appendChild(wl);
+      } else if(section && section.classList.contains('pv2-wl-section')){
+        var titleEl = section.querySelector('.pv2-wl-title');
+        if(titleEl) titleEl.textContent = '\ud83d\udcca \u00daltimas '+matches.length+' partidas';
+      }
+      wl.innerHTML = cells;
     }
   }
 
@@ -14118,9 +14156,10 @@ switchTab=function(t){
     setTimeout(_pv2TryInit, 500);
   }
 
-  // Expose para debug
+  // Expose para debug + para que setSeasonType pueda re-renderizar el bloque pv2
   window._pv2Init = _pv2Init;
   window._pv2Enabled = _pv2Enabled;
+  window._pv2LoadStats = _pv2LoadStats;  // pv2-season-refresh-v1
 })();
 // PLAYER-V2-JS END
 
