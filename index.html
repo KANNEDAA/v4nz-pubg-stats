@@ -13625,7 +13625,12 @@ switchTab=function(t){
       var collapsed;
       if(saved === '1') collapsed = true;
       else if(saved === '0') collapsed = false;
-      else collapsed = (window.innerWidth < 600);
+      // pv2-lm-collapsed-default-all: por defecto colapsado en TODOS los viewports
+      // (anónimos + logueados, móvil + desktop). El hero last-match ocupaba demasiada
+      // pantalla y dificultaba la lectura rápida. El toggle #pv2LmToggle sigue
+      // disponible y persiste la elección del usuario por viewport (key móvil
+      // vs key desktop separadas vía _pv2LmKey).
+      else collapsed = true;
       box.classList.toggle('collapsed', collapsed);
     } catch(e){}
   }
