@@ -14726,30 +14726,27 @@ switchTab=function(t){
   function _hv2LoadTopPlayers(){
     if(!panelJugadores || panelJugadores.dataset.loaded === '1') return;
     panelJugadores.dataset.loaded = '1';
-    // Usamos el endpoint real de PUBG leaderboards que ya tiene el backend:
-    // devuelve { players:[{name,stats:{kills,wins,roundsPlayed,averageDamage},platforms:[]}] }
-    fetch('/api/leaderboard?platform=console&region=eu&mode=squad-fpp', { credentials:'same-origin' })
+    // hv2-top-real-community-v1: usar /api/v4nz-leaderboard (jugadores REGISTRADOS
+    // en V4NZ con sus stats reales) en vez del Top 500 oficial de PUBG (random gente
+    // del leaderboard global). Antes la sección "Top de la comunidad" mostraba
+    // jugadores que no habían sido buscados nunca en V4NZ y eran random.
+    // Shape de respuesta: { players:[{player_name, platform, rank, kd, rounds, ...}] }
+    fetch('/api/v4nz-leaderboard?platform=all&mode=squad&game_mode=tpp', { credentials:'same-origin' })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data){
         var players = (data && data.players) || [];
-        if(!players.length){ panelJugadores.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">Sin datos todav&iacute;a</div>'; return; }
+        if(!players.length){ panelJugadores.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">A&uacute;n no hay jugadores con suficientes partidas en V4NZ. Busca a alguien para que aparezca aqu&iacute;.</div>'; return; }
         panelJugadores.innerHTML = players.slice(0,5).map(function(p,i){
-          var rank = i+1;
+          var rank = (typeof p.rank === 'number') ? p.rank : (i+1);
           var rankCls = rank<=3 ? ' p'+rank : '';
-          var name = p.name || '—';
-          var st = p.stats || {};
-          var kills = st.kills || 0;
-          var games = st.roundsPlayed || 0;
-          var wins = st.wins || 0;
-          var kd = games > wins ? (kills / (games - wins)) : (kills || 0);
-          var kdStr = (typeof kd === 'number' && isFinite(kd)) ? kd.toFixed(2) : '0.00';
-          /* fix 44g-h4: K/D semantico — mismo criterio que clanes */
-          var _kdCls = (typeof kd === 'number' && isFinite(kd)) ? (kd >= 2 ? ' kd-elite' : kd >= 1.5 ? ' kd-high' : kd < 1 ? ' kd-low' : '') : '';
-          var platformArr = p.platforms || [];
-          var platform = (platformArr[0] || 'PSN').toString();
-          var platformLower = platform.toLowerCase().indexOf('xbox') >= 0 ? 'xbox' : 'psn';
+          var name = p.player_name || '—';
+          var kd = parseFloat(p.kd) || 0;
+          var kdStr = kd.toFixed(2);
+          var _kdCls = kd >= 2 ? ' kd-elite' : kd >= 1.5 ? ' kd-high' : kd < 1 ? ' kd-low' : '';
+          var platformLower = (p.platform || 'psn').toLowerCase();
           var platformShow = platformLower === 'xbox' ? 'Xbox' : 'PSN';
-          var sub = platformShow + ' · ' + _hv2Fmt(kills) + ' kills · ' + games + ' partidas';
+          var rounds = p.rounds || 0;
+          var sub = platformShow + ' · ' + _hv2Fmt(rounds) + ' partidas · ADR ' + Math.round(p.avg_damage || 0);
           return '<div class="podio-item'+rankCls+'" data-player="'+_hv2Esc(name)+'" data-platform="'+platformLower+'" role="button" tabindex="0">'
             + '<div class="podio-rank">'+rank+'</div>'
             + '<div class="podio-main"><div class="podio-name">'+_hv2Esc(name)+'</div><div class="podio-sub">'+_hv2Esc(sub)+'</div></div>'
@@ -14760,13 +14757,13 @@ switchTab=function(t){
           it.addEventListener('click', function(){
             var n = it.getAttribute('data-player');
             var pf = it.getAttribute('data-platform') || 'psn';
-            if(n && typeof searchPlayer === 'function'){ if(typeof setPlatform==='function') setPlatform(pf); searchPlayer(n); }
+            if(n && typeof goToPlayer === 'function'){ goToPlayer(n, pf); }
             else if(n){ location.href = '/stats/' + pf + '/' + encodeURIComponent(n); }
           });
           it.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') it.click(); });
         });
       })
-      .catch(function(){ panelJugadores.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">Sin datos todav&iacute;a</div>'; });
+      .catch(function(){ panelJugadores.innerHTML = '<div class="podio-item" style="color:var(--text-secondary);">No se pudo cargar el ranking de la comunidad.</div>'; });
   }
 
   // --- 4. Podios header "Ver ranking →" ---
