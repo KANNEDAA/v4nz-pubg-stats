@@ -13566,6 +13566,11 @@ switchTab=function(t){
       _pv2Text('pv2LmPos', '#' + placement);
       _pv2Text('pv2LmTime', survMin + ':' + String(survSec).padStart(2, '0'));
       box.style.display = '';
+      // pv2-lm-collapse-on-show-fix: aplicar estado colapsado JUSTO al mostrar el box.
+      // Antes solo se aplicaba en _pv2RefreshLastMatch (1.2s después), y si el box
+      // se mostraba síncrono aquí salía expandido durante 1.2s o se quedaba expandido
+      // si _pv2RefreshLastMatch corría antes del display:''.
+      try { _pv2UpdateLmMini(); _pv2ApplyLmCollapsedState(); } catch(e){}
 
       // Enlace al detalle de la partida
       var detailLink = document.getElementById('pv2LmDetail');
@@ -13604,6 +13609,8 @@ switchTab=function(t){
         _pv2Text('pv2LmPos', s.wins ? (s.wins + 'W') : '-');
         _pv2Text('pv2LmTime', s.rounds ? (s.rounds + 'p') : '-');
         box.style.display = '';
+        // pv2-lm-collapse-on-show-fix: aplicar estado colapsado JUSTO al mostrar el box (fetch path).
+        try { _pv2UpdateLmMini(); _pv2ApplyLmCollapsedState(); } catch(e){}
 
         // Deltas sólo con snapshots
         if(snaps.length >= 2){
