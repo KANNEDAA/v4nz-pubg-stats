@@ -5830,6 +5830,8 @@ async function loadClanPage(tag,subtab){
         h+='<span style="font-family:Orbitron;font-weight:700;font-size:.7rem;width:24px;text-align:center;color:var(--text-dim);">'+(i+1)+'</span>';
         h+=medal?'<span>'+medal+'</span>':'';
         h+='<span class="clan-member-name" onclick="document.getElementById(\'searchInput\').value=\''+m.player_name+'\';setPlatform(\''+c.platform+'\');switchTab(\'overview\');searchPlayer();">'+m.player_name+'</span>';
+        // fav-star-everywhere-v1: estrella en cada miembro del clan
+        h+=playerFavStar(m.player_name, c.platform, '.7rem');
         h+=clBadge;
         h+='<span id="alias-'+escJs(m.player_name.toLowerCase())+'" style="font-size:.55rem;color:var(--accent-orange);opacity:.7;margin-left:6px;"></span>';
         h+='</div>';
@@ -7087,10 +7089,32 @@ function showEditGroupsPopup(){
 }
 function toggleFavoriteFromHeader(){const n=currentPlayerData?.attributes?.name;if(!n)return;toggleFavorite(n,currentPlatform);updateFavHeaderBtn();}
 function updateFavHeaderBtn(){const btn=document.getElementById('favHeaderBtn');if(!btn||!currentPlayerData)return;const n=currentPlayerData.attributes.name;const fav=isFavorite(n);btn.innerHTML=fav?'&#x2605;':'&#x2606;';btn.classList.toggle('active',fav);btn.title=fav?'Quitar de favoritos':'Guardar en favoritos';}
-function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const idx=favorites.findIndex(f=>f.name===name);if(idx>=0)favorites.splice(idx,1);else favorites.push({name,platform,group:''});localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
+function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const idx=favorites.findIndex(f=>f.name===name);if(idx>=0)favorites.splice(idx,1);else favorites.push({name,platform,group:''});localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();
+  // fav-star-everywhere-v1: refrescar estrellas inyectadas en kill log, ranking, miembros de clan, etc.
+  if(typeof updateAllPlayerFavStars==='function')updateAllPlayerFavStars();
+  if(typeof updateFavHeaderBtn==='function')updateFavHeaderBtn();
+}
 function setFavGroup(name,group,evt){if(evt)evt.stopPropagation();const f=favorites.find(f=>f.name===name);if(f){f.group=f.group===group?'':group;localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}}
 function cycleFavGroup(name,evt){if(evt)evt.stopPropagation();const f=favorites.find(fv=>fv.name===name);if(!f)return;const groups=[''].concat(FAV_GROUPS);const cur=groups.indexOf(f.group||'');f.group=groups[(cur+1)%groups.length];localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
 function isFavorite(name){return favorites.some(f=>f.name===name);}
+/* fav-star-everywhere-v1: helper para inyectar estrella ⭐ de jugador en cualquier UI.
+   Mismo patrón que clanFavStar pero llama a toggleFavorite. El click hace
+   stopPropagation para no disparar la navegación del row contenedor.
+   Usar así: '<div onclick="goToPlayer(...)">'+playerFavStar(name,platform)+nameHtml+'</div>' */
+function playerFavStar(name,platform,size){
+  size=size||'.75rem';
+  var fav=isFavorite(name);
+  var n=esc(name||''), p=(platform||'psn');
+  return '<span data-player-fav="'+n+'" data-player-plat="'+p+'" onclick="toggleFavorite(\''+escJs(name||'')+'\',\''+p+'\',event)" style="cursor:pointer;font-size:'+size+';color:'+(fav?'var(--accent-yellow)':'var(--text-dim)')+';transition:color .2s;flex-shrink:0;padding:2px 4px;" title="'+(fav?'Quitar de favoritos':'Añadir a favoritos')+'">'+(fav?'★':'☆')+'</span>';
+}
+function updateAllPlayerFavStars(){
+  document.querySelectorAll('[data-player-fav]').forEach(function(el){
+    var name=el.dataset.playerFav;var fav=isFavorite(name);
+    el.innerHTML=fav?'★':'☆';
+    el.style.color=fav?'var(--accent-yellow)':'var(--text-dim)';
+    el.title=fav?'Quitar de favoritos':'Añadir a favoritos';
+  });
+}
 /* ═══ CLAN FAVORITES ═══ */
 function isClanFavorite(tag){return clanFavorites.some(f=>f.tag===tag);}
 function clanFavStar(tag,name,platform,size){
@@ -8120,6 +8144,8 @@ function _mdRenderSquad(ctx){
     if(isMe){
       h+='<span class="md-pname-me" title="'+esc(name)+'">'+esc(name)+' <span style="font-size:.55rem;opacity:.7;">(tu)</span></span>';
     } else {
+      // fav-star-everywhere-v1: estrella antes del nombre del compañero del squad
+      h+=playerFavStar(name,currentPlatform,'.7rem');
       h+='<span class="md-pname-link" onclick="closeMatchDetail();goToPlayer(\''+escJs(name)+'\',\''+currentPlatform+'\');" title="'+esc(name)+'">'+esc(name)+'</span>';
     }
     if(isMvp)h+='<span class="md-mvp-tag">MVP</span>';
@@ -8462,7 +8488,8 @@ function _mdRenderDamage(ctx){
     h+='<div class="dmg-card"><div class="dmg-card-title">&#x1F3AF; Por Victima</div>';
     victimSorted.forEach(function(v){
       var pct=(v[1]/maxV*100).toFixed(0);
-      h+='<div class="dmg-bar-row"><div class="dmg-bar-label" style="cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(v[0])+'\',\''+currentPlatform+'\');">'+esc(v[0])+'</div><div class="dmg-bar-track"><div class="dmg-bar-fill" style="width:'+pct+'%;background:var(--accent);"></div></div><div class="dmg-bar-val">'+Math.round(v[1])+'</div></div>';
+      // fav-star-everywhere-v1: estrella + nombre clicable
+      h+='<div class="dmg-bar-row"><div class="dmg-bar-label" style="display:flex;align-items:center;gap:4px;">'+playerFavStar(v[0],currentPlatform,'.7rem')+'<span style="cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(v[0])+'\',\''+currentPlatform+'\');">'+esc(v[0])+'</span></div><div class="dmg-bar-track"><div class="dmg-bar-fill" style="width:'+pct+'%;background:var(--accent);"></div></div><div class="dmg-bar-val">'+Math.round(v[1])+'</div></div>';
     });
     h+='</div>';
     h+='</div>';
@@ -8471,7 +8498,10 @@ function _mdRenderDamage(ctx){
       h+='<div class="dmg-card" style="margin-top:10px;"><div class="dmg-card-title">&#x1F6E1; Da\u00f1o Recibido De</div>';
       attackerSorted.forEach(function(a){
         var pct=(a[1]/maxA*100).toFixed(0);
-        h+='<div class="dmg-bar-row"><div class="dmg-bar-label">'+esc(a[0])+'</div><div class="dmg-bar-track"><div class="dmg-bar-fill" style="width:'+pct+'%;background:var(--accent-red);"></div></div><div class="dmg-bar-val">'+Math.round(a[1])+'</div></div>';
+        // fav-star-everywhere-v1: atacante con estrella + nombre clicable (filtra "Zona/Caida")
+        var isPlayer=a[0]&&a[0]!=='Zona/Caida'&&a[0]!=='?';
+        var nameHtml=isPlayer?playerFavStar(a[0],currentPlatform,'.7rem')+'<span style="cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(a[0])+'\',\''+currentPlatform+'\');">'+esc(a[0])+'</span>':esc(a[0]);
+        h+='<div class="dmg-bar-row"><div class="dmg-bar-label" style="display:flex;align-items:center;gap:4px;">'+nameHtml+'</div><div class="dmg-bar-track"><div class="dmg-bar-fill" style="width:'+pct+'%;background:var(--accent-red);"></div></div><div class="dmg-bar-val">'+Math.round(a[1])+'</div></div>';
       });
       h+='</div>';
     }
@@ -9057,6 +9087,8 @@ function renderFrequentTeammates(){
   if(!sorted.length){el.style.display='none';try{_adnPopulateSquad([]);}catch(e){}return;}
   let h='';sorted.forEach(([name,count])=>{
     h+='<div class="freq-tm-chip" onclick="event.stopPropagation();goToPlayer(\''+escJs(name)+'\',\''+currentPlatform+'\');">';
+    // fav-star-everywhere-v1: estrella en cada compañero frecuente
+    h+=playerFavStar(name,currentPlatform,'.65rem');
     h+='<span style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.7rem;color:var(--text-primary);">'+esc(name)+'</span>';
     h+='<span style="font-size:.55rem;color:var(--accent);font-family:Rajdhani,sans-serif;font-weight:700;background:var(--accent-dim);padding:1px 6px;border-radius:10px;">'+count+'x</span>';
     h+='</div>';
@@ -9141,7 +9173,8 @@ function renderMatchRivals(){
     h+=badge;
     h+='<div class="rival-avatar">'+initial+'</div>';
     h+='<div class="rival-info">';
-    h+='<div class="rival-info-name">'+esc(d.name)+'</div>';
+    // fav-star-everywhere-v1: estrella inline antes del nombre del rival
+    h+='<div class="rival-info-name" style="display:flex;align-items:center;gap:4px;">'+playerFavStar(d.name,currentPlatform,'.65rem')+'<span>'+esc(d.name)+'</span></div>';
     h+='<div class="rival-info-stats"><span class="ri-val '+ctxClass+'">'+d.count+'x '+ctxLabel+'</span> \u00b7 '+avgK+' kills \u00b7 '+avgD+' dmg \u00b7 #'+avgPlace+' avg</div>';
     h+='</div></div>';
   });
@@ -12746,7 +12779,8 @@ async function loadV4NZRanking(platform,mode,gameMode,btn){
       const platIcon=p.platform==='psn'?'PS':'XB';
       h+='<tr class="'+rowClass+'" onclick="goToPlayer(\''+escJs(p.player_name)+'\',\''+p.platform+'\')">';
       h+='<td class="num">'+(medal||p.rank)+'</td>';
-      h+='<td><span class="rank-name">'+esc(p.player_name)+'<span class="rank-plat">'+platIcon+'</span></span>'+(isMe?' <span style="font-size:.55rem;background:var(--accent);color:var(--bg);padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px;">T\u00da</span>':'')+'</td>';
+      // fav-star-everywhere-v1: estrella al inicio de cada nombre del ranking
+      h+='<td><span style="display:inline-flex;align-items:center;gap:4px;">'+playerFavStar(p.player_name,p.platform,'.7rem')+'<span class="rank-name">'+esc(p.player_name)+'<span class="rank-plat">'+platIcon+'</span></span>'+(isMe?'<span style="font-size:.55rem;background:var(--accent);color:var(--bg);padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px;">T\u00da</span>':'')+'</span></td>';
       h+='<td><span class="rank-val val-kd">'+parseFloat(p.kd).toFixed(2)+'</span></td>';
       h+='<td><span class="rank-val val-adr">'+Math.round(p.avg_damage)+'</span></td>';
       h+='<td><span class="rank-val val-wr">'+parseFloat(p.win_rate).toFixed(1)+'%</span></td>';
@@ -14259,8 +14293,11 @@ switchTab=function(t){
           var isMe = myTag && c.tag && c.tag.toLowerCase() === myTag.toLowerCase();
           var members = c.active_members || c.member_count || '?';
           var kd = parseFloat(c.avg_kd) || 0;
+          // fav-star-everywhere-v1: estrella de clan al inicio de cada fila del ranking
+          var starHtml = (typeof clanFavStar === 'function') ? clanFavStar(c.tag, c.name || c.tag, 'console', '.7rem') : '';
           return '<div class="cv2-rk-row" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + escJs(c.tag) + '\')">' +
             '<span class="cv2-rk-pos">' + (i+1) + '</span>' +
+            starHtml +
             '<span class="cv2-rk-name">[' + _cv2Esc(c.tag) + '] ' + _cv2Esc(c.name || c.tag) +
               (isMe ? ' <span class="cv2-cc-chip mine" style="margin-left:6px;">🛡️ MÍO</span>' : '') +
             '</span>' +
