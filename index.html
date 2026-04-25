@@ -3710,8 +3710,14 @@ body.pv2-active #pv2StatsSection:has(#pv2StatGrid[data-state="empty"]) .pv2-mode
    el contenido viejo (search-mode/compare/analysis) renderiza igual que antes.
    ══════════════════════════════════════════════════════════════════════ */
 body.cv2-active #clansV2Wrap{display:block!important}
-body.cv2-active #panel-clans > .section-title:first-of-type,
-body.cv2-active #panel-clans > p:first-of-type,
+/* cv2-hide-old-section-fix: la regla anterior usaba `.section-title:first-of-type`
+   pero `:first-of-type` aplica al tipo HTML (div), no a la clase. El primer div
+   de #panel-clans es #clansV2Wrap (sin clase), así que la regla NUNCA matcheaba
+   y "Clanes de Consola" + descripción + tabs viejas se mostraban siempre debajo
+   del wrapper nuevo. Fix: ocultar TODAS las .section-title, p, .clan-mode-tabs
+   directas de #panel-clans cuando cv2 está activo. */
+body.cv2-active #panel-clans > .section-title,
+body.cv2-active #panel-clans > p,
 body.cv2-active #panel-clans > .clan-mode-tabs,
 body.cv2-active #clanSearchMode{display:none!important}
 /* clans-v2-hide-search-hero: ocultar el hero anónimo grande arriba en /clans
@@ -4550,8 +4556,11 @@ body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
         <div class="cv2-my-clan" id="cv2MyClan" style="display:none;"></div>
         <div class="cv2-empty-clan" id="cv2EmptyClan" style="display:none;">
           <div class="cv2-em-title">&#x1F6E1;&#xFE0F; A&uacute;n no has marcado tu clan</div>
-          <div class="cv2-em-sub">B&uacute;scate a ti mismo y detectaremos tu clan autom&aacute;ticamente.</div>
-          <button type="button" class="cv2-em-cta" onclick="if(typeof openAuthPopup==='function')openAuthPopup()">&#x1F50D; Buscar mi jugador</button>
+          <div class="cv2-em-sub">B&uacute;scate a ti mismo o busca tu clan por nombre.</div>
+          <!-- cv2-empty-cta-fix: antes este botón abría openAuthPopup() (login forzado).
+               Ahora lleva al sub-tab "Buscar" y pone foco en el input — más útil para
+               anónimos y para users que aún no han buscado nada. -->
+          <button type="button" class="cv2-em-cta" onclick="if(typeof _cv2SwitchTab==='function'){_cv2SwitchTab('search');setTimeout(function(){var i=document.getElementById('cv2SearchInput');if(i){i.focus();}},50);}">&#x1F50D; Buscar clan o jugador</button>
         </div>
         <a class="cv2-discord" href="https://discord.gg/dTdcvHs2kg" target="_blank" rel="noopener">
           <span class="cv2-dc-icon">&#x1F4AC;</span>
@@ -4566,6 +4575,16 @@ body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
             <span>&#x2B50; CLANES GUARDADOS <span id="cv2FavCount" style="color:var(--text-dim);font-weight:400"></span></span>
           </div>
           <div class="cv2-grid" id="cv2FavGrid"><div class="cv2-empty-fav">A&uacute;n no has guardado clanes. B&uacute;scalos en la pesta&ntilde;a Buscar.</div></div>
+        </div>
+        <!-- cv2-feed-top5: descubrimiento siempre visible (anónimos + logueados sin clanes guardados).
+             Sin esto, el sub-tab "Mi feed" se sentía vacío para visitantes que no tenían
+             clan ni favoritos. -->
+        <div class="cv2-section">
+          <div class="cv2-section-title">
+            <span>&#x1F3C6; TOP 5 CLANES &mdash; DESCUBRE LA LIGA</span>
+            <a href="/ranking" onclick="event.preventDefault();if(typeof Router!=='undefined')Router.navigate('/ranking');else if(typeof switchTab==='function')switchTab('ranking');else location.href='/ranking'" style="font-size:12px;color:var(--accent);font-weight:700;text-decoration:none;">ver completo &rarr;</a>
+          </div>
+          <div id="cv2FeedTop5"><div style="text-align:center;color:var(--text-dim);padding:18px;font-size:13px;">Cargando ranking...</div></div>
         </div>
       </section>
 
@@ -14191,21 +14210,25 @@ switchTab=function(t){
     });
   }
 
-  // ── Ranking embed (top 5 clanes V4NZ) ──
-  function _cv2LoadRankingEmbed(){
-    var box = document.getElementById('cv2RankingEmbed');
+  // ── Ranking embed (helper compartido para el sub-tab Ranking y el Top 5 del feed) ──
+  // cv2-feed-top5: refactor — extracto del renderer original a un helper que acepta
+  // targetId + limit + showTitle. El sub-tab Ranking usa limit=10 con título; el feed
+  // usa limit=5 sin título (porque el header ya lo pone el markup del feed).
+  function _cv2RenderClanList(targetId, limit, showTitle){
+    var box = document.getElementById(targetId);
     if(!box) return;
     _cv2GetLeaderboard().then(function(lb){
-      if(!lb.length){ box.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:18px;">No hay datos de ranking todavía.</div>'; return; }
-      var top = lb.slice(0, 10);
+      if(!lb.length){ box.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:18px;font-size:13px;">No hay datos de ranking todavía.</div>'; return; }
+      var top = lb.slice(0, limit || 10);
       var myTag = '';
       try { if(typeof myClan !== 'undefined' && myClan && myClan.tag) myTag = myClan.tag; } catch(e){}
-      box.innerHTML =
+      var headerHtml = showTitle ? (
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
           '<span style="font-family:Orbitron,sans-serif;font-weight:800;font-size:14px;">🏆 TOP CLANES V4NZ</span>' +
           '<a href="/ranking" onclick="event.preventDefault();if(typeof Router!==\'undefined\')Router.navigate(\'/ranking\');else location.href=\'/ranking\'" style="font-size:12px;color:var(--accent);font-weight:700;">ver completo →</a>' +
-        '</div>' +
-        top.map(function(c, i){
+        '</div>'
+      ) : '';
+      box.innerHTML = headerHtml + top.map(function(c, i){
           var isMe = myTag && c.tag && c.tag.toLowerCase() === myTag.toLowerCase();
           var members = c.active_members || c.member_count || '?';
           var kd = parseFloat(c.avg_kd) || 0;
@@ -14219,6 +14242,8 @@ switchTab=function(t){
         }).join('');
     });
   }
+  function _cv2LoadRankingEmbed(){ _cv2RenderClanList('cv2RankingEmbed', 10, true); }
+  function _cv2LoadFeedTop5(){ _cv2RenderClanList('cv2FeedTop5', 5, false); }
 
   // ── Búsqueda directa ──
   window._cv2DoSearch = function(){
@@ -14302,6 +14327,7 @@ switchTab=function(t){
     document.body.classList.add('cv2-active');
     _cv2LoadMyClan();
     _cv2LoadFavorites();
+    _cv2LoadFeedTop5();  // cv2-feed-top5: descubrimiento siempre visible para anónimos
     setTimeout(_cv2LoadMyClan, 1500);  // retry para currentUser tardío
     setTimeout(_cv2LoadFavorites, 1500);
   }
