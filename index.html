@@ -3663,6 +3663,44 @@ body.pv2-active #pv2StatsSection:has(#pv2StatGrid[data-state="empty"]) .pv2-mode
   /* pv2-mobile-ctas-hide: ocultar CTAs del hero en móvil — ya están duplicados en el footer
      y ocupaban una fila "fina" horizontal que aplastaba el contenido arriba. */
   body.pv2-active .pv2-hero-ctas{display:none!important}
+
+  /* pv2-mobile-header-compact: el header del perfil ocupaba ~700px en móvil antes
+     de que el user pudiera ver contenido (chips meta apilados verticalmente +
+     padding hero generoso + border-top section + márgenes huérfanos entre hero
+     y stats). Reducción: chips meta en línea horizontal scrollable, paddings
+     verticales más densos, border-top de la 1ª sección eliminado (redundante con
+     el hero), márgenes hero/last-match reducidos. Resultado: ~350px menos arriba
+     manteniendo legibilidad y profesionalidad. */
+  body.pv2-active .pv2-hero{padding:8px 0 10px}
+  body.pv2-active .pv2-eyebrow{margin-bottom:10px;padding:3px 8px;font-size:10px}
+  body.pv2-active .pv2-top{margin-bottom:10px;gap:10px}
+  body.pv2-active .pv2-avatar{width:44px;height:44px;font-size:18px}
+  body.pv2-active .pv2-ident h1{font-size:20px;margin-bottom:2px}
+  body.pv2-active .pv2-meta{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    margin:0 -12px;
+    padding:0 12px;
+  }
+  body.pv2-active .pv2-meta::-webkit-scrollbar{display:none}
+  body.pv2-active .pv2-meta > *{flex-shrink:0}
+  body.pv2-active .pv2-plat-badge,
+  body.pv2-active .pv2-clan-badge,
+  body.pv2-active .pv2-rank-pill{
+    padding:2px 7px;
+    font-size:10px;
+  }
+  body.pv2-active .pv2-last-match{margin-top:10px;border-top-width:2px}
+  body.pv2-active .pv2-last-match.collapsed{padding:8px 12px}
+  body.pv2-active .pv2-section{padding:14px 0}
+  /* La 1ª sección visible tras el hero: sin border-top — ya hay separación visual
+     suficiente con el padding del hero y el bloque last-match. El border-top creaba
+     una línea horizontal que partía la página justo después del hero collapsed
+     dejando un hueco visualmente vacío. */
+  body.pv2-active .pv2-hero + .pv2-section{border-top:0;padding-top:6px}
+  body.pv2-active .pv2-hero + .pv2-section + .pv2-section{padding-top:14px}
 }
 /* player-v2-polish-1 END */
 
