@@ -3665,6 +3665,11 @@ body.pv2-self .pv2-only-other{display:none!important}
 .pv2-wl-legend{display:inline-flex;flex-wrap:wrap;gap:10px;font-size:10px;color:var(--text-dim);align-items:center}
 .pv2-wl-legend-item{display:inline-flex;align-items:center;gap:4px}
 .pv2-wl-legend .pv2-wl-cell{width:16px;height:16px;font-size:8px;border-radius:3px}
+/* pv2-wl-clickable-v1: las celdas son clicables y abren el match detail */
+.pv2-wl-cell.clickable{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.pv2-wl-cell.clickable:hover{transform:scale(1.15);box-shadow:0 0 0 2px rgba(0,240,255,.4)}
+.pv2-wl-cell.clickable:active{transform:scale(0.95)}
+.pv2-wl-hint{font-size:10px;color:var(--text-dim);margin-top:8px;text-align:center;font-style:italic}
 .pv2-stat-footlinks{font-size:12px;color:var(--text-dim);display:flex;gap:14px}
 .pv2-stat-footlinks a{color:var(--accent);font-weight:600;text-decoration:none}
 
@@ -14051,12 +14056,22 @@ switchTab=function(t){
     // WL grid de últimas partidas (si hay currentMatchData)
     if(wl && typeof currentMatchData !== 'undefined' && Array.isArray(currentMatchData) && currentMatchData.length){
       // pv2-wl-legend-v1: cabecera con t\u00edtulo y leyenda para que se entienda qu\u00e9 es el grid
+      // pv2-wl-clickable-v1: cada celda es clicable y abre el match detail con showMatchDetail(idx)
       var matches = currentMatchData.slice(0, 20);
-      var cells = matches.map(function(m){
+      var cells = matches.map(function(m, idx){
         var rank = (m && m.playerStats && m.playerStats.winPlace) || 99;
-        if(rank === 1) return '<span class="pv2-wl-cell ww" title="WWCD - 1\u00aa posici\u00f3n">\u2605</span>';
-        if(rank <= 10) return '<span class="pv2-wl-cell w" title="Top 10 - posici\u00f3n '+rank+'">W</span>';
-        return '<span class="pv2-wl-cell l" title="Posici\u00f3n '+rank+'">L</span>';
+        var ps = (m && m.playerStats) || {};
+        var attr = (m && m.data && m.data.attributes) || {};
+        var mapName = (typeof MAP_NAMES !== 'undefined' && MAP_NAMES[attr.mapName]) || attr.mapName || 'Mapa';
+        var mode = (attr.gameMode || '').toUpperCase().replace(/-/g, ' ');
+        var kills = ps.kills || 0;
+        var dmg = Math.round(ps.damageDealt || 0);
+        // Tooltip rico (visible en desktop al hover)
+        var tt = mapName + ' \u00b7 ' + mode + ' \u00b7 #' + rank + ' \u00b7 ' + kills + 'k ' + dmg + 'dmg';
+        var click = ' onclick="if(typeof showMatchDetail===\'function\')showMatchDetail(' + idx + ')"';
+        if(rank === 1) return '<span class="pv2-wl-cell ww clickable" title="' + tt + '"' + click + '>\u2605</span>';
+        if(rank <= 10) return '<span class="pv2-wl-cell w clickable" title="' + tt + '"' + click + '>W</span>';
+        return '<span class="pv2-wl-cell l clickable" title="' + tt + '"' + click + '>L</span>';
       }).join('');
       var section = wl.parentElement;
       if(section && !section.classList.contains('pv2-wl-section')){
@@ -14073,6 +14088,11 @@ switchTab=function(t){
           '</div>';
         wl.parentNode.insertBefore(newSection, wl);
         newSection.appendChild(wl);
+        // Hint debajo del grid
+        var hint = document.createElement('div');
+        hint.className = 'pv2-wl-hint';
+        hint.textContent = '\ud83d\udc46 Pulsa una partida para ver el detalle';
+        newSection.appendChild(hint);
       } else if(section && section.classList.contains('pv2-wl-section')){
         var titleEl = section.querySelector('.pv2-wl-title');
         if(titleEl) titleEl.textContent = '\ud83d\udcca \u00daltimas '+matches.length+' partidas';
