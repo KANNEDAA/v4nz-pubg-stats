@@ -2688,6 +2688,9 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
     background: var(--bg-card);
     border-top: 1px solid var(--border);
     z-index: 110;
+    /* bottom-nav-tight-v1: padding interno mínimo. El safe-area-inset-bottom solo
+       suma cuando iOS lo necesita (modo standalone PWA o iPhones sin Safari nav),
+       en navegación normal con barra de Safari es 0. */
     padding: 0 0 env(safe-area-inset-bottom, 0px);
     box-shadow: 0 -4px 20px rgba(0,0,0,.25);
   }
@@ -2697,7 +2700,9 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 0 6px;
+    /* bottom-nav-tight-v1: padding-bottom reducido de 6px a 2px para pegar más
+       los textos al borde inferior (queda más rasante con la barra de Safari). */
+    padding: 6px 0 2px;
     background: none;
     border: none;
     color: var(--text-dim);
