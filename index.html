@@ -14845,7 +14845,13 @@ switchTab=function(t){
       var panel = document.getElementById('homeV2Logged');
       if(!panel) return;
       var logged = _hv2IsLogged();
-      if(!logged){ panel.style.display = 'none'; return; }
+      // hv2-route-aware-v1: el panel logueado solo tiene sentido en la home (/).
+      // Si el user está en /clans, /ranking, /compare, /stats/, /clan/, etc, NO mostrarlo
+      // aunque tenga sesión activa. Antes el panel se solapaba con esos paneles
+      // dedicados causando que la URL fuera /clans pero el contenido visible fuera la home.
+      var p = location.pathname || '/';
+      var inHome = (p === '/' || p === '');
+      if(!logged || !inHome){ panel.style.display = 'none'; return; }
       panel.style.display = '';
       // Ocultar bloques que estorban al logueado
       var toHide = ['.value-props','.bot-index-teaser','#hv2CtaRegister'];
@@ -15265,6 +15271,17 @@ switchTab=function(t){
   setTimeout(_hv2ShowLoggedPanel, 2000);
   window.addEventListener('storage', function(e){ if(e && (e.key === 'v4nz_token' || e.key === 'recent_searches' || e.key === 'pubg_clan_favorites')) _hv2ShowLoggedPanel(); });
   document.addEventListener('v4nz-auth-changed', _hv2ShowLoggedPanel);
+  // hv2-route-aware-v1: re-evaluar el panel cuando el SPA navega entre rutas
+  // (back/forward del navegador o pushState desde Router/switchTab).
+  window.addEventListener('popstate', function(){ setTimeout(_hv2ShowLoggedPanel, 50); });
+  (function(){
+    var _ps = history.pushState;
+    history.pushState = function(){
+      var ret = _ps.apply(this, arguments);
+      try { setTimeout(_hv2ShowLoggedPanel, 50); } catch(e){}
+      return ret;
+    };
+  })();
 
   // --- Kick off ---
   _hv2LoadTopClans();
