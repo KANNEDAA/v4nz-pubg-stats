@@ -6849,12 +6849,12 @@ async function findPlayer(name,platform){
     setLoaderStep('Buscando jugador...');
     const vars=nameVariations(name);
     // Try remaining variations on same platform
-    for(let i=1;i<vars.length;i++){await wait(300);try{return await apiGet(url+encodeURIComponent(vars[i]));}catch(e){if(e.status&&e.status!==404)throw e;}}
+    for(let i=1;i<vars.length;i++){await wait(100);try{return await apiGet(url+encodeURIComponent(vars[i]));}catch(e){if(e.status&&e.status!==404)throw e;}}
     // Try all variations on other platform
     setLoaderStep('Buscando jugador...');
     const alt=platform==='psn'?'xbox':'psn';
     const altUrl=API_BASE+'/'+alt+'/players?filter[playerNames]=';
-    for(let i=0;i<vars.length;i++){await wait(300);try{return await apiGet(altUrl+encodeURIComponent(vars[i]));}catch(e){if(e.status&&e.status!==404)throw e;}}
+    for(let i=0;i<vars.length;i++){await wait(100);try{return await apiGet(altUrl+encodeURIComponent(vars[i]));}catch(e){if(e.status&&e.status!==404)throw e;}}
     throw e1;
   }
 }
@@ -6940,13 +6940,17 @@ async function searchPlayer(){
     const _pv2Lazy = (typeof _pv2Enabled === 'function') && _pv2Enabled();
     const mids=_allMids.slice(0, _pv2Lazy ? 5 : 20);
     window._matchesLoaded=mids.length;
-    // Load matches in batches of 5 to avoid rate limits
+    // rpm100-throttling-relax-v1: con 100 RPM (10 req/s), batch de 15 paralelo es seguro.
+    // Antes batch=5 sin delay. Cargar 20 partidas pasaba por 4 batches (4 round-trips
+    // serializados ~3-5s). Ahora 2 batches → ~1.5-2s. Sin delay entre batches porque
+    // ya estamos por debajo del limit aún en peor caso.
     currentMatchData=[];
-    for(let b=0;b<mids.length;b+=5){
-      const batch=mids.slice(b,b+5);
+    const _matchBatch=15;
+    for(let b=0;b<mids.length;b+=_matchBatch){
+      const batch=mids.slice(b,b+_matchBatch);
       const results=await Promise.all(batch.map(m=>apiGet(API_BASE+'/'+currentPlatform+'/matches/'+m.id).catch(()=>null)));
       currentMatchData.push(...results.filter(Boolean));
-      if(b+5<mids.length)setLoaderStep('Cargando partidas ('+(b+5)+'/'+mids.length+')...');
+      if(b+_matchBatch<mids.length)setLoaderStep('Cargando partidas ('+(b+_matchBatch)+'/'+mids.length+')...');
     }
     setLoaderStep('Casi listo...');
     if(!_pv2Lazy){
