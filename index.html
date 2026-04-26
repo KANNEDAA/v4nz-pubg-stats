@@ -12063,7 +12063,7 @@ async function fetchClanMemberStats(members,platform){
       let lastMatch=null;
       if(pData&&pData.data&&pData.data[0]&&pData.data[0].relationships&&pData.data[0].relationships.matches&&pData.data[0].relationships.matches.data&&pData.data[0].relationships.matches.data.length>0){lastMatch='activo';}
       results.push({name:mName,stats:combined,active:lastMatch});
-      await wait(200);
+      await wait(50);  // rpm100-throttling-relax-v2: 200→50ms entre miembros del squad
     }catch(e){results.push({name:mName,stats:null,active:null});}
   }
   // Mark remaining members as not fetched
