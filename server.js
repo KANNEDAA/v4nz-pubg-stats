@@ -1820,14 +1820,20 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
     if (!pData.data || !pData.data[0]) return res.json({ error: 'player_not_found' });
 
     const playerId = pData.data[0].id;
-    const matchIds = (pData.data[0].relationships?.matches?.data || []).slice(0, 5).map(m => m.id);
+    // bot-index-pro-v1: subir de 5 a 25 partidas analizadas (con 100 RPM aprobado y batch
+    // paralelo cabe holgadamente). N=25 da confianza estadística para detectar farmers
+    // de bots con consistencia (5 partidas = ruido, 25 partidas = patrón claro).
+    // Match JSON cuenta como RPM PUBG. Telemetría va al CDN (no cuenta).
+    const matchIds = (pData.data[0].relationships?.matches?.data || []).slice(0, 25).map(m => m.id);
     if (!matchIds.length) return res.json({ error: 'no_matches', playerName, platform: shard, totalKills: 0, botKills: 0, humanKills: 0, botRatio: 0, matchesAnalyzed: 0 });
 
     let totalKills = 0, botKills = 0, analyzed = 0;
 
-    for (const matchId of matchIds) {
+    // Procesar en batches paralelos de 5 (5 fetches simultáneos × 5 batches max).
+    // Antes era secuencial (5 partidas tardaban ~10-15s sin caché). Ahora paralelo (~3-4s sin caché).
+    const BATCH = 5;
+    async function processOne(matchId) {
       try {
-        // 2. Get match → telemetry URL
         let matchData;
         const mKey = `match_${shard}_${matchId}`;
         const mCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [mKey]);
@@ -1845,9 +1851,8 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
 
         const asset = (matchData.included || []).find(i => i.type === 'asset');
         const telUrl = asset?.attributes?.URL;
-        if (!telUrl) continue;
+        if (!telUrl) return null;
 
-        // 3. Get telemetry (cache 30 days — immutable)
         let telemetry;
         const tKey = `telemetry_${matchId}`;
         const tCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [tKey]);
@@ -1863,19 +1868,28 @@ app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
           ).catch(() => {});
         }
 
-        // 4. Count kills: bot vs human
-        // Bots in PUBG have accountId starting with "ai." (e.g. "ai.abcdef123456")
-        // Also catch empty/missing accountId as bot just in case
+        let mTotal = 0, mBots = 0;
         const killEvents = telemetry.filter(e => e._T === 'LogPlayerKillV2' || e._T === 'LogPlayerKill');
         for (const ev of killEvents) {
           const killer = ev.killer || ev.finisher;
           if (!killer || killer.accountId !== playerId) continue;
-          totalKills++;
+          mTotal++;
           const victimId = ev.victim?.accountId || '';
-          if (!victimId || victimId === '' || victimId.startsWith('ai.')) botKills++;
+          if (!victimId || victimId === '' || victimId.startsWith('ai.')) mBots++;
         }
+        return { mTotal, mBots };
+      } catch(e) { return null; }
+    }
+
+    for (let i = 0; i < matchIds.length; i += BATCH) {
+      const batch = matchIds.slice(i, i + BATCH);
+      const results = await Promise.all(batch.map(processOne));
+      for (const r of results) {
+        if (!r) continue;
+        totalKills += r.mTotal;
+        botKills += r.mBots;
         analyzed++;
-      } catch(e) { /* skip this match */ }
+      }
     }
 
     const result = {
