@@ -1152,7 +1152,7 @@ app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
               try { matchData = JSON.parse(mcached.rows[0].response_data); } catch(e) { matchData = null; }
             }
             if (!matchData) {
-              await new Promise(r => setTimeout(r, 500)); // Rate limit PUBG API
+              await new Promise(r => setTimeout(r, 100)); // rpm100-throttling-relax-v2: 500→100ms
               const matchResp = await fetchWithTimeout(fetch,
                 `https://api.pubg.com/shards/${platform}/matches/${matchId}`,
                 { headers }, 10000);
@@ -1185,7 +1185,7 @@ app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
             });
           } catch (me) { /* skip match */ }
         }
-        await new Promise(r => setTimeout(r, 600)); // Rate limit between players
+        await new Promise(r => setTimeout(r, 150)); // rpm100-throttling-relax-v2: 600→150ms entre players
       } catch (pe) { /* skip player */ }
     }
 
@@ -2194,7 +2194,7 @@ Genera el análisis JSON:
         lastErr = apiErr;
         console.error(`AI DNA API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
         if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise(r => setTimeout(r, 500));  // rpm100-throttling-relax-v2: 2000→500ms (export workflows)
           continue;
         }
         throw apiErr;
@@ -2339,7 +2339,7 @@ Genera el análisis JSON:
         lastErr = apiErr;
         console.error(`AI compare API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
         if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise(r => setTimeout(r, 500));  // rpm100-throttling-relax-v2: 2000→500ms (export workflows)
           continue;
         }
         throw apiErr;
@@ -2556,7 +2556,7 @@ Genera el análisis JSON:
         lastErr = apiErr;
         console.error(`AI deep analysis attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
         if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise(r => setTimeout(r, 500));  // rpm100-throttling-relax-v2: 2000→500ms (export workflows)
           continue;
         }
         throw apiErr;
@@ -2707,7 +2707,7 @@ Genera el análisis JSON:
         lastErr = apiErr;
         console.error(`AI compare clans API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
         if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise(r => setTimeout(r, 500));  // rpm100-throttling-relax-v2: 2000→500ms (export workflows)
           continue;
         }
         throw apiErr;
@@ -2920,7 +2920,7 @@ Devuelve JSON exactamente así (nada fuera del objeto):
         lastErr = apiErr;
         console.error(`AI clan DNA API attempt ${attempt + 1} failed:`, apiErr.status || apiErr.message);
         if (attempt === 0 && (apiErr.status === 529 || apiErr.status === 500 || apiErr.status === 502 || apiErr.status === 503)) {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise(r => setTimeout(r, 500));  // rpm100-throttling-relax-v2: 2000→500ms (export workflows)
           continue;
         }
         throw apiErr;
