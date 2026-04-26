@@ -704,8 +704,10 @@ async function importClanByPubgId(clanId) {
       }
     } catch (e) { console.log('[import] Could not fetch current season:', e.message); }
 
-    // Fetch season stats for each member (batched, max 10 concurrent)
-    const batchSize = 10;
+    // rpm100-throttling-relax-v1: con 100 RPM (10 req/s) podemos paralelizar 25
+    // simultáneos sin riesgo. Antes batch=10 + 1500ms delay, ahora batch=25 + 300ms.
+    // Ganancia: clan de 60 miembros pasa de ~9s a ~3s.
+    const batchSize = 25;
     for (let i = 0; i < clanMembers.length; i += batchSize) {
       const batch = clanMembers.slice(i, i + batchSize);
       const results = await Promise.allSettled(batch.map(async (cm) => {
@@ -732,7 +734,7 @@ async function importClanByPubgId(clanId) {
         }
       }));
       results.forEach(r => { if (r.status === 'fulfilled') members.push(r.value); });
-      if (i + batchSize < clanMembers.length) await new Promise(r => setTimeout(r, 1500));
+      if (i + batchSize < clanMembers.length) await new Promise(r => setTimeout(r, 300));
     }
     members.sort((a, b) => b.stats.kills - a.stats.kills);
     console.log(`[import] PUBG API: got stats for ${members.length} members (${members.filter(m => m.active).length} active)`);
@@ -981,8 +983,8 @@ app.post('/clans/discover-members', requireAdmin, async (req, res) => {
 
     for (const matchId of matchIds) {
       try {
-        // Rate limit: wait 1s between match fetches
-        if (matchesProcessed > 0) await new Promise(r => setTimeout(r, 1200));
+        // rpm100-throttling-relax-v1: con 100 RPM (10 req/s) podemos bajar a 300ms
+        if (matchesProcessed > 0) await new Promise(r => setTimeout(r, 300));
 
         console.log(`[discover] Fetching match ${matchesProcessed + 1}/${matchIds.length}: ${matchId}`);
         const matchResp = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers }, 10000);
@@ -4497,7 +4499,7 @@ initDB().then(() => {
           } catch (e) {
             console.error(`[cron] ✗ Failed [${clan.tag}]:`, e.message);
           }
-          await new Promise(r => setTimeout(r, 3000));
+          await new Promise(r => setTimeout(r, 800));  // rpm100-throttling-relax-v1: 3000→800ms
         }
 
         // Phase 2: resolve pubg_clan_id from top member, then import
@@ -4531,7 +4533,7 @@ initDB().then(() => {
           } catch (e) {
             console.error(`[cron] ✗ Failed [${clan.tag}]:`, e.message);
           }
-          await new Promise(r => setTimeout(r, 3000));
+          await new Promise(r => setTimeout(r, 800));  // rpm100-throttling-relax-v1: 3000→800ms
         }
 
         console.log('[cron] Clan refresh cycle complete');
