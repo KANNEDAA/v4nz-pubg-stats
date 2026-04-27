@@ -14507,19 +14507,46 @@ switchTab=function(t){
         h+='</div>';
         dst.innerHTML=h;
       } else {
-        // No clan found — try as player gamertag
-        dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--text-dim);font-size:.75rem;">No se encontró clan "'+esc(q)+'". Buscando como jugador...</div>';
+        // No clan found — try as player gamertag (gt27-search-multi-platform-v1)
+        // 1. Probar primero la plataforma activa, luego la otra. Diferenciar 3 casos:
+        //    (a) player encontrado con clan → llevar al clan
+        //    (b) player encontrado sin clan → mensaje "existe pero sin clan"
+        //    (c) player no encontrado en ninguna → "no se encontró clan ni jugador"
+        dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--text-dim);font-size:.75rem;">No se encontró clan "'+esc(q)+'". Buscando como jugador en ambas plataformas...</div>';
+        var platformsToTry = (clanPlatform === 'xbox') ? ['xbox','psn'] : ['psn','xbox'];
+        var foundPlayer = null;
+        var foundOnPlatform = null;
+        for(var i=0;i<platformsToTry.length;i++){
+          var plat = platformsToTry[i];
+          try{
+            var pRes = await apiGet(API_BASE+'/'+plat+'/players?filter[playerNames]='+encodeURIComponent(q));
+            if(pRes && pRes.data && pRes.data.length > 0){
+              foundPlayer = pRes.data[0];
+              foundOnPlatform = plat;
+              break;
+            }
+          }catch(e2){ /* ignorar 404/error de plataforma, probar siguiente */ }
+        }
+        if(!foundPlayer){
+          // Caso (c): no encontrado en ninguna plataforma
+          dst.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:.75rem;">&#x274C; No se encontró clan ni jugador "'+esc(q)+'" en PSN ni Xbox.</div>';
+          return;
+        }
+        var clanId = foundPlayer.attributes && foundPlayer.attributes.clanId;
+        var platLabel = (foundOnPlatform === 'xbox') ? 'Xbox' : 'PSN';
+        if(!clanId){
+          // Caso (b): player existe pero sin clan
+          dst.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:.75rem;line-height:1.5;">&#x1F464; El jugador <strong style="color:var(--text-primary);">'+esc(q)+'</strong> existe en <strong style="color:var(--accent);">'+platLabel+'</strong>, pero <strong>no pertenece a ningún clan</strong>.<br/><span onclick="goToPlayer(\''+esc(q)+'\',\''+foundOnPlatform+'\')" style="display:inline-block;margin-top:10px;color:var(--accent);cursor:pointer;font-weight:700;">&rarr; Ver ficha del jugador</span></div>';
+          return;
+        }
+        // Caso (a): player con clan → buscar el clan
         try{
-          var pRes=await apiGet(API_BASE+'/'+clanPlatform+'/players?filter[playerNames]='+encodeURIComponent(q));
-          var player=pRes.data[0];
-          var clanId=player.attributes&&player.attributes.clanId;
-          if(!clanId){ dst.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:.75rem;">No se encontró clan ni jugador "'+esc(q)+'".</div>'; return; }
-          var cData=await apiGet(API_BASE+'/'+clanPlatform+'/clans/'+clanId);
-          var attr=cData.data.attributes||{};
-          var tag=attr.clanTag||'???';
-          dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--accent);font-size:.8rem;cursor:pointer;" onclick="loadClanPage(\''+esc(tag)+'\');history.pushState(null,\'\',\'/clan/'+esc(tag)+'\');">Clan encontrado: <strong>['+esc(tag)+'] '+esc(attr.clanName||'')+'</strong> — Click para ver &rarr;</div>';
-        }catch(e2){
-          dst.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:.75rem;">No se encontró clan ni jugador "'+esc(q)+'".</div>';
+          var cData = await apiGet(API_BASE+'/'+foundOnPlatform+'/clans/'+clanId);
+          var attr = cData.data.attributes || {};
+          var tag = attr.clanTag || '???';
+          dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--accent);font-size:.8rem;line-height:1.5;cursor:pointer;" onclick="loadClanPage(\''+esc(tag)+'\');history.pushState(null,\'\',\'/clan/'+esc(tag)+'\');"><div style="color:var(--text-dim);font-size:.7rem;margin-bottom:4px;">Jugador encontrado en '+platLabel+'</div>Clan: <strong>['+esc(tag)+'] '+esc(attr.clanName||'')+'</strong> — Click para ver &rarr;</div>';
+        }catch(e3){
+          dst.innerHTML='<div style="text-align:center;padding:16px;color:var(--accent-orange);font-size:.75rem;">El jugador <strong>'+esc(q)+'</strong> está en un clan pero no pude cargarlo. Inténtalo de nuevo en unos segundos.</div>';
         }
       }
     }catch(e){
