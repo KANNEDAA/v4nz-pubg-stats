@@ -3582,7 +3582,10 @@ body.pv2-self .pv2-only-other{display:none!important}
 
 /* Hero */
 .pv2-hero{padding:20px 0 28px;background:radial-gradient(ellipse at top,rgba(74,158,255,.08),transparent 60%)}
-.pv2-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(95,217,127,.1);border:1px solid rgba(95,217,127,.3);color:#5fd97f;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;margin-bottom:16px;letter-spacing:.5px}
+/* remove-api-chip-v1: eyebrow "PUBG OFFICIAL API" oculto — todos los datos vienen de la API,
+   decirlo en un chip verde grande es ruido innecesario. Si en el futuro queremos transmitir
+   frescura, basta con un "actualizado hace Xh" sutil junto al nombre. */
+.pv2-eyebrow{display:none!important}
 .pv2-dot{width:7px;height:7px;border-radius:50%;background:#5fd97f;box-shadow:0 0 8px #5fd97f;animation:pv2Pulse 2s ease-in-out infinite}
 @keyframes pv2Pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @media (prefers-reduced-motion:reduce){.pv2-dot{animation:none}}
@@ -3604,7 +3607,27 @@ body.pv2-self .pv2-only-other{display:none!important}
 .pv2-cta:hover{filter:brightness(1.1)}
 
 /* Última partida — colapsable con toggle */
-.pv2-last-match{margin-top:20px;background:linear-gradient(135deg,var(--bg-secondary,#131829),var(--bg-card,#1c2340));border:1px solid var(--border,#2a3350);border-top:3px solid var(--accent);border-radius:16px;padding:18px;position:relative;overflow:hidden;transition:padding .2s ease}
+/* remove-sticky-lastmatch-v1: el bloque viejo de "última partida" (tarjeta gorda con
+   stats expandibles + sticky en móvil) ya no se usa — reemplazado por la línea-CTA
+   #pv2LastMatchMini debajo. Lo ocultamos con !important para asegurar que no aparece
+   incluso si _pv2LoadLastMatch lo intenta mostrar. */
+.pv2-last-match{display:none!important}
+/* Nueva línea inline-CTA: una sola fila con info mínima de la última partida y un
+   call-to-action que hace scroll a la sección "Últimas 20 partidas" — donde están
+   los datos navegables de verdad. */
+.pv2-lm-mini{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:10px 14px;background:linear-gradient(90deg,rgba(0,240,255,0.06),transparent);border:1px solid var(--border,#2a3350);border-left:3px solid var(--accent);border-radius:8px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--text-primary)}
+.pv2-lm-mini:hover{background:linear-gradient(90deg,rgba(0,240,255,0.12),rgba(0,240,255,0.02));border-color:var(--accent)}
+.pv2-lm-mini-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv2-lm-mini-text .pv2-lm-mini-when{color:var(--text-dim);font-size:12px;margin-left:4px}
+.pv2-lm-mini-go{color:var(--accent);font-family:Rajdhani,sans-serif;font-weight:700;font-size:12px;letter-spacing:.5px;flex-shrink:0;display:inline-flex;align-items:center;gap:4px}
+@media(max-width:768px){.pv2-lm-mini{padding:8px 12px;font-size:12.5px}}
+/* player-menu-more-v1: estilo dropdown "..." */
+.pv2-mm-item:hover{background:var(--bg-card,#1c2340)!important;color:var(--accent)!important}
+.pv2-mm-item:hover span{color:var(--accent)!important}
+/* clan-fav-in-header-v1: estrella favorito clan dentro del chip pv2Clan */
+.pv2-clan-fav-star{display:inline-block;margin-left:6px;color:var(--text-dim);cursor:pointer;font-size:.9rem;line-height:1;transition:all .15s;padding:0 2px}
+.pv2-clan-fav-star:hover{color:var(--accent-yellow,#ffd700);transform:scale(1.2)}
+.pv2-clan-fav-star.is-fav{color:var(--accent-yellow,#ffd700);text-shadow:0 0 6px rgba(255,215,0,0.4)}
 .pv2-last-match.collapsed{padding:10px 14px}
 .pv2-last-match.collapsed .pv2-lm-stats,
 .pv2-last-match.collapsed .pv2-lm-deltas,
@@ -4474,11 +4497,26 @@ body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
         <a href="#" class="pv2-lm-detail" id="pv2LmDetail">Ver detalle de la partida &rarr;</a>
       </div>
 
-      <div class="pv2-hero-ctas" id="pv2HeroCtas">
-        <button type="button" class="pv2-cta pv2-only-self" onclick="if(typeof generateStatsCard==='function')generateStatsCard()">&#x1F4F7; Stats Card</button>
-        <button type="button" class="pv2-cta pv2-only-self" onclick="if(typeof generateSeasonWrapped==='function')generateSeasonWrapped()">&#x1F3C6; Mi Wrapped</button>
-        <button type="button" class="pv2-cta" onclick="if(typeof _goCompareWithMe==='function')_goCompareWithMe();else if(typeof switchTab==='function')switchTab('compare')">&#x1F50D; Comparar</button>
+      <!-- remove-sticky-lastmatch-v1: línea-CTA inline NO sticky.
+           Se rellena desde _pv2LoadLastMatch (mini render) y al click hace scroll a #pv2WlGrid -->
+      <div class="pv2-lm-mini" id="pv2LastMatchMini" style="display:none;" onclick="(function(){var el=document.getElementById('pv2WlGrid')||document.getElementById('wlGridContainer');if(el){var y=el.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}})()">
+        <div class="pv2-lm-mini-text">&#x1F3AE; <span id="pv2LmMiniTitle">Última partida</span><span class="pv2-lm-mini-when" id="pv2LmMiniWhen"></span></div>
+        <div class="pv2-lm-mini-go">Ver mis partidas &darr;</div>
+      </div>
+
+      <!-- player-actions-clean-v1 + player-menu-more-v1: header acciones limpias.
+           Solo Favorito + Compartir + ⋯ visible. El resto va al menú desplegable. -->
+      <div class="pv2-hero-ctas" id="pv2HeroCtas" style="position:relative;">
         <button type="button" class="pv2-cta pv2-only-other" id="pv2FavBtn">&#x2B50; Favorito</button>
+        <button type="button" class="pv2-cta" id="pv2ShareBtn" onclick="if(typeof _pv2DoShare==='function')_pv2DoShare();">&#x1F517; Compartir</button>
+        <button type="button" class="pv2-cta" id="pv2MoreBtn" onclick="(function(e){e.stopPropagation();var m=document.getElementById('pv2MoreMenu');if(m)m.style.display=(m.style.display==='block')?'none':'block';})(event)" title="Más acciones" aria-haspopup="true" aria-expanded="false" style="padding:8px 12px;font-size:1.1rem;line-height:1;">&#x22EF;</button>
+        <!-- Dropdown menú "..." -->
+        <div class="pv2-more-menu" id="pv2MoreMenu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:240px;background:var(--bg-secondary,#131829);border:1px solid var(--border-strong,#3a4668);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,0.5);padding:6px;z-index:50;font-size:13px;">
+          <button type="button" class="pv2-mm-item" onclick="document.getElementById('pv2MoreMenu').style.display='none';if(typeof _goCompareWithMe==='function')_goCompareWithMe();else if(typeof switchTab==='function')switchTab('compare');" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 12px;background:transparent;border:0;color:var(--text-primary);font-family:inherit;font-size:13px;cursor:pointer;border-radius:7px;text-align:left;">&#x1F50D; Comparar con otro jugador <span style="color:var(--text-dim);font-size:12px;">&rarr;</span></button>
+          <button type="button" class="pv2-mm-item pv2-only-self" onclick="document.getElementById('pv2MoreMenu').style.display='none';if(typeof generateStatsCard==='function')generateStatsCard();" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 12px;background:transparent;border:0;color:var(--text-primary);font-family:inherit;font-size:13px;cursor:pointer;border-radius:7px;text-align:left;">&#x1F4F7; Generar Stats Card <span style="color:var(--text-dim);font-size:12px;">&rarr;</span></button>
+          <button type="button" class="pv2-mm-item pv2-only-self" onclick="document.getElementById('pv2MoreMenu').style.display='none';if(typeof generateSeasonWrapped==='function')generateSeasonWrapped();" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 12px;background:transparent;border:0;color:var(--text-primary);font-family:inherit;font-size:13px;cursor:pointer;border-radius:7px;text-align:left;">&#x1F3C6; Mi Season Wrapped <span style="color:var(--text-dim);font-size:12px;">&rarr;</span></button>
+          <button type="button" class="pv2-mm-item" onclick="document.getElementById('pv2MoreMenu').style.display='none';if(typeof _pv2DoShare==='function')_pv2DoShare(true);" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 12px;background:transparent;border:0;color:var(--text-primary);font-family:inherit;font-size:13px;cursor:pointer;border-radius:7px;text-align:left;">&#x1F4CB; Copiar link de la ficha <span style="color:var(--text-dim);font-size:12px;">&rarr;</span></button>
+        </div>
       </div>
     </header>
 
@@ -13583,17 +13621,35 @@ switchTab=function(t){
     if(isSelf) _pv2Show('pv2NextStepSection', true);
   }
 
-  // ── Clan retry ──
+  // ── Clan retry (clan-fav-in-header-v1) ──
+  // Antes mostraba solo texto plano del clan. Ahora:
+  //   - link clickable que abre /clan/:tag
+  //   - estrella favorito clan separada al final del chip (toggle sin salir del header)
   function _pv2RefreshClan(){
     var clanEl = document.getElementById('pv2Clan');
     if(!clanEl) return;
     var clanBadgeOld = document.getElementById('playerClanBadge');
-    var text = '';
-    if(clanBadgeOld && clanBadgeOld.textContent){
-      text = clanBadgeOld.textContent.trim();
+    if(!clanBadgeOld || !clanBadgeOld.textContent){
+      clanEl.style.display = 'none';
+      return;
     }
-    if(text){ clanEl.textContent = text; clanEl.style.display = ''; }
-    else { clanEl.style.display = 'none'; }
+    var raw = clanBadgeOld.textContent.trim();
+    var m = raw.match(/\[([^\]]+)\]\s*(.*)/);
+    if(!m){
+      clanEl.textContent = raw;
+      clanEl.style.display = '';
+      return;
+    }
+    var tag = m[1];
+    var name = m[2].trim();
+    var plat = (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn';
+    var safeTagAttr = tag.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var safeNameAttr = name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var safeTagJs = (typeof escJs === 'function') ? escJs(tag) : tag.replace(/'/g,"\\'");
+    var clanLink = '<a href="/clan/' + encodeURIComponent(tag) + '" onclick="event.preventDefault();if(typeof switchTab===\'function\')switchTab(\'clans\');history.pushState(null,\'\',\'/clan/' + encodeURIComponent(tag) + '\');if(typeof loadClanPage===\'function\')loadClanPage(\'' + safeTagJs + '\');return false;" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">\u{1F6E1}\u{FE0F} [' + safeTagAttr + '] ' + safeNameAttr + '</a>';
+    var star = (typeof clanFavStar === 'function') ? clanFavStar(tag, name, plat, '.85rem') : '';
+    clanEl.innerHTML = clanLink + (star ? ' ' + star : '');
+    clanEl.style.display = '';
   }
 
   // ── Rank retry ──
@@ -13602,9 +13658,12 @@ switchTab=function(t){
       var rankEl = document.getElementById('pv2Rank');
       if(!rankEl) return;
       var rankOld = document.getElementById('rankBadge');
-      var rankText = rankOld ? rankOld.textContent.trim().replace(/\s+/g,' ').slice(0, 40) : '';
+      var rankText = rankOld ? rankOld.textContent.trim() : '';
       if(rankText){
-        rankEl.textContent = '\u2B50 ' + rankText;
+        // rank-chip-medal-v1: medalla en lugar de estrella (la estrella confundia con favoritos).
+        // Limpia los emojis de rank heredados del rankBadge viejo (corona/diamante/oro/etc) para que no haya doble icono.
+        rankText = rankText.replace(/[\u{1F451}\u{1F48E}\u{1F4A0}\u{2B50}\u{1F31F}\u{1FA99}\u{1F949}]/gu, '').replace(/\s+/g,' ').trim().slice(0, 40);
+        rankEl.textContent = '\u{1F396}\u{FE0F} ' + rankText;
       }
     } catch(e){}
   }
@@ -13853,11 +13912,30 @@ switchTab=function(t){
   function _pv2UpdateLmMini(){
     try {
       var mini = document.getElementById('pv2LmMini');
-      if(!mini) return;
-      var k = (document.getElementById('pv2LmKills') || {}).textContent || '?';
-      var d = (document.getElementById('pv2LmDmg') || {}).textContent || '?';
-      var p = (document.getElementById('pv2LmPos') || {}).textContent || '?';
-      mini.textContent = '\u00B7 ' + k + 'k \u00B7 ' + d + ' dmg \u00B7 ' + p;
+      if(mini){
+        var k = (document.getElementById('pv2LmKills') || {}).textContent || '?';
+        var d = (document.getElementById('pv2LmDmg') || {}).textContent || '?';
+        var p = (document.getElementById('pv2LmPos') || {}).textContent || '?';
+        mini.textContent = '\u00B7 ' + k + 'k \u00B7 ' + d + ' dmg \u00B7 ' + p;
+      }
+      // remove-sticky-lastmatch-v1: rellenar tambien la linea-CTA inline #pv2LastMatchMini
+      var newMini = document.getElementById('pv2LastMatchMini');
+      if(newMini){
+        var when = (document.getElementById('pv2LmWhen') || {}).textContent || '';
+        var map = (document.getElementById('pv2LmMap') || {}).textContent || '';
+        var whenT = (when || '').trim();
+        var mapT = (map || '').trim();
+        if(mapT === 'Mapa' || mapT === '?') mapT = '';
+        if(whenT === '?') whenT = '';
+        if(whenT || mapT){
+          var sub = document.getElementById('pv2LmMiniWhen');
+          if(sub){
+            if(whenT && mapT) sub.textContent = whenT + ' en ' + mapT;
+            else sub.textContent = whenT || mapT;
+          }
+          newMini.style.display = '';
+        }
+      }
     } catch(e){}
   }
   // pv2-lm-always-collapsed-on-load: SIEMPRE colapsado al cargar la página (audit-fixes-v2).
@@ -14214,6 +14292,58 @@ switchTab=function(t){
   window._pv2Init = _pv2Init;
   window._pv2Enabled = _pv2Enabled;
   window._pv2LoadStats = _pv2LoadStats;  // pv2-season-refresh-v1
+
+  // ─────────────────────────────────────────────────────────────────────
+  // player-actions-clean-v1 + player-menu-more-v1
+  // Helpers para los nuevos botones del header (Compartir + dropdown ⋯)
+  // ─────────────────────────────────────────────────────────────────────
+  // Share: prefiere Web Share API en móvil; copia link en desktop o si forceCopy=true
+  function _pv2DoShare(forceCopy){
+    try {
+      var pd = (typeof currentPlayerData !== 'undefined') ? currentPlayerData : null;
+      var name = (pd && pd.attributes && pd.attributes.name) || '';
+      var plat = (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn';
+      if(!name){
+        // fallback: copiar URL actual
+        if(navigator.clipboard) navigator.clipboard.writeText(location.href).catch(function(){});
+        return;
+      }
+      var url = 'https://v4nz.com/stats/' + plat + '/' + encodeURIComponent(name);
+      var title = 'V4NZ — Stats de ' + name;
+      var text = 'Mira las stats de ' + name + ' en V4NZ PUBG Tracker';
+      // forceCopy desde menú "Copiar link" o desktop sin Web Share API → copia al portapapeles
+      var canShare = !forceCopy && navigator.share && /Mobi|Android/i.test(navigator.userAgent);
+      if(canShare){
+        navigator.share({ title: title, text: text, url: url }).catch(function(){});
+      } else if(navigator.clipboard){
+        navigator.clipboard.writeText(url).then(function(){
+          var btn = document.getElementById('pv2ShareBtn');
+          if(btn){
+            var orig = btn.innerHTML;
+            btn.innerHTML = '✅ Copiado';
+            setTimeout(function(){ btn.innerHTML = orig; }, 1800);
+          }
+        }).catch(function(){});
+      }
+    } catch(e){}
+  }
+  window._pv2DoShare = _pv2DoShare;
+
+  // Cerrar dropdown "..." al hacer click fuera o pulsar Escape
+  document.addEventListener('click', function(e){
+    var menu = document.getElementById('pv2MoreMenu');
+    if(!menu || menu.style.display !== 'block') return;
+    var btn = document.getElementById('pv2MoreBtn');
+    // Si el click es dentro del menú o en el botón que lo abre, ignorar
+    if((btn && btn.contains(e.target)) || menu.contains(e.target)) return;
+    menu.style.display = 'none';
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      var menu = document.getElementById('pv2MoreMenu');
+      if(menu) menu.style.display = 'none';
+    }
+  });
 })();
 // PLAYER-V2-JS END
 
