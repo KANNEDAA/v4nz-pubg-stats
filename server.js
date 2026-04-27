@@ -642,6 +642,55 @@ app.post('/clans/requests/:id/reject', requireAdmin, async (req, res) => {
 
 // ═══ IMPORT CLAN FROM PUBGCLANS.NET ═══
 
+// gt27-auto-import-on-profile-v1: dado un gamertag + plataforma, encontrar el clanId del
+// player en la PUBG API (probando ambas plataformas si la primera falla) y, si su clan
+// no está en BD V4NZ, importarlo. Fire-and-forget — no se debe esperar ni bloquear endpoints.
+// Usado tras /auth/register y PUT /auth/profile cuando el user guarda su gamertag.
+async function _autoImportClanFromGamertag(gamertag, platformHint) {
+  if (!pool || !gamertag || !SERVER_API_KEY) return;
+  const cleanGT = String(gamertag).trim();
+  if (!cleanGT) return;
+  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+  // Probar la plataforma hint primero, luego la otra
+  const platforms = (platformHint === 'xbox') ? ['xbox', 'psn'] : ['psn', 'xbox'];
+  let clanId = null;
+  for (const plat of platforms) {
+    try {
+      const pResp = await fetchWithTimeout(fetch,
+        `https://api.pubg.com/shards/${plat}/players?filter[playerNames]=${encodeURIComponent(cleanGT)}`,
+        { headers }, 8000);
+      if (!pResp.ok) continue;
+      const pData = await pResp.json();
+      const player = pData.data && pData.data[0];
+      if (!player) continue;
+      const cId = player.attributes && player.attributes.clanId;
+      if (cId) { clanId = cId; break; }
+      // Player encontrado pero sin clan → no hay nada que importar
+      console.log(`[auto-import] ${cleanGT} encontrado en ${plat} pero sin clan`);
+      return;
+    } catch (e) { /* probar siguiente plataforma */ }
+  }
+  if (!clanId) {
+    console.log(`[auto-import] ${cleanGT} no encontrado en PSN ni Xbox`);
+    return;
+  }
+  // Comprobar si el clan ya está en BD por pubg_clan_id (más fiable que tag)
+  try {
+    const exists = await pool.query('SELECT tag FROM clans WHERE pubg_clan_id = $1 LIMIT 1', [clanId]);
+    if (exists.rows.length) {
+      console.log(`[auto-import] clan ${clanId} (${exists.rows[0].tag}) ya está en V4NZ — skip`);
+      return;
+    }
+  } catch (e) { /* columna pubg_clan_id puede no existir en BDs antiguas — seguir e importar */ }
+  console.log(`[auto-import] importando clan ${clanId} descubierto vía gamertag ${cleanGT}`);
+  try {
+    const result = await importClanByPubgId(clanId);
+    console.log(`[auto-import] OK — clan ${result.tag || clanId} importado (${result.memberCount || '?'} miembros)`);
+  } catch (e) {
+    console.warn(`[auto-import] falló import de ${clanId}: ${e.message}`);
+  }
+}
+
 // Reusable import function — used by endpoint, refresh, auto-refresh, and cron
 async function importClanByPubgId(clanId) {
   if (!pool) throw new Error('No database configured');
@@ -793,11 +842,7 @@ async function importClanByPubgId(clanId) {
     }
   }
 
-  // GT-26: Si no hay miembros, registrar el clan igualmente con metadata (tag, name, level, platform).
-  // Los miembros se irán descubriendo conforme los usuarios busquen jugadores de ese clan.
-  if (!members.length) {
-    console.log(`[import] No members found from any source — registering clan with metadata only`);
-  }
+  if (!members.length) throw new Error('No se encontraron miembros del clan en ninguna fuente');
 
   // Step 4: Register the clan (upsert)
   const cleanTag = clanMeta.clanTag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
@@ -1456,6 +1501,10 @@ app.post('/auth/register', rateLimit, async (req, res) => {
     const token = generateToken(user);
     setAuthCookie(res, token);
     res.json({ token, user: { id: user.id, display_name: user.display_name, gamertag: user.gamertag, platform: user.platform } });
+    // gt27-auto-import-on-profile-v1: si el user puso gamertag al registrarse, dar de alta su clan en background
+    if (user.gamertag) {
+      setImmediate(() => { _autoImportClanFromGamertag(user.gamertag, user.platform).catch(e => console.warn('[auto-import register] err:', e.message)); });
+    }
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
@@ -1592,7 +1641,12 @@ app.put('/auth/profile', requireAuth, async (req, res) => {
       [cleanGT || null, cleanPlat, req.user.id]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ user: result.rows[0] });
+    const updatedUser = result.rows[0];
+    res.json({ user: updatedUser });
+    // gt27-auto-import-on-profile-v1: si el user guardó gamertag, dar de alta su clan en background
+    if (updatedUser.gamertag) {
+      setImmediate(() => { _autoImportClanFromGamertag(updatedUser.gamertag, updatedUser.platform).catch(e => console.warn('[auto-import profile] err:', e.message)); });
+    }
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
 
