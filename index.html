@@ -3810,7 +3810,9 @@ body.cv2-active #searchHero{display:none!important}
    los oculto por defecto, los nuevos sub-tabs los muestran */
 body.cv2-active #clanCompareMode,
 body.cv2-active #clanAnalysisMode{display:none}
-body.cv2-active.cv2-show-search #clanSearchMode{display:block!important}
+/* gt27-fix-overlap-v1: quitada regla cv2-show-search porque la búsqueda v2
+   renderiza en su propio contenedor #cv2SearchResults; reactivar el panel
+   viejo #clanSearchMode causaba solapamiento nuevo+viejo en /clans. */
 body.cv2-active.cv2-show-compare #clanCompareMode{display:block!important}
 body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
 
