@@ -3810,6 +3810,7 @@ body.cv2-active #searchHero{display:none!important}
    los oculto por defecto, los nuevos sub-tabs los muestran */
 body.cv2-active #clanCompareMode,
 body.cv2-active #clanAnalysisMode{display:none}
+body.cv2-active.cv2-show-search #clanSearchMode{display:block!important}
 body.cv2-active.cv2-show-compare #clanCompareMode{display:block!important}
 body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
 
@@ -4703,7 +4704,7 @@ body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
             <button type="button" id="cv2SearchByPlayer" onclick="if(typeof setClanSearchTab==='function')setClanSearchTab('player'); _cv2HighlightSearchTab('player');">&#x1F464; Por gamertag</button>
           </div>
           <div class="cv2-search-row">
-            <input type="text" class="cv2-search-input" id="cv2SearchInput" placeholder="Tag o nombre del clan (ej. V4NZ, AVANZA, JOJO...)" />
+            <input type="text" class="cv2-search-input" id="cv2SearchInput" placeholder="Tag o nombre del clan (ej. V4NZ, AVANZA, JOJO...)" onkeydown="if(event.key==='Enter')_cv2DoSearch()" />
             <button type="button" class="cv2-search-btn" onclick="_cv2DoSearch()">BUSCAR</button>
           </div>
           <div class="cv2-search-hint">
@@ -11777,6 +11778,10 @@ function renderSquadResults(players){
 
 function setClanMode(mode,btn){
   document.querySelectorAll('.clan-mode-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  /* GT-27: toggle cv2-show-* classes so CSS !important rules don't block panels */
+  document.body.classList.toggle('cv2-show-search',mode==='search');
+  document.body.classList.toggle('cv2-show-compare',mode==='compare');
+  document.body.classList.toggle('cv2-show-analysis',mode==='analysis');
   document.getElementById('clanSearchMode').style.display=mode==='search'?'block':'none';
   document.getElementById('clanCompareMode').style.display=mode==='compare'?'block':'none';
   document.getElementById('clanAnalysisMode').style.display=mode==='analysis'?'block':'none';
@@ -14463,24 +14468,56 @@ switchTab=function(t){
   function _cv2LoadRankingEmbed(){ _cv2RenderClanList('cv2RankingEmbed', 10, true); }
   function _cv2LoadFeedTop5(){ _cv2RenderClanList('cv2FeedTop5', 5, false); }
 
-  // ── Búsqueda directa ──
-  window._cv2DoSearch = function(){
+  // ── Búsqueda directa (GT-27: reescrita para no depender de las funciones viejas) ──
+  window._cv2DoSearch = async function(){
     var inp = document.getElementById('cv2SearchInput');
     if(!inp) return;
     var q = (inp.value || '').trim();
     if(!q){ inp.focus(); return; }
-    // Sincronizar con el input viejo y disparar la función real
-    var old = document.getElementById('clanNameInput');
-    if(old) old.value = q;
-    var oldP = document.getElementById('clanPlayerInput');
-    if(oldP) oldP.value = q;
-    if(typeof searchClanByName === 'function') searchClanByName();
-    // Mover resultados al contenedor v2
-    setTimeout(function(){
-      var dst = document.getElementById('cv2SearchResults');
-      var src = document.getElementById('clanResults') || document.getElementById('clanNameResults');
-      if(dst && src && src.innerHTML){ dst.innerHTML = src.innerHTML; }
-    }, 1500);
+    var dst = document.getElementById('cv2SearchResults');
+    if(!dst) return;
+    dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--text-dim);font-size:.75rem;">Buscando clanes...</div>';
+    try{
+      var resp = await fetch('/clans/search/'+encodeURIComponent(q));
+      if(!resp.ok) throw new Error('Error buscando');
+      var data = await resp.json();
+      if(data.clans && data.clans.length > 0){
+        var h='<div style="font-size:.7rem;color:var(--text-dim);margin-bottom:8px;font-family:Rajdhani,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;">'+data.clans.length+' clan'+(data.clans.length>1?'es':'')+' encontrado'+(data.clans.length>1?'s':'')+'</div>';
+        h+='<div style="display:flex;flex-direction:column;gap:6px;">';
+        data.clans.forEach(function(cl){
+          h+='<div onclick="loadClanPage(\''+esc(cl.tag)+'\');history.pushState(null,\'\',\'/clan/'+esc(cl.tag)+'\');" style="cursor:pointer;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:12px 16px;transition:all .2s;display:flex;align-items:center;gap:12px;" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.background=\'rgba(0,240,255,0.04)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--bg-secondary)\'">';
+          h+='<div style="width:36px;height:36px;border-radius:8px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-size:.6rem;font-weight:900;color:var(--accent);flex-shrink:0;">'+esc(cl.tag).slice(0,4)+'</div>';
+          h+='<div style="flex:1;min-width:0;">';
+          h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+          h+='<span style="font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;color:var(--accent);">['+esc(cl.tag)+']</span>';
+          if(cl.name)h+='<span style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:600;color:var(--text-primary);">'+esc(cl.name)+'</span>';
+          h+='</div>';
+          h+='<div style="font-size:.65rem;color:var(--text-dim);margin-top:2px;">'+((cl.active_members||0))+' miembros &middot; '+((cl.total_kills||0))+' kills &middot; K/D '+(cl.avg_kd||'0.00')+'</div>';
+          h+='</div>';
+          h+='<div style="font-size:.65rem;color:var(--accent);font-family:Rajdhani,sans-serif;font-weight:600;">VER &rarr;</div>';
+          h+='</div>';
+        });
+        h+='</div>';
+        dst.innerHTML=h;
+      } else {
+        // No clan found — try as player gamertag
+        dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--text-dim);font-size:.75rem;">No se encontró clan "'+esc(q)+'". Buscando como jugador...</div>';
+        try{
+          var pRes=await apiGet(API_BASE+'/'+clanPlatform+'/players?filter[playerNames]='+encodeURIComponent(q));
+          var player=pRes.data[0];
+          var clanId=player.attributes&&player.attributes.clanId;
+          if(!clanId){ dst.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:.75rem;">No se encontró clan ni jugador "'+esc(q)+'".</div>'; return; }
+          var cData=await apiGet(API_BASE+'/'+clanPlatform+'/clans/'+clanId);
+          var attr=cData.data.attributes||{};
+          var tag=attr.clanTag||'???';
+          dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--accent);font-size:.8rem;cursor:pointer;" onclick="loadClanPage(\''+esc(tag)+'\');history.pushState(null,\'\',\'/clan/'+esc(tag)+'\');">Clan encontrado: <strong>['+esc(tag)+'] '+esc(attr.clanName||'')+'</strong> — Click para ver &rarr;</div>';
+        }catch(e2){
+          dst.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:.75rem;">No se encontró clan ni jugador "'+esc(q)+'".</div>';
+        }
+      }
+    }catch(e){
+      dst.innerHTML='<div style="text-align:center;padding:12px;color:var(--accent-orange);font-size:.75rem;">Error buscando clanes. Inténtalo de nuevo.</div>';
+    }
   };
   window._cv2HighlightSearchTab = function(mode){
     var btnName = document.getElementById('cv2SearchByName');
