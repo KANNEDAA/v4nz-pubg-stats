@@ -11336,6 +11336,13 @@ async function comparePlayers(){
       setLoaderStep('Buscando '+name+'...');
       const p=await findPlayer(name,platform);
       const rn=p.data[0].attributes.name;
+      // gt27-auto-import-on-compare-v1: si el player tiene clanId, dar de alta su clan en V4NZ (fire-and-forget)
+      try {
+        const cId = p.data[0].attributes && p.data[0].attributes.clanId;
+        if(cId){
+          fetch('/clans/import-members',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId:cId,gameMode:'squad'})}).catch(()=>{});
+        }
+      } catch(e){}
       setLoaderStep('Stats de '+rn+'...');
       const ss=await apiGet(API_BASE+'/'+platform+'/players/'+p.data[0].id+'/seasons/'+csId);
       return {stats:ss.data.attributes.gameModeStats[mode]||ss.data.attributes.gameModeStats.squad||{},resolvedName:rn};
