@@ -793,11 +793,7 @@ async function importClanByPubgId(clanId) {
     }
   }
 
-  // GT-26: Si no hay miembros, registrar el clan igualmente con metadata (tag, name, level, platform).
-  // Los miembros se irán descubriendo conforme los usuarios busquen jugadores de ese clan.
-  if (!members.length) {
-    console.log(`[import] No members found from any source — registering clan with metadata only`);
-  }
+  if (!members.length) throw new Error('No se encontraron miembros del clan en ninguna fuente');
 
   // Step 4: Register the clan (upsert)
   const cleanTag = clanMeta.clanTag.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 20);
