@@ -3628,6 +3628,9 @@ body.pv2-self .pv2-only-other{display:none!important}
 .pv2-clan-fav-star{display:inline-block;margin-left:6px;color:var(--text-dim);cursor:pointer;font-size:.9rem;line-height:1;transition:all .15s;padding:0 2px}
 .pv2-clan-fav-star:hover{color:var(--accent-yellow,#ffd700);transform:scale(1.2)}
 .pv2-clan-fav-star.is-fav{color:var(--accent-yellow,#ffd700);text-shadow:0 0 6px rgba(255,215,0,0.4)}
+/* pv2-fav-state-v1: botón Favorito iluminado cuando está activo */
+.pv2-cta.is-fav{border-color:var(--accent-yellow,#ffd700)!important;color:var(--accent-yellow,#ffd700)!important;background:rgba(255,215,0,0.08)!important;box-shadow:0 0 0 1px rgba(255,215,0,0.2),0 0 12px rgba(255,215,0,0.1)}
+.pv2-cta.is-fav:hover{background:rgba(255,215,0,0.15)!important;border-color:var(--accent-yellow,#ffd700)!important}
 .pv2-last-match.collapsed{padding:10px 14px}
 .pv2-last-match.collapsed .pv2-lm-stats,
 .pv2-last-match.collapsed .pv2-lm-deltas,
@@ -13577,7 +13580,7 @@ switchTab=function(t){
     // Eyebrow: API actualizada (placeholder hora actual)
     _pv2Text('pv2Eyebrow', 'PUBG OFFICIAL API \u00B7 actualizado ahora mismo');
 
-    // Fav button (other only)
+    // Fav button (other only) — pv2-fav-state-v1: ahora se ilumina + retry estado inicial
     var favBtn = document.getElementById('pv2FavBtn');
     if(favBtn){
       favBtn.onclick = function(){
@@ -13585,7 +13588,13 @@ switchTab=function(t){
           if(typeof toggleFavorite === 'function'){ toggleFavorite(name, plat); }
           else if(typeof toggleFavoriteFromHeader === 'function'){ toggleFavoriteFromHeader(); }
         } catch(e){}
+        try { _pv2UpdateFavBtn(); } catch(e){}
+        try { if(typeof updateFavHeaderBtn === 'function') updateFavHeaderBtn(); } catch(e){}
       };
+      // Estado inicial + retries (favorites puede llegar tarde en sync con server)
+      try { _pv2UpdateFavBtn(); } catch(e){}
+      setTimeout(function(){ try{ _pv2UpdateFavBtn(); }catch(e){} }, 800);
+      setTimeout(function(){ try{ _pv2UpdateFavBtn(); }catch(e){} }, 2200);
     }
 
     // ── Última partida (retry cuando currentMatchData termine de llegar) ──
@@ -14294,9 +14303,26 @@ switchTab=function(t){
   window._pv2LoadStats = _pv2LoadStats;  // pv2-season-refresh-v1
 
   // ─────────────────────────────────────────────────────────────────────
-  // player-actions-clean-v1 + player-menu-more-v1
-  // Helpers para los nuevos botones del header (Compartir + dropdown ⋯)
+  // player-actions-clean-v1 + player-menu-more-v1 + pv2-fav-state-v1
+  // Helpers para los nuevos botones del header (Favorito + Compartir + dropdown ⋯)
   // ─────────────────────────────────────────────────────────────────────
+  // pv2-fav-state-v1: actualiza el botón Favorito según el estado real (★ + clase is-fav)
+  function _pv2UpdateFavBtn(){
+    try {
+      var btn = document.getElementById('pv2FavBtn');
+      if(!btn) return;
+      var pd = (typeof currentPlayerData !== 'undefined') ? currentPlayerData : null;
+      var n = pd && pd.attributes && pd.attributes.name;
+      if(!n) return;
+      var fav = (typeof isFavorite === 'function') ? isFavorite(n) : false;
+      btn.classList.toggle('is-fav', fav);
+      // Icono ★ lleno si fav, ☆ hueco si no
+      btn.innerHTML = (fav ? '★' : '☆') + ' Favorito';
+      btn.title = fav ? 'Quitar de favoritos' : 'Guardar en favoritos';
+    } catch(e){}
+  }
+  window._pv2UpdateFavBtn = _pv2UpdateFavBtn;
+
   // Share: prefiere Web Share API en móvil; copia link en desktop o si forceCopy=true
   function _pv2DoShare(forceCopy){
     try {
