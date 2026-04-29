@@ -3669,6 +3669,70 @@ body.pv2-self .pv2-only-other{display:none!important}
 /* ADN */
 .pv2-adn-grid{display:grid;gap:16px;grid-template-columns:1fr}
 @media (min-width:768px){.pv2-adn-grid{grid-template-columns:1fr 1fr}}
+
+/* ─── gt27-pv2-filters-bar-v1: barra de filtros arriba ─── */
+/* Antes Squad/Duo/Solo estaban dentro de stats y Temporada/Ranked/Lifetime al
+   fondo de la página. Ahora todos los filtros juntos, arriba, antes del ADN. */
+body.pv2-active .pv2-filters-bar{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 16px;
+  margin-bottom:24px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  align-items:center;
+}
+body.pv2-active .pv2-filter-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+body.pv2-active .pv2-filter-label{
+  font-size:.6rem;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text-dim);
+  margin-right:4px;
+  font-weight:700;
+}
+body.pv2-active .pv2-filter-chip{
+  background:var(--bg-secondary);
+  border:1px solid var(--border);
+  color:var(--text-secondary);
+  padding:5px 12px;
+  border-radius:999px;
+  font-family:'Rajdhani',sans-serif;
+  font-weight:700;
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  cursor:pointer;
+  transition:all .2s;
+}
+body.pv2-active .pv2-filter-chip:hover{color:var(--text-primary);border-color:rgba(255,255,255,.15)}
+body.pv2-active .pv2-filter-chip.active{
+  background:var(--accent-dim);
+  color:var(--accent);
+  border-color:var(--accent);
+  box-shadow:0 0 8px rgba(0,240,255,.15);
+}
+body.pv2-active .pv2-filter-divider{width:1px;height:18px;background:var(--border)}
+@media (max-width:720px){
+  body.pv2-active .pv2-filter-divider{display:none}
+  body.pv2-active .pv2-filters-bar{padding:10px 12px;gap:8px}
+}
+
+/* gt27-pv2-filters-bar-v1: ocultar los chips viejos duplicados de modo
+   (Squad/Duo/Solo) dentro de pv2StatsSection. Ahora están en pv2FiltersBar. */
+body.pv2-active #pv2StatsSection > .pv2-mode-chips{display:none!important}
+
+/* gt27-pv2-filters-bar-v1: ocultar los footlinks "Ver Ranked / Ver Lifetime"
+   ya que ahora tenemos chips Temporada/Ranked/Lifetime arriba. */
+body.pv2-active #pv2StatsSection .pv2-stat-footlinks{display:none!important}
+
+/* gt27-pv2-filters-bar-v1: ocultar el bloque "HISTORIAL DEL JUGADOR" (#evolutionSection)
+   cuando estás en pv2-active. La info se mantiene accesible vía el acordeón
+   "Evolución temporal" del bloque Ver más. Sin esto el bloque salía ancho y
+   confuso al fondo de la ficha duplicando los stats grandes. */
+body.pv2-active #evolutionSection{display:none!important}
 .pv2-adn-card{background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;padding:18px}
 
 /* Stats */
@@ -4557,6 +4621,31 @@ body.cv2-detail-active #searchHero{display:none!important}
         </div>
       </div>
     </header>
+
+    <!-- gt27-pv2-filters-bar-v1: barra de filtros unificada arriba.
+         Antes Squad/Duo/Solo estaban dentro de Stats y Temporada/Ranked/Lifetime
+         al fondo. Ahora todos los filtros juntos en una barra, antes del ADN. -->
+    <section class="pv2-filters-bar" id="pv2FiltersBar" style="display:none;">
+      <div class="pv2-filter-group">
+        <span class="pv2-filter-label">Modo</span>
+        <button type="button" class="pv2-filter-chip active" data-pv2filter="st" data-val="season">Temporada</button>
+        <button type="button" class="pv2-filter-chip" data-pv2filter="st" data-val="ranked">Ranked</button>
+        <button type="button" class="pv2-filter-chip" data-pv2filter="st" data-val="lifetime">Lifetime</button>
+      </div>
+      <div class="pv2-filter-divider"></div>
+      <div class="pv2-filter-group">
+        <span class="pv2-filter-label">Squad</span>
+        <button type="button" class="pv2-filter-chip active" data-pv2filter="sq" data-val="squad">Squad</button>
+        <button type="button" class="pv2-filter-chip" data-pv2filter="sq" data-val="duo">Duo</button>
+        <button type="button" class="pv2-filter-chip" data-pv2filter="sq" data-val="solo">Solo</button>
+      </div>
+      <div class="pv2-filter-divider"></div>
+      <div class="pv2-filter-group">
+        <span class="pv2-filter-label">Vista</span>
+        <button type="button" class="pv2-filter-chip active" data-pv2filter="gm" data-val="tpp">TPP</button>
+        <button type="button" class="pv2-filter-chip" data-pv2filter="gm" data-val="fpp">FPP</button>
+      </div>
+    </section>
 
     <!-- IDENTIDAD ADN (placeholder, se rellena desde ADN existente) -->
     <section class="pv2-section" id="pv2AdnSection" style="display:none;">
@@ -13669,6 +13758,13 @@ switchTab=function(){
     } catch(e){}
     document.body.classList.toggle('pv2-self', isSelf);
 
+    // gt27-pv2-filters-bar-v1: mostrar barra de filtros + sincronizar estado
+    var fb = document.getElementById('pv2FiltersBar');
+    if(fb){
+      fb.style.display = '';
+      _pv2SyncFilterChips();
+    }
+
     // Hero — avatar + nombre
     _pv2Text('pv2Avatar', _pv2Initial(name));
     _pv2Text('pv2NameSelf', name);
@@ -14427,6 +14523,42 @@ switchTab=function(){
   // player-actions-clean-v1 + player-menu-more-v1 + pv2-fav-state-v1
   // Helpers para los nuevos botones del header (Favorito + Compartir + dropdown ⋯)
   // ─────────────────────────────────────────────────────────────────────
+  // gt27-pv2-filters-bar-v1: sincroniza el estado activo de los chips de la
+  // barra de filtros con las variables globales (currentSquadMode,
+  // seasonTypeMode, currentGameMode). Se llama al renderizar la barra y
+  // después de cada click para mantener consistencia.
+  function _pv2SyncFilterChips(){
+    try {
+      var sq = (typeof currentSquadMode !== 'undefined') ? currentSquadMode : 'squad';
+      var st = (typeof seasonTypeMode !== 'undefined') ? seasonTypeMode : 'season';
+      var gm = (typeof currentGameMode !== 'undefined') ? currentGameMode : 'tpp';
+      document.querySelectorAll('#pv2FiltersBar .pv2-filter-chip').forEach(function(b){
+        var f = b.getAttribute('data-pv2filter');
+        var v = b.getAttribute('data-val');
+        var active = (f === 'sq' && v === sq) || (f === 'st' && v === st) || (f === 'gm' && v === gm);
+        b.classList.toggle('active', active);
+      });
+    } catch(e){}
+  }
+  window._pv2SyncFilterChips = _pv2SyncFilterChips;
+
+  // Click handler delegado para los chips de la barra de filtros.
+  // Llama a las funciones globales existentes (setSquadMode, setSeasonType,
+  // setGameMode) y luego sincroniza el estado visual de TODOS los chips.
+  document.addEventListener('click', function(ev){
+    var c = ev.target.closest && ev.target.closest('.pv2-filter-chip');
+    if(!c) return;
+    var f = c.getAttribute('data-pv2filter');
+    var v = c.getAttribute('data-val');
+    if(!f || !v) return;
+    try {
+      if(f === 'sq' && typeof setSquadMode === 'function'){ setSquadMode(v); }
+      else if(f === 'st' && typeof setSeasonType === 'function'){ setSeasonType(v); }
+      else if(f === 'gm' && typeof setGameMode === 'function'){ setGameMode(v); }
+    } catch(e){}
+    setTimeout(_pv2SyncFilterChips, 50);
+  });
+
   // pv2-fav-state-v1: actualiza el botón Favorito según el estado real (★ + clase is-fav)
   function _pv2UpdateFavBtn(){
     try {
