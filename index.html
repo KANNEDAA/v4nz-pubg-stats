@@ -13614,6 +13614,17 @@ switchTab=function(){
   // ── 4. Init principal — se dispara tras searchPlayer() completar ───
   function _pv2Init(){
     if(!_pv2Enabled()) return;
+    // gt27-pv2-route-sync-v1: NO activar pv2 si la ruta no es /stats/PLAT/NAME.
+    // Sin este check, _pv2TryInit() (disparado por MutationObserver del title
+    // a los 800ms) re-añadía pv2-active aun cuando el user había navegado a
+    // /clans, /ranking, /compare. Resultado: el wrapper de jugador volvía a
+    // verse mezclado con el panel destino.
+    if(!/^\/stats\/(psn|xbox)\//i.test(location.pathname || '/')){
+      document.body.classList.remove('pv2-active');
+      var _wrapEl = document.getElementById('playerV2Wrap');
+      if(_wrapEl) _wrapEl.style.display = 'none';
+      return;
+    }
     document.body.classList.add('pv2-active');
 
     var pd = (typeof currentPlayerData !== 'undefined') ? currentPlayerData : null;
