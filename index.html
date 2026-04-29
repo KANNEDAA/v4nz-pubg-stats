@@ -13409,10 +13409,16 @@ function _bnToggleMore(){
   },10);
 }
 // Hook into switchTab to sync bottom nav
+// gt27-switchtab-wrapper-fix-v1: el wrapper antes solo pasaba `t`, perdiendo
+// el segundo argumento `opts` (ej. {preserveDeepLink:true}). Eso hacía que
+// loadClanPage('TAG') → switchTab('clans', {preserveDeepLink:true}) llegara
+// al original como switchTab('clans') sin opts, y el original disparaba
+// pushState a /clans clobbando la URL /clan/TAG. Fix: usar apply para pasar
+// TODOS los arguments al original.
 var _origSwitchTab=switchTab;
-switchTab=function(t){
-  _origSwitchTab(t);
-  _bnUpdateActive(t);
+switchTab=function(){
+  _origSwitchTab.apply(this, arguments);
+  _bnUpdateActive(arguments[0]);
 };
 
 // PLAYER-V2-JS START (player-v2-home-sync) — ocultar wrapper v2 cuando estás en la home (panel logueado visible)
