@@ -3697,6 +3697,22 @@ body.pv2-active .pv2-adn-acc-chip.scope{background:rgba(0,240,255,.12);color:var
 body.pv2-active .pv2-adn-acc-chip.muzzle{background:rgba(38,222,129,.12);color:var(--accent-green,#26de81);border-color:rgba(38,222,129,.25)}
 body.pv2-active .pv2-adn-acc-chip.grip{background:rgba(255,140,66,.12);color:var(--accent-orange,#ff8c42);border-color:rgba(255,140,66,.25)}
 body.pv2-active .pv2-adn-acc-chip.mag{background:rgba(255,215,0,.12);color:var(--accent-yellow,#ffd700);border-color:rgba(255,215,0,.25)}
+
+/* gt27-mate-clan-tag-v1: tag de clan al lado del nombre del compañero frecuente */
+body.pv2-active .pv2-mate-clan-tag{
+  display:inline-flex;
+  align-items:center;
+  font-family:'Orbitron','Rajdhani',sans-serif;
+  font-weight:800;
+  font-size:.6rem;
+  color:var(--accent);
+  background:var(--accent-dim);
+  border:1px solid rgba(0,240,255,.25);
+  padding:1px 5px;
+  border-radius:3px;
+  margin-right:2px;
+  letter-spacing:.5px;
+}
 body.pv2-active .pv2-adn-row.clickable{cursor:pointer;border-radius:6px;transition:background .2s,padding .2s}
 body.pv2-active .pv2-adn-row.clickable:hover{background:rgba(0,240,255,.04);padding-left:6px;padding-right:6px}
 body.pv2-active .pv2-adn-empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);font-size:.78rem;padding:24px 16px;text-align:center;line-height:1.5}
@@ -14208,16 +14224,22 @@ switchTab=function(){
         var iconCls = 'mate-' + ((i % 3) + 1);
         var safeName = (typeof escJs === 'function') ? escJs(name) : name;
         var plat = (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn';
-        return '<div class="pv2-adn-row clickable" onclick="if(typeof goToPlayer===\'function\')goToPlayer(\'' + safeName + '\',\'' + plat + '\')">' +
+        // gt27-mate-clan-tag-v1: a\u00f1adir data-mate-name para enriquecer con clan tag tras render
+        // Pre-fill con cach\u00e9 local si ya tenemos el clan (evita parpadeo en re-renders)
+        var cachedClan = (window._pv2MateClanCache && window._pv2MateClanCache[name.toLowerCase()]) || '';
+        var clanPrefix = cachedClan ? '<span class="pv2-mate-clan-tag">[' + _cv2EscSafe(cachedClan) + ']</span> ' : '';
+        return '<div class="pv2-adn-row clickable" data-mate-name="' + _cv2EscSafe(name) + '" onclick="if(typeof goToPlayer===\'function\')goToPlayer(\'' + safeName + '\',\'' + plat + '\')">' +
           '<div class="pv2-adn-row-icon ' + iconCls + '">' + initial + '</div>' +
           '<div class="pv2-adn-row-info">' +
-            '<div class="pv2-adn-row-name">' + _cv2EscSafe(name) + '</div>' +
+            '<div class="pv2-adn-row-name"><span class="pv2-mate-clan-slot">' + clanPrefix + '</span>' + _cv2EscSafe(name) + '</div>' +
             '<div class="pv2-adn-row-meta"><span>\ud83c\udfae ' + count + ' partidas juntos</span></div>' +
             '<div class="pv2-adn-row-bar"><div class="pv2-adn-row-bar-fill mate" style="width:' + pct + '%"></div></div>' +
           '</div>' +
           '<div class="pv2-adn-row-pct">' + pct + '%</div>' +
         '</div>';
       }).join('');
+      // gt27-mate-clan-tag-v1: tras render, disparar enrichment en background
+      setTimeout(_pv2EnrichTeammatesClans, 50);
       return '<div class="pv2-adn-card">' +
         '<div class="pv2-adn-card-mini-title"><span>\ud83d\udc65 Compa\u00f1eros frecuentes</span><span>\ud83e\udd1d</span></div>' +
         rows +
@@ -14229,6 +14251,48 @@ switchTab=function(){
 
   // Helper escape (reutiliza el que est\u00e9 disponible o fallback simple)
   function _cv2EscSafe(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // gt27-mate-clan-tag-v1: cache local de tags de clan por gamertag (no repetir fetches)
+  window._pv2MateClanCache = window._pv2MateClanCache || {};
+
+  // Enrich los compa\u00f1eros frecuentes con su clan tag.
+  // Hace fetch a /api/player-clan?name=X por cada teammate sin clan en cache,
+  // en paralelo, y rellena el slot vac\u00edo del DOM. Si el teammate no tiene clan,
+  // marca null en cache para no repetir.
+  function _pv2EnrichTeammatesClans(){
+    try {
+      var rows = document.querySelectorAll('.pv2-adn-row[data-mate-name]');
+      if(!rows.length) return;
+      var pending = [];
+      rows.forEach(function(row){
+        var name = row.getAttribute('data-mate-name');
+        if(!name) return;
+        var key = name.toLowerCase();
+        var cached = window._pv2MateClanCache[key];
+        if(cached !== undefined){
+          // Si ya est\u00e1 cacheado (incl. null), aplicar al slot
+          var slot = row.querySelector('.pv2-mate-clan-slot');
+          if(slot && cached) slot.innerHTML = '<span class="pv2-mate-clan-tag">[' + _cv2EscSafe(cached) + ']</span> ';
+          return;
+        }
+        pending.push({ row: row, name: name, key: key });
+      });
+      // Fetch en paralelo
+      pending.forEach(function(item){
+        fetch('/api/player-clan?name=' + encodeURIComponent(item.name), { credentials:'same-origin' })
+          .then(function(r){ return r.ok ? r.json() : null; })
+          .then(function(d){
+            var tag = (d && d.tag) || null;
+            window._pv2MateClanCache[item.key] = tag;
+            if(tag){
+              var slot = item.row.querySelector('.pv2-mate-clan-slot');
+              if(slot) slot.innerHTML = '<span class="pv2-mate-clan-tag">[' + _cv2EscSafe(tag) + ']</span> ';
+            }
+          })
+          .catch(function(){ window._pv2MateClanCache[item.key] = null; });
+      });
+    } catch(e){}
+  }
 
   // gt27-recent-arsenal-v1: diccionario de accesorios PUBG (itemId \u2192 nombre legible)
   var _PV2_ATTACH_NAMES = {
@@ -14314,6 +14378,53 @@ switchTab=function(){
     return '';
   }
 
+  // gt27-recent-arsenal-icons-v1: parser inteligente — devuelve nombre legible
+  // detectando por substring del itemId. Cubre TODAS las variantes futuras de PUBG
+  // (Aimpoint_03_Lvl3, Suppressor_SniperRifle, Stock_BulletLoop, etc.) sin tener
+  // que listar uno a uno. Si el diccionario tiene match exacto, se prioriza ese.
+  function _pv2AttachLabel(id){
+    if(!id) return '';
+    // 1. Match exacto en diccionario (nombres pulidos)
+    if(_PV2_ATTACH_NAMES[id]) return _PV2_ATTACH_NAMES[id];
+    // 2. Heuristics por substring — orden importa (más específico primero)
+    var s = id;
+    // Miras con zoom numérico (priorizar el número)
+    var zoomMatch = s.match(/Scope(\d+)/);
+    if(zoomMatch) return 'Mira ' + zoomMatch[1] + 'x';
+    if(/ACOG/.test(s)) return 'Mira 4x';
+    if(/CQBSS/.test(s)) return 'Mira 2x';
+    if(/Thermal/i.test(s)) return 'Mira Térmica';
+    if(/Nightvision|Night_Vision/i.test(s)) return 'Visión Nocturna';
+    if(/HoloSight|Holo/i.test(s)) return 'Holográfica';
+    if(/DotSight|Aimpoint|RedDot/i.test(s)) return 'Mira Roja';
+    // Bocachas
+    if(/Compensator/i.test(s)) return 'Compensador';
+    if(/Suppressor/i.test(s)) return 'Silenciador';
+    if(/FlashHider/i.test(s)) return 'Apagallamas';
+    // Empuñaduras
+    if(/AngledForeGrip/i.test(s)) return 'Emp. Angular';
+    if(/LightweightForeGrip/i.test(s)) return 'Emp. Ligera';
+    if(/HalfGrip/i.test(s)) return 'Media Emp.';
+    if(/ThumbGrip/i.test(s)) return 'Pulgar';
+    if(/LaserSight/i.test(s)) return 'Láser';
+    if(/Foregrip|VerticalForeGrip/i.test(s)) return 'Emp. Vertical';
+    // Cargadores
+    if(/ExtendedQuickDraw/i.test(s)) return 'Cargador Ext+Ráp';
+    if(/Extended/i.test(s) && /Magazine/i.test(s)) return 'Cargador Extendido';
+    if(/QuickDraw/i.test(s) && /Magazine/i.test(s)) return 'Cargador Rápido';
+    // Culatas y stocks
+    if(/CheekPad/i.test(s)) return 'Apoyo Mejilla';
+    if(/BulletLoop/i.test(s)) return 'Bandolera';
+    if(/Stock_AR/i.test(s)) return 'Culata AR';
+    if(/Stock_SniperRifle/i.test(s)) return 'Culata Sniper';
+    if(/Stock_UZI/i.test(s)) return 'Culata UZI';
+    if(/Stock/i.test(s)) return 'Culata';
+    // Otros / fallback
+    if(/Bipod/i.test(s)) return 'Bípode';
+    // Fallback estético (raw clean)
+    return s.replace(/^Item_Attach_Weapon_(Upper_|Lower_|Muzzle_|Magazine_|Stock_)?/, '').replace(/_C$/, '').replace(/_/g,' ').replace(/\b(\d+)\b/g, '');
+  }
+
   // gt27-recent-arsenal-v1: render del Arsenal con datos del endpoint /api/recent-arsenal
   function _pv2RenderRecentArsenal(arsenal){
     try {
@@ -14326,7 +14437,7 @@ switchTab=function(){
         var name = (typeof cleanWeaponName === 'function') ? cleanWeaponName(w.weaponId) : (w.weaponId || '').replace(/^Item_Weapon_|_C$/g,'');
         var pct = Math.round(((w.kills || 0) / maxKills) * 100);
         var topAccs = (w.attaches || []).slice(0, 2).map(function(a){
-          var label = _PV2_ATTACH_NAMES[a.id] || (a.id || '').replace(/^Item_Attach_Weapon_(Upper_|Lower_|Muzzle_|Magazine_|Stock_)?/, '').replace(/_C$/, '').replace(/_/g,' ');
+          var label = _pv2AttachLabel(a.id);
           var cat = _pv2AttachCategory(a.id);
           return '<span class="pv2-adn-acc-chip' + (cat ? ' ' + cat : '') + '">' + _pv2AttachIcon(cat) + _cv2EscSafe(label) + '</span>';
         }).join('');
