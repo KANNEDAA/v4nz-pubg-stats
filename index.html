@@ -3675,7 +3675,8 @@ body.pv2-active .pv2-adn-card-mini-title{font-size:11px;text-transform:uppercase
 body.pv2-active .pv2-adn-row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
 body.pv2-active .pv2-adn-row:last-of-type{border-bottom:0}
 body.pv2-active .pv2-adn-row-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;color:#fff;font-family:'Orbitron',sans-serif;font-weight:900}
-body.pv2-active .pv2-adn-row-icon.weapon{background:linear-gradient(135deg,#ff6b00,#ff3355)}
+/* gt27-recent-arsenal-icons-v1: weapon-icon en cyan suave (antes rojo agresivo) */
+body.pv2-active .pv2-adn-row-icon.weapon{background:linear-gradient(135deg,rgba(0,240,255,.12),rgba(168,85,247,.12));border:1px solid rgba(0,240,255,.25);color:var(--accent)}
 body.pv2-active .pv2-adn-row-icon.mate-1{background:linear-gradient(135deg,#ff6b00,#ff3355)}
 body.pv2-active .pv2-adn-row-icon.mate-2{background:linear-gradient(135deg,#00f0ff,#a855f7)}
 body.pv2-active .pv2-adn-row-icon.mate-3{background:linear-gradient(135deg,#00ff88,#00f0ff)}
@@ -3687,9 +3688,15 @@ body.pv2-active .pv2-adn-row-bar{position:relative;height:3px;background:var(--b
 body.pv2-active .pv2-adn-row-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-orange,#ff8c42));border-radius:2px;transition:width 1.2s ease-out}
 body.pv2-active .pv2-adn-row-bar-fill.mate{background:linear-gradient(90deg,var(--accent),#a855f7)}
 body.pv2-active .pv2-adn-row-pct{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;color:var(--accent);min-width:36px;text-align:right}
-/* gt27-recent-arsenal-v1: chips de accesorios bajo el nombre del arma */
+/* gt27-recent-arsenal-v1 + gt27-recent-arsenal-icons-v1: chips de accesorios con mini iconos SVG */
 body.pv2-active .pv2-adn-acc-row{display:flex;gap:4px;flex-wrap:wrap;margin:3px 0 4px}
-body.pv2-active .pv2-adn-acc-chip{font-size:.58rem;padding:1px 6px;border-radius:4px;background:rgba(168,85,247,.14);color:#c89cf5;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Rajdhani',sans-serif;border:1px solid rgba(168,85,247,.2)}
+body.pv2-active .pv2-adn-acc-chip{font-size:.58rem;padding:2px 7px 2px 5px;border-radius:4px;background:rgba(168,85,247,.14);color:#c89cf5;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Rajdhani',sans-serif;border:1px solid rgba(168,85,247,.2);display:inline-flex;align-items:center;gap:4px}
+body.pv2-active .pv2-adn-acc-chip svg{width:11px;height:11px;flex-shrink:0;opacity:.85}
+/* Variantes por categoría — color del chip según tipo de accesorio */
+body.pv2-active .pv2-adn-acc-chip.scope{background:rgba(0,240,255,.12);color:var(--accent);border-color:rgba(0,240,255,.25)}
+body.pv2-active .pv2-adn-acc-chip.muzzle{background:rgba(38,222,129,.12);color:var(--accent-green,#26de81);border-color:rgba(38,222,129,.25)}
+body.pv2-active .pv2-adn-acc-chip.grip{background:rgba(255,140,66,.12);color:var(--accent-orange,#ff8c42);border-color:rgba(255,140,66,.25)}
+body.pv2-active .pv2-adn-acc-chip.mag{background:rgba(255,215,0,.12);color:var(--accent-yellow,#ffd700);border-color:rgba(255,215,0,.25)}
 body.pv2-active .pv2-adn-row.clickable{cursor:pointer;border-radius:6px;transition:background .2s,padding .2s}
 body.pv2-active .pv2-adn-row.clickable:hover{background:rgba(0,240,255,.04);padding-left:6px;padding-right:6px}
 body.pv2-active .pv2-adn-empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);font-size:.78rem;padding:24px 16px;text-align:center;line-height:1.5}
@@ -14274,6 +14281,39 @@ switchTab=function(){
     'Item_Attach_Weapon_Upper_Aimpoint_03_Lvl3_C': 'Mira Roja'
   };
 
+  // gt27-recent-arsenal-icons-v1: SVG mini iconos para cada categor\u00eda de accesorio
+  function _pv2AttachIcon(category){
+    if(category === 'scope'){
+      // Mira con cross-hair
+      return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>';
+    }
+    if(category === 'muzzle'){
+      // Cilindro silenciador
+      return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="6" width="12" height="4" rx="1"/><line x1="5" y1="6" x2="5" y2="10"/><line x1="9" y1="6" x2="9" y2="10"/></svg>';
+    }
+    if(category === 'grip'){
+      // Empu\u00f1adura
+      return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 3h6v3l-1.5 7h-3L5 6z"/></svg>';
+    }
+    if(category === 'mag'){
+      // Cargador
+      return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5" y="2" width="6" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/></svg>';
+    }
+    // Default
+    return '<svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="3"/></svg>';
+  }
+
+  // Detectar categor\u00eda del accesorio seg\u00fan itemId
+  function _pv2AttachCategory(id){
+    if(!id) return '';
+    if(id.indexOf('_Upper_') !== -1 || id.indexOf('Scope') !== -1 || id.indexOf('Sight') !== -1 || id.indexOf('Aimpoint') !== -1 || id.indexOf('ACOG') !== -1) return 'scope';
+    if(id.indexOf('_Muzzle_') !== -1 || id.indexOf('Suppressor') !== -1 || id.indexOf('Compensator') !== -1 || id.indexOf('FlashHider') !== -1) return 'muzzle';
+    if(id.indexOf('_Lower_') !== -1 || id.indexOf('Grip') !== -1 || id.indexOf('Foregrip') !== -1) return 'grip';
+    if(id.indexOf('_Magazine_') !== -1) return 'mag';
+    if(id.indexOf('_Stock_') !== -1) return 'grip';
+    return '';
+  }
+
   // gt27-recent-arsenal-v1: render del Arsenal con datos del endpoint /api/recent-arsenal
   function _pv2RenderRecentArsenal(arsenal){
     try {
@@ -14287,7 +14327,8 @@ switchTab=function(){
         var pct = Math.round(((w.kills || 0) / maxKills) * 100);
         var topAccs = (w.attaches || []).slice(0, 2).map(function(a){
           var label = _PV2_ATTACH_NAMES[a.id] || (a.id || '').replace(/^Item_Attach_Weapon_(Upper_|Lower_|Muzzle_|Magazine_|Stock_)?/, '').replace(/_C$/, '').replace(/_/g,' ');
-          return '<span class="pv2-adn-acc-chip">' + _cv2EscSafe(label) + '</span>';
+          var cat = _pv2AttachCategory(a.id);
+          return '<span class="pv2-adn-acc-chip' + (cat ? ' ' + cat : '') + '">' + _pv2AttachIcon(cat) + _cv2EscSafe(label) + '</span>';
         }).join('');
         return '<div class="pv2-adn-row">' +
           '<div class="pv2-adn-row-icon weapon">\ud83d\udd2b</div>' +
