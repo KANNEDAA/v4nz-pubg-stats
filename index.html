@@ -13787,6 +13787,10 @@ switchTab=function(){
         // Limpia los emojis de rank heredados del rankBadge viejo (corona/diamante/oro/etc) para que no haya doble icono.
         rankText = rankText.replace(/[\u{1F451}\u{1F48E}\u{1F4A0}\u{2B50}\u{1F31F}\u{1FA99}\u{1F949}]/gu, '').replace(/\s+/g,' ').trim().slice(0, 40);
         rankEl.textContent = '\u{1F396}\u{FE0F} ' + rankText;
+        // gt27-rank-tooltip-v1: tooltip explicativo. El user no entiende qué es
+        // "Master5315 Est." (parece premio o nombre). Aclaramos: rango competitivo.
+        rankEl.setAttribute('title', 'Tu rango competitivo estimado · Tier (Survivor/Master/Diamante/etc) + puntos RP estimados a partir de tus stats');
+        rankEl.style.cursor = 'help';
       }
     } catch(e){}
   }
@@ -13835,9 +13839,12 @@ switchTab=function(){
     };
     var role = roleMap[maxAxis.k] || { name: 'JUGADOR', col: '#00f0ff' };
 
-    // Calcular puntos SVG del pentágono de datos (viewBox 280×260, centro 140,130 radio 78)
-    // viewBox ampliado de 240→280 para que labels grandes ("Soporte 99") no se corten
-    var cx = 140, cy = 130, r = 78;
+    // gt27-radar-viewbox-fix-v1: viewBox ampliado 280→360, centro 140→180.
+    // Antes "Precisión 50" (text-anchor:start desde x=235) y "Soporte 99"
+    // (text-anchor:end con x=45) se salían del viewBox 280 por la derecha
+    // y por la izquierda respectivamente — el número de Precisión quedaba
+    // cortado y "Soporte" se leía como "porte".
+    var cx = 180, cy = 130, r = 78;
     var pts = axes.map(function(a, i){
       var v = Math.min(100, Math.max(0, scores[a.k] || 0));
       var ang = -Math.PI/2 + (i * 2*Math.PI / 5);
@@ -13894,7 +13901,7 @@ switchTab=function(){
 
     grid.innerHTML =
       '<div class="pv2-adn-card">' +
-        '<svg viewBox="0 0 280 260" style="width:100%;max-width:320px;margin:0 auto;display:block;">' +
+        '<svg viewBox="0 0 360 260" style="width:100%;max-width:380px;margin:0 auto;display:block;">' +
           '<polygon points="' + refOuter + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
           '<polygon points="' + refInner + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
           '<polygon points="' + ptsStr + '" fill="rgba(245,213,71,.15)" stroke="' + role.col + '" stroke-width="2"/>' +
@@ -14316,9 +14323,9 @@ switchTab=function(){
           '<div class="pv2-wl-header">' +
             '<span class="pv2-wl-title">\ud83d\udcca \u00daltimas '+matches.length+' partidas</span>' +
             '<span class="pv2-wl-legend">' +
-              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell ww">\u2605</span>WWCD</span>' +
+              '<span class="pv2-wl-legend-item" title="Victoria \u00b7 Winner Winner Chicken Dinner"><span class="pv2-wl-cell ww">\u2605</span>Victoria</span>' +
               '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell w">W</span>Top 10</span>' +
-              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell l">L</span>+10</span>' +
+              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell l">L</span>Resto</span>' +
             '</span>' +
           '</div>';
         wl.parentNode.insertBefore(newSection, wl);
