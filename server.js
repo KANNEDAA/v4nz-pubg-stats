@@ -2017,8 +2017,9 @@ app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
   const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
   const cacheKey = `recent_arsenal_${shard}_${playerName.toLowerCase()}`;
 
-  // Cache 1h
-  if (pool) {
+  // Cache 1h (skip si ?refresh=1 — útil tras desplegar fix del parser)
+  const skipCache = req.query.refresh === '1';
+  if (pool && !skipCache) {
     try {
       const cached = await pool.query(
         "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '1 hour'",
@@ -2079,13 +2080,27 @@ app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
         }
         if (!Array.isArray(telemetry)) return;
 
+        // gt27-recent-arsenal-killfix-v1: PUBG telemetría usa 2 formatos para
+        // damageCauserName: "Item_Weapon_M416_C" (legacy) y "WeapBerylM762_C"
+        // (compacto). Mi filtro inicial solo aceptaba el primero, perdía todos
+        // los kills del segundo formato. Normalizamos a Item_Weapon_X_C.
+        function normalizeWeaponId(raw) {
+          if (!raw) return '';
+          if (raw.startsWith('Item_Weapon_')) return raw;
+          if (raw.startsWith('Weap')) {
+            // "WeapBerylM762_C" → "Item_Weapon_BerylM762_C"
+            return 'Item_Weapon_' + raw.slice(4);
+          }
+          return '';
+        }
         // Procesar eventos
         for (const ev of telemetry) {
           const t = ev._T;
           // Kills con damageCauserName = arma
           if ((t === 'LogPlayerKillV2' || t === 'LogPlayerKill') && (ev.killer?.accountId === playerId || ev.finisher?.accountId === playerId)) {
-            const wpId = ev.killerDamageInfo?.damageCauserName || ev.damageCauserName || ev.damageTypeCategory || '';
-            if (wpId && wpId.startsWith('Item_Weapon_')) {
+            const rawWp = ev.killerDamageInfo?.damageCauserName || ev.damageCauserName || '';
+            const wpId = normalizeWeaponId(rawWp);
+            if (wpId) {
               const ws = weaponStats[wpId] || { kills: 0, attaches: {} };
               ws.kills++;
               weaponStats[wpId] = ws;
@@ -2093,9 +2108,9 @@ app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
           }
           // Accesorios acoplados al arma
           if (t === 'LogItemAttach' && ev.character?.accountId === playerId) {
-            const wpId = ev.parentItem?.itemId || '';
+            const wpId = normalizeWeaponId(ev.parentItem?.itemId || '');
             const accId = ev.childItem?.itemId || '';
-            if (wpId && wpId.startsWith('Item_Weapon_') && accId) {
+            if (wpId && accId) {
               const ws = weaponStats[wpId] || { kills: 0, attaches: {} };
               ws.attaches[accId] = (ws.attaches[accId] || 0) + 1;
               weaponStats[wpId] = ws;
