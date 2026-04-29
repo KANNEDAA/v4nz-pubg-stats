@@ -2007,6 +2007,139 @@ app.get('/api/pubg-report/:accountId', async (req, res) => {
   }
 });
 
+// gt27-recent-arsenal-v1: endpoint que parsea telemetría de las últimas 5 partidas
+// y devuelve agregado de armas usadas + accesorios reales (mira/silenciador/empuñadura).
+// Filosofía "snapshot reciente": qué juega el jugador AHORA, no su histórico de la cuenta.
+// Cache 1h por jugador para refrescar tras nuevas partidas. Reutiliza el cache de
+// telemetría (30 días) que ya usa /api/bot-index, así no descarga partidas dos veces.
+app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
+  const { platform, playerName } = req.params;
+  const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
+  const cacheKey = `recent_arsenal_${shard}_${playerName.toLowerCase()}`;
+
+  // Cache 1h
+  if (pool) {
+    try {
+      const cached = await pool.query(
+        "SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '1 hour'",
+        [cacheKey]
+      );
+      if (cached.rows.length) {
+        try { return res.json(JSON.parse(cached.rows[0].response_data)); } catch(e){}
+      }
+    } catch(e){}
+  }
+
+  if (!SERVER_API_KEY) return res.status(503).json({ error: 'No API key' });
+  const headers = { 'Authorization': 'Bearer ' + SERVER_API_KEY, 'Accept': 'application/vnd.api+json' };
+
+  try {
+    // 1. Buscar player
+    const pRes = await fetchWithTimeout(fetch,
+      `https://api.pubg.com/shards/${shard}/players?filter[playerNames]=${encodeURIComponent(playerName)}`,
+      { headers }, 8000);
+    if (!pRes.ok) return res.status(404).json({ error: 'Player not found' });
+    const pData = await pRes.json();
+    const player = pData.data && pData.data[0];
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    const playerId = player.id;
+    const matches = (player.relationships?.matches?.data || []).slice(0, 5).map(m => m.id);
+    if (!matches.length) return res.json({ weapons: [], matchesAnalyzed: 0 });
+
+    // 2. Para cada match, cargar telemetría (cache 30 días)
+    const weaponStats = {}; // weaponId → { kills, attaches: { accId → count } }
+
+    async function processMatch(matchId) {
+      try {
+        const tKey = `telemetry_${matchId}`;
+        let telemetry = null;
+        if (pool) {
+          const tCached = await pool.query("SELECT response_data FROM api_cache WHERE cache_key = $1 AND created_at > NOW() - INTERVAL '30 days'", [tKey]);
+          if (tCached.rows.length) {
+            try { telemetry = JSON.parse(tCached.rows[0].response_data); } catch(e){}
+          }
+        }
+        if (!telemetry) {
+          const mRes = await fetchWithTimeout(fetch, `https://api.pubg.com/shards/${shard}/matches/${matchId}`, { headers }, 8000);
+          if (!mRes.ok) return;
+          const mData = await mRes.json();
+          const asset = (mData.included || []).find(i => i.type === 'asset');
+          const telUrl = asset?.attributes?.URL;
+          if (!telUrl) return;
+          const tRes = await fetchWithTimeout(fetch, telUrl, {}, 20000);
+          telemetry = await tRes.json();
+          if (pool) {
+            try {
+              await pool.query(
+                'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+                [tKey, JSON.stringify(telemetry)]
+              );
+            } catch(e){}
+          }
+        }
+        if (!Array.isArray(telemetry)) return;
+
+        // Procesar eventos
+        for (const ev of telemetry) {
+          const t = ev._T;
+          // Kills con damageCauserName = arma
+          if ((t === 'LogPlayerKillV2' || t === 'LogPlayerKill') && (ev.killer?.accountId === playerId || ev.finisher?.accountId === playerId)) {
+            const wpId = ev.killerDamageInfo?.damageCauserName || ev.damageCauserName || ev.damageTypeCategory || '';
+            if (wpId && wpId.startsWith('Item_Weapon_')) {
+              const ws = weaponStats[wpId] || { kills: 0, attaches: {} };
+              ws.kills++;
+              weaponStats[wpId] = ws;
+            }
+          }
+          // Accesorios acoplados al arma
+          if (t === 'LogItemAttach' && ev.character?.accountId === playerId) {
+            const wpId = ev.parentItem?.itemId || '';
+            const accId = ev.childItem?.itemId || '';
+            if (wpId && wpId.startsWith('Item_Weapon_') && accId) {
+              const ws = weaponStats[wpId] || { kills: 0, attaches: {} };
+              ws.attaches[accId] = (ws.attaches[accId] || 0) + 1;
+              weaponStats[wpId] = ws;
+            }
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Procesar las 5 partidas en paralelo (batch 5 está dentro del límite RPM)
+    await Promise.all(matches.map(processMatch));
+
+    // 3. Agregar y rankear
+    const weapons = Object.entries(weaponStats)
+      .map(([wpId, stats]) => {
+        const accs = Object.entries(stats.attaches || {})
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([id, count]) => ({ id, count }));
+        return { weaponId: wpId, kills: stats.kills, attaches: accs };
+      })
+      .filter(w => w.kills > 0 || (w.attaches && w.attaches.length))
+      .sort((a, b) => b.kills - a.kills)
+      .slice(0, 5);
+
+    const result = { weapons, matchesAnalyzed: matches.length };
+
+    // Cachear
+    if (pool) {
+      try {
+        await pool.query(
+          'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
+          [cacheKey, JSON.stringify(result)]
+        );
+      } catch(e){}
+    }
+
+    res.json(result);
+  } catch (e) {
+    console.error('[recent-arsenal]', e.message);
+    res.status(500).json({ error: 'Server error', message: e.message });
+  }
+});
+
 // ═══ Player Snapshots (Mi Evolución) ═══
 app.post('/api/snapshots', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
