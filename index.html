@@ -14517,8 +14517,8 @@ switchTab=function(t){
       '</div>' +
       (statsPending ? '<div style="text-align:center;font-size:11px;color:var(--text-dim);margin:4px 0 8px;font-style:italic;">⏳ Las stats agregadas se calculan tras el primer snapshot diario. Vuelve en unas horas.</div>' : '') +
       '<div class="cv2-mc-ctas">' +
-        '<button type="button" class="cv2-mc-cta primary" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + escJs(tag) + '\')">🛡️ Ver clan completo</button>' +
-        '<button type="button" class="cv2-mc-cta" onclick="loadClanPage(\'' + escJs(tag) + '\');setTimeout(function(){var b=document.getElementById(\'aiClanBtn\');if(b)b.click();},700);">🤖 Analizar con IA</button>' +
+        '<button type="button" class="cv2-mc-cta primary" onclick="if(typeof loadClanPage===\'function\'){try{history.pushState(null,\'\',\'/clan/\'+encodeURIComponent(\'' + escJs(tag) + '\'));}catch(e){}loadClanPage(\'' + escJs(tag) + '\')}">🛡️ Ver clan completo</button>' +
+        '<button type="button" class="cv2-mc-cta" onclick="try{history.pushState(null,\'\',\'/clan/\'+encodeURIComponent(\'' + escJs(tag) + '\'));}catch(e){}loadClanPage(\'' + escJs(tag) + '\');setTimeout(function(){var b=document.getElementById(\'aiClanBtn\');if(b)b.click();},700);">🤖 Analizar con IA</button>' +
         '<button type="button" class="cv2-mc-cta" onclick="if(navigator.share)navigator.share({title:\'V4NZ \\u00b7 Clan ' + escJs(tag) + '\',url:location.origin+\'/clan/' + escJs(tag) + '\'});else navigator.clipboard.writeText(location.origin+\'/clan/' + escJs(tag) + '\').then(function(){alert(\'Enlace copiado\')})">🔗 Compartir</button>' +
         '<button type="button" class="cv2-mc-cta danger" onclick="if(typeof clearMyClan===\'function\')clearMyClan();_cv2LoadMyClan();">✕ Quitar</button>' +
       '</div>';
@@ -14660,7 +14660,7 @@ switchTab=function(t){
           var kd = parseFloat(c.avg_kd) || 0;
           // fav-star-everywhere-v1: estrella de clan al inicio de cada fila del ranking
           var starHtml = (typeof clanFavStar === 'function') ? clanFavStar(c.tag, c.name || c.tag, 'console', '.7rem') : '';
-          return '<div class="cv2-rk-row" onclick="if(typeof loadClanPage===\'function\')loadClanPage(\'' + escJs(c.tag) + '\')">' +
+          return '<div class="cv2-rk-row" onclick="if(typeof loadClanPage===\'function\'){try{history.pushState(null,\'\',\'/clan/\'+encodeURIComponent(\'' + escJs(c.tag) + '\'));}catch(e){}loadClanPage(\'' + escJs(c.tag) + '\')}">' +
             '<span class="cv2-rk-pos">' + (i+1) + '</span>' +
             starHtml +
             '<span class="cv2-rk-name">[' + _cv2Esc(c.tag) + '] ' + _cv2Esc(c.name || c.tag) +
