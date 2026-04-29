@@ -3826,8 +3826,14 @@ body.cv2-active #clansV2Wrap{display:block!important}
    directas de #panel-clans cuando cv2 está activo. */
 body.cv2-active #panel-clans > .section-title,
 body.cv2-active #panel-clans > p,
-body.cv2-active #panel-clans > .clan-mode-tabs,
-body.cv2-active #clanSearchMode{display:none!important}
+body.cv2-active #panel-clans > .clan-mode-tabs{display:none!important}
+/* gt27-fix-clandetail-v1: ANTES ocultábamos #clanSearchMode entero, pero
+   #clanResults (donde loadClanPage renderiza la ficha del clan) está DENTRO,
+   así que al pulsar un clan los datos cargaban en un div invisible. Ahora
+   ocultamos sólo los hijos viejos de #clanSearchMode dejando #clanResults
+   visible para que la página del clan se renderice correctamente. */
+body.cv2-active #clanSearchMode > *:not(#clanResults){display:none!important}
+body.cv2-active #clanSearchMode{display:block}
 /* clans-v2-hide-search-hero: ocultar el hero anónimo grande arriba en /clans
    (lo mismo que hacemos con body.pv2-active en ficha v2). El sub-tab Buscar
    del wrapper tiene su propio input. */
@@ -6943,7 +6949,10 @@ async function smartSearch(){
   searchPlayer();
 }
 // Show a clan detail by tag (called from smart search results)
+// gt27-fix-clandetail-v1: pushState para que _cv2Init quite cv2-active y
+// el wrapper V2 no quede solapando encima de la página completa del clan.
 function showClanByTag(tag){
+  try { history.pushState(null, '', '/clan/' + encodeURIComponent(tag)); } catch(e){}
   loadClanPage(tag);
 }
 async function searchPlayer(){
@@ -14552,10 +14561,16 @@ switchTab=function(t){
     }).join('');
 
     // Click row → loadClanPage
+    // gt27-fix-clandetail-v1: pushState antes de loadClanPage para que _cv2Init
+    // detecte la nueva ruta /clan/TAG y quite cv2-active, evitando que el
+    // wrapper V2 quede solapando encima de la página completa del clan.
     grid.querySelectorAll('.cv2-card').forEach(function(card){
       card.addEventListener('click', function(){
         var tag = card.getAttribute('data-cv2-fav-tag');
-        if(tag && typeof loadClanPage === 'function') loadClanPage(tag);
+        if(tag && typeof loadClanPage === 'function'){
+          try { history.pushState(null, '', '/clan/' + encodeURIComponent(tag)); } catch(e){}
+          loadClanPage(tag);
+        }
       });
     });
 
@@ -14994,7 +15009,11 @@ switchTab=function(t){
         panelClanes.querySelectorAll('.podio-item').forEach(function(it){
           it.addEventListener('click', function(){
             var t = it.getAttribute('data-tag');
-            if(t && typeof loadClanPage === 'function'){ loadClanPage(t); }
+            if(t && typeof loadClanPage === 'function'){
+              // gt27-fix-clandetail-v1: pushState para que cv2-active se quite
+              try { history.pushState(null, '', '/clan/' + encodeURIComponent(t)); } catch(e){}
+              loadClanPage(t);
+            }
             else if(t){ location.href = '/clan/' + encodeURIComponent(t); }
           });
           it.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') it.click(); });
@@ -15396,7 +15415,7 @@ switchTab=function(t){
         if(empty) empty.style.display = 'none';
         if(link){
           link.style.display = '';
-          link.onclick = function(e){ e.preventDefault(); if(typeof loadClanPage==='function') loadClanPage(tag); else location.href='/clan/'+encodeURIComponent(tag); };
+          link.onclick = function(e){ e.preventDefault(); if(typeof loadClanPage==='function'){ try { history.pushState(null, '', '/clan/' + encodeURIComponent(tag)); } catch(_e){} loadClanPage(tag); } else location.href='/clan/'+encodeURIComponent(tag); };
         }
         // hv2-fixes-v1 — `clan.members` puede ser array de objetos (el endpoint lo devuelve así);
         // envolver en length cuando toque para que no salga "[object Object],[object Object]..."
