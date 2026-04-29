@@ -12079,10 +12079,10 @@ async function loadClanAnalysisHub(){
     if(hasDat){
       h+=renderClanIntelligence(c.dbMembers,c.dbClan);
       // Link to full clan page
-      h+='<div style="margin-top:12px;text-align:center;"><button onclick="loadClanPage(\''+escJs(c.tag)+'\');setClanMode(\'search\',document.querySelector(\'.clan-mode-tab\'));" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:Rajdhani;font-weight:700;font-size:.72rem;padding:8px 20px;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">Ver Pagina Completa del Clan</button></div>';
+      h+='<div style="margin-top:12px;text-align:center;"><button onclick="try{history.pushState(null,\'\',\'/clan/\'+encodeURIComponent(\''+escJs(c.tag)+'\'));}catch(e){}loadClanPage(\''+escJs(c.tag)+'\');setClanMode(\'search\',document.querySelector(\'.clan-mode-tab\'));" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:Rajdhani;font-weight:700;font-size:.72rem;padding:8px 20px;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;">Ver Pagina Completa del Clan</button></div>';
     }else{
       h+='<div style="padding:20px;text-align:center;"><div style="font-size:.8rem;color:var(--text-dim);margin-bottom:10px;">Este clan no tiene stats en V4NZ o tiene menos de 3 miembros.</div>';
-      h+='<button onclick="loadClanPage(\''+escJs(c.tag)+'\');setClanMode(\'search\',document.querySelector(\'.clan-mode-tab\'));" style="background:var(--accent);color:var(--bg-primary);font-family:Rajdhani;font-weight:700;font-size:.72rem;padding:8px 20px;border-radius:8px;cursor:pointer;border:none;text-transform:uppercase;letter-spacing:1px;">Ir al Clan</button>';
+      h+='<button onclick="try{history.pushState(null,\'\',\'/clan/\'+encodeURIComponent(\''+escJs(c.tag)+'\'));}catch(e){}loadClanPage(\''+escJs(c.tag)+'\');setClanMode(\'search\',document.querySelector(\'.clan-mode-tab\'));" style="background:var(--accent);color:var(--bg-primary);font-family:Rajdhani;font-weight:700;font-size:.72rem;padding:8px 20px;border-radius:8px;cursor:pointer;border:none;text-transform:uppercase;letter-spacing:1px;">Ir al Clan</button>';
       h+='</div>';
     }
     h+='</div></div>';
@@ -15474,8 +15474,8 @@ switchTab=function(t){
           + '</div>'
           // audit-fixes-v1: escJs en lugar de _hv2Esc + querySelector apunta a requestAiClanDna (no analyzeClanWithAI inexistente)
           + '<div style="display:flex;gap:6px;margin-top:10px;">'
-          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + escJs(tag) + '\');" style="flex:1;">Radiograf\u00eda</button>'
-          +   '<button class="hv2l-btn-sec" type="button" onclick="loadClanPage(\'' + escJs(tag) + '\');setTimeout(function(){var b=document.querySelector(\'[onclick*=requestAiClanDna]\');if(b)b.click();},400);" style="flex:1;border-color:rgba(168,85,247,.35);color:var(--accent-purple);">Analizar IA</button>'
+          +   '<button class="hv2l-btn-sec" type="button" onclick="try{history.pushState(null,\'\',\'/clan/\'+encodeURIComponent(\'' + escJs(tag) + '\'));}catch(e){}loadClanPage(\'' + escJs(tag) + '\');" style="flex:1;">Radiograf\u00eda</button>'
+          +   '<button class="hv2l-btn-sec" type="button" onclick="try{history.pushState(null,\'\',\'/clan/\'+encodeURIComponent(\'' + escJs(tag) + '\'));}catch(e){}loadClanPage(\'' + escJs(tag) + '\');setTimeout(function(){var b=document.querySelector(\'[onclick*=requestAiClanDna]\');if(b)b.click();},400);" style="flex:1;border-color:rgba(168,85,247,.35);color:var(--accent-purple);">Analizar IA</button>'
           + '</div>';
       })
       .catch(function(){ if(empty) empty.style.display=''; });
