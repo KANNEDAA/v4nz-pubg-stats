@@ -14397,10 +14397,13 @@ switchTab=function(){
     if(/Nightvision|Night_Vision/i.test(s)) return 'Visión Nocturna';
     if(/HoloSight|Holo/i.test(s)) return 'Holográfica';
     if(/DotSight|Aimpoint|RedDot/i.test(s)) return 'Mira Roja';
-    // Bocachas
+    // gt27-attach-extra-names-v1: bocachas + shotgun specials
+    if(/MuzzleBrake/i.test(s)) return 'Freno Boca';
     if(/Compensator/i.test(s)) return 'Compensador';
     if(/Suppressor/i.test(s)) return 'Silenciador';
     if(/FlashHider/i.test(s)) return 'Apagallamas';
+    if(/Choke/i.test(s)) return 'Choke';
+    if(/DuckBill/i.test(s)) return 'DuckBill';
     // Empuñaduras
     if(/AngledForeGrip/i.test(s)) return 'Emp. Angular';
     if(/LightweightForeGrip/i.test(s)) return 'Emp. Ligera';
