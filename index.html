@@ -5902,7 +5902,9 @@ function v4nzShareToast(btn, msg){
 
 // Clan page rendering for /clan/:tag URLs
 async function loadClanPage(tag,subtab){
-  switchTab('clans');
+  // gt27-clans-back-from-detail-v1: pasar preserveDeepLink para que switchTab
+  // no haga pushState a /clans clobbando la URL /clan/TAG.
+  switchTab('clans', {preserveDeepLink: true});
   const cr=document.getElementById('clanResults');
   cr.innerHTML='<div style="text-align:center;padding:40px;"><div class="api-loader"><div class="spinner"></div><div class="loader-text">Cargando clan '+tag+'...</div></div></div>';
   try{
@@ -7101,7 +7103,7 @@ function autoBestMode(){
   }
 }
 
-function switchTab(t){
+function switchTab(t, opts){
   // Hide SEO content when navigating to any section (only visible on initial home)
   const seo=document.getElementById('seoContent');if(seo)seo.style.display='none';
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -7142,8 +7144,12 @@ function switchTab(t){
   var _sbw=document.getElementById('streamerBannerWrap'); if(_sbw) _sbw.style.display='none';
   // URL management: push friendly URLs for main sections
   if(mainSections.includes(t)){
-    // Don't clobber /clan/TAG → /clans (preserve clan deep-links)
-    if(!(t==='clans'&&location.pathname.match(/^\/clan\//i))){
+    // gt27-clans-back-from-detail-v1: la protección anti-clobber sólo aplica
+    // cuando loadClanPage llama internamente con {preserveDeepLink:true}.
+    // Si el usuario pulsa "Clanes" en el menú principal, sí queremos pushState
+    // a /clans para que cv2-detail-active se quite y vuelva la UI normal.
+    var _preserveDL = opts && opts.preserveDeepLink;
+    if(!(_preserveDL && t==='clans' && location.pathname.match(/^\/clan\//i))){
       history.pushState(null,'','/'+t);
     }
     document.title={'clans':'Clanes — V4NZ','ranking':'Ranking — V4NZ','compare':'Comparar / Squad — V4NZ'}[t]||'V4NZ — PUBG Console Stats Tracker';
