@@ -14518,8 +14518,14 @@ switchTab=function(){
           fetch('/clans/' + encodeURIComponent(d.tag), { credentials:'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }),
           _cv2GetLeaderboard()
         ]).then(function(res){
-          var clan = res[0]; var lb = res[1];
-          if(!clan){ showEmpty(); return; }
+          var resp = res[0]; var lb = res[1];
+          if(!resp){ showEmpty(); return; }
+          // gt27-myclan-shape-fix-v1: el endpoint /clans/:tag devuelve {clan,members}
+          // (no el clan plano). Antes pasábamos `resp` directo a _cv2RenderHero,
+          // que buscaba `.tag` y caía al bail-out → empty state aunque el clan
+          // existiera. Fix: extraer resp.clan, fallback a resp por compatibilidad.
+          var clan = resp.clan || resp;
+          if(!clan || !clan.tag){ showEmpty(); return; }
           _cv2RenderHero(clan, _cv2RankOf(clan.tag, lb));
         });
       })
