@@ -7172,7 +7172,18 @@ async function searchPlayer(){
       try{currentWeaponData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/weapon_mastery');}catch(e){currentWeaponData=null;}
       try{currentSurvivalData=await apiGet(API_BASE+'/'+currentPlatform+'/players/'+currentPlayerData.id+'/survival_mastery');}catch(e){currentSurvivalData=null;}
     } else {
+      // gt27-pv2-weapon-bg-v1: en pv2 cargamos weapon_mastery EN BACKGROUND (no bloquea
+      // el render inicial), y cuando termina refrescamos el ADN automáticamente para
+      // que el panel "Arsenal favorito" se rellene. Antes lo dejábamos null y se
+      // perdía el dato hasta que el usuario expandiera el acordeón "Armas top".
       currentWeaponData=null;currentSurvivalData=null;
+      (function(plat, pid){
+        apiGet(API_BASE+'/'+plat+'/players/'+pid+'/weapon_mastery').then(function(d){
+          currentWeaponData = d;
+          try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
+          try { renderWeaponStats(); } catch(e){}
+        }).catch(function(){ currentWeaponData = null; });
+      })(currentPlatform, currentPlayerData.id);
     }
     showSkeletons(false);autoBestMode();renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
     // v174 GT-24: show banner if current season was empty
@@ -14644,6 +14655,9 @@ switchTab=function(){
 
   // Expose para debug + para que setSeasonType pueda re-renderizar el bloque pv2
   window._pv2Init = _pv2Init;
+  // gt27-pv2-weapon-bg-v1: exponer _pv2LoadAdn para que el fetch background de
+  // weapon_mastery pueda refrescar el panel "Arsenal favorito" al recibir datos.
+  if(typeof _pv2LoadAdn === 'function') window._pv2LoadAdn = _pv2LoadAdn;
   window._pv2Enabled = _pv2Enabled;
   window._pv2LoadStats = _pv2LoadStats;  // pv2-season-refresh-v1
 
