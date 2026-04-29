@@ -7588,6 +7588,12 @@ async function loadBotIndex(platform,playerName){
     window._lastBotIndex=data;
     // Re-render personality if bot data changes the detected role
     if(data.botRatio>=50&&data.matchesAnalyzed>=3){try{renderPersonality();}catch(e){}}
+    // gt27-pv2-bot-bg-v1: refrescar el ADN 4-paneles cuando llegan los datos del Bot Index.
+    // Antes loadBotIndex se disparaba automáticamente al cargar la ficha y guardaba el
+    // resultado en _lastBotIndex, pero el panel D del ADN ya se había renderizado con el
+    // empty state ("se calcula tras 3+ partidas") y nadie lo refrescaba. Patrón
+    // render-then-enrich: render inmediato → fetch background → re-render al recibir.
+    try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
   }catch(e){container.style.display='none';container.innerHTML='';}
 }
 
