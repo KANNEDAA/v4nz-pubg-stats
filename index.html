@@ -5902,6 +5902,21 @@ function v4nzShareToast(btn, msg){
 
 // Clan page rendering for /clan/:tag URLs
 async function loadClanPage(tag,subtab){
+  // gt27-load-clan-pushstate-v1: garantizar que la URL refleje /clan/TAG
+  // SIEMPRE que se llame loadClanPage, independientemente de si el handler
+  // que la invoca hizo pushState o no. Esto cubre todos los call sites
+  // (ranking embed, favoritos, HERO Mi Clan, podio-item, search results,
+  // homeV2Logged Radiografía/IA, análisis hub, etc.) sin tener que ir
+  // handler por handler. _cv2Init se dispara después por el wrapping de
+  // pushState y aplica cv2-detail-active automáticamente.
+  try {
+    if(tag){
+      var _wantUrl = '/clan/' + encodeURIComponent(tag);
+      if(location.pathname !== _wantUrl){
+        history.pushState(null, '', _wantUrl);
+      }
+    }
+  } catch(_e){}
   // gt27-clans-back-from-detail-v1: pasar preserveDeepLink para que switchTab
   // no haga pushState a /clans clobbando la URL /clan/TAG.
   switchTab('clans', {preserveDeepLink: true});
