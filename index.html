@@ -293,6 +293,12 @@ body.has-player-loaded .search-hero .search-box .platform-selector .platform-btn
 .search-box { display: flex; align-items: center; max-width: 700px; margin: 0 auto; background: var(--bg-card); border: 2px solid var(--border); border-radius: 16px; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; box-shadow: var(--shadow-card); }
 .search-box:focus-within { border-color: rgba(0,240,255,0.4); box-shadow: 0 0 40px rgba(0,240,255,0.12), 0 0 80px rgba(0,240,255,0.04), var(--shadow-card); }
 .platform-selector { display: none; }
+/* gt27-hide-platform-selectors-v1: ocultar todos los selectores PS/Xbox visibles
+   al usuario. findPlayer() (línea 6939) y _cv2DoSearch ya prueban PSN primero
+   y caen a Xbox automáticamente vía nameVariations. La elección manual era
+   fricción innecesaria — PUBG es PUBG, da igual la consola para buscar. */
+body.has-player-loaded .search-hero .search-box .platform-selector,
+.clan-platform-sel { display: none !important; }
 .platform-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 10px 14px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.25s; }
 .platform-btn:hover { color: var(--text-primary); }
 .platform-btn.active { color: var(--accent); background: var(--accent-dim); }
@@ -12124,12 +12130,25 @@ function toggleClanIntel(idx){
 }
 
 async function fetchClanByPlayer(playerName, platform){
-  const pRes=await apiGet(API_BASE+'/'+platform+'/players?filter[playerNames]='+encodeURIComponent(playerName));
-  const player=pRes.data[0];
-  // clanId is in attributes, NOT in relationships
-  const clanId=player.attributes&&player.attributes.clanId;
+  // gt27-hide-platform-selectors-v1: probar ambas plataformas automáticamente.
+  // Antes solo probaba la plataforma seleccionada manualmente; al ocultar el
+  // selector PS/Xbox necesitamos detectar plataforma sola.
+  const platsToTry = (platform === 'xbox') ? ['xbox','psn'] : ['psn','xbox'];
+  let player = null, foundPlat = null, lastErr = null;
+  for(const p of platsToTry){
+    try {
+      const pRes = await apiGet(API_BASE+'/'+p+'/players?filter[playerNames]='+encodeURIComponent(playerName));
+      if(pRes && pRes.data && pRes.data.length > 0){
+        player = pRes.data[0];
+        foundPlat = p;
+        break;
+      }
+    } catch(e){ lastErr = e; if(e.status && e.status !== 404) throw e; }
+  }
+  if(!player) throw (lastErr || new Error('No se encontró el jugador '+playerName+' en PSN ni Xbox'));
+  const clanId = player.attributes && player.attributes.clanId;
   if(!clanId) throw new Error(playerName+' no pertenece a ningun clan');
-  const cData=await apiGet(API_BASE+'/'+platform+'/clans/'+clanId);
+  const cData = await apiGet(API_BASE+'/'+foundPlat+'/clans/'+clanId);
   return cData.data;
 }
 
