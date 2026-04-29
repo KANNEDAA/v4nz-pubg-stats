@@ -3692,6 +3692,20 @@ body.pv2-active .pv2-adn-row.clickable:hover{background:rgba(0,240,255,.04);padd
 body.pv2-active .pv2-adn-empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);font-size:.78rem;padding:24px 16px;text-align:center;line-height:1.5}
 body.pv2-active .pv2-adn-empty-card .pv2-adn-empty-icon{font-size:1.8rem;margin-bottom:8px;opacity:.5}
 
+/* gt27-pv2-adn-loading-v1: estado loading con spinner animado + texto pulsando */
+body.pv2-active .pv2-adn-loading-card{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-secondary);font-size:.82rem;padding:32px 16px;text-align:center;line-height:1.5;animation:pv2AdnPulse 2s ease-in-out infinite}
+body.pv2-active .pv2-adn-loading-card .pv2-adn-spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-right-color:var(--accent);border-radius:50%;animation:pv2AdnSpin .9s linear infinite;margin-bottom:14px}
+body.pv2-active .pv2-adn-loading-card .pv2-adn-loading-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;color:var(--text-primary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+body.pv2-active .pv2-adn-loading-card .pv2-adn-loading-msg{font-size:.74rem;color:var(--text-dim)}
+body.pv2-active .pv2-adn-loading-card .pv2-adn-loading-msg::after{content:'';display:inline-block;animation:pv2AdnDots 1.4s steps(4,end) infinite;width:0;overflow:hidden;vertical-align:bottom}
+@keyframes pv2AdnSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pv2AdnPulse{0%,100%{opacity:1}50%{opacity:.65}}
+@keyframes pv2AdnDots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}100%{content:''}}
+@media (prefers-reduced-motion:reduce){
+  body.pv2-active .pv2-adn-spinner{animation-duration:3s}
+  body.pv2-active .pv2-adn-loading-card{animation:none}
+}
+
 /* ─── gt27-pv2-filters-bar-v1: barra de filtros arriba ─── */
 /* Antes Squad/Duo/Solo estaban dentro de stats y Temporada/Ranked/Lifetime al
    fondo de la página. Ahora todos los filtros juntos, arriba, antes del ADN. */
@@ -7177,12 +7191,20 @@ async function searchPlayer(){
       // que el panel "Arsenal favorito" se rellene. Antes lo dejábamos null y se
       // perdía el dato hasta que el usuario expandiera el acordeón "Armas top".
       currentWeaponData=null;currentSurvivalData=null;
+      // gt27-pv2-adn-loading-v1: marcar estados loading antes de disparar fetches
+      // para que los paneles muestren spinner en lugar de empty state engañoso.
+      window._pv2WeaponLoading = true;
       (function(plat, pid){
         apiGet(API_BASE+'/'+plat+'/players/'+pid+'/weapon_mastery').then(function(d){
           currentWeaponData = d;
+          window._pv2WeaponLoading = false;
           try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
           try { renderWeaponStats(); } catch(e){}
-        }).catch(function(){ currentWeaponData = null; });
+        }).catch(function(){
+          currentWeaponData = null;
+          window._pv2WeaponLoading = false;
+          try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
+        });
       })(currentPlatform, currentPlayerData.id);
     }
     showSkeletons(false);autoBestMode();renderPlayerHeader();renderNarrativeInsights();renderRankBadge();renderSeasonBar(cs);document.getElementById('seasonTypeSelector').style.display='flex';renderWLGrid();renderCharts();renderOverviewStats();renderMatchHistory();try{renderWeaponStats();}catch(we){console.error('Weapon render error:',we);}try{renderFunStats();}catch(fe){console.error('FunStats error:',fe);}try{renderPersonality();}catch(pe){console.error('Personality error:',pe);}showDataPanels();switchTab('overview');
@@ -7572,6 +7594,10 @@ function renderPlayerHeader(){const p=currentPlayerData,n=p.attributes.name;docu
 /* ===== BOT INDEX BADGE ===== */
 async function loadBotIndex(platform,playerName){
   const container=document.getElementById('botIndexBadge');
+  // gt27-pv2-adn-loading-v1: marcar loading + disparar render del ADN para que
+  // el panel D del ADN muestre spinner en lugar del empty state hasta que llegue.
+  window._pv2BotLoading = true;
+  try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
   if(!container)return;
   container.style.display='inline-flex';
   container.innerHTML='<div style="display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;margin-top:6px;"><span style="animation:spin .8s linear infinite;display:inline-block;width:10px;height:10px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;"></span> Analizando bots...</div>';
@@ -7593,8 +7619,13 @@ async function loadBotIndex(platform,playerName){
     // resultado en _lastBotIndex, pero el panel D del ADN ya se había renderizado con el
     // empty state ("se calcula tras 3+ partidas") y nadie lo refrescaba. Patrón
     // render-then-enrich: render inmediato → fetch background → re-render al recibir.
+    window._pv2BotLoading = false;
     try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
-  }catch(e){container.style.display='none';container.innerHTML='';}
+  }catch(e){
+    window._pv2BotLoading = false;
+    try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(_e){}
+    container.style.display='none';container.innerHTML='';
+  }
 }
 
 /* ===== DETECTAR CLAN DEL JUGADOR Y AUTO-REGISTRAR ===== */
@@ -14054,12 +14085,31 @@ switchTab=function(){
         '</div>' +
       '</div>';
 
-    grid.innerHTML = radarHtml + _pv2AdnArmasCard() + _pv2AdnTeammatesCard() + (botHtml || '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83e\udd16</div><div><strong>Bot Index</strong><br>Se calcula tras 3+ partidas analizadas.</div></div>');
+    // gt27-pv2-adn-loading-v1: spinner si bot index a\u00fan se est\u00e1 calculando en background
+    var botFallback;
+    if(window._pv2BotLoading){
+      botFallback = '<div class="pv2-adn-card pv2-adn-loading-card">' +
+        '<div class="pv2-adn-spinner"></div>' +
+        '<div class="pv2-adn-loading-title">\ud83e\udd16 Bot Index</div>' +
+        '<div class="pv2-adn-loading-msg">Analizando partidas vs bots</div>' +
+      '</div>';
+    } else {
+      botFallback = '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83e\udd16</div><div><strong>Bot Index</strong><br>Se calcula tras 3+ partidas analizadas.</div></div>';
+    }
+    grid.innerHTML = radarHtml + _pv2AdnArmasCard() + _pv2AdnTeammatesCard() + (botHtml || botFallback);
   }
 
   // gt27-pv2-adn-4paneles-v1: helper Card B \u2014 top 3 armas por kills
   function _pv2AdnArmasCard(){
     try {
+      // gt27-pv2-adn-loading-v1: spinner mientras se carga weapon_mastery en background
+      if((!currentWeaponData || !currentWeaponData.data) && window._pv2WeaponLoading){
+        return '<div class="pv2-adn-card pv2-adn-loading-card">' +
+          '<div class="pv2-adn-spinner"></div>' +
+          '<div class="pv2-adn-loading-title">\ud83d\udd2b Arsenal favorito</div>' +
+          '<div class="pv2-adn-loading-msg">Cargando tus armas</div>' +
+        '</div>';
+      }
       if(!currentWeaponData || !currentWeaponData.data || !currentWeaponData.data.attributes){
         return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udd2b</div><div><strong>Arsenal favorito</strong><br>Datos de armas no disponibles.</div></div>';
       }
