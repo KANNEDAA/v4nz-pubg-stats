@@ -2093,7 +2093,12 @@ app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
           }
           return '';
         }
-        // Procesar eventos
+        // gt27-arsenal-attack-events-v1: cambiar fuente de datos de attaches.
+        // Antes usábamos LogItemAttach (acoplar accesorio) que pierde miras
+        // pre-equipadas (armas del suelo o de jugadores caídos vienen ya con scope
+        // sin disparar evento de attach). Ahora usamos LogPlayerAttack que lleva
+        // weapon.attachedItems (lista de accesorios actuales en el momento del
+        // disparo), capturando TODOS los casos. Counts = nº disparos con ese setup.
         for (const ev of telemetry) {
           const t = ev._T;
           // Kills con damageCauserName = arma
@@ -2106,15 +2111,18 @@ app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
               weaponStats[wpId] = ws;
             }
           }
-          // Accesorios acoplados al arma
-          if (t === 'LogItemAttach' && ev.character?.accountId === playerId) {
-            const wpId = normalizeWeaponId(ev.parentItem?.itemId || '');
-            const accId = ev.childItem?.itemId || '';
-            if (wpId && accId) {
-              const ws = weaponStats[wpId] || { kills: 0, attaches: {} };
-              ws.attaches[accId] = (ws.attaches[accId] || 0) + 1;
-              weaponStats[wpId] = ws;
+          // Accesorios desde LogPlayerAttack (cubre miras pre-equipadas)
+          if (t === 'LogPlayerAttack' && ev.attacker?.accountId === playerId) {
+            const rawWp = ev.weapon?.itemId || '';
+            const wpId = normalizeWeaponId(rawWp);
+            if (!wpId) continue;
+            const attachedList = ev.weapon?.attachedItems || [];
+            if (!attachedList.length) continue;
+            const ws = weaponStats[wpId] || { kills: 0, attaches: {} };
+            for (const accId of attachedList) {
+              if (accId) ws.attaches[accId] = (ws.attaches[accId] || 0) + 1;
             }
+            weaponStats[wpId] = ws;
           }
         }
       } catch(e) {}
