@@ -3848,6 +3848,21 @@ body.cv2-active #clanAnalysisMode{display:none}
 body.cv2-active.cv2-show-compare #clanCompareMode{display:block!important}
 body.cv2-active.cv2-show-analysis #clanAnalysisMode{display:block!important}
 
+/* gt27-clan-detail-clean-v1: cuando la ruta es /clan/TAG (página completa de
+   un clan), ocultamos TODO el chrome de /clans (wrapper V2 + UI vieja) y
+   dejamos sólo #clanResults visible. Sin esto, al pulsar un clan se veía
+   por encima la lista de favoritos / Mi Clan / search box, dando la falsa
+   impresión de que el clan no cargaba. */
+body.cv2-detail-active #clansV2Wrap{display:none!important}
+body.cv2-detail-active #panel-clans > .section-title,
+body.cv2-detail-active #panel-clans > p,
+body.cv2-detail-active #panel-clans > .clan-mode-tabs{display:none!important}
+body.cv2-detail-active #clanSearchMode > *:not(#clanResults){display:none!important}
+body.cv2-detail-active #clanSearchMode{display:block}
+body.cv2-detail-active #clanCompareMode,
+body.cv2-detail-active #clanAnalysisMode{display:none!important}
+body.cv2-detail-active #searchHero{display:none!important}
+
 .cv2-wrap{color:var(--text-primary)}
 .cv2-header{padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:18px}
 .cv2-page-title{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;letter-spacing:1px;margin-bottom:4px}
@@ -14811,6 +14826,11 @@ switchTab=function(t){
   function _cv2OnClansRoute(){
     return /^\/clan(es|s)(\/.*)?$/i.test(location.pathname || '/');
   }
+  // gt27-clan-detail-clean-v1: detectar /clan/TAG (página completa de un clan).
+  // No matchea /clans, /clanes (esos van por _cv2OnClansRoute).
+  function _cv2OnClanDetailRoute(){
+    return /^\/clan\/[^\/]+/i.test(location.pathname || '/');
+  }
 
   // ── Init ──
   // BUG GRAVE arreglado: antes _cv2Init añadía body.cv2-active SIEMPRE al cargar
@@ -14821,8 +14841,16 @@ switchTab=function(t){
   function _cv2Init(){
     if(!_cv2Enabled()){
       document.body.classList.remove('cv2-active');
+      document.body.classList.remove('cv2-detail-active');
       return;
     }
+    // gt27-clan-detail-clean-v1: en /clan/TAG aplicar cv2-detail-active y NO cv2-active
+    if(_cv2OnClanDetailRoute()){
+      document.body.classList.remove('cv2-active');
+      document.body.classList.add('cv2-detail-active');
+      return;
+    }
+    document.body.classList.remove('cv2-detail-active');
     if(!_cv2OnClansRoute()){
       document.body.classList.remove('cv2-active');
       return;
