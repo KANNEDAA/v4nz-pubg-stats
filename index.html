@@ -3670,6 +3670,28 @@ body.pv2-self .pv2-only-other{display:none!important}
 .pv2-adn-grid{display:grid;gap:16px;grid-template-columns:1fr}
 @media (min-width:768px){.pv2-adn-grid{grid-template-columns:1fr 1fr}}
 
+/* ─── gt27-pv2-adn-4paneles-v1: ADN visual con 4 paneles (Radar + Armas + Compañeros + Bot Index) ─── */
+body.pv2-active .pv2-adn-card-mini-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+body.pv2-active .pv2-adn-row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+body.pv2-active .pv2-adn-row:last-of-type{border-bottom:0}
+body.pv2-active .pv2-adn-row-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;color:#fff;font-family:'Orbitron',sans-serif;font-weight:900}
+body.pv2-active .pv2-adn-row-icon.weapon{background:linear-gradient(135deg,#ff6b00,#ff3355)}
+body.pv2-active .pv2-adn-row-icon.mate-1{background:linear-gradient(135deg,#ff6b00,#ff3355)}
+body.pv2-active .pv2-adn-row-icon.mate-2{background:linear-gradient(135deg,#00f0ff,#a855f7)}
+body.pv2-active .pv2-adn-row-icon.mate-3{background:linear-gradient(135deg,#00ff88,#00f0ff)}
+body.pv2-active .pv2-adn-row-info{flex:1;min-width:0}
+body.pv2-active .pv2-adn-row-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;color:var(--text-primary);display:flex;align-items:center;gap:6px;margin-bottom:3px}
+body.pv2-active .pv2-adn-row-meta{display:flex;gap:8px;font-size:.62rem;color:var(--text-dim)}
+body.pv2-active .pv2-adn-row-meta-good{color:var(--accent-green,#26de81);font-weight:700}
+body.pv2-active .pv2-adn-row-bar{position:relative;height:3px;background:var(--bg-secondary,#1a1a28);border-radius:2px;margin-top:5px;overflow:hidden}
+body.pv2-active .pv2-adn-row-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-orange,#ff8c42));border-radius:2px;transition:width 1.2s ease-out}
+body.pv2-active .pv2-adn-row-bar-fill.mate{background:linear-gradient(90deg,var(--accent),#a855f7)}
+body.pv2-active .pv2-adn-row-pct{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;color:var(--accent);min-width:36px;text-align:right}
+body.pv2-active .pv2-adn-row.clickable{cursor:pointer;border-radius:6px;transition:background .2s,padding .2s}
+body.pv2-active .pv2-adn-row.clickable:hover{background:rgba(0,240,255,.04);padding-left:6px;padding-right:6px}
+body.pv2-active .pv2-adn-empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);font-size:.78rem;padding:24px 16px;text-align:center;line-height:1.5}
+body.pv2-active .pv2-adn-empty-card .pv2-adn-empty-icon{font-size:1.8rem;margin-bottom:8px;opacity:.5}
+
 /* ─── gt27-pv2-filters-bar-v1: barra de filtros arriba ─── */
 /* Antes Squad/Duo/Solo estaban dentro de stats y Temporada/Ranked/Lifetime al
    fondo de la página. Ahora todos los filtros juntos, arriba, antes del ADN. */
@@ -13995,7 +14017,11 @@ switchTab=function(){
       }
     } catch(e){}
 
-    grid.innerHTML =
+    // gt27-pv2-adn-4paneles-v1: ADN visual con 4 paneles. Antes 2 paneles
+    // (Radar + Bot Index). Ahora 4: Radar, Armas top, Compa\u00f1eros frecuentes,
+    // Bot Index. El user pidi\u00f3 "datos en gr\u00e1ficos que sorprendan al primer
+    // pantallazo" \u2014 esta es la materializaci\u00f3n.
+    var radarHtml =
       '<div class="pv2-adn-card">' +
         '<svg viewBox="0 0 360 260" style="width:100%;max-width:380px;margin:0 auto;display:block;">' +
           '<polygon points="' + refOuter + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
@@ -14009,9 +14035,111 @@ switchTab=function(){
           '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Tu estilo de juego en consola</div>' +
           '<div style="font-size:13px;color:var(--accent);font-weight:600;">\u2728 Brillas en ' + maxAxis.lbl.toUpperCase().replace('.', '') + ' (' + Math.round(maxVal) + ')</div>' +
         '</div>' +
-      '</div>' +
-      (botHtml || '<div class="pv2-adn-card" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:12px;padding:24px;text-align:center;">Bot Index se calcula tras 3+ partidas analizadas</div>');
+      '</div>';
+
+    grid.innerHTML = radarHtml + _pv2AdnArmasCard() + _pv2AdnTeammatesCard() + (botHtml || '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83e\udd16</div><div><strong>Bot Index</strong><br>Se calcula tras 3+ partidas analizadas.</div></div>');
   }
+
+  // gt27-pv2-adn-4paneles-v1: helper Card B \u2014 top 3 armas por kills
+  function _pv2AdnArmasCard(){
+    try {
+      if(!currentWeaponData || !currentWeaponData.data || !currentWeaponData.data.attributes){
+        return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udd2b</div><div><strong>Arsenal favorito</strong><br>Datos de armas no disponibles.</div></div>';
+      }
+      var wData = currentWeaponData.data.attributes.weaponSummaries;
+      if(!wData || Object.keys(wData).length === 0){
+        return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udd2b</div><div><strong>Arsenal favorito</strong><br>Sin kills registrados todav\u00eda.</div></div>';
+      }
+      var weapons = Object.entries(wData)
+        .map(function(entry){
+          var id = entry[0], data = entry[1];
+          return {
+            name: (typeof cleanWeaponName === 'function') ? cleanWeaponName(id) : id.replace(/^Item_Weapon_|_C$/g,''),
+            kills: (typeof getWeaponKills === 'function') ? getWeaponKills(data) : (data.StatsTotal && (data.StatsTotal.Kills || 0)) || 0,
+            hs: (typeof getWeaponHS === 'function') ? getWeaponHS(data) : 0,
+            level: data.LevelCurrent || data.levelCurrent || 0
+          };
+        })
+        .filter(function(w){ return w.kills > 0; })
+        .sort(function(a,b){ return b.kills - a.kills; })
+        .slice(0, 4);
+      if(!weapons.length){
+        return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udd2b</div><div><strong>Arsenal favorito</strong><br>Sin kills registrados todav\u00eda.</div></div>';
+      }
+      var maxKills = weapons[0].kills || 1;
+      var rows = weapons.map(function(w){
+        var pct = Math.round((w.kills / maxKills) * 100);
+        return '<div class="pv2-adn-row">' +
+          '<div class="pv2-adn-row-icon weapon">\ud83d\udd2b</div>' +
+          '<div class="pv2-adn-row-info">' +
+            '<div class="pv2-adn-row-name">' + _cv2EscSafe(w.name) + (w.level ? '<span style="font-size:.6rem;color:var(--text-dim);font-weight:400;">Lv.' + w.level + '</span>' : '') + '</div>' +
+            '<div class="pv2-adn-row-meta"><span>\ud83d\udc80 ' + w.kills + ' kills</span>' + (w.hs > 0 ? '<span class="pv2-adn-row-meta-good">\ud83c\udfaf ' + w.hs + ' HS</span>' : '') + '</div>' +
+            '<div class="pv2-adn-row-bar"><div class="pv2-adn-row-bar-fill" style="width:' + pct + '%"></div></div>' +
+          '</div>' +
+          '<div class="pv2-adn-row-pct">' + w.kills + '</div>' +
+        '</div>';
+      }).join('');
+      return '<div class="pv2-adn-card">' +
+        '<div class="pv2-adn-card-mini-title"><span>\ud83d\udd2b Arsenal favorito</span><span>\u2694\ufe0f</span></div>' +
+        rows +
+      '</div>';
+    } catch(e){
+      return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udd2b</div><div><strong>Arsenal favorito</strong><br>No se pudo cargar.</div></div>';
+    }
+  }
+
+  // gt27-pv2-adn-4paneles-v1: helper Card C \u2014 top 3 compa\u00f1eros frecuentes
+  function _pv2AdnTeammatesCard(){
+    try {
+      if(!currentMatchData || !currentMatchData.length || !currentPlayerData){
+        return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udc65</div><div><strong>Compa\u00f1eros frecuentes</strong><br>Cargando partidas...</div></div>';
+      }
+      var pn = currentPlayerData.attributes.name.toLowerCase();
+      var tmCount = {};
+      currentMatchData.forEach(function(match){
+        var pp = (match.included || []).find(function(i){ return i.type === 'participant' && i.attributes.stats.name.toLowerCase() === pn; });
+        if(!pp) return;
+        var roster = (match.included || []).find(function(i){ return i.type === 'roster' && i.relationships && i.relationships.participants && i.relationships.participants.data.some(function(p){ return p.id === pp.id; }); });
+        if(!roster || !roster.relationships || !roster.relationships.participants) return;
+        var pids = roster.relationships.participants.data.map(function(p){ return p.id; });
+        (match.included || []).filter(function(i){ return i.type === 'participant' && pids.includes(i.id); }).forEach(function(p){
+          var nm = p.attributes.stats.name;
+          if(nm.toLowerCase() !== pn){ tmCount[nm] = (tmCount[nm] || 0) + 1; }
+        });
+      });
+      var sorted = Object.entries(tmCount).sort(function(a,b){ return b[1] - a[1]; }).filter(function(e){ return e[1] >= 2; }).slice(0, 4);
+      if(!sorted.length){
+        return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udc65</div><div><strong>Compa\u00f1eros frecuentes</strong><br>A\u00fan no detectamos compa\u00f1eros recurrentes.<br><span style="font-size:.7rem;color:var(--text-dim);">Juega en Squad o Duo para que aparezcan.</span></div></div>';
+      }
+      var totalMatches = currentMatchData.length;
+      var rows = sorted.map(function(entry, i){
+        var name = entry[0], count = entry[1];
+        var pct = Math.round((count / totalMatches) * 100);
+        var initial = (name || '?').charAt(0).toUpperCase();
+        var iconCls = 'mate-' + ((i % 3) + 1);
+        var safeName = (typeof escJs === 'function') ? escJs(name) : name;
+        var plat = (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn';
+        return '<div class="pv2-adn-row clickable" onclick="if(typeof goToPlayer===\'function\')goToPlayer(\'' + safeName + '\',\'' + plat + '\')">' +
+          '<div class="pv2-adn-row-icon ' + iconCls + '">' + initial + '</div>' +
+          '<div class="pv2-adn-row-info">' +
+            '<div class="pv2-adn-row-name">' + _cv2EscSafe(name) + '</div>' +
+            '<div class="pv2-adn-row-meta"><span>\ud83c\udfae ' + count + ' partidas juntos</span></div>' +
+            '<div class="pv2-adn-row-bar"><div class="pv2-adn-row-bar-fill mate" style="width:' + pct + '%"></div></div>' +
+          '</div>' +
+          '<div class="pv2-adn-row-pct">' + pct + '%</div>' +
+        '</div>';
+      }).join('');
+      return '<div class="pv2-adn-card">' +
+        '<div class="pv2-adn-card-mini-title"><span>\ud83d\udc65 Compa\u00f1eros frecuentes</span><span>\ud83e\udd1d</span></div>' +
+        rows +
+      '</div>';
+    } catch(e){
+      return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udc65</div><div><strong>Compa\u00f1eros frecuentes</strong><br>No se pudo cargar.</div></div>';
+    }
+  }
+
+  // Helper escape (reutiliza el que est\u00e9 disponible o fallback simple)
+  function _cv2EscSafe(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   // ── 5. Última partida — primero intenta partida real de currentMatchData[0],
   //      si aún no está cargada, muestra snapshot agregado como fallback ──
