@@ -13445,11 +13445,26 @@ switchTab=function(){
   // aunque tenga datos del último jugador buscado. Si no, aparece debajo del panel
   // logueado y genera un scroll infinito con info que no pediste.
   (function _pv2HomeSync(){
+    // gt27-pv2-route-sync-v1: detectar si estamos en una ficha de jugador.
+    // Sin esto, body.pv2-active se quedaba pegado al ir a /clans, /ranking,
+    // /compare, etc., y el wrapper de jugador (#playerV2Wrap, que vive en
+    // main-content directamente) seguía visible mezclando con el panel destino.
+    function _onPlayerRoute(){
+      return /^\/stats\/(psn|xbox)\//i.test(location.pathname || '/');
+    }
     function _sync(){
       if(!_pv2Enabled()) return;
       var wrap = document.getElementById('playerV2Wrap');
       var hp = document.getElementById('homepageContent');
-      if(!wrap || !hp) return;
+      if(!wrap) return;
+      // gt27-pv2-route-sync-v1: si no estamos en /stats/PLAT/NAME, quitar
+      // pv2-active y ocultar el wrapper. Eso evita el mezclado con /clans.
+      if(!_onPlayerRoute()){
+        document.body.classList.remove('pv2-active');
+        wrap.style.display = 'none';
+        return;
+      }
+      if(!hp) return;
       var hpVisible = window.getComputedStyle(hp).display !== 'none';
       if(hpVisible){
         // Estamos en la home → ocultar wrapper v2 (panel logueado se encarga)
@@ -13474,6 +13489,16 @@ switchTab=function(){
     } catch(e){}
     // Hook popstate (router SPA)
     window.addEventListener('popstate', function(){ setTimeout(_sync, 80); });
+    // gt27-pv2-route-sync-v1: hook pushState para reaccionar al cambio de ruta
+    // del menú principal (switchTab → pushState a /clans, /ranking, /compare).
+    try {
+      var _origPS = history.pushState;
+      history.pushState = function(){
+        var ret = _origPS.apply(this, arguments);
+        try { setTimeout(_sync, 60); } catch(e){}
+        return ret;
+      };
+    } catch(e){}
   })();
 
   // ── 2. Listeners (acordeones + chips) ──────────────────────────────
