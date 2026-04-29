@@ -3687,6 +3687,9 @@ body.pv2-active .pv2-adn-row-bar{position:relative;height:3px;background:var(--b
 body.pv2-active .pv2-adn-row-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-orange,#ff8c42));border-radius:2px;transition:width 1.2s ease-out}
 body.pv2-active .pv2-adn-row-bar-fill.mate{background:linear-gradient(90deg,var(--accent),#a855f7)}
 body.pv2-active .pv2-adn-row-pct{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;color:var(--accent);min-width:36px;text-align:right}
+/* gt27-recent-arsenal-v1: chips de accesorios bajo el nombre del arma */
+body.pv2-active .pv2-adn-acc-row{display:flex;gap:4px;flex-wrap:wrap;margin:3px 0 4px}
+body.pv2-active .pv2-adn-acc-chip{font-size:.58rem;padding:1px 6px;border-radius:4px;background:rgba(168,85,247,.14);color:#c89cf5;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Rajdhani',sans-serif;border:1px solid rgba(168,85,247,.2)}
 body.pv2-active .pv2-adn-row.clickable{cursor:pointer;border-radius:6px;transition:background .2s,padding .2s}
 body.pv2-active .pv2-adn-row.clickable:hover{background:rgba(0,240,255,.04);padding-left:6px;padding-right:6px}
 body.pv2-active .pv2-adn-empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);font-size:.78rem;padding:24px 16px;text-align:center;line-height:1.5}
@@ -13835,6 +13838,11 @@ switchTab=function(){
       _pv2SyncFilterChips();
     }
 
+    // gt27-recent-arsenal-v1: disparar fetch del arsenal reciente en background.
+    // Cuando lleguen los datos, _pv2LoadAdn refresca el panel B con armas + accesorios
+    // de las últimas 5 partidas (filosofía "qué juega ahora", no histórico de la cuenta).
+    try { _pv2LoadRecentArsenal(plat, name); } catch(e){}
+
     // Hero — avatar + nombre
     _pv2Text('pv2Avatar', _pv2Initial(name));
     _pv2Text('pv2NameSelf', name);
@@ -14102,12 +14110,19 @@ switchTab=function(){
   // gt27-pv2-adn-4paneles-v1: helper Card B \u2014 top 3 armas por kills
   function _pv2AdnArmasCard(){
     try {
-      // gt27-pv2-adn-loading-v1: spinner mientras se carga weapon_mastery en background
-      if((!currentWeaponData || !currentWeaponData.data) && window._pv2WeaponLoading){
+      // gt27-recent-arsenal-v1: si tenemos datos del arsenal RECIENTE (\u00faltimas 5
+      // partidas, v\u00eda endpoint /api/recent-arsenal con telemetr\u00eda parseada),
+      // priorizamos esa fuente porque muestra "qu\u00e9 juega ahora" con accesorios reales.
+      // Fallback a weapon_mastery hist\u00f3rico si no.
+      if(window._pv2RecentArsenal && window._pv2RecentArsenal.weapons && window._pv2RecentArsenal.weapons.length){
+        return _pv2RenderRecentArsenal(window._pv2RecentArsenal);
+      }
+      // Spinner mientras se carga el arsenal reciente o weapon_mastery
+      if(window._pv2RecentArsenalLoading || ((!currentWeaponData || !currentWeaponData.data) && window._pv2WeaponLoading)){
         return '<div class="pv2-adn-card pv2-adn-loading-card">' +
           '<div class="pv2-adn-spinner"></div>' +
-          '<div class="pv2-adn-loading-title">\ud83d\udd2b Arsenal favorito</div>' +
-          '<div class="pv2-adn-loading-msg">Cargando tus armas</div>' +
+          '<div class="pv2-adn-loading-title">\ud83d\udd2b Arsenal reciente</div>' +
+          '<div class="pv2-adn-loading-msg">Analizando tus \u00faltimas 5 partidas</div>' +
         '</div>';
       }
       if(!currentWeaponData || !currentWeaponData.data || !currentWeaponData.data.attributes){
@@ -14207,6 +14222,112 @@ switchTab=function(){
 
   // Helper escape (reutiliza el que est\u00e9 disponible o fallback simple)
   function _cv2EscSafe(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // gt27-recent-arsenal-v1: diccionario de accesorios PUBG (itemId \u2192 nombre legible)
+  var _PV2_ATTACH_NAMES = {
+    // Miras
+    'Item_Attach_Weapon_Upper_DotSight_C': 'Mira Roja',
+    'Item_Attach_Weapon_Upper_HoloSight_C': 'Hologr\u00e1fica',
+    'Item_Attach_Weapon_Upper_Aimpoint_C': 'Mira Roja',
+    'Item_Attach_Weapon_Upper_PM_HoloSight_C': 'Hologr\u00e1fica',
+    'Item_Attach_Weapon_Upper_Scope2x_C': 'Mira 2x',
+    'Item_Attach_Weapon_Upper_CQBSS_C': 'Mira 2x',
+    'Item_Attach_Weapon_Upper_ACOG_01_C': 'Mira 4x',
+    'Item_Attach_Weapon_Upper_Scope3x_C': 'Mira 3x',
+    'Item_Attach_Weapon_Upper_Scope4x_C': 'Mira 4x',
+    'Item_Attach_Weapon_Upper_Scope6x_C': 'Mira 6x',
+    'Item_Attach_Weapon_Upper_Scope8x_C': 'Mira 8x',
+    'Item_Attach_Weapon_Upper_Scope15x_C': 'Mira 15x',
+    // Bocachas
+    'Item_Attach_Weapon_Muzzle_Compensator_Large_C': 'Compensador',
+    'Item_Attach_Weapon_Muzzle_Compensator_Medium_C': 'Compensador',
+    'Item_Attach_Weapon_Muzzle_Compensator_Small_C': 'Compensador',
+    'Item_Attach_Weapon_Muzzle_Suppressor_Large_C': 'Silenciador',
+    'Item_Attach_Weapon_Muzzle_Suppressor_Medium_C': 'Silenciador',
+    'Item_Attach_Weapon_Muzzle_Suppressor_Small_C': 'Silenciador',
+    'Item_Attach_Weapon_Muzzle_FlashHider_Large_C': 'Apagallamas',
+    'Item_Attach_Weapon_Muzzle_FlashHider_Medium_C': 'Apagallamas',
+    'Item_Attach_Weapon_Muzzle_FlashHider_Small_C': 'Apagallamas',
+    // Empu\u00f1aduras
+    'Item_Attach_Weapon_Lower_AngledForeGrip_C': 'Emp. Angular',
+    'Item_Attach_Weapon_Lower_Foregrip_C': 'Emp. Vertical',
+    'Item_Attach_Weapon_Lower_LightweightForeGrip_C': 'Emp. Ligera',
+    'Item_Attach_Weapon_Lower_HalfGrip_C': 'Media Emp.',
+    'Item_Attach_Weapon_Lower_LaserSight_C': 'L\u00e1ser',
+    'Item_Attach_Weapon_Lower_QuickDraw_Large_AR_C': 'Empu\u00f1adura',
+    'Item_Attach_Weapon_Lower_ThumbGrip_C': 'Pulgar',
+    // Cargadores
+    'Item_Attach_Weapon_Magazine_QuickDraw_Large_C': 'Carg. R\u00e1pido',
+    'Item_Attach_Weapon_Magazine_QuickDraw_Medium_C': 'Carg. R\u00e1pido',
+    'Item_Attach_Weapon_Magazine_QuickDraw_Small_C': 'Carg. R\u00e1pido',
+    'Item_Attach_Weapon_Magazine_Extended_Large_C': 'Carg. Extendido',
+    'Item_Attach_Weapon_Magazine_Extended_Medium_C': 'Carg. Extendido',
+    'Item_Attach_Weapon_Magazine_Extended_Small_C': 'Carg. Extendido',
+    'Item_Attach_Weapon_Magazine_ExtendedQuickDraw_Large_C': 'Carg. Ext+R\u00e1p',
+    'Item_Attach_Weapon_Magazine_ExtendedQuickDraw_Medium_C': 'Carg. Ext+R\u00e1p',
+    'Item_Attach_Weapon_Magazine_ExtendedQuickDraw_Small_C': 'Carg. Ext+R\u00e1p',
+    // Culatas
+    'Item_Attach_Weapon_Stock_AR_Composite_C': 'Culata',
+    'Item_Attach_Weapon_Stock_SniperRifle_BulletLoops_C': 'Bandolera',
+    'Item_Attach_Weapon_Stock_UZI_C': 'Culata UZI',
+    // Otros frecuentes
+    'Item_Attach_Weapon_Upper_Aimpoint_03_Lvl3_C': 'Mira Roja'
+  };
+
+  // gt27-recent-arsenal-v1: render del Arsenal con datos del endpoint /api/recent-arsenal
+  function _pv2RenderRecentArsenal(arsenal){
+    try {
+      var weapons = arsenal.weapons || [];
+      if(!weapons.length){
+        return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udd2b</div><div><strong>Arsenal reciente</strong><br>No detectamos kills con armas en las \u00faltimas ' + (arsenal.matchesAnalyzed || 5) + ' partidas.</div></div>';
+      }
+      var maxKills = Math.max.apply(null, weapons.map(function(w){ return w.kills || 0; })) || 1;
+      var rows = weapons.slice(0, 4).map(function(w){
+        var name = (typeof cleanWeaponName === 'function') ? cleanWeaponName(w.weaponId) : (w.weaponId || '').replace(/^Item_Weapon_|_C$/g,'');
+        var pct = Math.round(((w.kills || 0) / maxKills) * 100);
+        var topAccs = (w.attaches || []).slice(0, 2).map(function(a){
+          var label = _PV2_ATTACH_NAMES[a.id] || (a.id || '').replace(/^Item_Attach_Weapon_(Upper_|Lower_|Muzzle_|Magazine_|Stock_)?/, '').replace(/_C$/, '').replace(/_/g,' ');
+          return '<span class="pv2-adn-acc-chip">' + _cv2EscSafe(label) + '</span>';
+        }).join('');
+        return '<div class="pv2-adn-row">' +
+          '<div class="pv2-adn-row-icon weapon">\ud83d\udd2b</div>' +
+          '<div class="pv2-adn-row-info">' +
+            '<div class="pv2-adn-row-name">' + _cv2EscSafe(name) + '</div>' +
+            (topAccs ? '<div class="pv2-adn-acc-row">' + topAccs + '</div>' : '') +
+            '<div class="pv2-adn-row-meta"><span>\ud83d\udc80 ' + (w.kills || 0) + ' kills (\u00falt. ' + (arsenal.matchesAnalyzed || 5) + ')</span></div>' +
+            '<div class="pv2-adn-row-bar"><div class="pv2-adn-row-bar-fill" style="width:' + pct + '%"></div></div>' +
+          '</div>' +
+          '<div class="pv2-adn-row-pct">' + (w.kills || 0) + '</div>' +
+        '</div>';
+      }).join('');
+      return '<div class="pv2-adn-card">' +
+        '<div class="pv2-adn-card-mini-title"><span>\ud83d\udd2b Arsenal reciente</span><span title="Datos de las ' + (arsenal.matchesAnalyzed || 5) + ' \u00faltimas partidas, mira/silenciador reales">\u2694\ufe0f ' + (arsenal.matchesAnalyzed || 5) + ' part.</span></div>' +
+        rows +
+      '</div>';
+    } catch(e){
+      return '<div class="pv2-adn-card pv2-adn-empty-card"><div class="pv2-adn-empty-icon">\ud83d\udd2b</div><div><strong>Arsenal reciente</strong><br>Error al renderizar.</div></div>';
+    }
+  }
+
+  // gt27-recent-arsenal-v1: fetch del arsenal reciente al cargar la ficha
+  // (background, no bloquea render). Refresca el ADN cuando llegan los datos.
+  function _pv2LoadRecentArsenal(plat, name){
+    if(!plat || !name) return;
+    window._pv2RecentArsenal = null;
+    window._pv2RecentArsenalLoading = true;
+    fetch('/api/recent-arsenal/' + encodeURIComponent(plat) + '/' + encodeURIComponent(name), { credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        window._pv2RecentArsenalLoading = false;
+        if(data && data.weapons){ window._pv2RecentArsenal = data; }
+        try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
+      })
+      .catch(function(){
+        window._pv2RecentArsenalLoading = false;
+        try { if(typeof window._pv2LoadAdn === 'function') window._pv2LoadAdn(); } catch(e){}
+      });
+  }
+  window._pv2LoadRecentArsenal = _pv2LoadRecentArsenal;
 
   // ── 5. Última partida — primero intenta partida real de currentMatchData[0],
   //      si aún no está cargada, muestra snapshot agregado como fallback ──
