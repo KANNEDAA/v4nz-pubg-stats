@@ -1,0 +1,87 @@
+# CI mínimo de v4nz-pubg-stats
+#
+# Bloquea merges/pushes a main cuando:
+#   1. server.js tiene errores de sintaxis JavaScript
+#   2. Algún bloque <script> de index.html tiene errores de sintaxis JS
+#   3. server.js pierde alguno de los hardenings obligatorios (regresión)
+#   4. index.html vuelve a meter el token JWT en localStorage (regresión XSS)
+#
+# Sin este CI, los hardenings de seguridad pueden revertirse silenciosamente
+# en rebases/merges (ya pasó entre el 23 abril y el 1 mayo de 2026 — PR #3
+# tuvo que rehacer cosas que ya estaban en PR #1 y PR #2).
+#
+# No requiere DB ni npm install — solo checks estáticos rápidos. ~30 segundos
+# por run en un runner gratuito de GitHub Actions.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Sintaxis + anti-regresión hardening
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Sintaxis JS de server.js
+        run: node --check server.js
+
+      - name: Sintaxis JS de bloques <script> en index.html
+        run: |
+          node -e "
+            const fs = require('fs');
+            const html = fs.readFileSync('index.html', 'utf8');
+            const re = /<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g;
+            let m, idx = 0, errs = [];
+            while ((m = re.exec(html)) !== null) {
+              idx++;
+              try { new Function(m[1]); }
+              catch(e) { errs.push('Bloque <script> #' + idx + ': ' + e.message); }
+            }
+            console.log('Validados', idx, 'bloques <script>');
+            if (errs.length) { errs.forEach(e => console.error(e)); process.exit(1); }
+          "
+
+      - name: Hardenings obligatorios presentes en server.js
+        run: |
+          set -e
+          missing=()
+          required=(
+            "JWT_SECRET"
+            "trust proxy"
+            "pool.on"
+            "withTx"
+          )
+          for p in "${required[@]}"; do
+            if ! grep -q "$p" server.js; then
+              missing+=("$p")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Regresión detectada — server.js no contiene los siguientes hardenings:"
+            printf '  - %s\n' "${missing[@]}"
+            echo ""
+            echo "Estos hardenings vienen de PR #1, PR #2 y PR #3 (ver SKILL.md v3.31)."
+            echo "Si tu cambio los elimina a propósito, abre un issue antes de mergear."
+            exit 1
+          fi
+          echo "OK: hardenings presentes (JWT_SECRET fail-fast, trust proxy, pool.on('error'), withTx helper)"
+
+      - name: index.html no debe escribir/leer v4nz_token de localStorage
+        run: |
+          if grep -nE "localStorage\.(setItem|getItem)\s*\(\s*['\"]v4nz_token" index.html; then
+            echo ""
+            echo "::error::Regresión XSS — token JWT detectado en localStorage."
+            echo "El token debe vivir solo en cookie HttpOnly (server.js:106)."
+            echo "Cualquier escritura/lectura desde localStorage expone el token a XSS."
+            exit 1
+          fi
+          echo "OK: index.html no maneja v4nz_token desde localStorage"
