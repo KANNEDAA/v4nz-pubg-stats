@@ -4685,9 +4685,12 @@ body.cv2-detail-active #searchHero{display:none!important}
       </div>
 
       <!-- player-actions-clean-v1 + player-menu-more-v1: header acciones limpias.
-           Solo Favorito + Compartir + ⋯ visible. El resto va al menú desplegable. -->
+           Solo Favorito + Compartir + ⋯ visible. El resto va al menú desplegable.
+           gt27-fav-clean-v1: añadido botón "Guardar clan" para que la acción sea
+           clara (antes era una estrella ☆ inline en el chip del clan, no se entendía). -->
       <div class="pv2-hero-ctas" id="pv2HeroCtas" style="position:relative;">
-        <button type="button" class="pv2-cta pv2-only-other" id="pv2FavBtn">&#x2B50; Favorito</button>
+        <button type="button" class="pv2-cta pv2-only-other" id="pv2FavBtn">&#x2B50; Guardar jugador</button>
+        <button type="button" class="pv2-cta" id="pv2ClanFavBtn" style="display:none;">&#x1F6E1;&#xFE0F; Guardar clan</button>
         <button type="button" class="pv2-cta" id="pv2ShareBtn" onclick="if(typeof _pv2DoShare==='function')_pv2DoShare();">&#x1F517; Compartir</button>
         <button type="button" class="pv2-cta" id="pv2MoreBtn" onclick="(function(e){e.stopPropagation();var m=document.getElementById('pv2MoreMenu');if(m)m.style.display=(m.style.display==='block')?'none':'block';})(event)" title="Más acciones" aria-haspopup="true" aria-expanded="false" style="padding:8px 12px;font-size:1.1rem;line-height:1;">&#x22EF;</button>
         <!-- Dropdown menú "..." -->
@@ -13985,8 +13988,13 @@ switchTab=function(){
     var safeNameAttr = name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     var safeTagJs = (typeof escJs === 'function') ? escJs(tag) : tag.replace(/'/g,"\\'");
     var clanLink = '<a href="/clan/' + encodeURIComponent(tag) + '" onclick="event.preventDefault();if(typeof switchTab===\'function\')switchTab(\'clans\');history.pushState(null,\'\',\'/clan/' + encodeURIComponent(tag) + '\');if(typeof loadClanPage===\'function\')loadClanPage(\'' + safeTagJs + '\');return false;" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">\u{1F6E1}\u{FE0F} [' + safeTagAttr + '] ' + safeNameAttr + '</a>';
-    var star = (typeof clanFavStar === 'function') ? clanFavStar(tag, name, plat, '.85rem') : '';
-    clanEl.innerHTML = clanLink + (star ? ' ' + star : '');
+    // gt27-fav-clean-v1: estrella inline del clan ELIMINADA del header.
+    // El usuario no entendía qué hacía la estrella ☆ junto al nombre del clan
+    // (parecía decorativo). Ahora el guardar clan vive en un botón claro con
+    // texto en la barra de acciones (pv2ClanFavBtn). El chip clan queda limpio.
+    clanEl.innerHTML = clanLink;
+    // Actualizar el botón "Guardar clan" tras renderizar el chip (lee el tag desde el link)
+    setTimeout(function(){ try{ if(typeof window._pv2UpdateClanFavBtn === 'function') window._pv2UpdateClanFavBtn(); }catch(e){} }, 30);
     clanEl.style.display = '';
   }
 
@@ -15146,7 +15154,10 @@ switchTab=function(){
     setTimeout(_pv2SyncFilterChips, 50);
   });
 
-  // pv2-fav-state-v1: actualiza el botón Favorito según el estado real (★ + clase is-fav)
+  // pv2-fav-state-v1 + gt27-fav-clean-v1: actualiza el botón Favorito con texto
+  // explícito según el estado. Antes ponía solo "★ Favorito" / "☆ Favorito" — el
+  // user no entendía qué hacía al click. Ahora "⭐ Guardar jugador" si está sin
+  // guardar y "★ Jugador guardado" si ya es favorito.
   function _pv2UpdateFavBtn(){
     try {
       var btn = document.getElementById('pv2FavBtn');
@@ -15156,12 +15167,49 @@ switchTab=function(){
       if(!n) return;
       var fav = (typeof isFavorite === 'function') ? isFavorite(n) : false;
       btn.classList.toggle('is-fav', fav);
-      // Icono ★ lleno si fav, ☆ hueco si no
-      btn.innerHTML = (fav ? '★' : '☆') + ' Favorito';
-      btn.title = fav ? 'Quitar de favoritos' : 'Guardar en favoritos';
+      btn.innerHTML = fav ? '★ Jugador guardado' : '⭐ Guardar jugador';
+      btn.title = fav ? 'Quitar de favoritos' : 'Guardar este jugador en favoritos';
     } catch(e){}
   }
   window._pv2UpdateFavBtn = _pv2UpdateFavBtn;
+
+  // gt27-fav-clean-v1: botón "Guardar clan" análogo. Solo visible si el jugador
+  // tiene clan asociado. Texto cambia entre "Guardar clan" y "Clan guardado ✓".
+  function _pv2UpdateClanFavBtn(){
+    try {
+      var btn = document.getElementById('pv2ClanFavBtn');
+      if(!btn) return;
+      // Extraer tag del clan desde el chip pv2Clan (que renderiza _pv2RefreshClan)
+      var clanEl = document.getElementById('pv2Clan');
+      var clanLink = clanEl && clanEl.querySelector('a');
+      var href = clanLink && clanLink.getAttribute('href');
+      var tag = '';
+      if(href){
+        var m = href.match(/\/clan\/(.+)$/);
+        if(m) tag = decodeURIComponent(m[1]);
+      }
+      if(!tag){
+        btn.style.display = 'none';
+        return;
+      }
+      var plat = (typeof currentPlatform !== 'undefined') ? currentPlatform : 'psn';
+      // Nombre del clan: extraer del texto del link "🛡️ [TAG] Nombre"
+      var clanText = clanLink ? clanLink.textContent : '';
+      var nm = clanText.replace(/^[^\[]*\[[^\]]+\]\s*/, '').trim() || tag;
+      var isFav = (typeof isClanFavorite === 'function') ? isClanFavorite(tag) : false;
+      btn.style.display = '';
+      btn.classList.toggle('is-fav', isFav);
+      btn.innerHTML = isFav ? '\u{1F6E1}\u{FE0F} Clan guardado ✓' : '\u{1F6E1}\u{FE0F} Guardar clan';
+      btn.title = isFav ? 'Quitar clan de guardados' : 'Guardar este clan en favoritos';
+      btn.onclick = function(){
+        try {
+          if(typeof toggleClanFavorite === 'function') toggleClanFavorite(tag, nm, plat);
+        } catch(e){}
+        setTimeout(_pv2UpdateClanFavBtn, 50);
+      };
+    } catch(e){}
+  }
+  window._pv2UpdateClanFavBtn = _pv2UpdateClanFavBtn;
 
   // Share: prefiere Web Share API en móvil; copia link en desktop o si forceCopy=true
   function _pv2DoShare(forceCopy){
