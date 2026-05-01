@@ -14949,12 +14949,28 @@ switchTab=function(){
       // pv2-wl-legend-v1: cabecera con t\u00edtulo y leyenda para que se entienda qu\u00e9 es el grid
       // pv2-wl-clickable-v1: cada celda es clicable y abre el match detail con showMatchDetail(idx)
       // gt27-pv2-wl-pretty-v1: estilo alineado con wl-grid cl\u00e1sico (gradientes vivos + posici\u00f3n real "#N" + summary)
+      // gt27-pv2-wl-pretty-fix-v1: BUG fix — antes leía m.playerStats que no
+      // existe en la estructura currentMatchData (cada match tiene m.included con
+      // los participantes y hay que buscar el del jugador por nombre). Como
+      // m.playerStats venía undefined, el rank caía al fallback 99 y todas las
+      // partidas salían rojas con #99. Replicamos la lógica de renderWLGrid viejo.
+      var pnLower = '';
+      try {
+        var pdNow = (typeof currentPlayerData !== 'undefined') ? currentPlayerData : null;
+        if(pdNow && pdNow.attributes && pdNow.attributes.name){
+          pnLower = pdNow.attributes.name.toLowerCase();
+        }
+      } catch(e){}
       var matches = currentMatchData.slice(0, 20);
       var wins = 0, top10s = 0, outs = 0;
       var cells = matches.map(function(m, idx){
-        var rank = (m && m.playerStats && m.playerStats.winPlace) || 99;
-        var ps = (m && m.playerStats) || {};
         var attr = (m && m.data && m.data.attributes) || {};
+        var participants = (m && m.included) ? m.included.filter(function(i){ return i.type === 'participant'; }) : [];
+        var pp = pnLower ? participants.find(function(p){
+          return p.attributes && p.attributes.stats && p.attributes.stats.name && p.attributes.stats.name.toLowerCase() === pnLower;
+        }) : null;
+        var ps = (pp && pp.attributes && pp.attributes.stats) || {};
+        var rank = ps.winPlace || 99;
         var mapName = (typeof MAP_NAMES !== 'undefined' && MAP_NAMES[attr.mapName]) || attr.mapName || 'Mapa';
         var mode = (attr.gameMode || '').toUpperCase().replace(/-/g, ' ');
         var kills = ps.kills || 0;
