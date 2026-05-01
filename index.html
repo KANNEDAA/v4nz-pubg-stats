@@ -3814,23 +3814,26 @@ body.pv2-active #evolutionSection{display:none!important}
 .pv2-sc-delta{margin-top:8px;font-size:11px;font-weight:700}
 .pv2-sc-delta.up{color:#5fd97f}
 .pv2-sc-delta.down{color:#ff5757}
-.pv2-wl-grid{display:flex;flex-wrap:wrap;gap:4px;padding:12px;background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;margin-bottom:12px}
-.pv2-wl-cell{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
-.pv2-wl-cell.w{background:rgba(95,217,127,.2);color:#5fd97f}
-.pv2-wl-cell.l{background:rgba(255,87,87,.12);color:#ff5757}
-.pv2-wl-cell.ww{background:linear-gradient(135deg,#ffd24a,#ff9f43);color:#000}
-/* pv2-wl-legend-v1: cabecera con título y leyenda inline encima del grid de últimas partidas.
-   Antes el grid salía pelado con "L L L L..." sin contexto y el user no sabía qué era. */
-.pv2-wl-section{background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;padding:12px;margin-bottom:12px}
+.pv2-wl-grid{display:flex;flex-wrap:wrap;gap:6px;padding:12px;background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;margin-bottom:12px}
+/* gt27-pv2-wl-pretty-v1: alineado con el estilo del wl-grid clásico (más bonito).
+   Gradientes vivos verde/amarillo/rojo, fuente Orbitron, texto oscuro sobre fondo claro,
+   posición real "#N" en lugar de solo "L". */
+.pv2-wl-cell{width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#000;cursor:default;position:relative;transition:transform .2s}
+.pv2-wl-cell.ww{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000}
+.pv2-wl-cell.w{background:linear-gradient(135deg,#ffd700,#ffaa00);color:#000}
+.pv2-wl-cell.l{background:linear-gradient(135deg,#ff3355,#cc2244);color:#fff}
+.pv2-wl-section{background:var(--bg-secondary,#131829);border:1px solid var(--border,#2a3350);border-radius:16px;padding:14px 16px;margin-bottom:12px}
 .pv2-wl-section .pv2-wl-grid{padding:0;background:transparent;border:0;border-radius:0;margin-bottom:0}
 .pv2-wl-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .pv2-wl-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase}
 .pv2-wl-legend{display:inline-flex;flex-wrap:wrap;gap:10px;font-size:10px;color:var(--text-dim);align-items:center}
 .pv2-wl-legend-item{display:inline-flex;align-items:center;gap:4px}
-.pv2-wl-legend .pv2-wl-cell{width:16px;height:16px;font-size:8px;border-radius:3px}
-/* pv2-wl-clickable-v1: las celdas son clicables y abren el match detail */
+.pv2-wl-legend .pv2-wl-cell{width:18px;height:18px;font-size:8px;border-radius:3px}
+.pv2-wl-summary{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:.72rem;color:var(--text-secondary,#9aa3b8);font-family:'Rajdhani',sans-serif;font-weight:600}
+.pv2-wl-summary span{display:flex;align-items:center;gap:6px}
+.pv2-wl-summary .pv2-wl-dot{width:8px;height:8px;border-radius:3px;display:inline-block}
 .pv2-wl-cell.clickable{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
-.pv2-wl-cell.clickable:hover{transform:scale(1.15);box-shadow:0 0 0 2px rgba(0,240,255,.4)}
+.pv2-wl-cell.clickable:hover{transform:scale(1.2);z-index:2;box-shadow:0 0 0 2px rgba(0,240,255,.4)}
 .pv2-wl-cell.clickable:active{transform:scale(0.95)}
 .pv2-wl-hint{font-size:10px;color:var(--text-dim);margin-top:8px;text-align:center;font-style:italic}
 .pv2-stat-footlinks{font-size:12px;color:var(--text-dim);display:flex;gap:14px}
@@ -14866,7 +14869,9 @@ switchTab=function(){
     if(wl && typeof currentMatchData !== 'undefined' && Array.isArray(currentMatchData) && currentMatchData.length){
       // pv2-wl-legend-v1: cabecera con t\u00edtulo y leyenda para que se entienda qu\u00e9 es el grid
       // pv2-wl-clickable-v1: cada celda es clicable y abre el match detail con showMatchDetail(idx)
+      // gt27-pv2-wl-pretty-v1: estilo alineado con wl-grid cl\u00e1sico (gradientes vivos + posici\u00f3n real "#N" + summary)
       var matches = currentMatchData.slice(0, 20);
+      var wins = 0, top10s = 0, outs = 0;
       var cells = matches.map(function(m, idx){
         var rank = (m && m.playerStats && m.playerStats.winPlace) || 99;
         var ps = (m && m.playerStats) || {};
@@ -14878,10 +14883,17 @@ switchTab=function(){
         // Tooltip rico (visible en desktop al hover)
         var tt = mapName + ' \u00b7 ' + mode + ' \u00b7 #' + rank + ' \u00b7 ' + kills + 'k ' + dmg + 'dmg';
         var click = ' onclick="if(typeof showMatchDetail===\'function\')showMatchDetail(' + idx + ')"';
-        if(rank === 1) return '<span class="pv2-wl-cell ww clickable" title="' + tt + '"' + click + '>\u2605</span>';
-        if(rank <= 10) return '<span class="pv2-wl-cell w clickable" title="' + tt + '"' + click + '>W</span>';
-        return '<span class="pv2-wl-cell l clickable" title="' + tt + '"' + click + '>L</span>';
+        if(rank === 1){ wins++; return '<span class="pv2-wl-cell ww clickable" title="' + tt + '"' + click + '>W</span>'; }
+        if(rank <= 10){ top10s++; return '<span class="pv2-wl-cell w clickable" title="' + tt + '"' + click + '>#' + rank + '</span>'; }
+        outs++;
+        return '<span class="pv2-wl-cell l clickable" title="' + tt + '"' + click + '>#' + rank + '</span>';
       }).join('');
+      var summaryHtml =
+        '<div class="pv2-wl-summary">' +
+          '<span><span class="pv2-wl-dot" style="background:#00ff88"></span> ' + wins + ' Victorias</span>' +
+          '<span><span class="pv2-wl-dot" style="background:#ffd700"></span> ' + top10s + ' Top 10</span>' +
+          '<span><span class="pv2-wl-dot" style="background:#ff3355"></span> ' + outs + ' Fuera</span>' +
+        '</div>';
       var section = wl.parentElement;
       if(section && !section.classList.contains('pv2-wl-section')){
         var newSection = document.createElement('div');
@@ -14890,14 +14902,18 @@ switchTab=function(){
           '<div class="pv2-wl-header">' +
             '<span class="pv2-wl-title">\ud83d\udcca \u00daltimas '+matches.length+' partidas</span>' +
             '<span class="pv2-wl-legend">' +
-              '<span class="pv2-wl-legend-item" title="Victoria \u00b7 Winner Winner Chicken Dinner"><span class="pv2-wl-cell ww">\u2605</span>Victoria</span>' +
-              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell w">W</span>Top 10</span>' +
-              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell l">L</span>Resto</span>' +
+              '<span class="pv2-wl-legend-item" title="Victoria \u00b7 Winner Winner Chicken Dinner"><span class="pv2-wl-cell ww">W</span>Victoria</span>' +
+              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell w">#</span>Top 10</span>' +
+              '<span class="pv2-wl-legend-item"><span class="pv2-wl-cell l">#</span>Resto</span>' +
             '</span>' +
           '</div>';
         wl.parentNode.insertBefore(newSection, wl);
         newSection.appendChild(wl);
-        // Hint debajo del grid
+        // Resumen + hint debajo del grid
+        var summaryEl = document.createElement('div');
+        summaryEl.className = 'pv2-wl-summary-host';
+        summaryEl.innerHTML = summaryHtml;
+        newSection.appendChild(summaryEl);
         var hint = document.createElement('div');
         hint.className = 'pv2-wl-hint';
         hint.textContent = '\ud83d\udc46 Pulsa una partida para ver el detalle';
@@ -14905,6 +14921,8 @@ switchTab=function(){
       } else if(section && section.classList.contains('pv2-wl-section')){
         var titleEl = section.querySelector('.pv2-wl-title');
         if(titleEl) titleEl.textContent = '\ud83d\udcca \u00daltimas '+matches.length+' partidas';
+        var sumHost = section.querySelector('.pv2-wl-summary-host');
+        if(sumHost) sumHost.innerHTML = summaryHtml;
       }
       wl.innerHTML = cells;
     }
