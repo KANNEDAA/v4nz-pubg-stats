@@ -5508,8 +5508,12 @@ function toggleTheme(){
 })();
 
 // ═══ AUTH SYSTEM ═══
+// JWT now lives only in the HttpOnly cookie set by the backend; it's never persisted in
+// localStorage to keep it out of reach of any future XSS. authToken stays in memory after
+// login so we can keep the Authorization-header path for same-session API calls, but
+// every fetch also sends the cookie via credentials:'include' as a fallback.
 let currentUser=null;
-let authToken=localStorage.getItem('v4nz_token')||null;
+let authToken=null;
 
 function openAuthPopup(){
   if(currentUser){showAuthView('logged');const dr=document.getElementById('deepAnalysisResult');if(dr&&dr.innerHTML.length>100){const ab=document.querySelector('.auth-box');if(ab)ab.classList.add('auth-box-wide');}}
@@ -5635,7 +5639,6 @@ async function doLogin(){
     const d=await r.json();
     if(!r.ok){showAuthError('authLoginError',d.error||'Error al entrar');return;}
     authToken=d.token;currentUser=d.user;
-    localStorage.setItem('v4nz_token',authToken);
     updateAuthUI();loadFavoritesFromServer();closeAuthPopup();
     autoLoadMyStats();
   }catch(e){showAuthError('authLoginError','Error de conexion');}
@@ -5654,7 +5657,6 @@ async function doRegister(){
     const d=await r.json();
     if(!r.ok){showAuthError('authRegError',d.error||'Error al registrar');return;}
     authToken=d.token;currentUser=d.user;
-    localStorage.setItem('v4nz_token',authToken);
     updateAuthUI();syncFavoritesToServer();closeAuthPopup();
     autoLoadMyStats();
   }catch(e){showAuthError('authRegError','Error de conexion');}
@@ -5662,7 +5664,6 @@ async function doRegister(){
 
 function doLogout(){
   authToken=null;currentUser=null;
-  localStorage.removeItem('v4nz_token');
   fetch('/auth/logout',{method:'POST',credentials:'include'}).catch(()=>{});
   updateAuthUI();closeAuthPopup();
 }
@@ -5703,28 +5704,24 @@ async function syncFavoritesToServer(){
   }catch(e){console.error('Sync error:',e);}
 }
 
-// Check for Discord OAuth callback token in hash fragment (secure — not sent to server)
+// Discord OAuth puts the token in the URL hash for legacy clients; we accept it in memory
+// but never persist it. The backend also set an HttpOnly cookie on the same redirect, so
+// the cookie is the source of truth — the hash token is just a session-fast-path.
 (function(){
   const hash=location.hash.substring(1);
   const params=new URLSearchParams(hash);
   const token=params.get('auth_token');
   if(token){
-    authToken=token;localStorage.setItem('v4nz_token',token);
+    authToken=token;
     history.replaceState(null,'',location.pathname);
   }
-  // Auto-login: try cookie first, then localStorage token
-  if(authToken){
-    fetch('/auth/me',{headers:{'Authorization':'Bearer '+authToken},credentials:'include'})
-      .then(r=>{if(!r.ok)throw new Error();return r.json();})
-      .then(d=>{currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
-      .catch(()=>{authToken=null;localStorage.removeItem('v4nz_token');updateAuthUI();});
-  }else{
-    // No localStorage token — maybe there's an HttpOnly cookie from previous session
-    fetch('/auth/me',{credentials:'include'})
-      .then(r=>{if(!r.ok)throw new Error();return r.json();})
-      .then(d=>{authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
-      .catch(()=>{});
-  }
+  // Always try cookie-based session restore. Authorization header is added only when we
+  // already have an in-memory token (e.g. just after Discord redirect, before cookie syncs).
+  const initHeaders=authToken?{'Authorization':'Bearer '+authToken}:undefined;
+  fetch('/auth/me',{headers:initHeaders,credentials:'include'})
+    .then(r=>{if(!r.ok)throw new Error();return r.json();})
+    .then(d=>{if(!authToken)authToken='cookie';currentUser=d.user;updateAuthUI();loadFavoritesFromServer();autoLoadMyStats();})
+    .catch(()=>{authToken=null;updateAuthUI();});
 })();
 
 const IS_PROXIED=location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname.includes('railway.app')||location.hostname.includes('v4nz.com');
@@ -5926,8 +5923,8 @@ function renderClanHistoryUI(){
   // Mi Clan banner
   if(myClan){
     const memberHintMC=myClan.members&&myClan.members.length?myClan.members.length+' miembros':'Nivel '+myClan.level+' &mdash; '+myClan.memberCount+' miembros';
-    const mct=myClan.tag.replace(/'/g,"\\'");
-    banner.innerHTML='<div class="my-clan-banner" onclick="history.pushState(null,\'\',\'/clan/\'+\''+mct+'\');loadClanPage(\''+mct+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+myClan.tag+']</div>'+'<div class="mcb-name">'+myClan.name+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+clanPlatLabel(myClan.platform)+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="history.pushState(null,\'\',\'/clan/\'+\''+mct+'\');loadClanPage(\''+mct+'\');event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
+    const mct=escJs(myClan.tag);
+    banner.innerHTML='<div class="my-clan-banner" onclick="history.pushState(null,\'\',\'/clan/\'+\''+mct+'\');loadClanPage(\''+mct+'\')">'+'<div class="mcb-badge">MI CLAN</div>'+'<div class="mcb-tag">['+esc(myClan.tag)+']</div>'+'<div class="mcb-name">'+esc(myClan.name)+'</div>'+'<div class="mcb-members">'+memberHintMC+' &mdash; '+clanPlatLabel(myClan.platform)+'</div>'+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="chi-action-btn" onclick="history.pushState(null,\'\',\'/clan/\'+\''+mct+'\');loadClanPage(\''+mct+'\');event.stopPropagation();" style="color:var(--accent);border-color:rgba(0,240,255,0.3);font-size:.65rem;">Ver Clan</button><button class="chi-action-btn remove-history" onclick="clearMyClan(event)" style="font-size:.65rem;">Quitar Mi Clan</button></div></div>';
   }else{banner.innerHTML='';}
   // Clanes Favoritos
   const favSec=document.getElementById('clanFavoritesSection');
@@ -10771,7 +10768,10 @@ function renderAiDna(data) {
   _lastAiDnaData = data; // Store for share card
   const s = getActiveStats();
   const scores = data.scores || calcDnaScores(s);
-  const roleColor = data.roleColor || '#00f0ff';
+  // Validate roleColor as a hex literal — anything else falls back, otherwise an injected
+  // value would break out of style="..." and execute attribute-level CSS injection.
+  const _rcRaw = data.roleColor || '#00f0ff';
+  const roleColor = /^#[0-9a-fA-F]{3,8}$/.test(_rcRaw) ? _rcRaw : '#00f0ff';
 
   const bars = [
     { label: 'Agresividad', val: scores.agresividad, col: '#ff3355' },
@@ -10786,16 +10786,16 @@ function renderAiDna(data) {
   const insightsHtml = (data.insights || []).map((ins, idx) => {
     const icon = idx === 0 ? '💪' : idx === 1 ? '⚠️' : '🔍';
     const label = idx === 0 ? 'Fortaleza' : idx === 1 ? 'Mejorable' : 'Curiosidad';
-    return '<div class="ai-dna-insight"><span style="font-weight:700;color:' + (idx === 0 ? '#00ff88' : idx === 1 ? '#ff6b00' : '#a855f7') + ';">' + icon + ' ' + label + ':</span> ' + ins + '</div>';
+    return '<div class="ai-dna-insight"><span style="font-weight:700;color:' + (idx === 0 ? '#00ff88' : idx === 1 ? '#ff6b00' : '#a855f7') + ';">' + icon + ' ' + label + ':</span> ' + esc(ins) + '</div>';
   }).join('');
 
-  const tipHtml = data.tip ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(255,200,0,0.06);border:1px solid rgba(255,200,0,0.15);border-radius:8px;font-size:.78rem;color:#ccc;line-height:1.5;text-align:left;"><strong style="color:#ffd700;">💡 Consejo:</strong> ' + data.tip + '</div>' : '';
+  const tipHtml = data.tip ? '<div style="margin:12px 0;padding:10px 14px;background:rgba(255,200,0,0.06);border:1px solid rgba(255,200,0,0.15);border-radius:8px;font-size:.78rem;color:#ccc;line-height:1.5;text-align:left;"><strong style="color:#ffd700;">💡 Consejo:</strong> ' + esc(data.tip) + '</div>' : '';
 
   const name = currentPlayerData?.attributes?.name || 'Jugador';
   const rounds = s.roundsPlayed || 0;
 
   const sect = document.getElementById('personalitySection');
-  sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvasAi" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + data.role + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-desc">' + data.description + '</div><div class="ai-dna-insights">' + insightsHtml + '</div>' + tipHtml + '<div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + (data.role || '').replace(/'/g, "\\'") + '\')">🔗 COMPARTIR ENLACE</button></div><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
+  sect.innerHTML = '<div class="ai-dna-result"><div class="dna-layout"><div class="dna-radar-wrap"><canvas id="dnaRadarCanvasAi" width="200" height="200"></canvas></div><div class="dna-info"><div class="ai-dna-badge">GENERADO POR IA</div><div class="ai-dna-role" style="color:' + roleColor + ';text-shadow:0 0 30px ' + roleColor + '44;">' + esc(data.role) + '</div><div class="ai-dna-subtitle">Clasificación IA basada en ' + rounds + ' partidas</div><div class="ai-dna-desc">' + esc(data.description) + '</div><div class="ai-dna-insights">' + insightsHtml + '</div>' + tipHtml + '<div class="dna-bars">' + barsHtml + '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;"><button class="personality-share" style="margin-top:0;background:' + roleColor + '18;border-color:' + roleColor + '44;color:' + roleColor + ';" onclick="shareAdnImage()">📸 COMPARTIR IMAGEN</button><button class="personality-share" style="margin-top:0;" onclick="sharePersonality(\'' + escJs(data.role || '') + '\')">🔗 COMPARTIR ENLACE</button></div><div class="ai-dna-powered">⚡ Análisis generado por inteligencia artificial · Se actualiza semanalmente</div></div></div></div>';
   sect.classList.add('visible');
   drawDnaRadar('dnaRadarCanvasAi', scores, roleColor);
   // Scroll to result after render so fadeInUp animation is visible
@@ -16073,7 +16073,7 @@ switchTab=function(){
   // --- 9. Ocultar CTA Registro cuando user logged ---
   function _hv2HideCtaIfLogged(){
     try {
-      var logged = (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('v4nz_token');
+      var logged = (typeof currentUser !== 'undefined' && currentUser);
       if(logged){
         var cta = document.getElementById('hv2CtaRegister');
         if(cta) cta.style.display = 'none';
@@ -16089,7 +16089,7 @@ switchTab=function(){
 
   // --- 10. Logged panel consolidation (home-v2-logged-v1) ---
   function _hv2IsLogged(){
-    try { return !!(typeof currentUser !== 'undefined' && currentUser) || !!localStorage.getItem('v4nz_token'); } catch(e){ return false; }
+    try { return !!(typeof currentUser !== 'undefined' && currentUser); } catch(e){ return false; }
   }
   function _hv2GetUsername(){
     try {
@@ -16340,15 +16340,15 @@ switchTab=function(){
         if(Array.isArray(arr) && arr.length){ tag = arr[0].tag || arr[0].clan_tag || arr[0]; }
       } catch(e){}
       if(!tag){
-        var token = '';
-        try { token = localStorage.getItem('v4nz_token') || ''; } catch(e){}
-        if(token){
-          fetch('/auth/favorites', { headers:{ 'Authorization':'Bearer '+token } })
+        // Cookie auth: relies on credentials:'include' instead of a localStorage token.
+        // Endpoint is /favorites (the previous /auth/favorites was already a 404).
+        if(typeof currentUser !== 'undefined' && currentUser){
+          fetch('/favorites', { credentials:'include' })
             .then(function(r){ return r.ok ? r.json() : {favorites:[]}; })
             .then(function(data){
               var favs = (data && (data.favorites || data.clanFavorites)) || [];
-              var found = favs.find(function(f){ return f && (f.type === 'clan' || f.kind === 'clan' || (f.tag && !f.player_name && !f.name_lower)); });
-              if(found){ _hv2RenderClan(found.tag || found.clan_tag || ''); }
+              var found = favs.find(function(f){ return f && (f.fav_type === 'clan' || f.type === 'clan' || f.kind === 'clan' || (f.tag && !f.player_name && !f.name_lower)); });
+              if(found){ _hv2RenderClan(found.tag || found.clan_tag || found.name || ''); }
               else { if(empty) empty.style.display = ''; }
             })
             .catch(function(){ if(empty) empty.style.display = ''; });
@@ -16539,7 +16539,8 @@ switchTab=function(){
   _hv2ShowLoggedPanel();
   setTimeout(_hv2ShowLoggedPanel, 600);
   setTimeout(_hv2ShowLoggedPanel, 2000);
-  window.addEventListener('storage', function(e){ if(e && (e.key === 'v4nz_token' || e.key === 'recent_searches' || e.key === 'pubg_clan_favorites')) _hv2ShowLoggedPanel(); });
+  // Cross-tab refresh: token is cookie-based now, so we only react to favorites/searches.
+  window.addEventListener('storage', function(e){ if(e && (e.key === 'recent_searches' || e.key === 'pubg_clan_favorites')) _hv2ShowLoggedPanel(); });
   document.addEventListener('v4nz-auth-changed', _hv2ShowLoggedPanel);
   // hv2-route-aware-v1: re-evaluar el panel cuando el SPA navega entre rutas
   // (back/forward del navegador o pushState desde Router/switchTab).
