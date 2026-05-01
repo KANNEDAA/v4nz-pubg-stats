@@ -45,6 +45,8 @@ const pool = process.env.DATABASE_URL ? new Pool({
   idleTimeoutMillis: 30000,       // Close idle connections after 30s
   connectionTimeoutMillis: 5000   // Fail fast if can't connect in 5s
 }) : null;
+// Without this listener an idle-client error becomes an uncaughtException and crashes the process.
+if (pool) pool.on('error', (err) => console.error('[pg pool] idle client error:', err.message));
 
 // ═══ PERFORMANCE: Fetch with timeout helper ═══
 function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 10000) {
@@ -368,6 +370,10 @@ async function initDB() {
     `).catch(() => {}); // Ignore if already correct type
     // Add pubg_clan_id column for auto-refresh (safe to run multiple times)
     await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS pubg_clan_id VARCHAR(100)`).catch(() => {});
+    // api_cache extra columns used by AI endpoints (ai-dna, ai-compare, ai-deep-analysis, last-played batch).
+    // Without these the cache writes fail silently and every request hits Anthropic/PUBG.
+    await pool.query(`ALTER TABLE api_cache ADD COLUMN IF NOT EXISTS data JSONB`).catch(() => {});
+    await pool.query(`ALTER TABLE api_cache ADD COLUMN IF NOT EXISTS ttl_seconds INT`).catch(() => {});
     console.log('✓ Database tables ready');
   } catch (e) { console.error('DB init error:', e.message); }
 }
