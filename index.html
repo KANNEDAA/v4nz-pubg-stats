@@ -14003,6 +14003,52 @@ switchTab=function(){
     } catch(e){}
   }
 
+  // gt27-pv2-personality-unified-v1: helper que aplica el árbol narrativo de 16
+  // categorías que usa renderPersonality() para que el ADN PUBG (arriba) y
+  // el ADN completo (abajo) digan SIEMPRE lo mismo. Antes el de arriba usaba
+  // un roleMap simple de 5 (DEPREDADOR/FRANCOTIRADOR/SUPERVIVIENTE/PILOTO LOCO/MEDICO)
+  // según el eje más alto del radar — eso podía contradecir al de abajo.
+  // Ahora ambos usan la misma lógica → identidad clara y única para el jugador.
+  function _pv2ComputePersonality(s){
+    if(!s || !s.roundsPlayed) return null;
+    var calcKDfn  = (typeof calcKD       === 'function') ? calcKD       : function(){return 0;};
+    var calcWRfn  = (typeof calcWinRate  === 'function') ? calcWinRate  : function(){return 0;};
+    var calcHSfn  = (typeof calcHSRate   === 'function') ? calcHSRate   : function(){return 0;};
+    var calcADRfn = (typeof calcAvgDmg   === 'function') ? calcAvgDmg   : function(){return 0;};
+    var calcT10fn = (typeof calcTop10Rate=== 'function') ? calcTop10Rate: function(){return 0;};
+    var kd  = parseFloat(calcKDfn(s));
+    var wr  = parseFloat(calcWRfn(s));
+    var hs  = parseFloat(calcHSfn(s));
+    var ad  = parseFloat(calcADRfn(s));
+    var t10 = parseFloat(calcT10fn(s));
+    var rr  = s.roundsPlayed ? (s.revives||0)/s.roundsPlayed : 0;
+    var rd  = s.roundsPlayed ? (s.rideDistance||0)/s.roundsPlayed : 0;
+    var dbnos = s.DBNOs||0, kills = s.kills||0;
+    var kpr  = s.roundsPlayed ? (s.kills||0)/s.roundsPlayed : 0;
+    var wpg  = s.roundsPlayed ? (s.weaponsAcquired||0)/s.roundsPlayed : 0;
+    var hbpg = s.roundsPlayed ? ((s.heals||0)+(s.boosts||0))/s.roundsPlayed : 0;
+    var bi   = window._lastBotIndex;
+    var p;
+    if(bi && bi.matchesAnalyzed>=3 && bi.botRatio>=50){ p={name:'MATA BOTS',col:'#ff6b00',desc:'Especialista en lobbies de bots. '+bi.botRatio+'% de tus kills son contra IA.',tags:['Bot lobbies','Farm','IA']}; }
+    else if(hs>25 && (s.longestKill||0)>150){ p={name:'FRANCOTIRADOR',col:'#a855f7',desc:'Preciso y letal a distancia. Tus headshots hablan por ti.',tags:['Precision','Largo alcance','Paciencia']}; }
+    else if(kd>=3.5 && ad>=300){ p={name:'DEPREDADOR',col:'#ff3355',desc:'Top 15% consola. Maquina de matar que domina cada duelo.',tags:['Elite','Alto dano','Dominante']}; }
+    else if(wr>=15){ p={name:'CAMPEON',col:'#ffd700',desc:'Winrate elite (15%+). Sabes cerrar partidas como pocos.',tags:['Victorioso','Estratega','Constante']}; }
+    else if((s.maxKillStreaks||0)>=5 && (s.roundMostKills||0)>=8 && kd>1.5){ p={name:'MAQUINA DE RACHA',col:'#ffd700',desc:'Cuando arrancas no hay quien te pare. Rachas de kills que dan miedo.',tags:['Rachas','Imparable','Clutch']}; }
+    else if(kpr>=2 && ad>200 && t10<40 && kd>1){ p={name:'PUSHEADOR',col:'#ff3355',desc:'Siempre el primero en entrar. No conoces la palabra campear.',tags:['Agresivo','Primera sangre','Sin miedo']}; }
+    else if(kills>50 && dbnos>0 && (kills/dbnos)>=0.85 && ad>120 && kd>1.2){ p={name:'REMATADOR',col:'#ff3355',desc:'No dejas a nadie en el suelo. Ejecutas rapido y sin piedad.',tags:['Ejecucion','Eficiencia','Sin piedad']}; }
+    else if(kills>30 && dbnos>0 && (kills/dbnos)>=1.4){ p={name:'ROBA KILLS',col:'#ffd700',desc:'Siempre apareces para dar el tiro final. Tus compas te odian... pero funciona.',tags:['Oportunista','Ultimo tiro','Buitre']}; }
+    else if((s.suicides||0)>=3 && s.roundsPlayed && (s.suicides/s.roundsPlayed)>0.08 && kpr>=1){ p={name:'KAMIKAZE',col:'#ff6b00',desc:'Te llevas a alguien por delante aunque sea lo ultimo que hagas. Literal.',tags:['Explosivo','Suicida','Caos']}; }
+    else if(rr>0.5){ p={name:'MEDICO DE COMBATE',col:'#00ff88',desc:'El alma del equipo. Sin ti, tu squad no sobreviviria.',tags:['Soporte','Equipo','Revives']}; }
+    else if(rd>2000){ p={name:'PILOTO LOCO',col:'#ff6b00',desc:'Siempre sobre ruedas. El vehiculo es tu arma favorita.',tags:['Vehiculos','Movilidad','Atropellos']}; }
+    else if(kd>1.5 && ad>150){ p={name:'GUERRERO',col:'#00f0ff',desc:'Equilibrio entre agresion y supervivencia. Un jugador completo.',tags:['Equilibrado','Versatil','Fiable']}; }
+    else if(wpg>=5 && hbpg>=3 && kd<1){ p={name:'LOOTEADOR',col:'#a855f7',desc:'Recogedor profesional. Tu mochila siempre esta llena, tus kills no tanto.',tags:['Loot','Mochilero','Recolector']}; }
+    else if(t10>50 && kd<0.8 && ad<100){ p={name:'RATA',col:'#00ff88',desc:'Maestro del escondite. Llegas al final sin que nadie sepa que estabas ahi.',tags:['Campero','Invisible','Zona']}; }
+    else if(t10>60){ p={name:'SUPERVIVIENTE',col:'#00ff88',desc:'Maestro de la zona. Siempre llegas al final.',tags:['Cauteloso','Top 10','Paciencia']}; }
+    else { p={name:'NOVATO PROMETEDOR',col:'#00f0ff',desc:'En camino a la grandeza. Cada partida es una leccion.',tags:['Aprendiendo','Potencial','Progreso']}; }
+    return p;
+  }
+  window._pv2ComputePersonality = _pv2ComputePersonality;
+
   // ── ADN — radar SVG + rol + "brillas en X" ──
   function _pv2LoadAdn(){
     var grid = document.getElementById('pv2AdnGrid');
@@ -14037,15 +14083,26 @@ switchTab=function(){
       if(v > maxVal){ maxVal = v; maxAxis = a; }
     });
 
-    // Rol simple según el maxAxis
-    var roleMap = {
-      agresividad: { name: 'DEPREDADOR',   col: '#ff3355' },
-      precision:   { name: 'FRANCOTIRADOR',col: '#a855f7' },
-      supervivencia:{ name: 'SUPERVIVIENTE',col: '#00ff88' },
-      movilidad:   { name: 'PILOTO LOCO',  col: '#ff6b00' },
-      soporte:     { name: 'M\u00C9DICO DE COMBATE', col: '#00f0ff' }
-    };
-    var role = roleMap[maxAxis.k] || { name: 'JUGADOR', col: '#00f0ff' };
+    // gt27-pv2-personality-unified-v1: usar el árbol narrativo de 16 categorías
+    // (mismo helper que renderPersonality del ADN completo). Antes había un roleMap
+    // simple de 5 que podía contradecir al de abajo. Fallback al maxAxis si el helper
+    // falla por cualquier razón.
+    var role = null;
+    try {
+      var sActive = (typeof getActiveStats === 'function') ? getActiveStats() : null;
+      var p = _pv2ComputePersonality(sActive);
+      if(p) role = { name: p.name, col: p.col, desc: p.desc, tags: p.tags };
+    } catch(e){}
+    if(!role){
+      var roleMap = {
+        agresividad: { name: 'DEPREDADOR',   col: '#ff3355' },
+        precision:   { name: 'FRANCOTIRADOR',col: '#a855f7' },
+        supervivencia:{ name: 'SUPERVIVIENTE',col: '#00ff88' },
+        movilidad:   { name: 'PILOTO LOCO',  col: '#ff6b00' },
+        soporte:     { name: 'M\u00C9DICO DE COMBATE', col: '#00f0ff' }
+      };
+      role = roleMap[maxAxis.k] || { name: 'JUGADOR', col: '#00f0ff' };
+    }
 
     // gt27-radar-viewbox-fix-v1: viewBox ampliado 280→360, centro 140→180.
     // Antes "Precisión 50" (text-anchor:start desde x=235) y "Soporte 99"
@@ -14122,8 +14179,15 @@ switchTab=function(){
         '</svg>' +
         '<div style="text-align:center;margin-top:8px;">' +
           '<div style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:' + role.col + ';margin-bottom:4px;">' + role.name + '</div>' +
-          '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Tu estilo de juego en consola</div>' +
-          '<div style="font-size:13px;color:var(--accent);font-weight:600;">\u2728 Brillas en ' + maxAxis.lbl.toUpperCase().replace('.', '') + ' (' + Math.round(maxVal) + ')</div>' +
+          (role.desc ?
+            '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.4;max-width:280px;margin-left:auto;margin-right:auto;">' + role.desc + '</div>' :
+            '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Tu estilo de juego en consola</div>') +
+          (role.tags && role.tags.length ?
+            '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">' +
+              role.tags.map(function(t){ return '<span style="font-size:10px;padding:3px 8px;border-radius:10px;background:' + role.col + '22;color:' + role.col + ';border:1px solid ' + role.col + '44;font-family:Rajdhani,sans-serif;font-weight:600;letter-spacing:.5px;">' + t + '</span>'; }).join('') +
+            '</div>' :
+            '') +
+          '<div style="font-size:11px;color:var(--accent);font-weight:600;opacity:.8;">\u2728 Brillas en ' + maxAxis.lbl.toUpperCase().replace('.', '') + ' (' + Math.round(maxVal) + ')</div>' +
         '</div>' +
       '</div>';
 
