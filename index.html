@@ -9558,7 +9558,11 @@ function renderMatchRivals(){
       if(!isSameTeam&&(ps.winPlace||99)<myPlace)d.beatMe++;
     });
   });
-  const sorted=Object.values(playerCount).sort((a,b)=>b.count-a.count).filter(e=>e.count>=2).slice(0,10);
+  // gt27-rivals-only-enemies-v1: filtrar fuera los aliados puros (d.enemy===0).
+  // Antes la sección "RIVALES HABITUALES" mostraba aliados, enemigos y mixtos, lo que
+  // duplicaba a los aliados puros con la sección "COMPAÑEROS FRECUENTES" justo debajo.
+  // Ahora solo aparecen jugadores que te han enfrentado al menos una vez (enemy + mixto).
+  const sorted=Object.values(playerCount).sort((a,b)=>b.count-a.count).filter(e=>e.count>=2&&e.enemy>=1).slice(0,10);
   if(!sorted.length){el.style.display='none';try{_adnPopulateRivals([]);}catch(e){}return;}
   // v177: enhanced rival cards
   let h='';sorted.forEach(d=>{
