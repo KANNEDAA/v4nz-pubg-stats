@@ -3104,17 +3104,6 @@ body.has-player-loaded .hero-glow { display: none; }
   .search-hero h1{font-size:1.2rem}
   .hero-platform-toggle .platform-btn{padding:10px 16px;font-size:.75rem}
   .search-input{font-size:1rem;padding:16px 18px}
-  /* gt27-mobile-search-icon-v1: en móvil el botón BUSCAR pasa a icono lupa
-     cuadrado (~50px) en vez de texto. Antes ocupaba ~25% del ancho del hero
-     para nada — la lupa basta y deja más espacio al input del gamertag. */
-  .search-btn{padding:16px 18px;font-size:1.1rem;min-width:54px;display:inline-flex;align-items:center;justify-content:center}
-  .search-btn-icon{display:inline-block}
-  .search-btn-text{display:none}
-  /* gt27-mobile-no-sticky-nav-v1: en móvil quitar el sticky del navbar global.
-     Antes el header (V4NZ + Buscar + KANNEDA) se quedaba pegado arriba al
-     scrollear y robaba pantalla útil — el bottom-nav ya cubre la navegación
-     en móvil así que el header puede irse al desplazar. */
-  header{position:static!important}
   .player-info h2{font-size:1.1rem}
   .streamer-banner{flex-direction:column;text-align:center}
   .streamer-banner-links{justify-content:center}
@@ -3123,6 +3112,19 @@ body.has-player-loaded .hero-glow { display: none; }
   .home-feature{padding:14px 12px}
   .home-counter-val{font-size:1.2rem}
   .home-counters{gap:16px;margin:20px 0}
+}
+/* gt27-mobile-search-icon-v1 + gt27-mobile-no-sticky-nav-v1: cambios para
+   móvil + tablet pequeño (hasta 768px). Antes estaban a 480px pero muchos
+   viewports reales (Chrome estrecho ~660px, tabletas verticales) se quedaban
+   sin estas mejoras. */
+@media(max-width:768px){
+  /* Botón BUSCAR pasa a icono lupa cuadrado en vez de texto BUSCAR. */
+  .search-btn{padding:16px 18px;font-size:1.1rem;min-width:54px;display:inline-flex;align-items:center;justify-content:center}
+  .search-btn-icon{display:inline-block}
+  .search-btn-text{display:none}
+  /* Navbar global pierde el sticky → al scrollear baja con el contenido y
+     deja todo el viewport para los datos. El bottom-nav cubre la navegación. */
+  header{position:static!important}
 }
 .telemetry-feed { max-height: 300px; overflow-y: auto; margin-top: 16px; }
 .telem-event { padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 0.8rem; font-family: 'Rajdhani', sans-serif; }
