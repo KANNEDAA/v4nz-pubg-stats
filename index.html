@@ -15528,12 +15528,17 @@ switchTab=function(){
     });
 
     // Cargar stats reales para cada clan en paralelo
+    // clan-favs-kd-fix: el endpoint /clans/:tag devuelve {clan, members}, no el clan plano.
+    // Antes leíamos resp.avg_kd → undefined → K/D "-" + tier 'low' (BAJO) para todos.
+    // Mismo patrón que gt27-myclan-shape-fix-v1 ya aplicado a _cv2LoadMyClan.
     _cv2GetLeaderboard().then(function(lb){
       slice.forEach(function(c, i){
         fetch('/clans/' + encodeURIComponent(c.tag), { credentials:'same-origin' })
           .then(function(r){ return r.ok ? r.json() : null; })
-          .then(function(clan){
-            if(!clan) return;
+          .then(function(resp){
+            if(!resp) return;
+            var clan = resp.clan || resp;
+            if(!clan || !clan.tag) return;
             var card = grid.querySelector('[data-idx="' + i + '"]');
             if(!card) return;
             var kd = parseFloat(clan.avg_kd) || 0;
