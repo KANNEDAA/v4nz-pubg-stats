@@ -30,9 +30,20 @@ if (!process.env.RAILWAY_ENVIRONMENT) {
 }
 
 const app = express();
+// Required so req.ip and rate limiting see the real client behind Railway's proxy.
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const SERVER_API_KEY = process.env.PUBG_API_KEY || '';
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+// JWT_SECRET MUST be set in production — otherwise every restart invalidates all sessions.
+const IS_PRODUCTION = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
+if (IS_PRODUCTION && !process.env.JWT_SECRET) {
+  console.error('[FATAL] JWT_SECRET no definido en producción — abortando para evitar invalidar sesiones en cada deploy');
+  process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  console.warn('[WARN] JWT_SECRET no definido — usando clave aleatoria solo válida hasta el próximo restart (dev only)');
+  return crypto.randomBytes(32).toString('hex');
+})();
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://v4nz.com/auth/discord/callback';
@@ -63,7 +74,8 @@ app.use(cors({
   origin: ['https://v4nz.com', 'https://www.v4nz.com', 'http://localhost:3000'],
   credentials: true
 }));
-app.use(express.json());
+// Bound the JSON body size — clan import payloads are the largest legitimate use case.
+app.use(express.json({ limit: '256kb' }));
 
 // ═══ SECURITY HEADERS + CSP ═══
 app.use((req, res, next) => {
@@ -4688,7 +4700,12 @@ function gracefulShutdown(signal) {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('uncaughtException', (err) => { console.error('[FATAL] Uncaught exception:', err); gracefulShutdown('uncaughtException'); });
-process.on('unhandledRejection', (reason) => { console.error('[FATAL] Unhandled rejection:', reason); });
+process.on('unhandledRejection', (reason) => {
+  // Don't crash — but log with full stack so we notice in Railway logs.
+  // Future Node versions will exit by default; surface the issue loudly now.
+  const stack = reason && reason.stack ? reason.stack : reason;
+  console.error('[FATAL] Unhandled rejection:', stack);
+});
 
 // ═══ START ═══
 let _server;
