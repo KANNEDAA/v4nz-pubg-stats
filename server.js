@@ -59,6 +59,23 @@ const pool = process.env.DATABASE_URL ? new Pool({
 // Without this listener an idle-client error becomes an uncaughtException and crashes the process.
 if (pool) pool.on('error', (err) => console.error('[pg pool] idle client error:', err.message));
 
+// Run fn(client) inside BEGIN/COMMIT, rolling back on any throw. Use for multi-step
+// writes that must be atomic (favorite sync, request approval, clan import write phase).
+async function withTx(fn) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch (_) { /* connection probably gone */ }
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
 // ═══ PERFORMANCE: Fetch with timeout helper ═══
 function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 10000) {
   const controller = new AbortController();
@@ -630,23 +647,26 @@ app.post('/clans/requests/:id/approve', requireAdmin, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   try {
     const requestId = parseInt(req.params.id);
-    const request = await pool.query('SELECT * FROM member_requests WHERE id = $1', [requestId]);
-    if (!request.rows.length) return res.status(404).json({ error: 'Request not found' });
-    const r = request.rows[0];
-    // Add player to clan_members with 0 stats (will be updated later)
-    await pool.query(`
-      INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
-      VALUES ($1, $2, 0, 0, 0, 0, 0, true, $3)
-      ON CONFLICT (clan_tag, player_name) DO NOTHING
-    `, [r.clan_tag, r.player_name, 'approved_request']);
-    // Update clan active_members count
-    const countResult = await pool.query('SELECT COUNT(*) FROM clan_members WHERE clan_tag = $1 AND active = true', [r.clan_tag]);
-    await pool.query('UPDATE clans SET active_members = $1, updated_at = NOW() WHERE tag = $2', [countResult.rows[0].count, r.clan_tag]);
-    // Mark request as approved
-    await pool.query("UPDATE member_requests SET status = 'approved', reviewed_at = NOW() WHERE id = $1", [requestId]);
+    const r = await withTx(async (client) => {
+      const request = await client.query('SELECT * FROM member_requests WHERE id = $1', [requestId]);
+      if (!request.rows.length) { const err = new Error('Request not found'); err.notFound = true; throw err; }
+      const row = request.rows[0];
+      await client.query(`
+        INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
+        VALUES ($1, $2, 0, 0, 0, 0, 0, true, $3)
+        ON CONFLICT (clan_tag, player_name) DO NOTHING
+      `, [row.clan_tag, row.player_name, 'approved_request']);
+      const countResult = await client.query('SELECT COUNT(*) FROM clan_members WHERE clan_tag = $1 AND active = true', [row.clan_tag]);
+      await client.query('UPDATE clans SET active_members = $1, updated_at = NOW() WHERE tag = $2', [countResult.rows[0].count, row.clan_tag]);
+      await client.query("UPDATE member_requests SET status = 'approved', reviewed_at = NOW() WHERE id = $1", [requestId]);
+      return row;
+    });
     console.log(`[request] Approved: ${r.player_name} -> [${r.clan_tag}]`);
     res.json({ ok: true, playerName: r.player_name, clanTag: r.clan_tag });
-  } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
+  } catch (e) {
+    if (e.notFound) return res.status(404).json({ error: 'Request not found' });
+    console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 // POST /clans/requests/:id/reject — Admin: reject a member request
@@ -875,30 +895,39 @@ async function importClanByPubgId(clanId) {
   const avgDmg = members.length > 0 ? (totalDmg / members.length).toFixed(1) : 0;
   const winRate = totalRounds > 0 ? ((totalWins / totalRounds) * 100).toFixed(2) : 0;
 
-  await pool.query(`
-    INSERT INTO clans (tag, name, member_count, level, platform, registered_by,
-                       total_kills, total_wins, avg_kd, avg_damage, total_rounds,
-                       win_rate, active_members, pubg_clan_id, stats_updated_at, updated_at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())
-    ON CONFLICT (tag) DO UPDATE SET
-      name=EXCLUDED.name, member_count=EXCLUDED.member_count, level=EXCLUDED.level,
-      platform=EXCLUDED.platform, total_kills=EXCLUDED.total_kills, total_wins=EXCLUDED.total_wins,
-      avg_kd=EXCLUDED.avg_kd, avg_damage=EXCLUDED.avg_damage, total_rounds=EXCLUDED.total_rounds,
-      win_rate=EXCLUDED.win_rate, active_members=EXCLUDED.active_members,
-      pubg_clan_id=COALESCE(EXCLUDED.pubg_clan_id, clans.pubg_clan_id),
-      stats_updated_at=NOW(), updated_at=NOW()
-  `, [cleanTag, clanMeta.clanName, clanMeta.clanMemberCount, clanMeta.clanLevel, detectedPlatform,
-      'pubgclans_import', totalKills, totalWins, avgKd, avgDmg, totalRounds, winRate, activeCount, clanId]);
+  // Atomic write phase: clan upsert + member roster swap. Wrapped in a transaction so a
+  // partial failure can't leave the clan with a half-deleted roster. Members go in as a
+  // single multi-row INSERT instead of N round-trips (clans of 60 used to take ~60 trips).
+  await withTx(async (client) => {
+    await client.query(`
+      INSERT INTO clans (tag, name, member_count, level, platform, registered_by,
+                         total_kills, total_wins, avg_kd, avg_damage, total_rounds,
+                         win_rate, active_members, pubg_clan_id, stats_updated_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())
+      ON CONFLICT (tag) DO UPDATE SET
+        name=EXCLUDED.name, member_count=EXCLUDED.member_count, level=EXCLUDED.level,
+        platform=EXCLUDED.platform, total_kills=EXCLUDED.total_kills, total_wins=EXCLUDED.total_wins,
+        avg_kd=EXCLUDED.avg_kd, avg_damage=EXCLUDED.avg_damage, total_rounds=EXCLUDED.total_rounds,
+        win_rate=EXCLUDED.win_rate, active_members=EXCLUDED.active_members,
+        pubg_clan_id=COALESCE(EXCLUDED.pubg_clan_id, clans.pubg_clan_id),
+        stats_updated_at=NOW(), updated_at=NOW()
+    `, [cleanTag, clanMeta.clanName, clanMeta.clanMemberCount, clanMeta.clanLevel, detectedPlatform,
+        'pubgclans_import', totalKills, totalWins, avgKd, avgDmg, totalRounds, winRate, activeCount, clanId]);
 
-  // Delete old members before re-importing
-  await pool.query('DELETE FROM clan_members WHERE clan_tag = $1', [cleanTag]);
-  for (const m of members) {
-    const s = m.stats;
-    await pool.query(`
-      INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-    `, [cleanTag, m.name, s.kills, s.wins, s.kd, s.damage, s.rounds, m.active, 'pubgclans_import']);
-  }
+    await client.query('DELETE FROM clan_members WHERE clan_tag = $1', [cleanTag]);
+    if (members.length) {
+      const params = [];
+      const tuples = members.map((m, i) => {
+        const s = m.stats; const o = i * 9;
+        params.push(cleanTag, m.name, s.kills, s.wins, s.kd, s.damage, s.rounds, m.active, 'pubgclans_import');
+        return `($${o+1},$${o+2},$${o+3},$${o+4},$${o+5},$${o+6},$${o+7},$${o+8},$${o+9})`;
+      }).join(',');
+      await client.query(
+        'INSERT INTO clan_members (clan_tag, player_name, kills, wins, kd, damage, rounds, active, added_by) VALUES ' + tuples,
+        params
+      );
+    }
+  });
 
   // Snapshot + Transfer Detection
   try {
@@ -1349,17 +1378,25 @@ app.post('/clans/:tag/process-kills', rateLimit, async (req, res) => {
       }
     }
 
-    // Batch insert con UNIQUE constraint (match_id, killer, victim) → ON CONFLICT DO NOTHING
-    for (const k of pending) {
+    // Batch INSERTs in chunks. UNIQUE (match_id, killer, victim) handles dedup; chunking
+    // keeps each statement under Postgres' 65535 parameter limit (7 params × ~9000 rows).
+    const CHUNK = 500;
+    for (let i = 0; i < pending.length; i += CHUNK) {
+      const slice = pending.slice(i, i + CHUNK);
+      const params = [];
+      const tuples = slice.map((k, idx) => {
+        const o = idx * 7;
+        params.push(k.match_id, k.killer, k.victim, k.kClan, k.vClan, k.platform, k.occurred_at);
+        return `($${o+1},$${o+2},$${o+3},$${o+4},$${o+5},$${o+6},$${o+7})`;
+      }).join(',');
       try {
         const r = await pool.query(
-          `INSERT INTO kill_events (match_id, killer_name, victim_name, killer_clan, victim_clan, platform, occurred_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (match_id, killer_name, victim_name) DO NOTHING`,
-          [k.match_id, k.killer, k.victim, k.kClan, k.vClan, k.platform, k.occurred_at]
+          'INSERT INTO kill_events (match_id, killer_name, victim_name, killer_clan, victim_clan, platform, occurred_at) VALUES '
+          + tuples + ' ON CONFLICT (match_id, killer_name, victim_name) DO NOTHING',
+          params
         );
-        if (r.rowCount > 0) killsInserted++;
-      } catch (e) { errors++; }
+        killsInserted += r.rowCount || 0;
+      } catch (e) { errors += slice.length; }
     }
 
     res.json({
@@ -1708,14 +1745,25 @@ app.post('/favorites/sync', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { favorites: favs } = req.body;
   if (!Array.isArray(favs)) return res.status(400).json({ error: 'Formato invalido' });
+  // Hard cap to keep the multi-row INSERT bounded — protects against pathological payloads
+  // even with the express.json limit already in place.
+  if (favs.length > 500) return res.status(400).json({ error: 'Demasiados favoritos (max 500)' });
   try {
-    await pool.query('DELETE FROM user_favorites WHERE user_id = $1', [req.user.id]);
-    for (const f of favs) {
-      await pool.query(
-        'INSERT INTO user_favorites (user_id, name, platform, fav_type, fav_group) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING',
-        [req.user.id, f.name, f.platform || 'psn', f.type || 'player', f.group || '']
+    await withTx(async (client) => {
+      await client.query('DELETE FROM user_favorites WHERE user_id = $1', [req.user.id]);
+      if (!favs.length) return;
+      // Build a single multi-row INSERT: VALUES ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10),...
+      const params = [];
+      const tuples = favs.map((f, i) => {
+        const o = i * 5;
+        params.push(req.user.id, f.name, f.platform || 'psn', f.type || 'player', f.group || '');
+        return `($${o+1},$${o+2},$${o+3},$${o+4},$${o+5})`;
+      }).join(',');
+      await client.query(
+        'INSERT INTO user_favorites (user_id, name, platform, fav_type, fav_group) VALUES ' + tuples + ' ON CONFLICT DO NOTHING',
+        params
       );
-    }
+    });
     res.json({ ok: true, count: favs.length });
   } catch (e) { console.error(e.message); res.status(500).json({ error: 'Error interno del servidor' }); }
 });
