@@ -3607,6 +3607,12 @@ body.pv2-active #overviewStats{display:none!important}
    que rediseñarlo dentro de la barra de filtros pv2, no rescatar el componente viejo. */
 body.pv2-active #seasonBar,
 body.pv2-active #seasonTypeSelector{display:none!important}
+/* gt27-pv2-hide-old-tabs-v1: ocultar #tabsContainer (RESUMEN/PARTIDAS/ARMAS/ADN +
+   selector TPP/FPP) que aparece al final de la ficha. Es flow viejo: ahora hay
+   acordeones (Evolución/Últimas 20/Armas/ADN) y el TPP/FPP vive en la barra de
+   filtros pv2 arriba. El _pv2MigratePanels() lo ocultaba con style="display:none"
+   pero algún render lo volvía a mostrar. Esta regla CSS es definitiva. */
+body.pv2-active #tabsContainer{display:none!important}
 /* Diff self/other */
 body:not(.pv2-self) .pv2-only-self{display:none!important}
 body.pv2-self .pv2-only-other{display:none!important}
@@ -3755,6 +3761,25 @@ body.pv2-active .pv2-adn-loading-card .pv2-adn-loading-msg::after{content:'';dis
 @keyframes pv2AdnSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes pv2AdnPulse{0%,100%{opacity:1}50%{opacity:.65}}
 @keyframes pv2AdnDots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}100%{content:''}}
+/* gt27-pv2-adn-anim-v1: animaciones cinematográficas al cargar el ADN.
+   1) Radar polygon escala desde 0 al tamaño real con bounce
+   2) Puntos del radar pop con delay escalonado (uno por uno)
+   3) Etiqueta del rol pulsa con glow infinito sutil
+   Respetan prefers-reduced-motion para accesibilidad. */
+@keyframes pv2RadarDraw{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pv2PointPop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.6);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pv2RolePulseGlow{0%,100%{text-shadow:0 0 6px currentColor,0 0 14px currentColor}50%{text-shadow:0 0 14px currentColor,0 0 26px currentColor}}
+.pv2-adn-radar-poly{transform-box:fill-box;transform-origin:center;animation:pv2RadarDraw .7s cubic-bezier(.34,1.56,.64,1) both}
+.pv2-adn-radar-pt{transform-box:fill-box;transform-origin:center;animation:pv2PointPop .4s cubic-bezier(.34,1.56,.64,1) both}
+.pv2-adn-radar-pt-0{animation-delay:.5s}
+.pv2-adn-radar-pt-1{animation-delay:.6s}
+.pv2-adn-radar-pt-2{animation-delay:.7s}
+.pv2-adn-radar-pt-3{animation-delay:.8s}
+.pv2-adn-radar-pt-4{animation-delay:.9s}
+.pv2-adn-role-name{animation:pv2RolePulseGlow 3s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  .pv2-adn-radar-poly,.pv2-adn-radar-pt,.pv2-adn-role-name{animation:none}
+}
 @media (prefers-reduced-motion:reduce){
   body.pv2-active .pv2-adn-spinner{animation-duration:3s}
   body.pv2-active .pv2-adn-loading-card{animation:none}
@@ -14203,12 +14228,12 @@ switchTab=function(){
         '<svg viewBox="0 0 360 260" style="width:100%;max-width:380px;margin:0 auto;display:block;">' +
           '<polygon points="' + refOuter + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
           '<polygon points="' + refInner + '" fill="none" stroke="#2a3350" stroke-width="1"/>' +
-          '<polygon points="' + ptsStr + '" fill="rgba(245,213,71,.15)" stroke="' + role.col + '" stroke-width="2"/>' +
-          pts.map(function(p){ return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + role.col + '"/>'; }).join('') +
+          '<polygon class="pv2-adn-radar-poly" points="' + ptsStr + '" fill="rgba(245,213,71,.15)" stroke="' + role.col + '" stroke-width="2"/>' +
+          pts.map(function(p, i){ return '<circle class="pv2-adn-radar-pt pv2-adn-radar-pt-' + i + '" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + role.col + '"/>'; }).join('') +
           labels +
         '</svg>' +
         '<div style="text-align:center;margin-top:8px;">' +
-          '<div style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:' + role.col + ';margin-bottom:4px;">' + role.name + '</div>' +
+          '<div class="pv2-adn-role-name" style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:' + role.col + ';margin-bottom:4px;">' + role.name + '</div>' +
           (role.desc ?
             '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.4;max-width:280px;margin-left:auto;margin-right:auto;">' + role.desc + '</div>' :
             '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Tu estilo de juego en consola</div>') +
