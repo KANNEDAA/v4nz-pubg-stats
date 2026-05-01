@@ -3600,6 +3600,12 @@ body.pv2-active #panel-funstats{opacity:1!important;visibility:visible!important
    header de la ficha v2 — se ocultan para evitar duplicados. Las stats avanzadas que solo
    estaban aquí (Mayor Supervivencia, Kill Más Lejano, Heals) viven en el acordeón "ADN completo". */
 body.pv2-active #overviewStats{display:none!important}
+/* gt27-acc-rename-v1: el wlGridContainer (ÚLTIMAS X PARTIDAS dentro del acordeón
+   "Tendencia") duplicaba el grid bonito que ya está en STATS · SQUAD del header.
+   Lo ocultamos para que el acordeón quede limpio: sub-tabs SOLO/DUO/SQUAD + Kills
+   por partida (chart) + Daño por partida (chart). El "Historial completo" sigue
+   teniendo cards detalladas + cargar más. */
+body.pv2-active #wlGridContainer{display:none!important}
 /* gt27-pv2-hide-old-season-bar-v1: ocultar el seasonBar viejo ("T41 — ENE 2026") y los
    botones viejos TEMPORADA/RANKED/LIFETIME que aparecen al final de la ficha. Son
    duplicados de los chips MODO TEMPORADA/RANKED/LIFETIME que ya están arriba en la
@@ -4803,12 +4809,17 @@ body.cv2-detail-active #searchHero{display:none!important}
     <!-- ACORDEONES — se poblan con los panel-* viejos por JS -->
     <section class="pv2-section" id="pv2AccordionsSection" style="display:none;">
       <h2 class="pv2-sectitle">&#x26A1; VER M&Aacute;S</h2>
+      <!-- gt27-acc-rename-v1: acordeones renombrados para que cada uno cuente algo único.
+           Antes: "Evolución temporal" + "Últimas 20 partidas" sonaban a lo mismo y de hecho
+           el grid de partidas se duplicaba con el del header. Ahora "Tendencia" deja claro
+           que va de kills/daño por partida (charts), y "Historial completo" enfatiza el
+           detalle por partida + opción de cargar más allá de las 20. -->
       <div class="pv2-acc" data-acc="evolution">
-        <button type="button" class="pv2-acc-head"><span>&#x1F4C8; Evoluci&oacute;n temporal</span><span class="pv2-caret">&#x25BE;</span></button>
+        <button type="button" class="pv2-acc-head"><span>&#x1F4C8; Tendencia (kills + da&ntilde;o por partida)</span><span class="pv2-caret">&#x25BE;</span></button>
         <div class="pv2-acc-body"><div class="pv2-acc-host" id="pv2AccEvoHost"></div></div>
       </div>
       <div class="pv2-acc" data-acc="matches">
-        <button type="button" class="pv2-acc-head"><span>&#x1F3AE; &Uacute;ltimas 20 partidas</span><span class="pv2-caret">&#x25BE;</span></button>
+        <button type="button" class="pv2-acc-head"><span>&#x1F3AE; Historial completo de partidas</span><span class="pv2-caret">&#x25BE;</span></button>
         <div class="pv2-acc-body"><div class="pv2-acc-host" id="pv2AccMatchesHost"></div></div>
       </div>
       <div class="pv2-acc" data-acc="weapons">
