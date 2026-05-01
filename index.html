@@ -3579,6 +3579,12 @@ body.pv2-active #panel-overview,
 body.pv2-active #panel-matches,
 body.pv2-active #panel-weapons,
 body.pv2-active #panel-funstats{opacity:1!important;visibility:visible!important}
+/* gt27-pv2-evo-clean-v1: en el acordeón "Evolución temporal" (panel-overview) ya tenemos
+   ÚLTIMAS 5 PARTIDAS (con resumen) + KILLS POR PARTIDA + DAÑO POR PARTIDA. Las 9 stat cards
+   de #overviewStats (K/D, Victorias, ADR, HS%, etc.) son redundantes con las 4 cards del
+   header de la ficha v2 — se ocultan para evitar duplicados. Las stats avanzadas que solo
+   estaban aquí (Mayor Supervivencia, Kill Más Lejano, Heals) viven en el acordeón "ADN completo". */
+body.pv2-active #overviewStats{display:none!important}
 /* Diff self/other */
 body:not(.pv2-self) .pv2-only-self{display:none!important}
 body.pv2-self .pv2-only-other{display:none!important}
