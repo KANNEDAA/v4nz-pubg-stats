@@ -3113,10 +3113,13 @@ body.has-player-loaded .hero-glow { display: none; }
   .home-counter-val{font-size:1.2rem}
   .home-counters{gap:16px;margin:20px 0}
 }
-/* gt27-mobile-search-icon-v1 + gt27-mobile-no-sticky-nav-v1: cambios para
-   móvil + tablet pequeño (hasta 768px). Antes estaban a 480px pero muchos
-   viewports reales (Chrome estrecho ~660px, tabletas verticales) se quedaban
+/* gt27-mobile-search-icon-v1 + gt27-mobile-no-sticky-nav-v1 + gt27-navbar-avatar-v1:
+   cambios para móvil + tablet pequeño (hasta 768px). Antes estaban a 480px pero
+   muchos viewports reales (Chrome estrecho ~660px, tabletas verticales) se quedaban
    sin estas mejoras. */
+/* Defaults desktop: nombre completo del usuario, avatar oculto */
+.auth-name{display:inline}
+.auth-avatar{display:none}
 @media(max-width:768px){
   /* Botón BUSCAR pasa a icono lupa cuadrado en vez de texto BUSCAR. */
   .search-btn{padding:16px 18px;font-size:1.1rem;min-width:54px;display:inline-flex;align-items:center;justify-content:center}
@@ -3125,6 +3128,14 @@ body.has-player-loaded .hero-glow { display: none; }
   /* Navbar global pierde el sticky → al scrollear baja con el contenido y
      deja todo el viewport para los datos. El bottom-nav cubre la navegación. */
   header{position:static!important}
+  /* gt27-navbar-avatar-v1: la lupa del navbar es redundante con el botón
+     "JUGADOR" del bottom-nav y el hero buscador de la home. Ocultamos. */
+  .topbar-search{display:none!important}
+  /* Botón usuario logueado: pill "KANNEDA" se compacta a avatar circular 32px
+     con la inicial. Patrón estándar (Instagram, op.gg, dak.gg). */
+  .auth-btn.is-user .auth-name{display:none}
+  .auth-btn.is-user .auth-avatar{display:inline-flex;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent,#00f0ff),var(--accent-orange,#ff9f43));color:#000;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;align-items:center;justify-content:center;line-height:1}
+  .auth-btn.is-user{padding:0!important;background:transparent!important;border:0!important;min-width:32px}
 }
 .telemetry-feed { max-height: 300px; overflow-y: auto; margin-top: 16px; }
 .telem-event { padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 0.8rem; font-family: 'Rajdhani', sans-serif; }
@@ -5516,7 +5527,12 @@ function showAuthError(id,msg){const el=document.getElementById(id);el.textConte
 function updateAuthUI(){
   const btn=document.getElementById('authHeaderBtn');
   if(currentUser){
-    btn.innerHTML=currentUser.display_name;
+    // gt27-navbar-avatar-v1: en móvil/tablet (≤768px) el botón muestra solo
+    // avatar circular con la inicial. En desktop muestra el nombre completo.
+    // CSS .auth-name / .auth-avatar deciden cuál es visible según breakpoint.
+    const initial=(currentUser.display_name||'?').charAt(0).toUpperCase();
+    btn.innerHTML='<span class="auth-name">'+currentUser.display_name+'</span><span class="auth-avatar">'+initial+'</span>';
+    btn.classList.add('is-user');
     btn.style.background='var(--bg-card)';btn.style.border='1px solid var(--border)';btn.style.color='var(--accent)';
     document.getElementById('authUserName').textContent=currentUser.display_name;
     document.getElementById('authUserInfo').textContent=currentUser.email||currentUser.discord_name||'';
@@ -5531,6 +5547,7 @@ function updateAuthUI(){
     updateProfileGT();
   }else{
     btn.innerHTML='Iniciar Sesi\u00f3n';
+    btn.classList.remove('is-user');
     btn.style.background='';btn.style.border='';btn.style.color='';
   }
   // v186: Update bottom-nav profile icon
