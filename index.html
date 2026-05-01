@@ -9657,13 +9657,11 @@ function getMatchBadges(match,pn){
       badges.push({type:'killer',text:'Tu: '+topKills+' kills!',icon:'🔥'});
     }
   }
-  // Flag: match has a rival (someone you've seen in 3+ matches)
-  if(window._matchRivalsSet){
-    const rivalInMatch=participants.find(p=>p.attributes.stats.name.toLowerCase()!==pn.toLowerCase()&&window._matchRivalsSet.has(p.attributes.stats.name.toLowerCase()));
-    if(rivalInMatch){
-      badges.push({type:'rival',text:'Rival: '+rivalInMatch.attributes.stats.name,icon:'👀',player:rivalInMatch.attributes.stats.name});
-    }
-  }
+  // gt27-no-rival-badge-v1: badge "RIVAL: X" eliminado de las match cards.
+  // Era ruido más que señal — solo salía en partidas con repetidos, no era accionable
+  // y duplicaba info del bloque RIVALES HABITUALES de arriba. Si quieres saber a quién
+  // te enfrentaste en una partida, abres el detalle del match y ves el squad/kill log.
+  // (window._matchRivalsSet sigue construyéndose por si otros sitios lo usan.)
   // Flag: hot drop — jugador eliminado en menos de 2 minutos (caída caliente)
   const mePart=participants.find(p=>p.attributes.stats.name.toLowerCase()===pn.toLowerCase());
   if(mePart){
