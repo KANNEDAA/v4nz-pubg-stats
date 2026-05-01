@@ -306,6 +306,9 @@ body.has-player-loaded .search-hero .search-box .platform-selector,
 .search-input { flex: 1; background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; padding: 20px 24px; outline: none; font-family: 'Inter', sans-serif; }
 .search-input::placeholder { color: var(--text-dim); font-size:1rem; }
 .search-btn { background: var(--gradient-main); border: none; color: #000; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 2px; padding: 20px 36px; cursor: pointer; transition: all 0.25s; }
+/* gt27-mobile-search-icon-v1: defaults — desktop muestra texto BUSCAR, el icono lupa solo aparece en móvil (media query más abajo). */
+.search-btn-icon{display:none}
+.search-btn-text{display:inline}
 .search-btn:hover { opacity: 0.92; transform: translateY(-1px); }
 .recent-searches { max-width: 680px; margin: 16px auto 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .recent-tag { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 600; transition: all 0.2s; text-transform: uppercase; }
@@ -3101,7 +3104,17 @@ body.has-player-loaded .hero-glow { display: none; }
   .search-hero h1{font-size:1.2rem}
   .hero-platform-toggle .platform-btn{padding:10px 16px;font-size:.75rem}
   .search-input{font-size:1rem;padding:16px 18px}
-  .search-btn{padding:16px 24px;font-size:.85rem}
+  /* gt27-mobile-search-icon-v1: en móvil el botón BUSCAR pasa a icono lupa
+     cuadrado (~50px) en vez de texto. Antes ocupaba ~25% del ancho del hero
+     para nada — la lupa basta y deja más espacio al input del gamertag. */
+  .search-btn{padding:16px 18px;font-size:1.1rem;min-width:54px;display:inline-flex;align-items:center;justify-content:center}
+  .search-btn-icon{display:inline-block}
+  .search-btn-text{display:none}
+  /* gt27-mobile-no-sticky-nav-v1: en móvil quitar el sticky del navbar global.
+     Antes el header (V4NZ + Buscar + KANNEDA) se quedaba pegado arriba al
+     scrollear y robaba pantalla útil — el bottom-nav ya cubre la navegación
+     en móvil así que el header puede irse al desplazar. */
+  header{position:static!important}
   .player-info h2{font-size:1.1rem}
   .streamer-banner{flex-direction:column;text-align:center}
   .streamer-banner-links{justify-content:center}
@@ -4194,7 +4207,7 @@ body.cv2-detail-active #searchHero{display:none!important}
       <button class="platform-btn" data-platform="xbox" onclick="setPlatform('xbox')">XBOX</button>
     </div>
     <input type="text" class="search-input" id="searchInput" placeholder="Escribe tu gamertag..." autocomplete="off" aria-label="Gamertag del jugador"/>
-    <button class="search-btn" onclick="smartSearch()" aria-label="Buscar jugador">BUSCAR</button>
+    <button class="search-btn" onclick="smartSearch()" aria-label="Buscar jugador"><span class="search-btn-icon" aria-hidden="true">&#x1F50D;</span><span class="search-btn-text">BUSCAR</span></button>
   </div>
   <div class="hero-features" id="heroFeatures">
     <div class="hero-feat"><span class="hero-feat-icon">&#x1F4CA;</span>Stats detalladas</div>
