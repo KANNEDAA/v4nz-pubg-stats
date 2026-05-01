@@ -3585,6 +3585,13 @@ body.pv2-active #panel-funstats{opacity:1!important;visibility:visible!important
    header de la ficha v2 — se ocultan para evitar duplicados. Las stats avanzadas que solo
    estaban aquí (Mayor Supervivencia, Kill Más Lejano, Heals) viven en el acordeón "ADN completo". */
 body.pv2-active #overviewStats{display:none!important}
+/* gt27-pv2-hide-old-season-bar-v1: ocultar el seasonBar viejo ("T41 — ENE 2026") y los
+   botones viejos TEMPORADA/RANKED/LIFETIME que aparecen al final de la ficha. Son
+   duplicados de los chips MODO TEMPORADA/RANKED/LIFETIME que ya están arriba en la
+   barra de filtros pv2. Si en el futuro queremos selector de temporada PASADA habrá
+   que rediseñarlo dentro de la barra de filtros pv2, no rescatar el componente viejo. */
+body.pv2-active #seasonBar,
+body.pv2-active #seasonTypeSelector{display:none!important}
 /* Diff self/other */
 body:not(.pv2-self) .pv2-only-self{display:none!important}
 body.pv2-self .pv2-only-other{display:none!important}
