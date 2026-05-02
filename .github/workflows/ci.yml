@@ -85,3 +85,16 @@ jobs:
             exit 1
           fi
           echo "OK: index.html no maneja v4nz_token desde localStorage"
+
+      - name: HTML estructural - cierre body/html + scripts balanceados + tamano minimo
+        run: |
+          fail=0
+          [ "$(grep -c '</body>' index.html)" -lt 1 ] && { echo "::error::falta </body>"; fail=1; }
+          [ "$(grep -c '</html>' index.html)" -lt 1 ] && { echo "::error::falta </html>"; fail=1; }
+          opens=$(grep -c '<script\b' index.html)
+          closes=$(grep -c '</script>' index.html)
+          [ "$opens" != "$closes" ] && { echo "::error::scripts desbalanceados $opens/$closes"; fail=1; }
+          size=$(wc -c < index.html)
+          [ "$size" -lt 1150000 ] && { echo "::error::index.html demasiado pequeno: $size"; fail=1; }
+          [ $fail -eq 1 ] && exit 1
+          echo "OK: HTML integro ($size bytes)"
