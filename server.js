@@ -1463,33 +1463,56 @@ setInterval(() => {
   }
 }, 3600000);
 
-// ═══ RATE LIMITER (in-memory, no deps) ═══
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const RATE_LIMIT_MAX = 30; // max 30 requests per minute per IP
-function rateLimit(req, res, next) {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
-  const now = Date.now();
-  let entry = rateLimitMap.get(ip);
-  if (!entry || now - entry.start > RATE_LIMIT_WINDOW) {
-    entry = { start: now, count: 1 };
-    rateLimitMap.set(ip, entry);
-  } else {
-    entry.count++;
-  }
-  if (entry.count > RATE_LIMIT_MAX) {
-    trackMetric(req, 'rate-limited');
-    return res.status(429).json({ error: 'Demasiadas peticiones. Espera un momento.' });
-  }
-  next();
+// ═══ RATE LIMITERS (sliding-window, in-memory) ═══
+// Sliding window via per-IP timestamp lists (capped at `max` per IP). Avoids the
+// boundary-doubling bug of fixed windows. Returns the IETF-draft RateLimit-* headers
+// on every request and Retry-After on 429s so clients can back off correctly.
+//
+//   rateLimit     — generic 30/min  (PUBG proxy, clan POSTs, favorites, search)
+//   rateLimitAuth —      5/15min    (login/register/admin: bruteforce defense)
+//   rateLimitAI   —     10/hour     (AI endpoints: cache misses cost Anthropic $)
+//
+// Loopback is exempt so internal cron + prewarm callers (which hit /api/leaderboard)
+// don't burn budget meant for real users. trust-proxy=1 means req.ip is the real client.
+function makeRateLimit({ windowMs, max }) {
+  const buckets = new Map();
+  const cleanup = setInterval(() => {
+    const cutoff = Date.now() - windowMs;
+    for (const [ip, ts] of buckets) {
+      while (ts.length && ts[0] <= cutoff) ts.shift();
+      if (!ts.length) buckets.delete(ip);
+    }
+  }, 300000);
+  cleanup.unref?.();
+  const mw = function rateLimitMiddleware(req, res, next) {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || '';
+    if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return next();
+    const now = Date.now();
+    const cutoff = now - windowMs;
+    let ts = buckets.get(ip);
+    if (!ts) { ts = []; buckets.set(ip, ts); }
+    while (ts.length && ts[0] <= cutoff) ts.shift();
+    const remaining = Math.max(0, max - ts.length - 1);
+    const reset = ts.length ? Math.max(1, Math.ceil((ts[0] + windowMs - now) / 1000)) : Math.ceil(windowMs / 1000);
+    res.setHeader('RateLimit-Limit', max);
+    res.setHeader('RateLimit-Remaining', remaining);
+    res.setHeader('RateLimit-Reset', reset);
+    if (ts.length >= max) {
+      res.setHeader('Retry-After', reset);
+      trackMetric(req, 'rate-limited');
+      return res.status(429).json({ error: 'Demasiadas peticiones. Espera un momento.', retryAfter: reset });
+    }
+    ts.push(now);
+    next();
+  };
+  mw.buckets = buckets;
+  return mw;
 }
-// Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of rateLimitMap) {
-    if (now - entry.start > RATE_LIMIT_WINDOW * 2) rateLimitMap.delete(ip);
-  }
-}, 300000);
+const rateLimit     = makeRateLimit({ windowMs: 60 * 1000,        max: 30 });
+const rateLimitAuth = makeRateLimit({ windowMs: 15 * 60 * 1000,   max: 5  });
+const rateLimitAI   = makeRateLimit({ windowMs: 60 * 60 * 1000,   max: 10 });
+// Back-compat alias for /admin/metrics's "active IPs in last 5 min" query.
+const rateLimitMap = rateLimit.buckets;
 
 // ═══ AUTH SYSTEM ═══
 
@@ -1538,7 +1561,7 @@ function generateToken(user) {
 }
 
 // POST /auth/register — Email + password registration
-app.post('/auth/register', rateLimit, async (req, res) => {
+app.post('/auth/register', rateLimitAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password, displayName, gamertag, platform, newsOptIn } = req.body;
   if (!email || !password || !displayName) return res.status(400).json({ error: 'Email, contrasena y nombre son obligatorios' });
@@ -1564,7 +1587,7 @@ app.post('/auth/register', rateLimit, async (req, res) => {
 });
 
 // POST /auth/login — Email + password login
-app.post('/auth/login', rateLimit, async (req, res) => {
+app.post('/auth/login', rateLimitAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Base de datos no disponible' });
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email y contrasena son obligatorios' });
@@ -1791,7 +1814,7 @@ function getCacheTTL(pubgPath) {
 // ═══ LEADERBOARD SERVER-SIDE ENDPOINT ═══
 // Dedicated endpoint that caches leaderboard data and returns cache age
 // This avoids client-side API calls and enables pre-warming
-app.get('/api/leaderboard', async (req, res) => {
+app.get('/api/leaderboard', rateLimit, async (req, res) => {
   const { platform = 'console', region = 'eu', mode = 'squad-fpp' } = req.query;
   if (!SERVER_API_KEY) return res.status(503).json({ error: 'API key not configured' });
 
@@ -1911,7 +1934,7 @@ app.get('/api/leaderboard', async (req, res) => {
 
 // ═══ BOT INDEX — Telemetry-based bot detection ═══
 // MUST be before app.all('/api/*') to avoid being captured by the proxy
-app.get('/api/bot-index/:platform/:playerName', async (req, res) => {
+app.get('/api/bot-index/:platform/:playerName', rateLimit, async (req, res) => {
   const { platform, playerName } = req.params;
   const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
   const cacheKey = `bot_index_${shard}_${playerName.toLowerCase()}`;
@@ -2078,7 +2101,7 @@ app.get('/api/pubg-report/:accountId', async (req, res) => {
 // Filosofía "snapshot reciente": qué juega el jugador AHORA, no su histórico de la cuenta.
 // Cache 1h por jugador para refrescar tras nuevas partidas. Reutiliza el cache de
 // telemetría (30 días) que ya usa /api/bot-index, así no descarga partidas dos veces.
-app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
+app.get('/api/recent-arsenal/:platform/:playerName', rateLimit, async (req, res) => {
   const { platform, playerName } = req.params;
   const shard = ['psn','xbox','steam'].includes(platform) ? platform : 'psn';
   const cacheKey = `recent_arsenal_${shard}_${playerName.toLowerCase()}`;
@@ -2280,7 +2303,7 @@ app.get('/api/snapshots/:platform/:player', async (req, res) => {
 });
 
 // ============ V4NZ Leaderboard (top players from snapshots) ============
-app.get('/api/v4nz-leaderboard', async (req, res) => {
+app.get('/api/v4nz-leaderboard', rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'No database' });
   const { platform = 'all', mode = 'squad', game_mode = 'tpp' } = req.query;
 
@@ -2348,7 +2371,7 @@ app.delete('/api/ai-dna-cache', async (req, res) => {
 });
 
 // ============ AI DNA Analysis (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-dna', async (req, res) => {
+app.get('/api/ai-dna', rateLimitAI, async (req, res) => {
   try {
     const { playerName, platform, stats: statsParam } = req.query;
     let stats;
@@ -2532,7 +2555,7 @@ Genera el análisis JSON:
 });
 
 // ============ AI Compare Players (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-compare-players', async (req, res) => {
+app.get('/api/ai-compare-players', rateLimitAI, async (req, res) => {
   try {
     const { p1, p2, platform, mode, stats: statsParam } = req.query;
     let payload;
@@ -2678,7 +2701,7 @@ Genera el análisis JSON:
 });
 
 // ============ AI Deep Analysis (Pro) — usuario logueado con historial (v154) ============
-app.get('/api/ai-deep-analysis', requireAuth, async (req, res) => {
+app.get('/api/ai-deep-analysis', requireAuth, rateLimitAI, async (req, res) => {
   try {
     if (!pool) return res.status(503).json({ error: 'DB not available' });
     const userId = req.user.id;
@@ -2892,7 +2915,7 @@ Genera el análisis JSON:
 });
 
 // ============ AI Compare Clans (MUST be before the PUBG API catch-all proxy) ============
-app.get('/api/ai-compare-clans', async (req, res) => {
+app.get('/api/ai-compare-clans', rateLimitAI, async (req, res) => {
   try {
     const { tag1, tag2, stats: statsParam } = req.query;
     let payload;
@@ -3075,7 +3098,7 @@ app.get('/api/player-clan', async (req, res) => {
 // ai-clan-dna-v1 — sustituye el 404 del botón "ANALIZAR CLAN CON IA".
 // Patrón identico a /api/ai-compare-clans: cache api_cache 7d + Claude API con
 // retry en 5xx transitorios. Se alimenta de clans + clan_members (stats agregadas).
-app.get('/api/ai-clan-dna', async (req, res) => {
+app.get('/api/ai-clan-dna', rateLimitAI, async (req, res) => {
   try {
     const rawTag = (req.query.tag || '').toString().trim();
     if (!rawTag) return res.status(400).json({ error: 'Falta tag del clan' });
@@ -4117,7 +4140,7 @@ setInterval(async () => {
 
 // Admin verification endpoint — password never exposed in frontend
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-app.post('/auth/admin', rateLimit, (req, res) => {
+app.post('/auth/admin', rateLimitAuth, (req, res) => {
   if (!ADMIN_PASSWORD) return res.status(503).json({ error: 'Admin no configurado' });
   const { password } = req.body;
   if (!password || typeof password !== 'string') return res.status(401).json({ error: 'Contraseña incorrecta' });
@@ -4163,11 +4186,11 @@ app.get('/admin/metrics', (req, res) => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 20)
     .map(([ep, count]) => ({ endpoint: ep, count }));
-  // Active users right now (IPs with requests in last 5 min)
+  // Active users right now (IPs with at least one hit in the generic bucket in last 5 min)
   const fiveMinAgo = Date.now() - 300000;
   let activeNow = 0;
-  for (const [, entry] of rateLimitMap) {
-    if (entry.start > fiveMinAgo) activeNow++;
+  for (const [, ts] of rateLimitMap) {
+    if (ts.length && ts[ts.length - 1] > fiveMinAgo) activeNow++;
   }
   // Cache efficiency
   const cacheTotal = metrics.cacheHits + metrics.cacheMisses;
