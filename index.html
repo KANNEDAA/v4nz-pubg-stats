@@ -7135,7 +7135,10 @@ function showRateLimitCountdown(initialSecs){
   if(sBtn){sBtn.disabled=true;sBtn.style.opacity='0.5';sBtn.style.cursor='not-allowed';}
   const sInput=document.getElementById('searchInput');
   if(sInput){sInput.style.opacity='0.6';}
-  e.innerHTML='&#x23F3; Demasiadas consultas a la API de PUBG. Puedes reintentar en <strong>'+secs+'s</strong>';
+  // gt27-rate-limit-msg-v1: mensaje más explicativo. Antes "Demasiadas consultas"
+  // sonaba a culpa del usuario. La API de PUBG tiene un límite COMPARTIDO entre
+  // todos los visitantes de v4nz. Aclarar que se debe a tráfico simultáneo + cache.
+  e.innerHTML='&#x23F3; El servidor está ocupado <span style="opacity:.85">(límite compartido con otros usuarios)</span>. Reintenta en <strong>'+secs+'s</strong>';
   e.classList.add('visible');
   rateLimitInterval=setInterval(()=>{
     secs--;
@@ -7148,7 +7151,7 @@ function showRateLimitCountdown(initialSecs){
       setTimeout(()=>{e.classList.remove('visible');},2000);
       return;
     }
-    e.innerHTML='&#x23F3; Demasiadas consultas a la API de PUBG. Puedes reintentar en <strong>'+secs+'s</strong>';
+    e.innerHTML='&#x23F3; El servidor está ocupado <span style="opacity:.85">(límite compartido con otros usuarios)</span>. Reintenta en <strong>'+secs+'s</strong>';
   },1000);
 }
 function showDataPanels(){document.getElementById('tabsContainer').classList.add('visible');document.getElementById('emptyState').style.display='none';}
