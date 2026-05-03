@@ -2257,8 +2257,14 @@ app.get('/api/rivals/:platform/:playerName', rateLimit, async (req, res) => {
 
   try {
     const pLower = player.toLowerCase();
+    // gt29-rivals-v1: LIMIT 150 telemetries más recientes para no exceder
+    // el timeout de 100s del CDN. Cada telemetry pesa ~4 MB físicos →
+    // procesar 5000 superaba memoria + tiempo. 150 partidas (≈ 7-10 días
+    // de actividad real) es suficiente para top 5 rivales habituales y
+    // termina en ~10-30s. Cuando RPM-7 (Telemetry Mining) esté listo, este
+    // endpoint pasa a leer kill_events directo y desaparece el LIMIT.
     const cacheRes = await pool.query(
-      "SELECT response_data FROM api_cache WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\' AND created_at > NOW() - INTERVAL '30 days' LIMIT 5000"
+      "SELECT response_data FROM api_cache WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\' AND created_at > NOW() - INTERVAL '30 days' ORDER BY created_at DESC LIMIT 150"
     );
     const verdugos = new Map();  // killer→count: te mataron
     const presas = new Map();    // victim→count: tú los mataste
