@@ -2257,14 +2257,23 @@ app.get('/api/rivals/:platform/:playerName', rateLimit, async (req, res) => {
 
   try {
     const pLower = player.toLowerCase();
-    // gt29-rivals-v1: LIMIT 150 telemetries más recientes para no exceder
-    // el timeout de 100s del CDN. Cada telemetry pesa ~4 MB físicos →
-    // procesar 5000 superaba memoria + tiempo. 150 partidas (≈ 7-10 días
-    // de actividad real) es suficiente para top 5 rivales habituales y
-    // termina en ~10-30s. Cuando RPM-7 (Telemetry Mining) esté listo, este
-    // endpoint pasa a leer kill_events directo y desaparece el LIMIT.
+    // gt29-rivals-v1 (revisión): pre-filtrar a nivel SQL con ILIKE para
+    // procesar SOLO telemetries que contienen al jugador. Sin este filtro
+    // las 150 más recientes son random (de cualquier usuario que abrió esas
+    // partidas) y rara vez incluyen al player buscado → 0 resultados.
+    // ILIKE en text TOAST es lento (descomprimir cada fila para evaluar),
+    // pero dramáticamente mejor que transferir 600 MB a Node sin filtro.
+    // Cuando RPM-7 esté listo, esto desaparece y leemos kill_events.
+    const safePlayer = player.replace(/[%_\\]/g, '\\$&');
+    const ilikePattern = `%"name":"${safePlayer}"%`;
     const cacheRes = await pool.query(
-      "SELECT response_data FROM api_cache WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\' AND created_at > NOW() - INTERVAL '30 days' ORDER BY created_at DESC LIMIT 150"
+      `SELECT response_data FROM api_cache
+       WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\'
+         AND created_at > NOW() - INTERVAL '30 days'
+         AND response_data ILIKE $1 ESCAPE '\\'
+       ORDER BY created_at DESC
+       LIMIT 150`,
+      [ilikePattern]
     );
     const verdugos = new Map();  // killer→count: te mataron
     const presas = new Map();    // victim→count: tú los mataste
