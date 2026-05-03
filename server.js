@@ -3644,13 +3644,60 @@ async function _getMatchJsonCached(shard, matchId) {
   } catch(_) { return null; }
 }
 
+// gt28-telemetry-keep-types-v1: tipos de evento que V4NZ realmente consume.
+// Filtramos antes de cachear para reducir storage ~60% (~24 MB → ~10 MB lógicos
+// por partida). Ratio típico de payload tras pglz: 5×, así que cada fila pasa
+// de ~4 MB físicos a ~2 MB físicos. Si añades un feature que necesita un tipo
+// nuevo, agrégalo aquí. Las telemetries cacheadas con la versión vieja (24 MB)
+// siguen sirviéndose enteras hasta que expiren a los 30 días — solo las
+// inserciones NUEVAS aplican el filtro.
+//
+// Consumidores actuales (ver /skill v4nz-dev v3.32):
+//   LogPlayerKillV2/Kill   → process-kills, recent-arsenal, computeMatchInsights, telemetry-audit, kill log
+//   LogPlayerAttack        → recent-arsenal (accesorios), telemetry-audit
+//   LogPlayerTakeDamage    → telemetry-audit, body damage breakdown
+//   LogPlayerMakeGroggy    → match detail timeline (downs)
+//   LogMatchStart          → computeMatchInsights (TTFK)
+//   LogParachuteLanding    → match detail timeline (drops)
+//   LogPhaseChange         → telemetry-audit, timeline (zonas)
+//   LogGameStatePeriodic   → telemetry-audit (numAlivePlayers)
+//   LogPlayerPosition      → telemetry-audit (sampleo player)
+//   LogPlayerRevive        → telemetry-audit
+//   LogPlayerUseThrowable  → telemetry-audit (uso granadas)
+//   LogItemPickup/Equip/Use → telemetry-audit (inventario)
+//   LogVehicleRide/Leave   → telemetry-audit (movilidad)
+//   LogWeaponFireCount     → telemetry-audit (precisión)
+const TELEMETRY_KEEP_TYPES = new Set([
+  'LogMatchStart',
+  'LogParachuteLanding',
+  'LogPlayerKillV2',
+  'LogPlayerKill',
+  'LogPlayerMakeGroggy',
+  'LogPlayerAttack',
+  'LogPlayerTakeDamage',
+  'LogPlayerRevive',
+  'LogPlayerPosition',
+  'LogPlayerUseThrowable',
+  'LogItemPickup',
+  'LogItemEquip',
+  'LogItemUse',
+  'LogVehicleRide',
+  'LogVehicleLeave',
+  'LogPhaseChange',
+  'LogGameStatePeriodic',
+  'LogWeaponFireCount'
+]);
+
 // Fetch telemetría con cache 30 días (key: `telemetry_${matchId}`).
+// gt28-telemetry-keep-types-v1: filtra tipos no usados antes de cachear.
 async function _getTelemetryCached(matchId, telemetryUrl) {
   if (!pool) {
     if (!telemetryUrl) return null;
     try {
       const tRes = await fetchWithTimeout(fetch, telemetryUrl, {}, 30000);
-      return tRes.ok ? await tRes.json() : null;
+      if (!tRes.ok) return null;
+      const raw = await tRes.json();
+      return Array.isArray(raw) ? raw.filter(ev => ev && TELEMETRY_KEEP_TYPES.has(ev._T)) : raw;
     } catch(_) { return null; }
   }
   const tKey = `telemetry_${matchId}`;
@@ -3667,12 +3714,17 @@ async function _getTelemetryCached(matchId, telemetryUrl) {
   try {
     const tRes = await fetchWithTimeout(fetch, telemetryUrl, {}, 30000);
     if (!tRes.ok) return null;
-    const data = await tRes.json();
+    const raw = await tRes.json();
+    // Filtrar antes de cachear. Si raw no es array (formato inesperado),
+    // guardamos tal cual para no perder data y dejar la query devolverlo.
+    const filtered = Array.isArray(raw)
+      ? raw.filter(ev => ev && TELEMETRY_KEEP_TYPES.has(ev._T))
+      : raw;
     pool.query(
       'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
-      [tKey, JSON.stringify(data)]
+      [tKey, JSON.stringify(filtered)]
     ).catch(() => {});
-    return data;
+    return filtered;
   } catch(_) { return null; }
 }
 
