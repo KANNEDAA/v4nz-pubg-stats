@@ -367,9 +367,6 @@ async function initDB() {
       CREATE INDEX IF NOT EXISTS idx_kill_events_killer_clan ON kill_events(killer_clan) WHERE killer_clan IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_kill_events_victim_clan ON kill_events(victim_clan) WHERE victim_clan IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_kill_events_match ON kill_events(match_id);
-      -- gt29-rivals-v1: índices case-insensitive sobre killer/victim para queries de "Tus rivales"
-      CREATE INDEX IF NOT EXISTS idx_kill_events_killer_name_lower ON kill_events(LOWER(killer_name));
-      CREATE INDEX IF NOT EXISTS idx_kill_events_victim_name_lower ON kill_events(LOWER(victim_name));
 
       -- match-insights-v1: Radiografia del match - cache por (match, jugador) del analisis profundo.
       -- I-0a crea la mesa con placeholders; I-1..I-6 iran rellenando calculos reales por bloques.
@@ -2232,16 +2229,15 @@ app.get('/api/recent-arsenal/:platform/:playerName', async (req, res) => {
   }
 });
 
-// ═══ Tus Rivales — verdugos / presas / némesis (gt29-rivals-v1, kill_events) ═══
-// Lee de kill_events (poblada por _getTelemetryCached de forma incremental y
-// por /api/admin/extract-all-kills en una pasada masiva inicial).
-//   - top 5 verdugos: los que más te han matado
-//   - top 5 presas: a los que más has matado
-//   - nemesis abierta: verdugo con balance >=3:1 (mín 3 muertes), nadie con
-//     desbalance fuerte → null
-// Filtra bots por nombre vacío (kill_events no guarda accountId, pero los
-// bots con name vacío ya se descartan en la extracción). Cachea resultado
-// 1h en api_cache (key: rivals_v1_<platform>_<player>).
+// ═══ Tus Rivales — verdugos / presas / némesis (gt29-rivals-v1) ═══
+// Lee telemetries cacheadas de los últimos 30 días, agrega kills donde el
+// jugador es killer o víctima (excluyendo bots) y devuelve:
+//   - top 5 verdugos (los que más te han matado)
+//   - top 5 presas (a los que más has matado)
+//   - nemesis abierta: el verdugo con balance >=3:1 a su favor (mín 3 muertes)
+// Cachea resultado 1h en api_cache (key: rivals_v1_<platform>_<player>).
+// Cuando se construya RPM-7 (Telemetry Mining nocturno) la fuente cambiará a
+// la tabla kill_events para latencia O(1), sin tocar este endpoint.
 app.get('/api/rivals/:platform/:playerName', rateLimit, async (req, res) => {
   const platform = (req.params.platform || '').toLowerCase();
   const player = (req.params.playerName || '').trim();
@@ -2261,99 +2257,95 @@ app.get('/api/rivals/:platform/:playerName', rateLimit, async (req, res) => {
 
   try {
     const pLower = player.toLowerCase();
-    // Verdugos: kills donde el player es la víctima (LIMIT 5)
-    const verdugosRes = await pool.query(
-      `SELECT killer_name AS name, count(*)::int AS count
-       FROM kill_events
-       WHERE LOWER(victim_name) = $1
-         AND platform = $2
-         AND killer_name <> ''
-         AND LOWER(killer_name) <> $1
-       GROUP BY killer_name
-       ORDER BY count(*) DESC, killer_name ASC
-       LIMIT 5`,
-      [pLower, platform]
+    // gt29-rivals-v1 (revisión): pre-filtrar a nivel SQL con ILIKE para
+    // procesar SOLO telemetries que contienen al jugador. Sin este filtro
+    // las 150 más recientes son random (de cualquier usuario que abrió esas
+    // partidas) y rara vez incluyen al player buscado → 0 resultados.
+    // ILIKE en text TOAST es lento (descomprimir cada fila para evaluar),
+    // pero dramáticamente mejor que transferir 600 MB a Node sin filtro.
+    // Cuando RPM-7 esté listo, esto desaparece y leemos kill_events.
+    const safePlayer = player.replace(/[%_\\]/g, '\\$&');
+    const ilikePattern = `%"name":"${safePlayer}"%`;
+    const cacheRes = await pool.query(
+      `SELECT response_data FROM api_cache
+       WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\'
+         AND created_at > NOW() - INTERVAL '30 days'
+         AND response_data ILIKE $1 ESCAPE '\\'
+       ORDER BY created_at DESC
+       LIMIT 150`,
+      [ilikePattern]
     );
-    // Presas: kills donde el player es el killer (LIMIT 5)
-    const presasRes = await pool.query(
-      `SELECT victim_name AS name, count(*)::int AS count
-       FROM kill_events
-       WHERE LOWER(killer_name) = $1
-         AND platform = $2
-         AND victim_name <> ''
-         AND LOWER(victim_name) <> $1
-       GROUP BY victim_name
-       ORDER BY count(*) DESC, victim_name ASC
-       LIMIT 5`,
-      [pLower, platform]
-    );
-    // Totales
-    const totalsRes = await pool.query(
-      `SELECT
-         (SELECT count(*)::int FROM kill_events WHERE LOWER(killer_name) = $1 AND platform = $2 AND LOWER(victim_name) <> $1) AS total_kills,
-         (SELECT count(*)::int FROM kill_events WHERE LOWER(victim_name) = $1 AND platform = $2 AND LOWER(killer_name) <> $1) AS total_deaths,
-         (SELECT count(DISTINCT match_id)::int FROM kill_events WHERE platform = $2 AND (LOWER(killer_name) = $1 OR LOWER(victim_name) = $1)) AS matches_analyzed`,
-      [pLower, platform]
-    );
+    const verdugos = new Map();  // killer→count: te mataron
+    const presas = new Map();    // victim→count: tú los mataste
+    let matchesAnalyzed = 0;
 
-    const verdugosList = verdugosRes.rows;
-    const presasList = presasRes.rows;
-    const totals = totalsRes.rows[0] || { total_kills: 0, total_deaths: 0, matches_analyzed: 0 };
-
-    // Némesis abierta: el verdugo con mayor desbalance ≥3:1 (mín 3 muertes a sus manos)
-    let nemesis = null;
-    if (verdugosList.length) {
-      const presaMap = new Map(presasList.map(p => [p.name, p.count]));
-      // Obtener los counts cruzados para los 5 verdugos (mínimo 3 muertes)
-      const candidatos = verdugosList.filter(v => v.count >= 3);
-      if (candidatos.length) {
-        // Para cada verdugo, ver cuántas veces el player lo mató (puede no estar en top 5 presas)
-        const xbalance = await pool.query(
-          `SELECT killer_name AS rival, count(*)::int AS killed_by_me
-           FROM kill_events
-           WHERE LOWER(killer_name) = $1 AND platform = $2
-             AND LOWER(victim_name) = ANY($3::text[])
-           GROUP BY killer_name`,
-          [pLower, platform, candidatos.map(c => c.name.toLowerCase())]
-        );
-        // killed_by_me se midió en sentido inverso: kills donde player=killer y el verdugo era victim
-        // Hay que rehacerlo: para cada verdugo, contar kills donde player=killer y victim=verdugo
-        const reverseRes = await pool.query(
-          `SELECT victim_name AS rival, count(*)::int AS killed_by_me
-           FROM kill_events
-           WHERE LOWER(killer_name) = $1 AND platform = $2
-             AND LOWER(victim_name) = ANY($3::text[])
-           GROUP BY victim_name`,
-          [pLower, platform, candidatos.map(c => c.name.toLowerCase())]
-        );
-        const reverseMap = new Map(reverseRes.rows.map(r => [r.rival.toLowerCase(), r.killed_by_me]));
-        let bestRatio = 0;
-        for (const v of candidatos) {
-          const killedMe = v.count;
-          const killedByMe = reverseMap.get(v.name.toLowerCase()) || 0;
-          const ratio = (killedMe + 1) / (killedByMe + 1);
-          if (ratio >= 3 && ratio > bestRatio) {
-            bestRatio = ratio;
-            nemesis = {
-              name: v.name,
-              killed_me: killedMe,
-              killed_by_me: killedByMe,
-              ratio: Math.round(ratio * 10) / 10
-            };
-          }
+    for (const row of cacheRes.rows) {
+      let telemetry;
+      try { telemetry = JSON.parse(row.response_data); } catch(e) { continue; }
+      if (!Array.isArray(telemetry)) continue;
+      let participated = false;
+      for (const ev of telemetry) {
+        if (ev._T !== 'LogPlayerKillV2' && ev._T !== 'LogPlayerKill') continue;
+        const killer = ev.killer || ev.finisher;
+        const victim = ev.victim;
+        if (!killer || !victim) continue;
+        const kName = (killer.name || '').toLowerCase();
+        const vName = (victim.name || '').toLowerCase();
+        const isMeKiller = kName === pLower;
+        const isMeVictim = vName === pLower;
+        if (!isMeKiller && !isMeVictim) continue;
+        participated = true;
+        // Tú mataste a alguien (excluir bots y self-kills)
+        if (isMeKiller && !_isBotEntity(victim) && victim.name && vName !== pLower) {
+          presas.set(victim.name, (presas.get(victim.name) || 0) + 1);
+        }
+        // Alguien te mató (excluir bots y self-kills)
+        if (isMeVictim && !_isBotEntity(killer) && killer.name && kName !== pLower) {
+          verdugos.set(killer.name, (verdugos.get(killer.name) || 0) + 1);
         }
       }
+      if (participated) matchesAnalyzed++;
     }
+
+    const toList = (m) => [...m.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+
+    const verdugosList = toList(verdugos);
+    const presasList = toList(presas);
+
+    // Némesis abierta: verdugo con balance >=3:1 a su favor (te mata mucho más
+    // de lo que tú lo matas a él). Mínimo 3 muertes a sus manos para evitar ruido.
+    let nemesis = null;
+    let bestRatio = 0;
+    for (const [name, killedMe] of verdugos.entries()) {
+      if (killedMe < 3) continue;
+      const killedByMe = presas.get(name) || 0;
+      const ratio = (killedMe + 1) / (killedByMe + 1);
+      if (ratio >= 3 && ratio > bestRatio) {
+        bestRatio = ratio;
+        nemesis = {
+          name,
+          killed_me: killedMe,
+          killed_by_me: killedByMe,
+          ratio: Math.round(ratio * 10) / 10
+        };
+      }
+    }
+
+    const totalKillsByMe = [...presas.values()].reduce((a, b) => a + b, 0);
+    const totalDeathsToHumans = [...verdugos.values()].reduce((a, b) => a + b, 0);
 
     const result = {
       _v: 1,
       _meta: {
         player,
         platform,
-        matches_analyzed: totals.matches_analyzed,
-        total_kills_to_humans: totals.total_kills,
-        total_deaths_to_humans: totals.total_deaths,
-        source: 'kill_events'
+        matches_analyzed: matchesAnalyzed,
+        sample_window_days: 30,
+        total_kills_to_humans: totalKillsByMe,
+        total_deaths_to_humans: totalDeathsToHumans
       },
       verdugos: verdugosList,
       presas: presasList,
@@ -2370,125 +2362,6 @@ app.get('/api/rivals/:platform/:playerName', rateLimit, async (req, res) => {
     console.error('[rivals]', e.message);
     res.status(500).json({ error: 'Server error', message: e.message });
   }
-});
-
-// ═══ Helper — extraer kills de una telemetry y batch-insert en kill_events ═══
-// Usado por (a) /api/admin/extract-all-kills (pasada inicial) y
-// (b) _getTelemetryCached (incremental). Idempotente por UNIQUE
-// (match_id, killer_name, victim_name). NO guarda kills con killer/victim sin
-// nombre (los bots con accountId vacío suelen tener name "BOT_xxx" igualmente,
-// se filtran después en /api/rivals).
-async function _extractKillsToTable(telemetry, matchId, platform) {
-  if (!pool || !Array.isArray(telemetry)) return { inserted: 0, queued: 0 };
-  const pending = [];
-  for (const ev of telemetry) {
-    if (ev._T !== 'LogPlayerKillV2' && ev._T !== 'LogPlayerKill') continue;
-    const killer = (ev.killer?.name || ev.finisher?.name || '').trim();
-    const victim = (ev.victim?.name || '').trim();
-    if (!killer || !victim || killer === victim) continue;
-    pending.push({
-      match_id: matchId,
-      killer, victim,
-      platform: platform || 'unknown',
-      occurred_at: ev._D || null
-    });
-  }
-  if (!pending.length) return { inserted: 0, queued: 0 };
-  const CHUNK = 500;
-  let inserted = 0;
-  for (let i = 0; i < pending.length; i += CHUNK) {
-    const slice = pending.slice(i, i + CHUNK);
-    const params = [];
-    const tuples = slice.map((k, idx) => {
-      const o = idx * 5;
-      params.push(k.match_id, k.killer, k.victim, k.platform, k.occurred_at);
-      return `($${o+1},$${o+2},$${o+3},$${o+4},$${o+5})`;
-    }).join(',');
-    try {
-      const r = await pool.query(
-        'INSERT INTO kill_events (match_id, killer_name, victim_name, platform, occurred_at) VALUES '
-        + tuples + ' ON CONFLICT (match_id, killer_name, victim_name) DO NOTHING',
-        params
-      );
-      inserted += r.rowCount || 0;
-    } catch(_) {}
-  }
-  return { inserted, queued: pending.length };
-}
-
-// ═══ Admin — extraer kills de TODAS las telemetries cacheadas (gt29-rivals-extract-v1) ═══
-// POST /api/admin/extract-all-kills — devuelve { status: 'started' } al instante
-// y procesa en background. Tarda ~5-15 min según volumen. Progreso en logs Railway.
-// Idempotente: ON CONFLICT DO NOTHING evita duplicados, se puede relanzar.
-app.post('/api/admin/extract-all-kills', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: 'DB not configured' });
-  // Auth simple por header. Si no hay ADMIN_KEY definida, requiere coincidencia con JWT_SECRET.
-  const expected = process.env.ADMIN_KEY || process.env.JWT_SECRET || '';
-  const provided = req.get('X-Admin-Key') || '';
-  if (!expected || provided !== expected) {
-    return res.status(401).json({ error: 'admin key required' });
-  }
-
-  // Lanzar en background. No bloquea la respuesta.
-  setImmediate(async () => {
-    const t0 = Date.now();
-    let total = 0, processed = 0, errors = 0, kills = 0;
-    try {
-      // Pre-cargar mapa matchId → platform desde las claves `match_<platform>_<id>`
-      // cacheadas. Si el match no está en cache, platform queda como 'unknown' y
-      // no aparecerá en /api/rivals/<platform>/... (acepta el trade-off, son <5%).
-      const platformMap = new Map();
-      const platformsRes = await pool.query(
-        "SELECT cache_key FROM api_cache WHERE cache_key LIKE 'match\\_%' ESCAPE '\\'"
-      );
-      for (const row of platformsRes.rows) {
-        const m = row.cache_key.match(/^match_(xbox|psn|steam|kakao|console|tournament)_(.+)$/);
-        if (m) platformMap.set(m[2], m[1]);
-      }
-      console.log(`[extract-all-kills] platformMap built — ${platformMap.size} known matches`);
-
-      const countRes = await pool.query(
-        "SELECT count(*)::int AS n FROM api_cache WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\'"
-      );
-      total = countRes.rows[0]?.n || 0;
-      console.log(`[extract-all-kills] start — ${total} telemetries to process`);
-
-      // Procesar por chunks de 25 para no saturar memoria (24 MB × 25 = 600 MB pico)
-      const CHUNK = 25;
-      let offset = 0;
-      let unknownPlatform = 0;
-      while (offset < total) {
-        const batchRes = await pool.query(
-          `SELECT cache_key, response_data
-           FROM api_cache
-           WHERE cache_key LIKE 'telemetry\\_%' ESCAPE '\\'
-           ORDER BY created_at DESC
-           OFFSET $1 LIMIT $2`,
-          [offset, CHUNK]
-        );
-        for (const row of batchRes.rows) {
-          const matchId = row.cache_key.replace(/^telemetry_/, '');
-          let telemetry;
-          try { telemetry = JSON.parse(row.response_data); } catch(_) { errors++; continue; }
-          const platform = platformMap.get(matchId) || 'unknown';
-          if (platform === 'unknown') unknownPlatform++;
-          const r = await _extractKillsToTable(telemetry, matchId, platform);
-          kills += r.inserted;
-          processed++;
-        }
-        if (processed % 100 === 0 || offset + CHUNK >= total) {
-          console.log(`[extract-all-kills] ${processed}/${total} — ${kills} kills inserted, ${errors} errors, ${unknownPlatform} unknown-platform`);
-        }
-        offset += CHUNK;
-      }
-      const dt = ((Date.now() - t0) / 1000).toFixed(1);
-      console.log(`[extract-all-kills] DONE — ${processed}/${total} processed, ${kills} kills inserted, ${errors} errors, ${unknownPlatform} unknown-platform, ${dt}s`);
-    } catch(e) {
-      console.error('[extract-all-kills] FATAL:', e.message);
-    }
-  });
-
-  return res.json({ status: 'started', message: 'Procesando en background. Mira logs Railway para progreso.' });
 });
 
 // ═══ Player Snapshots (Mi Evolución) ═══
@@ -3952,11 +3825,7 @@ const TELEMETRY_KEEP_TYPES = new Set([
 
 // Fetch telemetría con cache 30 días (key: `telemetry_${matchId}`).
 // gt28-telemetry-keep-types-v1: filtra tipos no usados antes de cachear.
-// gt29-rivals-v1: tras cachear, extrae kills incrementalmente a kill_events
-// (background, no bloquea respuesta). Platform es opcional — si no se pasa,
-// los kills se insertan con platform='unknown' y solo aparecerán en /api/rivals
-// cuando se conozca el platform (en la práctica, casi todos los callers lo pasan).
-async function _getTelemetryCached(matchId, telemetryUrl, platform) {
+async function _getTelemetryCached(matchId, telemetryUrl) {
   if (!pool) {
     if (!telemetryUrl) return null;
     try {
@@ -3990,10 +3859,6 @@ async function _getTelemetryCached(matchId, telemetryUrl, platform) {
       'INSERT INTO api_cache (cache_key, response_data, status_code, created_at) VALUES ($1, $2, 200, NOW()) ON CONFLICT (cache_key) DO UPDATE SET response_data = $2, created_at = NOW()',
       [tKey, JSON.stringify(filtered)]
     ).catch(() => {});
-    // gt29-rivals-v1: extracción incremental a kill_events (background, no espera).
-    if (Array.isArray(filtered)) {
-      _extractKillsToTable(filtered, matchId, platform || 'unknown').catch(() => {});
-    }
     return filtered;
   } catch(_) { return null; }
 }
@@ -4052,7 +3917,7 @@ async function computeMatchInsights(matchId, player, platform) {
     if (!telemetryUrl) return setErr('telemetry_url_missing');
 
     // 3. Telemetría (cache 30d) — puede fallar con partidas >14 días (CDN purga)
-    const telemetry = await _getTelemetryCached(matchId, telemetryUrl, shard);
+    const telemetry = await _getTelemetryCached(matchId, telemetryUrl);
     if (!telemetry || !Array.isArray(telemetry)) return setErr('telemetry_fetch_failed');
 
     // 4. Calcular insights reales
