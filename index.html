@@ -3973,9 +3973,13 @@ body.pv2-active #pv2StatsSection:has(#pv2StatGrid[data-state="empty"]) .pv2-mode
   body.pv2-active .pv2-sectitle{font-size:12px}
   body.pv2-active .pv2-sc-value{font-size:22px}
   body.pv2-active .pv2-stat-card{padding:12px 10px}
-  /* pv2-mobile-ctas-hide: ocultar CTAs del hero en móvil — ya están duplicados en el footer
-     y ocupaban una fila "fina" horizontal que aplastaba el contenido arriba. */
-  body.pv2-active .pv2-hero-ctas{display:none!important}
+  /* gt27-mobile-ctas-show-v2: mostrar CTAs del hero en móvil. La regla anterior
+     (display:none) ocultaba Guardar jugador / Guardar clan / Compartir asumiendo
+     que estaban duplicados en el bottom-nav, pero el bottom-nav solo tiene tabs
+     de navegación → el usuario perdía la única forma de marcar favoritos en móvil.
+     flex-wrap + min-height:36px evitan que aplaste el hero al envolver. */
+  body.pv2-active .pv2-hero-ctas{display:flex!important;flex-wrap:wrap;gap:6px;margin-top:10px}
+  body.pv2-active .pv2-hero-ctas .pv2-cta{font-size:11px;padding:7px 10px;min-height:36px}
 
   /* pv2-mobile-header-compact: el header del perfil ocupaba ~700px en móvil antes
      de que el user pudiera ver contenido (chips meta apilados verticalmente +
