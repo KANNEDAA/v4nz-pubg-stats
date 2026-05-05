@@ -1304,7 +1304,7 @@ app.get('/clans/:tag/feed', rateLimit, async (req, res) => {
 
 // ═══ RIVALIDADES v1 — procesar telemetries cacheadas para extraer kill_events entre clanes registrados ═══
 // POST /clans/:tag/process-kills — escanea api_cache, extrae kills, inserta en kill_events (idempotente por UNIQUE)
-app.post('/clans/:tag/process-kills', rateLimit, async (req, res) => {
+app.post('/clans/:tag/process-kills', requireAdmin, rateLimit, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'DB not configured' });
   const cleanTag = (req.params.tag || '').toUpperCase().replace(/[^A-Z0-9_]/g, '');
   if (!cleanTag) return res.status(400).json({ error: 'Tag inválido' });
@@ -4685,6 +4685,18 @@ app.get('/maps/:name.png', async (req, res) => {
   res.status(502).send('Map image unavailable');
 });
 
+// ═══ HEALTH CHECK ═══
+// MUST be before app.get('*') catch-all, otherwise the SPA fallback swallows it.
+app.get('/health', async (req, res) => {
+  const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
+  if (pool) {
+    try { await pool.query('SELECT 1'); health.database = 'connected'; }
+    catch (e) { health.database = 'error'; health.status = 'degraded'; }
+  } else { health.database = 'not configured'; }
+  health.apiKey = SERVER_API_KEY ? 'configured' : 'missing';
+  res.status(health.status === 'ok' ? 200 : 503).json(health);
+});
+
 // Fallback: serve index.html for SPA routes with dynamic meta tags — marker: v184-server
 app.get('*', (req, res) => {
   const statsMatch = req.path.match(/^\/stats\/(psn|xbox)\/([^\/]+)(?:\/match\/[a-f0-9-]+)?$/i);
@@ -4773,17 +4785,6 @@ async function prewarmLeaderboards() {
     } catch (e) { console.error(`[Pre-warm] LB ${c.platform}/${c.region}/${c.mode} FAIL:`, e.message); }
   }
 }
-
-// ═══ HEALTH CHECK ═══
-app.get('/health', async (req, res) => {
-  const health = { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() };
-  if (pool) {
-    try { await pool.query('SELECT 1'); health.database = 'connected'; }
-    catch (e) { health.database = 'error'; health.status = 'degraded'; }
-  } else { health.database = 'not configured'; }
-  health.apiKey = SERVER_API_KEY ? 'configured' : 'missing';
-  res.status(health.status === 'ok' ? 200 : 503).json(health);
-});
 
 // ═══ GRACEFUL SHUTDOWN ═══
 function gracefulShutdown(signal) {
