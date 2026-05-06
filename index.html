@@ -7082,7 +7082,6 @@ function getRateLimitSecondsLeft(){ return Math.max(0, Math.ceil((window._rateLi
 // v145 — marker: friendly-ratelimit-v145 — evita que el sentinela __RATELIMIT__ aparezca literal en la UI
 function friendlyErr(e){try{const m=(e&&e.message)||String(e||'');if(!m)return'Error desconocido';if(m==='__RATELIMIT__'||m.indexOf('__RATELIMIT__')>=0){const s=getRateLimitSecondsLeft();return 'Demasiadas consultas. Espera '+(s>0?s+'s':'unos segundos')+' e inténtalo de nuevo.';}return m;}catch(_){return'Error desconocido';}}
 async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;const timeoutErr=new Promise((_,reject)=>setTimeout(()=>{const err=new Error('La peticion ha tardado demasiado. Intentalo de nuevo.');err.status=408;reject(err);},20000));try{r=await Promise.race([fetch(u,{headers:h}),timeoutErr]);}catch(netErr){if(netErr.status===408)throw netErr;const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=await Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))]);if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;if(j.error)msg=j.error;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';/* Read Retry-After header (PUBG sends seconds) — fallback 15 */let retrySecs=15;try{const ra=r.headers.get('retry-after');if(ra){const n=parseInt(ra,10);if(!isNaN(n)&&n>0&&n<=300)retrySecs=n;}}catch(e){}window._rateLimitedUntil=Date.now()+retrySecs*1000;showRateLimitCountdown(retrySecs);}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('La respuesta ha tardado demasiado.')),10000))]);}
-function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div></div>';return null;}
 function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);}
 function setLoaderStep(msg){const el=document.getElementById('mainLoaderStep');if(el)el.textContent=msg;}
 let errorTimeout=null;let rateLimitInterval=null;
@@ -7535,7 +7534,6 @@ function toggleFavorite(name,platform,evt){if(evt)evt.stopPropagation();const id
   // fav-players-block-v1: refrescar el bloque "Mis jugadores guardados" en home logueada
   if(typeof window._hv2LoadFavPlayers==='function')try{window._hv2LoadFavPlayers();}catch(e){}
 }
-function setFavGroup(name,group,evt){if(evt)evt.stopPropagation();const f=favorites.find(f=>f.name===name);if(f){f.group=f.group===group?'':group;localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}}
 function cycleFavGroup(name,evt){if(evt)evt.stopPropagation();const f=favorites.find(fv=>fv.name===name);if(!f)return;const groups=[''].concat(FAV_GROUPS);const cur=groups.indexOf(f.group||'');f.group=groups[(cur+1)%groups.length];localStorage.setItem('pubg_favorites',JSON.stringify(favorites));renderRecentSearches();}
 function isFavorite(name){return favorites.some(f=>f.name===name);}
 /* fav-star-everywhere-v1: helper para inyectar estrella ⭐ de jugador en cualquier UI.
@@ -7585,13 +7583,6 @@ function toggleClanFavorite(tag,name,platform,evt){
   updateClanFavBtn();
   updateAllClanFavStars();
   if(typeof renderCCFavs==='function')renderCCFavs();
-}
-function setClanFavGroup(tag,group,evt){
-  if(evt)evt.stopPropagation();
-  const f=clanFavorites.find(f=>f.tag===tag);
-  if(f){f.group=f.group===group?'':group;localStorage.setItem('pubg_clan_favorites',JSON.stringify(clanFavorites));renderClanHistoryUI();
-    if(authToken){fetch('/favorites',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},credentials:'include',body:JSON.stringify({name:tag,platform:f.platform||'psn',type:'clan',group:f.group||''})}).catch(()=>{});}
-  }
 }
 function cycleClanFavGroup(tag,evt){
   if(evt)evt.stopPropagation();
@@ -8062,11 +8053,6 @@ function _mdAvgCmp(val,avg,unit){
   const arrow=diff>0?' &#x25B2;':diff<0?' &#x25BC;':'';
   return'<div class="avg-cmp '+cls+'">'+display+arrow+'</div>';
 }
-function _mdToggleCollapsible(btn){
-  btn.classList.toggle('open');
-  const body=btn.nextElementSibling;
-  if(body)body.classList.toggle('open');
-}
 function showMatchDetail(idx){
   _mdResetTabs();
   const match=currentMatchData[idx];if(!match)return;
@@ -8122,7 +8108,6 @@ function showMatchDetail(idx){
   // match-detail-mockup-v2-m2: sección Squad (tarjetas jugador por miembro del squad)
   h+='<section class="md-section md-section-squad" id="mdSec-squad"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F465;</i> Tu squad <span class="md-sec-count">stats \u00b7 partida</span></h3><div class="md-section-hint">Tarjetas individuales por cada miembro del squad \u2014 MVP, tiempo vivo y breakdown de stats</div><div class="md-tab-content" id="mdTab-squad"></div></section>';
   // match-detail-m3a: sección Resumen eliminada — placeholder invisible para retrocompat
-  h+='<div class="md-tab-content" id="mdTab-resumen" style="display:none"></div>';
   // I-0b: Radiografia del match — seccion nueva con chip dorado
   h+='<section class="md-section" id="mdSec-insights"><h3 class="md-section-title"><i class="md-sec-ico">&#x1F9EC;</i> Radiograf\u00eda del match</h3><div class="md-tab-content" id="mdTab-insights"></div></section>';
   if(telemetryUrl){
@@ -8146,7 +8131,6 @@ function showMatchDetail(idx){
     h+='<div class="md-tab-content" id="mdTab-mapa" style="display:none"></div>';
   }
   // match-detail-m3a: sección Audit eliminada como tab independiente — el botón vive al final de Diagnóstico
-  h+='<div class="md-tab-content" id="mdTab-audit" style="display:none"></div>';
   // ═══ STICKY ACTIONS (always visible below tabs) ═══
   h+='<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center;justify-content:center;">';
   h+='<button onclick="shareMatchCard('+idx+')" style="flex:1;min-width:140px;background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(168,85,247,0.12));border:1px solid rgba(0,240,255,0.25);color:var(--accent);padding:10px 12px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;">&#x1F517; Compartir</button>';
@@ -8805,86 +8789,6 @@ function _mdRenderTimelineEvents(telem,pn){
   h+='<div class="md-timeline-summary"><strong>Resumen:</strong> '+nK+' kills del squad \u00b7 '+nKn+' knocks \u00b7 '+nD+' muertes del squad \u00b7 '+events.length+' eventos totales</div>';
   el.innerHTML=h;
 }
-// ═══ TAB: RESUMEN ═══
-function _mdRenderResumen(ctx){
-  var ps=ctx.ps,pn=ctx.pn,match=ctx.match,pp=ctx.pp;
-  var avgS=getActiveStats();var hasAvg=avgS&&avgS.roundsPlayed>0;
-  var avgKills=hasAvg?(avgS.kills/avgS.roundsPlayed):0;
-  var avgDmg=hasAvg?(avgS.damageDealt/avgS.roundsPlayed):0;
-  var avgHSPerRound=hasAvg?(avgS.headshotKills/avgS.roundsPlayed):0;
-  var avgAssists=hasAvg?((avgS.assists||0)/avgS.roundsPlayed):0;
-  var avgKnocks=hasAvg?((avgS.DBNOs||0)/avgS.roundsPlayed):0;
-  var h='';
-  // Primary stats
-  h+='<div class="match-detail-stats" style="margin:12px 0 8px;">';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent);font-size:1.4rem;">'+ps.kills+'</div><div class="lbl">Kills</div>'+_mdAvgCmp(ps.kills,avgKills)+'</div>';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-orange);font-size:1.4rem;">'+Math.round(ps.damageDealt)+'</div><div class="lbl">Dano</div>'+_mdAvgCmp(Math.round(ps.damageDealt),Math.round(avgDmg))+'</div>';
-  h+='<div class="match-detail-stat"><div class="val" style="color:var(--accent-green);font-size:1.4rem;">'+formatTime(ps.timeSurvived)+'</div><div class="lbl">Tiempo</div></div>';
-  h+='</div>';
-  // Secondary stats
-  h+='<div class="match-detail-stats">';
-  h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-purple);">'+(ps.headshotKills||0)+'</div><div class="lbl">Headshots</div>'+_mdAvgCmp(ps.headshotKills||0,avgHSPerRound)+'</div>';
-  h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-yellow);">'+(ps.assists||0)+'</div><div class="lbl">Assists</div>'+_mdAvgCmp(ps.assists||0,avgAssists)+'</div>';
-  h+='<div class="match-detail-stat md-stat-secondary"><div class="val" style="color:var(--accent-red);">'+(ps.DBNOs||0)+'</div><div class="lbl">Knocks</div>'+_mdAvgCmp(ps.DBNOs||0,avgKnocks)+'</div>';
-  h+='</div>';
-  // Combat summary
-  var dmgDealt=Math.round(ps.damageDealt||0);var killDmgRatio=ps.kills>0?Math.round(dmgDealt/ps.kills):0;
-  var dpm=ps.timeSurvived>0?(dmgDealt/(ps.timeSurvived/60)).toFixed(1):'0';
-  h+='<div class="md-combat-summary"><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent-orange);">'+dmgDealt+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano Total</div></div><div style="text-align:center;padding:0 16px;"><div style="font-size:.7rem;color:var(--text-dim);margin-bottom:4px;">Eficiencia</div><div style="font-family:Orbitron,sans-serif;font-size:1rem;color:var(--accent);">'+killDmgRatio+'</div><div style="font-size:.6rem;color:var(--text-dim);">dano/kill</div></div><div style="text-align:center;"><div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent);">'+dpm+'</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;">Dano/min</div></div></div>';
-  // Team section
-  var myRoster=(match.included||[]).find(function(i){return i.type==='roster'&&i.relationships&&i.relationships.participants&&i.relationships.participants.data.some(function(p){return p.id===pp.id;});});
-  var teammates=[];if(myRoster&&myRoster.relationships&&myRoster.relationships.participants){var partIds=myRoster.relationships.participants.data.map(function(p){return p.id;});teammates=(match.included||[]).filter(function(i){return i.type==='participant'&&partIds.includes(i.id);}).map(function(p){return p.attributes.stats;}).sort(function(a,b){return(b.damageDealt||0)-(a.damageDealt||0);});}
-  if(teammates.length>1){
-    var totalDmg=teammates.reduce(function(s,tm){return s+(tm.damageDealt||0);},0);
-    var tmColors=['var(--accent)','var(--accent-orange)','var(--accent-purple)','var(--accent-green)'];
-    h+='<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">';
-    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">Tu Equipo</div>';
-    if(totalDmg>0){h+='<div class="team-contrib-bar">';teammates.forEach(function(tm,ti){var pct=((tm.damageDealt||0)/totalDmg*100).toFixed(1);h+='<div class="seg" style="width:'+pct+'%;background:'+tmColors[ti%4]+';"></div>';});h+='</div>';}
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;">';
-    teammates.forEach(function(tm,ti){
-      var isMe=tm.name.toLowerCase()===pn.toLowerCase();
-      var pct=totalDmg>0?Math.round((tm.damageDealt||0)/totalDmg*100):0;
-      var isMvp=ti===0;
-      h+='<div style="background:var(--bg-secondary);padding:10px;border-radius:6px;'+(isMe?'border:1px solid var(--accent);':'border:1px solid var(--border);')+'">';
-      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">';
-      h+='<span style="color:'+(isMe?'var(--accent)':tmColors[ti%4])+';font-weight:700;font-size:.78rem;'+(isMe?'':'cursor:pointer;')+'" '+(isMe?'':'onclick="closeMatchDetail();goToPlayer(\''+escJs(tm.name)+'\',\''+currentPlatform+'\');" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'"')+'>'+esc(tm.name)+(isMe?' <span style="font-size:.55rem;opacity:.6;">(tu)</span>':'')+'</span>';
-      if(isMvp)h+='<span style="font-size:.6rem;background:rgba(255,200,0,.15);color:var(--accent-yellow);padding:1px 5px;border-radius:3px;font-weight:700;">MVP</span>';
-      h+='</div>';
-      h+='<div style="display:flex;gap:8px;align-items:baseline;">';
-      h+='<span style="color:var(--accent);font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;">'+tm.kills+'<span style="font-size:.6rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;"> kills</span></span>';
-      h+='<span style="color:var(--accent-orange);font-family:Orbitron,sans-serif;font-size:.8rem;font-weight:700;">'+Math.round(tm.damageDealt)+'<span style="font-size:.6rem;color:var(--text-dim);font-family:Rajdhani,sans-serif;"> dmg</span></span>';
-      h+='<span style="color:var(--text-dim);font-size:.65rem;margin-left:auto;">'+pct+'%</span>';
-      h+='</div></div>';
-    });
-    h+='</div></div>';
-  }
-  // Loot & movement
-  var lootItems=[];
-  if(ps.heals)lootItems.push({l:'Heals',v:ps.heals});if(ps.boosts)lootItems.push({l:'Boosts',v:ps.boosts});if(ps.weaponsAcquired)lootItems.push({l:'Armas',v:ps.weaponsAcquired});if(ps.roadKills)lootItems.push({l:'Atropellos',v:ps.roadKills});if(ps.vehicleDestroys)lootItems.push({l:'Vehiculos',v:ps.vehicleDestroys});if(ps.longestKill)lootItems.push({l:'Kill lejano',v:Math.round(ps.longestKill)+'m'});if(ps.swimDistance>0)lootItems.push({l:'Nado',v:((ps.swimDistance)/1000).toFixed(2)+'km'});
-  var walkKm=((ps.walkDistance||0)/1000).toFixed(1);var rideKm=((ps.rideDistance||0)/1000).toFixed(1);
-  if(lootItems.length>0||parseFloat(walkKm)>0||parseFloat(rideKm)>0){
-    h+='<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">';
-    h+='<div style="font-family:Rajdhani,sans-serif;font-size:.8rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Loot y Movimiento</div>';
-    h+='<div style="display:flex;gap:12px;margin-bottom:8px;">';
-    h+='<div style="flex:1;background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);"><div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:700;">'+walkKm+'km</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;margin-top:2px;">A pie</div></div>';
-    h+='<div style="flex:1;background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);"><div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:700;">'+rideKm+'km</div><div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;margin-top:2px;">Vehiculo</div></div>';
-    h+='</div>';
-    if(lootItems.length){h+='<div class="md-loot-grid">';lootItems.forEach(function(i){h+='<div class="md-loot-item"><span class="loot-val">'+i.v+'</span>'+i.l+'</div>';});h+='</div>';}
-    h+='</div>';
-  }
-  // Top killer warning
-  var allParts=(match.included||[]).filter(function(i){return i.type==='participant';});
-  var detailTopK=null,detailTopKills=0;allParts.forEach(function(p){var k=p.attributes.stats.kills||0;if(k>detailTopKills){detailTopKills=k;detailTopK=p.attributes.stats.name;}});
-  if(detailTopKills>=10&&detailTopK&&detailTopK.toLowerCase()!==pn.toLowerCase()){
-    var suspectColor=detailTopKills>=15?'var(--accent-red)':'var(--accent-orange)';
-    h+='<div style="margin-top:16px;background:rgba(255,51,85,0.08);border:1px solid rgba(255,51,85,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;">';
-    h+='<span style="font-size:1.2rem;">'+(detailTopKills>=15?'&#x26A0;&#xFE0F;':'&#x1F525;')+'</span>';
-    h+='<div><div style="font-family:Rajdhani,sans-serif;font-size:.7rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">Top Killer de la Partida</div>';
-    h+='<div style="font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;color:'+suspectColor+';cursor:pointer;" onclick="closeMatchDetail();goToPlayer(\''+escJs(detailTopK)+'\',\''+currentPlatform+'\');">'+esc(detailTopK)+' — '+detailTopKills+' kills</div>';
-    h+='</div></div>';
-  }
-  document.getElementById('mdTab-resumen').innerHTML=h;
-}
 // ═══ TAB: KILL LOG ═══
 function _mdRenderKillLog(ctx){
   var el=document.getElementById('mdTab-killlog');if(!el)return;
@@ -9098,17 +9002,6 @@ function _mdRenderMapa(ctx){
   h+='<button onclick="openTelemMap(\''+ctx.telemetryUrl+'\',\''+ctx.pn.replace(/'/g,"\\'")+'\',\''+ctx.mapName+'\','+ctx.idx+')" style="width:100%;max-width:400px;background:var(--accent);color:#000;border:none;padding:14px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9rem;font-family:Rajdhani,sans-serif;text-transform:uppercase;letter-spacing:1px;">&#x1F5FA; Abrir Mapa Interactivo</button>';
   h+='<div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Se abrira el mapa completo con tu ruta, kills y zona azul</div>';
   h+='</div>';
-  el.innerHTML=h;
-}
-// ═══ TAB: AUDITORÍA IA ═══
-function _mdRenderAudit(ctx){
-  var el=document.getElementById('mdTab-audit');if(!el)return;
-  if(!ctx.auditMatchId){el.innerHTML='<div class="md-tab-loading">Auditoria no disponible</div>';return;}
-  var h='<div style="text-align:center;margin:16px 0;" id="auditBtnWrap">';
-  h+='<button class="audit-btn" onclick="requestTelemetryAudit(\''+escJs(ctx.auditMatchId)+'\',\''+escJs(ctx.pn)+'\',\''+escJs(currentPlatform||'psn')+'\',this)" style="max-width:400px;">&#x1F50D; Auditar Partida con IA</button>';
-  h+='<div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">Analiza tu partida con inteligencia artificial</div>';
-  h+='</div>';
-  h+='<div id="auditResult"></div>';
   el.innerHTML=h;
 }
 // ═══ TELEMETRY AUDIT ═══
@@ -12800,17 +12693,6 @@ async function loadPlayerAliases(playerName){
     return d.aliases||[];
   }catch(e){return[];}
 }
-function renderAliasesBadge(aliases,container){
-  if(!aliases||!aliases.length)return;
-  const el=document.getElementById(container);
-  if(!el)return;
-  const txt=aliases.length===1?aliases[0]:aliases.slice(0,3).join(', ');
-  const badge=document.createElement('div');
-  badge.className='aliases-badge';
-  badge.innerHTML='<span style="opacity:.6;">&#x1F504;</span> Antes conocido como: <strong>'+esc(txt)+'</strong>';
-  badge.style.cssText='font-size:.65rem;color:var(--text-dim);margin-top:2px;font-family:Rajdhani,sans-serif;';
-  el.appendChild(badge);
-}
 
 async function loadClanMemberAliases(clanTag){
   try{
@@ -13660,32 +13542,6 @@ function _bnUpdateActive(tab){
     b.classList.toggle('active',b.getAttribute('data-bntab')===mapped);
   });
 }
-function _bnToggleMore(){
-  var existing=document.getElementById('bnMorePanel');
-  if(existing){existing.remove();return;}
-  var panel=document.createElement('div');
-  panel.id='bnMorePanel';
-  panel.style.cssText='position:fixed;bottom:56px;right:0;left:0;background:var(--bg-card);border-top:1px solid var(--border);z-index:111;padding:12px 16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.2);animation:fadeInUp .2s ease;';
-  var items=[
-    {tab:'compare',icon:'&#x2694;&#xFE0F;',label:'Comparar'},
-    {tab:'weapons',icon:'&#x1F52B;',label:'Armas'},
-    {tab:'funstats',icon:'&#x1F9EC;',label:'ADN'}
-  ];
-  items.forEach(function(it){
-    var btn=document.createElement('button');
-    btn.style.cssText='flex:0 0 auto;padding:10px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;color:var(--text-secondary);font-family:Rajdhani,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;';
-    btn.innerHTML=it.icon+' '+it.label;
-    btn.onclick=function(){panel.remove();switchTab(it.tab);_bnUpdateActive(it.tab);};
-    panel.appendChild(btn);
-  });
-  document.body.appendChild(panel);
-  // Close on tap outside
-  setTimeout(function(){
-    document.addEventListener('click',function _bnClose(e){
-      if(!panel.contains(e.target)&&!e.target.closest('[data-bntab="more"]')){panel.remove();document.removeEventListener('click',_bnClose);}
-    });
-  },10);
-}
 // Hook into switchTab to sync bottom nav
 // gt27-switchtab-wrapper-fix-v1: el wrapper antes solo pasaba `t`, perdiendo
 // el segundo argumento `opts` (ej. {preserveDeepLink:true}). Eso hacía que
@@ -13867,7 +13723,6 @@ switchTab=function(){
   }
 
   // ── 3. Helpers ─────────────────────────────────────────────────────
-  function _pv2Qs(sel){ return document.querySelector(sel); }
   function _pv2Text(id, text){ var el = document.getElementById(id); if(el) el.textContent = text; }
   function _pv2Show(id, show){ var el = document.getElementById(id); if(el) el.style.display = show ? '' : 'none'; }
   function _pv2Initial(name){ return (name || '?').charAt(0).toUpperCase(); }
