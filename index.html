@@ -698,8 +698,6 @@ body.has-player-loaded .search-hero .search-box .platform-selector,
 .share-stats-btn { background:linear-gradient(135deg,#5865F2,#00f0ff); color:#fff; border:none; padding:8px 18px; border-radius:8px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.75rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
 .share-stats-btn:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(0,240,255,.3); }
 
-/* cleanup-v200: bloque CSS hamburger + #mainNav fullscreen eliminado. Bottom-nav (v186) reemplaza la navegación móvil. */
-
 /* STREAMER BANNER */
 .streamer-banner { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:16px 24px; margin:0 auto; display:flex; align-items:center; gap:16px; position:relative; overflow:hidden; box-shadow:var(--shadow-card); z-index:1; }
 .streamer-banner::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent-orange),#c5ff00); }
@@ -1331,23 +1329,7 @@ footer a { color: var(--accent); text-decoration: none; }
 
 /* ═══ END VISUAL POLISH v147 ═══ */
 
-/* ═══════════════════════════════════════════════════════════════
-   V4NZ VISUAL POLISH v148 — marker: visual-polish-v148-consolidate
-   V4NZ v149 — admin panel removed (todo es automatico) — marker: admin-removed-v149
-   V4NZ v149 — empty states para WL grid + match history (14 dias retencion) — marker: empty-state-14d-v149
-   V4NZ v150 — fix DNA bars invisibles (keyframe dnaBarFill roto) — marker: dna-bars-fix-v150
-   V4NZ v151 — Historial del jugador (ex Mi Evolucion) — 9 metricas + modo delta + filtro temporal + export CSV — marker: historial-v151
-   V4NZ v152 — Comparar Jugadores con IA — endpoint /api/ai-compare-players + card veredicto + categorias + tip + cache 7d — marker: ai-compare-v152
-   V4NZ v153 — Comparar Clanes con IA — endpoint /api/ai-compare-clans + card veredicto + 4 dimensiones (potencia/calidad/profundidad/actividad) + identidad + tip + cache 7d — marker: ai-compare-clans-v153
-   V4NZ v154 — Analisis IA Pro (privado) — endpoint /api/ai-deep-analysis con requireAuth + historial 90d snapshots + panel usuario logueado + tendencias/loadout/plan entrenamiento + cache 7d — marker: ai-deep-v154
-   V4NZ v155 — auth-box wide mode para IA Pro — popup se expande a 700px al mostrar analisis + scroll + responsive — marker: auth-wide-v155
-   V4NZ v156 — Top 500 cleanup: quitar AS (sin datos), DUO y DUO FPP (sin datos) — quedan EU/NA con Squad/Squad FPP/Solo/Solo FPP — marker: top500-cleanup-v156
-   V4NZ v157 — Top 500 dinamico: mensaje aviso cuando 0 jugadores — marker: top500-nodata-v157
-   V4NZ v158 — Top 500 simplificado: quitar botones modo y plataforma (PUBG S40 usa leaderboard unico cross-platform), dejar solo EU/NA — marker: top500-simple-v158
-   V4NZ v159 — Fix: click en Mi Clan/Favoritos/Recientes abre la pagina completa del clan (loadClanPage) en vez de la vista inline basica — marker: clan-fav-page-v159
-   Consolidation pass: token rollout, hooks fixes, category colors,
-   category top-bars, clan/fav hovers, radar anim, light mode shadows
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ V4NZ VISUAL POLISH — consolidación tokens, hooks, colores, radar, sombras ═══ */
 
 /* 1) BORDER-RADIUS CONSOLIDATION — override with tokens (v148.1 hotfix) */
 .stat-card, .weapon-card, .fun-stat-card, .clan-card, .cr-row, .lb-row, .match-item, .auth-box, .streamer-card, .streamer-banner, .player-header, .card-modal, .telem-popup, .empty-state, .search-box { border-radius: var(--br-lg); }
@@ -2741,7 +2723,7 @@ canvas#dnaRadar, canvas#radarCanvas, .dna-radar-wrap { animation: radarEntrance 
     background: var(--accent);
     border-radius: 0 0 2px 2px;
   }
-  /* cleanup-v200: .hamburger ya eliminado. Mantener #mainNav display:none para ocultar nav desktop en móvil (bottom-nav lo reemplaza). */
+  /* En móvil: bottom-nav reemplaza el nav desktop */
   #mainNav { display: none !important; }
   /* topbar-mobile-search-v1: en móvil/tablet el header pasa a fila compacta:
      logo cuadrado + buscador (flex:1) + auth pill + tema. Inspirado en tracker.gg.
@@ -4199,7 +4181,6 @@ body.cv2-detail-active #searchHero{display:none!important}
 <div class="bg-radial"></div>
 
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text" id="mainLoaderStep">Buscando jugador...</div><div class="loader-timer" id="mainLoaderTimer" style="display:none;">0.0s</div></div>
-<!-- admin panel removed v149 — todo es automatico -->
 
 <header>
   <div class="header-inner">
@@ -4248,7 +4229,6 @@ body.cv2-detail-active #searchHero{display:none!important}
   <h1>Tu juego. Tu clan.<br><span>Tu liga.</span></h1>
   <p class="hero-tagline">Hecho por jugadores PUBG, para jugadores PUBG.</p>
   <p class="hero-powered">Powered by <span>PUBG Official API</span> &mdash; Gratis y sin anuncios</p>
-  <!-- v186: hero-platform-toggle grande eliminado (duplicaba el selector compacto del search-box) -->
   <div class="search-box">
     <div class="platform-selector">
       <button class="platform-btn active" data-platform="psn" onclick="setPlatform('psn')">PS</button>
@@ -5085,7 +5065,6 @@ body.cv2-detail-active #searchHero{display:none!important}
         <a href="https://discord.gg/dTdcvHs2kg" target="_blank" class="banner-discord-cta">Entrar en Discord</a>
       </div>
       <div id="clanHistorySection"></div>
-      <!-- admin panel removed v149 — todo es automatico -->
     </div>
     <div id="clanCompareMode" style="display:none;">
       <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;margin-bottom:16px;">
@@ -7087,8 +7066,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   // Nota: el listener de popstate está registrado globalmente por el objeto Router (v160).
   // Cuando el usuario pulsa ATRÁS en el navegador, Router.dispatch() lee location.pathname y ejecuta el handler.
-  // Admin panel removed v149 — todo es automatico
-  // Limpiar restos de sesiones anteriores que pudieran tener admin guardado
+  // Limpiar restos de sesiones anteriores que pudieran tener admin guardado (legacy)
   try{sessionStorage.removeItem('adminMode');sessionStorage.removeItem('adminToken');}catch(e){}
   // /admin redirige a la home (compatibilidad con enlaces antiguos)
   if(location.pathname==='/admin'){history.replaceState(null,'','/');}
@@ -7097,8 +7075,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 function setPlatform(p){currentPlatform=p;document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active',b.dataset.platform===p));}
 // Etiqueta de plataforma para clanes: en consola (PSN/Xbox) los clanes son cross-platform, asi que mostramos CONSOLA. Solo Steam se distingue.
 function clanPlatLabel(p){p=(p||'psn').toLowerCase();return p==='steam'?'STEAM':'CONSOLA';}
-function checkApiKey(){return true;}
-function saveApiKey(){}
 // Global rate limit state — checked by entry points (searchPlayer, etc.) to bail early
 window._rateLimitedUntil = 0;
 function isRateLimited(){ return Date.now() < (window._rateLimitedUntil||0); }
@@ -7107,7 +7083,6 @@ function getRateLimitSecondsLeft(){ return Math.max(0, Math.ceil((window._rateLi
 function friendlyErr(e){try{const m=(e&&e.message)||String(e||'');if(!m)return'Error desconocido';if(m==='__RATELIMIT__'||m.indexOf('__RATELIMIT__')>=0){const s=getRateLimitSecondsLeft();return 'Demasiadas consultas. Espera '+(s>0?s+'s':'unos segundos')+' e inténtalo de nuevo.';}return m;}catch(_){return'Error desconocido';}}
 async function apiGet(u){const h={'Accept':'application/vnd.api+json'};let r;const timeoutErr=new Promise((_,reject)=>setTimeout(()=>{const err=new Error('La peticion ha tardado demasiado. Intentalo de nuevo.');err.status=408;reject(err);},20000));try{r=await Promise.race([fetch(u,{headers:h}),timeoutErr]);}catch(netErr){if(netErr.status===408)throw netErr;const err=new Error('Sin conexion a internet. Comprueba tu red e intentalo de nuevo.');err.status=0;throw err;}if(!r.ok){let msg='Error '+r.status;try{const j=await Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))]);if(j.errors&&j.errors[0])msg=j.errors[0].detail||j.errors[0].title||msg;if(j.error)msg=j.error;}catch(e){}if(r.status===404)msg='Jugador no encontrado. Revisa el nombre y que la plataforma (PS/Xbox) sea correcta.';if(r.status===429){msg='__RATELIMIT__';/* Read Retry-After header (PUBG sends seconds) — fallback 15 */let retrySecs=15;try{const ra=r.headers.get('retry-after');if(ra){const n=parseInt(ra,10);if(!isNaN(n)&&n>0&&n<=300)retrySecs=n;}}catch(e){}window._rateLimitedUntil=Date.now()+retrySecs*1000;showRateLimitCountdown(retrySecs);}if(r.status===401||r.status===403)msg='Error de conexion con el servidor. Intentalo en unos minutos.';if(r.status>=500)msg='Los servidores de PUBG estan caidos. Intentalo mas tarde.';if(r.status===503)msg='Servicio temporalmente no disponible. Intentalo en unos minutos.';const err=new Error(msg);err.status=r.status;throw err;}return Promise.race([r.json(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('La respuesta ha tardado demasiado.')),10000))]);}
 function showApiLoader(targetId,msg){const el=document.getElementById(targetId);if(!el)return null;el.innerHTML='<div class="api-loader"><div class="spinner"></div><div class="loader-text">'+(msg||'Cargando...')+'</div></div>';return null;}
-function stopApiLoader(iv){}
 function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('active',v);}
 function setLoaderStep(msg){const el=document.getElementById('mainLoaderStep');if(el)el.textContent=msg;}
 let errorTimeout=null;let rateLimitInterval=null;
@@ -7241,7 +7216,6 @@ function showClanByTag(tag){
   loadClanPage(tag);
 }
 async function searchPlayer(){
-  if(!checkApiKey())return;
   // Bail early if still in cooldown — avoid wasting another call against the API
   if(isRateLimited()){showRateLimitCountdown(getRateLimitSecondsLeft());return;}
   const name=document.getElementById('searchInput').value.trim();if(!name){showError('Escribe el nombre de un jugador para buscar sus estadísticas');return;}
@@ -12181,7 +12155,6 @@ function setClanMode(mode,btn){
   if(mode==='compare'&&typeof renderCCFavs==='function')renderCCFavs();
 }
 function setClanPlatform(p,btn){clanPlatform=p;document.querySelectorAll('.clan-plat-btn[data-cplat]').forEach(b=>b.classList.toggle('active',b.dataset.cplat===p));}
-function setClanComparePlatform(p,btn){clanComparePlatform=p;document.querySelectorAll('.clan-plat-btn[data-ccplat]').forEach(b=>b.classList.toggle('active',b.dataset.ccplat===p));}
 // Compare Clans — tab switching (name vs player per side)
 const _ccMode={1:'name',2:'name'};
 const _ccPlat={1:'psn',2:'psn'};
